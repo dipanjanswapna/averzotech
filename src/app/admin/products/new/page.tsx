@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Check } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -717,3 +717,5 @@ export default function NewProductPage() {
     </div>
   );
 }
+
+    
