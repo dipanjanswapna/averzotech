@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { app } from '@/lib/firebase';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
+import { useToast } from '@/hooks/use-toast';
 
 export default function VendorDashboard() {
   const auth = getAuth(app);
@@ -15,6 +16,7 @@ export default function VendorDashboard() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -40,7 +42,7 @@ export default function VendorDashboard() {
     });
 
     return () => unsubscribe();
-  }, [auth, db, router]);
+  }, [auth, db, router, toast]);
 
   if (loading) {
     return (
