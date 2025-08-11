@@ -30,6 +30,8 @@ import {
 } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const allProducts = [
   // Men
@@ -69,24 +71,29 @@ export default function ShopPage() {
     const [displayedItems, setDisplayedItems] = React.useState(allProducts);
     const [sortOption, setSortOption] = React.useState("featured");
   
-    const [selectedCategory, setSelectedCategory] = React.useState("all");
-    const [selectedBrand, setSelectedBrand] = React.useState("all");
-    const [priceRange, setPriceRange] = React.useState([0, 50000]);
+    const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
+    const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
+    const [priceRange, setPriceRange] = React.useState([0, 65000]);
 
-    const brands = [...new Set(allProducts.map(item => item.brand))];
     const categories = [...new Set(allProducts.map(item => item.category))];
+    const allBrands = [...new Set(allProducts.map(item => item.brand))];
+    
+    const brands = React.useMemo(() => {
+        if (selectedCategories.length === 0) return allBrands;
+        return [...new Set(allProducts.filter(p => selectedCategories.includes(p.category)).map(p => p.brand))];
+    }, [selectedCategories, allBrands]);
 
     const applyFilters = React.useCallback(() => {
         let items = [...allProducts];
 
         // Filter by category
-        if (selectedCategory !== 'all') {
-          items = items.filter(item => item.category === selectedCategory);
+        if (selectedCategories.length > 0) {
+          items = items.filter(item => selectedCategories.includes(item.category));
         }
 
         // Filter by brand
-        if (selectedBrand !== 'all') {
-          items = items.filter(item => item.brand === selectedBrand);
+        if (selectedBrands.length > 0) {
+          items = items.filter(item => selectedBrands.includes(item.brand));
         }
 
         // Filter by price
@@ -110,17 +117,34 @@ export default function ShopPage() {
         }
 
         setDisplayedItems(items);
-    }, [selectedCategory, selectedBrand, priceRange, sortOption]);
+    }, [selectedCategories, selectedBrands, priceRange, sortOption]);
 
     React.useEffect(() => {
         applyFilters();
     }, [applyFilters]);
 
     const handleResetFilters = () => {
-        setSelectedCategory("all");
-        setSelectedBrand("all");
-        setPriceRange([0, 50000]);
+        setSelectedCategories([]);
+        setSelectedBrands([]);
+        setPriceRange([0, 65000]);
     };
+    
+    const handleCategoryChange = (category: string) => {
+        setSelectedCategories(prev => 
+            prev.includes(category) 
+            ? prev.filter(c => c !== category) 
+            : [...prev, category]
+        );
+    };
+
+    const handleBrandChange = (brand: string) => {
+        setSelectedBrands(prev => 
+            prev.includes(brand) 
+            ? prev.filter(b => b !== brand) 
+            : [...prev, brand]
+        );
+    };
+
 
   const filterControls = (
       <FilterControls 
@@ -128,10 +152,10 @@ export default function ShopPage() {
         categories={categories}
         priceRange={priceRange}
         onPriceChange={setPriceRange}
-        selectedBrand={selectedBrand}
-        onBrandChange={setSelectedBrand}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        selectedBrands={selectedBrands}
+        onBrandChange={handleBrandChange}
+        selectedCategories={selectedCategories}
+        onCategoryChange={handleCategoryChange}
         onApply={applyFilters}
         onReset={handleResetFilters}
       />
@@ -175,7 +199,6 @@ export default function ShopPage() {
                       <SelectItem value="price-asc">Price: Low to High</SelectItem>
                       <SelectItem value="price-desc">Price: High to Low</SelectItem>
                       <SelectItem value="discount">Discount</SelectItem>
-                      <SelectItem value="popular">Popularity</SelectItem>
                     </SelectContent>
                   </Select>
             </div>
@@ -183,7 +206,7 @@ export default function ShopPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="hidden md:block md:col-span-1">
-                 <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                 <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen} className="sticky top-24">
                     <CollapsibleTrigger className="flex justify-between items-center w-full font-semibold text-lg mb-4">
                       Filters <Filter className="w-5 h-5" />
                     </CollapsibleTrigger>
@@ -245,10 +268,10 @@ interface FilterControlsProps {
     categories: string[];
     priceRange: number[];
     onPriceChange: (value: number[]) => void;
-    selectedCategory: string;
-    onCategoryChange: (value: string) => void;
-    selectedBrand: string;
-    onBrandChange: (value: string) => void;
+    selectedCategories: string[];
+    onCategoryChange: (category: string) => void;
+    selectedBrands: string[];
+    onBrandChange: (brand: string) => void;
     onApply: () => void;
     onReset: () => void;
 }
@@ -258,9 +281,9 @@ function FilterControls({
     categories, 
     priceRange, 
     onPriceChange,
-    selectedCategory,
+    selectedCategories,
     onCategoryChange,
-    selectedBrand,
+    selectedBrands,
     onBrandChange,
     onApply,
     onReset
@@ -268,41 +291,45 @@ function FilterControls({
 
     return (
         <div className="space-y-6">
-            <div>
-                <Label className="font-semibold">Category</Label>
-                <Select value={selectedCategory} onValueChange={onCategoryChange}>
-                    <SelectTrigger className="w-full mt-2">
-                        <SelectValue placeholder="All Categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {categories.map(category => (
-                            <SelectItem key={category} value={category}>{category}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+             <Collapsible defaultOpen={true}>
+                <CollapsibleTrigger className="font-semibold w-full text-left">CATEGORIES</CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 space-y-2">
+                     {categories.map(category => (
+                        <div key={category} className="flex items-center space-x-2">
+                           <Checkbox 
+                                id={`cat-${category}`} 
+                                checked={selectedCategories.includes(category)}
+                                onCheckedChange={() => onCategoryChange(category)}
+                            />
+                           <Label htmlFor={`cat-${category}`} className="font-normal">{category}</Label>
+                        </div>
+                    ))}
+                </CollapsibleContent>
+            </Collapsible>
+
+            <Collapsible defaultOpen={true}>
+                <CollapsibleTrigger className="font-semibold w-full text-left">BRAND</CollapsibleTrigger>
+                <CollapsibleContent className="pt-4 space-y-2">
+                     {brands.map(brand => (
+                        <div key={brand} className="flex items-center space-x-2">
+                           <Checkbox 
+                                id={`brand-${brand}`}
+                                checked={selectedBrands.includes(brand)}
+                                onCheckedChange={() => onBrandChange(brand)}
+                            />
+                           <Label htmlFor={`brand-${brand}`} className="font-normal">{brand}</Label>
+                        </div>
+                    ))}
+                </CollapsibleContent>
+            </Collapsible>
+            
              <div>
-                <Label className="font-semibold">Brand</Label>
-                 <Select value={selectedBrand} onValueChange={onBrandChange}>
-                    <SelectTrigger className="w-full mt-2">
-                        <SelectValue placeholder="All Brands" />
-                    </SelectTrigger>
-                    <SelectContent>
-                       <SelectItem value="all">All Brands</SelectItem>
-                         {brands.map(brand => (
-                            <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-             <div>
-                <Label htmlFor="price-range" className="font-semibold">Price Range</Label>
+                <Label htmlFor="price-range" className="font-semibold">PRICE</Label>
                 <Slider
                     id="price-range"
                     min={0}
-                    max={50000}
-                    step={100}
+                    max={65000}
+                    step={1000}
                     value={priceRange}
                     onValueChange={onPriceChange}
                     className="mt-4"
@@ -312,9 +339,9 @@ function FilterControls({
                     <span>৳{priceRange[1]}</span>
                 </div>
             </div>
-             <div className="flex justify-between gap-2">
-                <Button variant="secondary" className="flex-1" onClick={onReset}>Reset</Button>
-                <Button className="flex-1" onClick={onApply}>Apply Filters</Button>
+             <div className="flex justify-between gap-2 pt-4 border-t">
+                <Button variant="secondary" className="flex-1" onClick={onReset}>Clear All</Button>
+                <Button className="flex-1" onClick={onApply}>Apply</Button>
             </div>
         </div>
     )
