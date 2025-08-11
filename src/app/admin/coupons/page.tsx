@@ -28,17 +28,19 @@ import {
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface Coupon {
   id: string;
   code: string;
   type: string;
-  value: string;
+  value: number;
   status: 'Active' | 'Expired' | 'Scheduled';
   used: number;
   limit: number | null;
+  startDate: string;
+  endDate: string;
 }
 
 export default function CouponsPage() {
@@ -51,21 +53,38 @@ export default function CouponsPage() {
       setLoading(true);
       try {
         const couponsCollection = collection(db, 'coupons');
-        const couponSnapshot = await getDocs(couponsCollection);
-        const couponList = couponSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Coupon));
+        const q = query(couponsCollection, orderBy('createdAt', 'desc'));
+        const couponSnapshot = await getDocs(q);
+        const couponList = couponSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            code: data.code,
+            type: data.type,
+            value: data.value,
+            used: data.used,
+            limit: data.limit,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            // Determine status based on dates
+            status: new Date() < new Date(data.startDate) ? 'Scheduled' : new Date() > new Date(data.endDate) ? 'Expired' : 'Active'
+          } as Coupon
+        });
         setCoupons(couponList);
       } catch (error) {
         console.error("Error fetching coupons: ", error);
+        toast({
+            title: "Error fetching coupons",
+            description: "Could not retrieve coupon data from the database.",
+            variant: "destructive"
+        })
       } finally {
         setLoading(false);
       }
     };
 
     fetchCoupons();
-  }, []);
+  }, [toast]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -74,6 +93,28 @@ export default function CouponsPage() {
       description: "Coupon code copied to clipboard.",
     });
   };
+  
+  const getStatusBadgeVariant = (status: string) => {
+        switch (status) {
+            case 'Active':
+                return 'default';
+            case 'Scheduled':
+                return 'secondary';
+            case 'Expired':
+                return 'destructive';
+            default:
+                return 'outline';
+        }
+    };
+
+    const getStatusBadgeClass = (status: string) => {
+        switch (status) {
+            case 'Active':
+                return 'bg-green-100 text-green-800';
+            default:
+                return '';
+        }
+    };
 
   return (
     <div className="space-y-8">
@@ -110,6 +151,7 @@ export default function CouponsPage() {
                   <TableHead>Value</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Usage</TableHead>
+                  <TableHead>Validity</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
                   </TableHead>
@@ -126,20 +168,18 @@ export default function CouponsPage() {
                         </Button>
                       </div>
                     </TableCell>
-                    <TableCell>{coupon.type}</TableCell>
-                    <TableCell className="font-semibold">{coupon.value}</TableCell>
+                    <TableCell className="capitalize">{coupon.type}</TableCell>
+                    <TableCell className="font-semibold">{coupon.type === 'percentage' ? `${coupon.value}%` : `৳${coupon.value}`}</TableCell>
                      <TableCell>
                       <Badge
-                        variant={
-                          coupon.status === 'Active' ? 'default' :
-                          coupon.status === 'Scheduled' ? 'secondary' : 'destructive'
-                        }
-                         className={coupon.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
+                        variant={getStatusBadgeVariant(coupon.status)}
+                         className={getStatusBadgeClass(coupon.status)}
                       >
                         {coupon.status}
                       </Badge>
                     </TableCell>
                     <TableCell>{coupon.used} / {coupon.limit ?? '∞'}</TableCell>
+                     <TableCell>{new Date(coupon.startDate).toLocaleDateString()} - {new Date(coupon.endDate).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
