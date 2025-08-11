@@ -41,7 +41,7 @@ const allFlashSaleItems = [
       name: 'Analog Watch',
       price: 1250,
       originalPrice: 2500,
-      discount: '50% OFF',
+      discount: 50,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'analog watch',
       stock: 100,
@@ -54,7 +54,7 @@ const allFlashSaleItems = [
       name: 'Wireless Earbuds',
       price: 1500,
       originalPrice: 3000,
-      discount: '50% OFF',
+      discount: 50,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'wireless earbuds',
       stock: 50,
@@ -67,7 +67,7 @@ const allFlashSaleItems = [
       name: 'Travel Backpack',
       price: 999,
       originalPrice: 1999,
-      discount: '50% OFF',
+      discount: 50,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'travel backpack',
       stock: 75,
@@ -80,7 +80,7 @@ const allFlashSaleItems = [
       name: 'Classic Aviators',
       price: 4500,
       originalPrice: 9000,
-      discount: '50% OFF',
+      discount: 50,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'aviator sunglasses',
       stock: 30,
@@ -93,7 +93,7 @@ const allFlashSaleItems = [
       name: 'Leather Belt',
       price: 8000,
       originalPrice: 16000,
-      discount: '50% OFF',
+      discount: 50,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'leather belt',
       stock: 20,
@@ -106,7 +106,7 @@ const allFlashSaleItems = [
       name: 'Galaxy Watch 5',
       price: 15000,
       originalPrice: 30000,
-      discount: '50% OFF',
+      discount: 50,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'smartwatch android',
       stock: 40,
@@ -119,7 +119,7 @@ const allFlashSaleItems = [
       name: 'WH-1000XM5 Headphones',
       price: 25000,
       originalPrice: 35000,
-      discount: '28% OFF',
+      discount: 28,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'wireless headphones',
       stock: 25,
@@ -132,7 +132,7 @@ const allFlashSaleItems = [
       name: 'AirPods Pro 2',
       price: 22000,
       originalPrice: 28000,
-      discount: '21% OFF',
+      discount: 21,
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'apple airpods',
       stock: 60,
@@ -143,13 +143,80 @@ const allFlashSaleItems = [
 const flashSaleEndTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
 
 export default function FlashSalePage() {
-  const [flashSaleItems, setFlashSaleItems] = React.useState(allFlashSaleItems);
   const [isFilterOpen, setIsFilterOpen] = React.useState(true);
-
-  // TODO: Implement actual filtering logic here based on state
+  const [displayedItems, setDisplayedItems] = React.useState(allFlashSaleItems);
+  const [sortOption, setSortOption] = React.useState("featured");
   
+  const [selectedCategory, setSelectedCategory] = React.useState("all");
+  const [selectedBrand, setSelectedBrand] = React.useState("all");
+  const [priceRange, setPriceRange] = React.useState([0, 30000]);
+
   const brands = [...new Set(allFlashSaleItems.map(item => item.brand))];
   const categories = [...new Set(allFlashSaleItems.map(item => item.category))];
+
+  const applyFilters = React.useCallback(() => {
+    let items = [...allFlashSaleItems];
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      items = items.filter(item => item.category === selectedCategory);
+    }
+
+    // Filter by brand
+    if (selectedBrand !== 'all') {
+      items = items.filter(item => item.brand === selectedBrand);
+    }
+
+    // Filter by price
+    items = items.filter(item => item.price >= priceRange[0] && item.price <= priceRange[1]);
+
+    // Sort items
+    switch (sortOption) {
+      case 'price-asc':
+        items.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        items.sort((a, b) => b.price - a.price);
+        break;
+      case 'discount':
+        items.sort((a, b) => b.discount - a.discount);
+        break;
+      case 'popular':
+        items.sort((a, b) => (b.sold / b.stock) - (a.sold / a.stock));
+        break;
+      case 'featured':
+      default:
+        // No specific sorting for featured, show as is or based on a default
+        break;
+    }
+
+    setDisplayedItems(items);
+  }, [selectedCategory, selectedBrand, priceRange, sortOption]);
+  
+  React.useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  const handleResetFilters = () => {
+    setSelectedCategory("all");
+    setSelectedBrand("all");
+    setPriceRange([0, 30000]);
+  };
+  
+  const filterControls = (
+      <FilterControls 
+        brands={brands}
+        categories={categories}
+        priceRange={priceRange}
+        onPriceChange={setPriceRange}
+        selectedBrand={selectedBrand}
+        onBrandChange={setSelectedBrand}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        onApply={applyFilters}
+        onReset={handleResetFilters}
+      />
+  );
   
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -168,7 +235,7 @@ export default function FlashSalePage() {
         </section>
 
         <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">All Flash Sale Items ({flashSaleItems.length})</h3>
+            <h3 className="text-lg font-semibold">All Flash Sale Items ({displayedItems.length})</h3>
              <div className="flex items-center gap-4">
                  <div className="md:hidden">
                     <Sheet>
@@ -183,12 +250,12 @@ export default function FlashSalePage() {
                           </SheetDescription>
                         </SheetHeader>
                         <div className="py-4">
-                           <FilterControls brands={brands} categories={categories} />
+                           {filterControls}
                         </div>
                       </SheetContent>
                     </Sheet>
                  </div>
-                  <Select>
+                  <Select value={sortOption} onValueChange={setSortOption}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Sort by: Featured" />
                     </SelectTrigger>
@@ -210,14 +277,15 @@ export default function FlashSalePage() {
                       Filters <Filter className="w-5 h-5" />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                       <FilterControls brands={brands} categories={categories} />
+                       {filterControls}
                     </CollapsibleContent>
                 </Collapsible>
             </div>
 
             <div className="md:col-span-3">
+              {displayedItems.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
-                    {flashSaleItems.map((deal) => (
+                    {displayedItems.map((deal) => (
                         <Link href={`/product/${deal.id}`} key={deal.id} className="group block border p-2 rounded-lg hover:shadow-lg transition-shadow duration-300">
                             <div className="relative overflow-hidden rounded-lg">
                                 <Image
@@ -240,7 +308,7 @@ export default function FlashSalePage() {
                                 <p className="text-sm font-semibold mt-1 text-foreground">
                                     ৳{deal.price}{' '}
                                     <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
-                                    <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
+                                    <span className="text-xs text-orange-400 font-bold">({deal.discount}% OFF)</span>
                                 </p>
                                 <div className='mt-2'>
                                     <Progress value={(deal.sold / deal.stock) * 100} className="h-2" />
@@ -250,6 +318,13 @@ export default function FlashSalePage() {
                         </Link>
                     ))}
                 </div>
+              ) : (
+                <div className="text-center py-16 col-span-full">
+                    <h2 className="text-2xl font-bold mb-2">No Products Found</h2>
+                    <p className="text-muted-foreground mb-4">Try adjusting your filters to find what you're looking for.</p>
+                    <Button variant="outline" onClick={handleResetFilters}>Reset Filters</Button>
+                </div>
+              )}
             </div>
         </div>
         
@@ -318,35 +393,58 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
     );
 }
 
-function FilterControls({ brands, categories }: { brands: string[], categories: string[]}) {
-    const [priceRange, setPriceRange] = React.useState([0, 30000]);
+interface FilterControlsProps {
+    brands: string[];
+    categories: string[];
+    priceRange: number[];
+    onPriceChange: (value: number[]) => void;
+    selectedCategory: string;
+    onCategoryChange: (value: string) => void;
+    selectedBrand: string;
+    onBrandChange: (value: string) => void;
+    onApply: () => void;
+    onReset: () => void;
+}
+
+function FilterControls({ 
+    brands, 
+    categories, 
+    priceRange, 
+    onPriceChange,
+    selectedCategory,
+    onCategoryChange,
+    selectedBrand,
+    onBrandChange,
+    onApply,
+    onReset
+}: FilterControlsProps) {
 
     return (
         <div className="space-y-6">
             <div>
                 <Label className="font-semibold">Category</Label>
-                <Select>
+                <Select value={selectedCategory} onValueChange={onCategoryChange}>
                     <SelectTrigger className="w-full mt-2">
                         <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Categories</SelectItem>
                         {categories.map(category => (
-                            <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
+                            <SelectItem key={category} value={category}>{category}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
             </div>
              <div>
                 <Label className="font-semibold">Brand</Label>
-                 <Select>
+                 <Select value={selectedBrand} onValueChange={onBrandChange}>
                     <SelectTrigger className="w-full mt-2">
                         <SelectValue placeholder="All Brands" />
                     </SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">All Brands</SelectItem>
                          {brands.map(brand => (
-                            <SelectItem key={brand} value={brand.toLowerCase()}>{brand}</SelectItem>
+                            <SelectItem key={brand} value={brand}>{brand}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -359,7 +457,7 @@ function FilterControls({ brands, categories }: { brands: string[], categories: 
                     max={30000}
                     step={100}
                     value={priceRange}
-                    onValueChange={setPriceRange}
+                    onValueChange={onPriceChange}
                     className="mt-4"
                 />
                 <div className="flex justify-between text-sm text-muted-foreground mt-2">
@@ -368,8 +466,8 @@ function FilterControls({ brands, categories }: { brands: string[], categories: 
                 </div>
             </div>
              <div className="flex justify-between gap-2">
-                <Button variant="secondary" className="flex-1">Reset</Button>
-                <Button className="flex-1">Apply Filters</Button>
+                <Button variant="secondary" className="flex-1" onClick={onReset}>Reset</Button>
+                <Button className="flex-1" onClick={onApply}>Apply Filters</Button>
             </div>
         </div>
     )
