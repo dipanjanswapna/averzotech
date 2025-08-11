@@ -23,13 +23,23 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ChevronLeft, CalendarIcon, Info } from 'lucide-react';
+import { ChevronLeft, CalendarIcon, Info, PlusCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import Image from 'next/image';
+
+interface Product {
+  id: string;
+  name: string;
+  images: string[];
+}
 
 export default function NewCouponPage() {
   const router = useRouter();
@@ -45,10 +55,44 @@ export default function NewCouponPage() {
   const [minPurchase, setMinPurchase] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [applicability, setApplicability] = useState('all'); // 'all', 'products'
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
+
+
+  useState(() => {
+    const fetchProducts = async () => {
+      try {
+        const productsCollection = collection(db, 'products');
+        const productSnapshot = await getDocs(productsCollection);
+        const productList = productSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Product));
+        setAllProducts(productList);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+      }
+    };
+    fetchProducts();
+  });
+
   const generateRandomCode = () => {
     const randomString = Math.random().toString(36).substring(2, 10).toUpperCase();
     setCode(randomString);
   };
+  
+  const handleToggleProduct = (product: Product) => {
+    setSelectedProducts(prevSelected => {
+        const isSelected = prevSelected.some(p => p.id === product.id);
+        if (isSelected) {
+            return prevSelected.filter(p => p.id !== product.id);
+        } else {
+            return [...prevSelected, product];
+        }
+    })
+  }
 
   const handleSaveCoupon = async () => {
     if (!code || !value || !startDate || !endDate) {
@@ -59,6 +103,11 @@ export default function NewCouponPage() {
       });
       return;
     }
+     if (applicability === 'products' && selectedProducts.length === 0) {
+        toast({ title: "No Products Selected", description: "Please select at least one product for this coupon.", variant: "destructive" });
+        return;
+    }
+
     setIsLoading(true);
     try {
       await addDoc(collection(db, 'coupons'), {
@@ -71,6 +120,10 @@ export default function NewCouponPage() {
         limit: limit ? parseInt(limit, 10) : null,
         minPurchase: minPurchase ? parseFloat(minPurchase) : 0,
         used: 0,
+        applicability: {
+            type: applicability,
+            ids: applicability === 'products' ? selectedProducts.map(p => p.id) : [],
+        },
         createdAt: serverTimestamp(),
       });
       toast({
@@ -170,6 +223,70 @@ export default function NewCouponPage() {
               </div>
             </CardContent>
           </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Coupon Applicability</CardTitle>
+                    <CardDescription>Specify which products this coupon applies to.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RadioGroup value={applicability} onValueChange={setApplicability} className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="all" id="all-products" />
+                            <Label htmlFor="all-products">All Products</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="products" id="specific-products" />
+                            <Label htmlFor="specific-products">Specific Products</Label>
+                        </div>
+                    </RadioGroup>
+                    {applicability === 'products' && (
+                        <div className="pt-4">
+                             <Dialog open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Select Products</Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Select Applicable Products</DialogTitle>
+                                    </DialogHeader>
+                                    <ScrollArea className="h-96">
+                                        <div className="grid grid-cols-1 gap-2 p-4">
+                                            {allProducts.map(product => {
+                                                const isSelected = selectedProducts.some(p => p.id === product.id);
+                                                return (
+                                                    <div key={product.id} className={`flex items-center justify-between p-2 rounded-md cursor-pointer ${isSelected ? 'bg-secondary' : ''}`} onClick={() => handleToggleProduct(product)}>
+                                                        <div className="flex items-center gap-4">
+                                                            <Image src={product.images[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                                                            <span className="font-medium">{product.name}</span>
+                                                        </div>
+                                                        {isSelected && <Check className="h-5 w-5 text-primary" />}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </ScrollArea>
+                                </DialogContent>
+                            </Dialog>
+
+                             <div className="mt-4 space-y-2">
+                                <Label>{selectedProducts.length} product(s) selected</Label>
+                                {selectedProducts.length > 0 && (
+                                     <div className="max-h-32 overflow-y-auto space-y-1 pr-2">
+                                        {selectedProducts.map(p => (
+                                            <div key={p.id} className="flex items-center justify-between text-sm bg-secondary p-1.5 rounded-md">
+                                                <span>{p.name}</span>
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleProduct(p)}><XCircle className="h-4 w-4 text-destructive" /></Button>
+                                            </div>
+                                        ))}
+                                     </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
 
            <Card>
             <CardHeader>
@@ -278,3 +395,4 @@ export default function NewCouponPage() {
     </div>
   );
 }
+

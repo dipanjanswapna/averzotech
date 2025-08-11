@@ -41,6 +41,10 @@ interface Coupon {
   limit: number | null;
   startDate: string;
   endDate: string;
+  applicability?: {
+    type: 'all' | 'products';
+    ids: string[];
+  }
 }
 
 export default function CouponsPage() {
@@ -66,7 +70,7 @@ export default function CouponsPage() {
             limit: data.limit,
             startDate: data.startDate,
             endDate: data.endDate,
-            // Determine status based on dates
+            applicability: data.applicability,
             status: new Date() < new Date(data.startDate) ? 'Scheduled' : new Date() > new Date(data.endDate) ? 'Expired' : 'Active'
           } as Coupon
         });
@@ -116,6 +120,16 @@ export default function CouponsPage() {
         }
     };
 
+    const getApplicabilityText = (applicability: Coupon['applicability']) => {
+        if (!applicability || applicability.type === 'all') {
+            return "All Products";
+        }
+        if (applicability.type === 'products') {
+            return `${applicability.ids.length} Product(s)`;
+        }
+        return "N/A";
+    }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -149,6 +163,7 @@ export default function CouponsPage() {
                   <TableHead>Code</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Value</TableHead>
+                  <TableHead>Applies To</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Usage</TableHead>
                   <TableHead>Validity</TableHead>
@@ -170,6 +185,7 @@ export default function CouponsPage() {
                     </TableCell>
                     <TableCell className="capitalize">{coupon.type}</TableCell>
                     <TableCell className="font-semibold">{coupon.type === 'percentage' ? `${coupon.value}%` : `৳${coupon.value}`}</TableCell>
+                    <TableCell>{getApplicabilityText(coupon.applicability)}</TableCell>
                      <TableCell>
                       <Badge
                         variant={getStatusBadgeVariant(coupon.status)}
