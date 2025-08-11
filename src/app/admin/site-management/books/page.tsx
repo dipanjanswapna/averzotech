@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ContentItem {
+  id?: string;
   file?: File;
   preview: string;
   alt: string;
@@ -67,13 +68,13 @@ export default function BooksPageManager() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setHeroImages(data.heroImages?.map((img: any) => ({ ...img, preview: img.url })) || []);
+        setHeroImages(data.heroImages?.map((img: any) => ({ ...img, preview: img.url, id: Math.random().toString() })) || []);
         if (data.banner) {
           setBanner({ ...data.banner, preview: data.banner.url });
         }
         setTrendingProducts(data.trendingProducts || []);
-        setCrazyDeals(data.crazyDeals?.map((item: any) => ({ ...item, preview: item.url })) || []);
-        setShopByCategory(data.shopByCategory?.map((item: any) => ({ ...item, preview: item.url })) || []);
+        setCrazyDeals(data.crazyDeals?.map((item: any) => ({ ...item, preview: item.url, id: Math.random().toString() })) || []);
+        setShopByCategory(data.shopByCategory?.map((item: any) => ({ ...item, preview: item.url, id: Math.random().toString() })) || []);
       }
       setIsFetching(false);
     };
@@ -103,20 +104,39 @@ export default function BooksPageManager() {
       const newArray = [...stateArray];
       newArray[index].file = file;
       newArray[index].preview = URL.createObjectURL(file);
+      newArray[index].url = '';
       stateSetter(newArray);
     }
   };
-
+  
   const handleSingleFileChange = (e: React.ChangeEvent<HTMLInputElement>, stateSetter: React.Dispatch<React.SetStateAction<any>>) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
         stateSetter((prev: any) => ({
             ...(prev || { preview: '', alt: '', dataAiHint: '' }),
             file: file,
-            preview: URL.createObjectURL(file)
+            preview: URL.createObjectURL(file),
+            url: ''
         }));
     }
   };
+
+  const handleUrlChange = (index: number, value: string, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
+      const newArray = [...stateArray];
+      newArray[index].url = value;
+      newArray[index].preview = value;
+      newArray[index].file = undefined;
+      stateSetter(newArray);
+  }
+  
+   const handleSingleUrlChange = (value: string, stateSetter: React.Dispatch<React.SetStateAction<any>>) => {
+      stateSetter((prev: any) => ({
+        ...(prev || { preview: '', alt: '', dataAiHint: '' }),
+        url: value,
+        preview: value,
+        file: undefined
+      }));
+  }
 
   const handleTextChange = (index: number, field: string, value: string, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
     const newArray = [...stateArray];
@@ -132,7 +152,7 @@ export default function BooksPageManager() {
   };
 
   const handleAddItem = (stateSetter: React.Dispatch<React.SetStateAction<any[]>>, newItem: any) => {
-    stateSetter(prev => [...prev, newItem]);
+    stateSetter(prev => [...prev, { ...newItem, id: Date.now().toString() }]);
   };
 
   const handleRemoveItem = (index: number, stateSetter: React.Dispatch<React.SetStateAction<any[]>>) => {
@@ -167,7 +187,7 @@ export default function BooksPageManager() {
           return Promise.all(
               items.map(async (item) => {
                   const url = await uploadImage(item, path);
-                  const { file, preview, ...rest } = item;
+                  const { file, preview, id, ...rest } = item;
                   return { ...rest, url };
               })
           );
@@ -226,11 +246,12 @@ export default function BooksPageManager() {
         </CardHeader>
         <CardContent className="space-y-4">
           {heroImages.map((image, index) => (
-            <div key={index} className="flex items-start gap-4 p-4 border rounded-lg bg-secondary/50">
+            <div key={image.id} className="flex items-start gap-4 p-4 border rounded-lg bg-secondary/50">
               <div className="relative w-48 h-24">
                 <Image src={image.preview} alt="Hero preview" fill className="object-cover rounded-md" />
               </div>
               <div className="flex-1 space-y-2">
+                <Input placeholder="Image URL" value={image.url || ''} onChange={(e) => handleUrlChange(index, e.target.value, setHeroImages, heroImages)} />
                 <Input placeholder="Link URL" value={image.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setHeroImages, heroImages)} />
                 <Input placeholder="Alt Text" value={image.alt || ''} onChange={(e) => handleTextChange(index, 'alt', e.target.value, setHeroImages, heroImages)} />
                 <Input placeholder="AI Hint" value={image.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setHeroImages, heroImages)} />
@@ -259,6 +280,7 @@ export default function BooksPageManager() {
                     <Image src={banner.preview} alt="Banner preview" fill className="object-cover rounded-md" />
                 </div>
                 <div className="flex-1 space-y-2">
+                    <Input placeholder="Image URL" value={banner.url || ''} onChange={(e) => handleSingleUrlChange(e.target.value, setBanner)} />
                     <Input placeholder="Link URL" value={banner.link || ''} onChange={(e) => handleSingleTextChange('link', e.target.value, setBanner)} />
                     <Input placeholder="Alt Text" value={banner.alt || ''} onChange={(e) => handleSingleTextChange('alt', e.target.value, setBanner)} />
                     <Input placeholder="AI Hint" value={banner.dataAiHint || ''} onChange={(e) => handleSingleTextChange('dataAiHint', e.target.value, setBanner)} />
@@ -326,8 +348,9 @@ export default function BooksPageManager() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {crazyDeals.map((item, index) => (
-              <div key={index} className="p-2 border rounded-lg space-y-2">
+              <div key={item.id} className="p-2 border rounded-lg space-y-2">
                 <Image src={item.preview} alt="Preview" width={300} height={400} className="object-cover rounded-md mx-auto aspect-[3/4]" />
+                <Input placeholder="Image URL" value={item.url || ''} onChange={(e) => handleUrlChange(index, e.target.value, setCrazyDeals, crazyDeals)} />
                 <Input placeholder="Deal Name (e.g. Classic Novels)" value={item.name || ''} onChange={(e) => handleTextChange(index, 'name', e.target.value, setCrazyDeals, crazyDeals)} />
                 <Input placeholder="Discount Text (e.g. MIN. 50% OFF)" value={item.discount || ''} onChange={(e) => handleTextChange(index, 'discount', e.target.value, setCrazyDeals, crazyDeals)} />
                 <Input placeholder="Link URL" value={item.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setCrazyDeals, crazyDeals)} />
@@ -351,8 +374,9 @@ export default function BooksPageManager() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {shopByCategory.map((item, index) => (
-              <div key={index} className="p-2 border rounded-lg space-y-2">
+              <div key={item.id} className="p-2 border rounded-lg space-y-2">
                 <Image src={item.preview} alt="Preview" width={200} height={250} className="object-cover rounded-md mx-auto aspect-[4/5]" />
+                <Input placeholder="Image URL" value={item.url || ''} onChange={(e) => handleUrlChange(index, e.target.value, setShopByCategory, shopByCategory)} />
                 <Input placeholder="Category Name (e.g. Fiction)" value={item.name || ''} onChange={(e) => handleTextChange(index, 'name', e.target.value, setShopByCategory, shopByCategory)} />
                 <Input placeholder="Discount Text (e.g. 40-80% OFF)" value={item.discount || ''} onChange={(e) => handleTextChange(index, 'discount', e.target.value, setShopByCategory, shopByCategory)} />
                 <Input placeholder="Link URL" value={item.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setShopByCategory, shopByCategory)} />
