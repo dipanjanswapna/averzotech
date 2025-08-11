@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, CreditCard, Landmark, Truck, Info } from "lucide-react"
+import { ChevronRight, CreditCard, Landmark, Truck, Info, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
-import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
+import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 
@@ -31,7 +31,7 @@ import { useToast } from "@/hooks/use-toast"
 export default function PaymentPage() {
     const router = useRouter();
     const { user } = useAuth();
-    const { cart, clearCart } = useCart();
+    const { cart, clearCart, subTotal, total, appliedCoupon } = useCart();
     const { toast } = useToast();
     const [paymentMethod, setPaymentMethod] = React.useState('card');
     const [loading, setLoading] = React.useState(false);
@@ -45,10 +45,8 @@ export default function PaymentPage() {
         method: 'Express Shipping (1-3 Days)'
     });
 
-    const subtotal = cart.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
-    const shippingFee = subtotal > 2000 ? 0 : 60;
-    const taxes = subtotal * 0.05; // 5% tax
-    const total = subtotal + shippingFee + taxes;
+    const shippingFee = subTotal > 2000 ? 0 : 60;
+    const taxes = subTotal * 0.05; // 5% tax
 
     const handlePlaceOrder = async () => {
         if (!user || cart.length === 0) {
@@ -78,9 +76,10 @@ export default function PaymentPage() {
             shippingAddress: shippingInfo,
             payment: {
                 method: paymentMethod,
-                subtotal: subtotal,
+                subtotal: subTotal,
                 shipping: shippingFee,
                 tax: taxes,
+                coupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : null,
                 total: total,
             },
             total: total
@@ -88,6 +87,18 @@ export default function PaymentPage() {
 
         try {
             const docRef = await addDoc(collection(db, "orders"), orderData);
+            
+            // If a coupon was used, increment its 'used' count in Firestore
+            if (appliedCoupon) {
+                const couponQuery = query(collection(db, "coupons"), where("code", "==", appliedCoupon.code));
+                const couponSnap = await getDocs(couponQuery);
+                if (!couponSnap.empty) {
+                    const couponDoc = couponSnap.docs[0];
+                    const newUsedCount = (couponDoc.data().used || 0) + 1;
+                    await updateDoc(couponDoc.ref, { used: newUsedCount });
+                }
+            }
+
             toast({
                 title: "Order Placed!",
                 description: "Your order has been placed successfully."
@@ -247,16 +258,17 @@ export default function PaymentPage() {
 
                           <Separator className="my-6" />
 
-                          <div className="flex gap-2 mb-6">
-                              <Input placeholder="Discount code" />
-                              <Button variant="secondary">Apply</Button>
-                          </div>
-
                           <div className="space-y-2">
                               <div className="flex justify-between">
                                   <p className="text-muted-foreground">Subtotal</p>
-                                  <p className="font-semibold">৳{subtotal.toFixed(2)}</p>
+                                  <p className="font-semibold">৳{subTotal.toFixed(2)}</p>
                               </div>
+                               {appliedCoupon && (
+                                 <div className="flex justify-between text-green-600">
+                                     <p>Discount ({appliedCoupon.code})</p>
+                                     <p className="font-semibold">- ৳{appliedCoupon.discountAmount.toFixed(2)}</p>
+                                 </div>
+                               )}
                               <div className="flex justify-between">
                                   <p className="text-muted-foreground">Shipping</p>
                                   <p className="font-semibold">৳{shippingFee.toFixed(2)}</p>

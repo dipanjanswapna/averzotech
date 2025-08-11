@@ -3,6 +3,14 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+// Define the structure of an applied coupon
+export interface AppliedCoupon {
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    discountAmount: number;
+}
+
 // Define the structure of a product in the cart
 interface Product {
     id: string;
@@ -35,6 +43,11 @@ interface CartContextType {
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
+  appliedCoupon: AppliedCoupon | null;
+  applyCoupon: (coupon: AppliedCoupon) => void;
+  removeCoupon: () => void;
+  subTotal: number;
+  total: number;
 }
 
 // Create the context
@@ -43,6 +56,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Create a provider component
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<Product[]>([]);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load cart from localStorage on initial render
@@ -52,19 +66,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (savedCart) {
         setCart(JSON.parse(savedCart));
       }
+      const savedCoupon = localStorage.getItem('appliedCoupon');
+      if (savedCoupon) {
+        setAppliedCoupon(JSON.parse(savedCoupon));
+      }
     } catch (error) {
-        console.error("Failed to parse cart from localStorage", error);
+        console.error("Failed to parse cart/coupon from localStorage", error);
         setCart([]);
+        setAppliedCoupon(null);
     }
     setIsLoaded(true);
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart and coupon to localStorage whenever they change
   useEffect(() => {
     if(isLoaded) {
        localStorage.setItem('shoppingCart', JSON.stringify(cart));
+       if (appliedCoupon) {
+           localStorage.setItem('appliedCoupon', JSON.stringify(appliedCoupon));
+       } else {
+           localStorage.removeItem('appliedCoupon');
+       }
     }
-  }, [cart, isLoaded]);
+  }, [cart, appliedCoupon, isLoaded]);
 
   const addToCart = (product: Omit<Product, 'quantity'>, quantity = 1) => {
     setCart(prevCart => {
@@ -102,12 +126,38 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const clearCart = () => {
     setCart([]);
+    setAppliedCoupon(null);
+    localStorage.removeItem('appliedCoupon');
   };
+  
+  const applyCoupon = (coupon: AppliedCoupon) => {
+      setAppliedCoupon(coupon);
+  }
+  
+  const removeCoupon = () => {
+      setAppliedCoupon(null);
+  }
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
+  const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
+  const total = subTotal - discountAmount + shippingFee;
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount }}>
+    <CartContext.Provider value={{ 
+        cart, 
+        addToCart, 
+        removeFromCart, 
+        updateQuantity, 
+        clearCart, 
+        cartCount,
+        appliedCoupon,
+        applyCoupon,
+        removeCoupon,
+        subTotal,
+        total
+    }}>
       {children}
     </CartContext.Provider>
   );

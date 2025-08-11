@@ -7,16 +7,19 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Heart, Gift, ChevronLeft } from 'lucide-react';
+import { Trash2, Heart, Gift, ChevronLeft, X } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useCart } from '@/hooks/use-cart';
+import { useCart, AppliedCoupon } from '@/hooks/use-cart';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon } = useCart();
   const { toast } = useToast();
+  const [couponCode, setCouponCode] = React.useState('');
+  const [isCheckingCoupon, setIsCheckingCoupon] = React.useState(false);
 
   const handleRemoveItem = (productId: string) => {
     removeFromCart(productId);
@@ -25,12 +28,77 @@ export default function CartPage() {
       description: "The item has been removed from your cart.",
     });
   };
+  
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+        toast({ title: "Coupon Code Required", description: "Please enter a coupon code.", variant: "destructive" });
+        return;
+    }
+    setIsCheckingCoupon(true);
+    try {
+        const couponsRef = collection(db, 'coupons');
+        const q = query(couponsRef, where("code", "==", couponCode.toUpperCase()));
+        const couponSnap = await getDocs(q);
 
-  const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
-  // Example shipping logic, can be made more complex
+        if (couponSnap.empty) {
+            toast({ title: "Invalid Coupon", description: "The coupon code you entered is not valid.", variant: "destructive"});
+            return;
+        }
+
+        const couponDoc = couponSnap.docs[0];
+        const couponData = couponDoc.data();
+        const now = new Date();
+
+        if (new Date(couponData.endDate) < now) {
+            toast({ title: "Coupon Expired", description: "This coupon has expired.", variant: "destructive"});
+            return;
+        }
+        if (new Date(couponData.startDate) > now) {
+            toast({ title: "Coupon Not Active", description: "This coupon is not active yet.", variant: "destructive"});
+            return;
+        }
+        if (couponData.limit !== null && couponData.used >= couponData.limit) {
+            toast({ title: "Coupon Limit Reached", description: "This coupon has reached its usage limit.", variant: "destructive"});
+            return;
+        }
+        if (couponData.minPurchase > subTotal) {
+            toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase} to use this coupon.`, variant: "destructive"});
+            return;
+        }
+
+        let discountAmount = 0;
+        if (couponData.type === 'percentage') {
+            discountAmount = subTotal * (couponData.value / 100);
+        } else {
+            discountAmount = couponData.value;
+        }
+
+        const couponToApply: AppliedCoupon = {
+            code: couponData.code,
+            type: couponData.type,
+            value: couponData.value,
+            discountAmount: discountAmount
+        };
+        
+        applyCoupon(couponToApply);
+        toast({ title: "Coupon Applied!", description: `You've got a discount of ৳${discountAmount.toFixed(2)}.` });
+
+    } catch(error) {
+        console.error("Error applying coupon: ", error);
+        toast({ title: "Error", description: "There was a problem applying the coupon.", variant: "destructive"});
+    } finally {
+        setIsCheckingCoupon(false);
+    }
+  }
+  
+  const handleRemoveCoupon = () => {
+      removeCoupon();
+      setCouponCode('');
+      toast({ title: "Coupon Removed" });
+  }
+
   const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
-  const grandTotal = subTotal + shippingFee;
-
+  
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
@@ -107,14 +175,31 @@ export default function CartPage() {
                       <span>Shipping Fee</span>
                       <span>{shippingFee === 0 ? 'Free' : `৳${shippingFee.toFixed(2)}`}</span>
                   </div>
+                  {appliedCoupon && (
+                     <div className="flex justify-between text-green-600 font-semibold">
+                      <span>Discount ({appliedCoupon.code})</span>
+                      <span>- ৳{appliedCoupon.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
               </div>
 
                <div className="mb-4">
                     <label htmlFor="coupon" className="text-sm font-medium mb-1 block">Have a Coupon?</label>
-                    <div className="flex gap-2">
-                        <Input id="coupon" placeholder="Enter coupon code" />
-                        <Button variant="secondary">Apply</Button>
-                    </div>
+                    {appliedCoupon ? (
+                        <div className="flex items-center justify-between p-2 bg-secondary rounded-md">
+                            <p className="text-sm font-semibold text-green-600">Applied: {appliedCoupon.code}</p>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRemoveCoupon}>
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-2">
+                            <Input id="coupon" placeholder="Enter coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} disabled={isCheckingCoupon} />
+                            <Button variant="secondary" onClick={handleApplyCoupon} disabled={isCheckingCoupon}>
+                                {isCheckingCoupon ? 'Applying...' : 'Apply'}
+                            </Button>
+                        </div>
+                    )}
               </div>
 
                <div className="mb-4">
@@ -127,7 +212,7 @@ export default function CartPage() {
               <Separator className="my-4" />
               <div className="flex justify-between font-bold text-lg mb-4">
                 <span>Grand Total</span>
-                <span>৳{grandTotal.toFixed(2)}</span>
+                <span>৳{total.toFixed(2)}</span>
               </div>
               <Button className="w-full" size="lg" asChild>
                 <Link href="/shipping">Continue to Shipping</Link>

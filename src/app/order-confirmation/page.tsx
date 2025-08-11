@@ -43,6 +43,10 @@ interface Order {
         subtotal: number;
         shipping: number;
         tax: number;
+        coupon?: {
+            code: string;
+            discountAmount: number;
+        } | null;
         total: number;
     };
     trackingId?: string;
@@ -184,6 +188,12 @@ export default function OrderConfirmationPage() {
                                     <p className="text-muted-foreground">Subtotal</p>
                                     <p className="font-semibold">৳{orderDetails.payment.subtotal.toFixed(2)}</p>
                                 </div>
+                                {orderDetails.payment.coupon && (
+                                    <div className="flex justify-between text-green-600">
+                                        <p>Discount ({orderDetails.payment.coupon.code})</p>
+                                        <p className="font-semibold">- ৳{orderDetails.payment.coupon.discountAmount.toFixed(2)}</p>
+                                    </div>
+                                )}
                                 <div className="flex justify-between">
                                     <p className="text-muted-foreground">Shipping Fee</p>
                                     <p className="font-semibold">৳{orderDetails.payment.shipping.toFixed(2)}</p>
