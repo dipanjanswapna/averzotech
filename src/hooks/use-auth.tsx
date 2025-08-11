@@ -17,6 +17,7 @@ export interface AppUser {
 interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
+  setUser: React.Dispatch<React.SetStateAction<AppUser | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [auth, db]);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, setUser }}>
       {children}
     </AuthContext.Provider>
   );

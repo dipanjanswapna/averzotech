@@ -24,6 +24,7 @@ import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useAuth } from '@/hooks/use-auth';
 
 
 interface AppUser {
@@ -35,42 +36,11 @@ interface AppUser {
 }
 
 export function SiteHeader() {
-  const [user, setUser] = useState<AppUser | null>(null);
+  const { user, loading } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const auth = getAuth(app);
-  const db = getFirestore(app);
   const { toast } = useToast();
   const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setUser({
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                fullName: userData.fullName || firebaseUser.displayName || 'User',
-                role: userData.role,
-                photoURL: userData.photoURL || firebaseUser.photoURL,
-            });
-        } else {
-             setUser({
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                fullName: firebaseUser.displayName || 'User',
-                role: 'customer',
-                photoURL: firebaseUser.photoURL,
-            });
-        }
-      } else {
-        setUser(null);
-      }
-    });
-    return () => unsubscribe();
-  }, [auth, db]);
 
   const handleLogout = async () => {
     try {
@@ -98,7 +68,7 @@ export function SiteHeader() {
       case 'vendor':
         return '/vendor/dashboard';
       default:
-        return '/profile/orders';
+        return '/profile';
     }
   }
 
@@ -321,7 +291,7 @@ export function SiteHeader() {
                                 <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild><Link href="/profile/orders">Profile</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
                             <DropdownMenuItem asChild><Link href="/profile/orders">Orders</Link></DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href="/wishlist">Wishlist</Link>

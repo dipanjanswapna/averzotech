@@ -7,7 +7,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button";
-import { Home, Menu, ShoppingCart, Heart, User, LogOut } from 'lucide-react';
+import { Home, Menu, ShoppingCart, Heart, User, LogOut, MapPin } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from "next/link";
@@ -43,13 +43,17 @@ export default function ProfileLayout({
                  <div className="w-full flex-1">
                    {/* Add search or other header elements here if needed */}
                 </div>
-                 <Button variant="ghost" size="icon" className="rounded-full">
-                    <Heart className="h-5 w-5" />
-                    <span className="sr-only">Wishlist</span>
+                 <Button variant="ghost" size="icon" className="rounded-full" asChild>
+                    <Link href="/wishlist">
+                        <Heart className="h-5 w-5" />
+                        <span className="sr-only">Wishlist</span>
+                    </Link>
                  </Button>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span className="sr-only">Cart</span>
+                <Button variant="ghost" size="icon" className="rounded-full" asChild>
+                    <Link href="/cart">
+                        <ShoppingCart className="h-5 w-5" />
+                        <span className="sr-only">Cart</span>
+                    </Link>
                  </Button>
             </header>
             <main className="flex-1 p-4 sm:p-6">{children}</main>
@@ -61,12 +65,13 @@ export default function ProfileLayout({
 const navItems = [
     { href: '/profile/orders', label: 'My Orders', icon: ShoppingCart },
     { href: '/profile', label: 'My Profile', icon: User },
+    { href: '/profile/addresses', label: 'Addresses', icon: MapPin },
     { href: '/wishlist', label: 'Wishlist', icon: Heart },
 ]
 
 function Sidebar({ user }: { user: any }) {
     const pathname = usePathname();
-     const auth = getAuth(app);
+    const auth = getAuth(app);
     const { toast } = useToast();
     const router = useRouter();
 
