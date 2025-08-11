@@ -98,7 +98,7 @@ export function SiteHeader() {
       case 'vendor':
         return '/vendor/dashboard';
       default:
-        return null;
+        return '/profile/orders';
     }
   }
 
@@ -321,12 +321,12 @@ export function SiteHeader() {
                                 <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                            <DropdownMenuItem>Orders</DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/profile/orders">Profile</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/profile/orders">Orders</Link></DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link href="/wishlist">Wishlist</Link>
                             </DropdownMenuItem>
-                            {dashboardLink && (
+                            {dashboardLink && (user.role !== 'customer') && (
                               <DropdownMenuItem asChild>
                                 <Link href={dashboardLink}>Dashboard</Link>
                               </DropdownMenuItem>

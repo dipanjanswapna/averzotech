@@ -6,7 +6,7 @@ import { getAuth, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
-interface AppUser {
+export interface AppUser {
   uid: string;
   email: string | null;
   fullName: string;
