@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useCart } from "@/hooks/use-cart"
+import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
 import { addDoc, collection, doc, getDocs, serverTimestamp, updateDoc, writeBatch, query, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
@@ -31,19 +31,21 @@ import { useToast } from "@/hooks/use-toast"
 export default function PaymentPage() {
     const router = useRouter();
     const { user } = useAuth();
-    const { cart, clearCart, subTotal, total, appliedCoupon, appliedGiftCard } = useCart();
+    const { cart, clearCart, subTotal, total, appliedCoupon, appliedGiftCard, shippingInfo } = useCart();
     const { toast } = useToast();
     const [paymentMethod, setPaymentMethod] = React.useState('card');
     const [loading, setLoading] = React.useState(false);
     
-    // In a real app, this would come from the shipping page selection
-    const [shippingInfo, setShippingInfo] = React.useState({
-        name: 'Kamal Hasan',
-        email: 'kamal@example.com',
-        phone: '+8801712345678',
-        fullAddress: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
-        method: 'Express Shipping (1-3 Days)'
-    });
+    React.useEffect(() => {
+        if (!shippingInfo) {
+            toast({
+                title: "No Shipping Information",
+                description: "Please select a shipping address first.",
+                variant: "destructive"
+            });
+            router.push('/shipping');
+        }
+    }, [shippingInfo, router, toast]);
 
     const shippingFee = subTotal > 2000 ? 0 : 60;
     const taxes = subTotal * 0.05; // 5% tax
@@ -53,6 +55,14 @@ export default function PaymentPage() {
             toast({
                 title: "Error",
                 description: "You must be logged in and have items in your cart to place an order.",
+                variant: "destructive"
+            })
+            return;
+        }
+        if (!shippingInfo) {
+            toast({
+                title: "Shipping Info Missing",
+                description: "Please go back and complete your shipping details.",
                 variant: "destructive"
             })
             return;
@@ -92,7 +102,6 @@ export default function PaymentPage() {
             const orderRef = doc(collection(db, "orders"));
             batch.set(orderRef, orderData);
             
-            // If a coupon was used, increment its 'used' count in Firestore
             if (appliedCoupon) {
                 const couponQuery = query(collection(db, "coupons"), where("code", "==", appliedCoupon.code));
                 const couponSnap = await getDocs(couponQuery);
@@ -103,7 +112,6 @@ export default function PaymentPage() {
                 }
             }
             
-            // If a gift card was used, update its balance
             if (appliedGiftCard) {
                 const giftCardQuery = query(collection(db, 'giftCards'), where('code', '==', appliedGiftCard.code));
                 const giftCardSnap = await getDocs(giftCardQuery);
@@ -136,6 +144,18 @@ export default function PaymentPage() {
             setLoading(false);
         }
     };
+
+    if (!shippingInfo) {
+        return (
+             <div className="flex min-h-screen flex-col bg-background">
+                <SiteHeader />
+                <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
+                    <p>Redirecting to shipping page...</p>
+                </main>
+                <SiteFooter />
+            </div>
+        )
+    }
 
     return (
         <div className="flex min-h-screen flex-col bg-background">

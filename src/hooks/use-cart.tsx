@@ -20,6 +20,14 @@ export interface AppliedGiftCard {
     balance: number;
 }
 
+export interface ShippingInfo {
+    name: string;
+    email: string;
+    phone: string;
+    fullAddress: string;
+    method: string;
+}
+
 // Define the structure of a product in the cart
 interface Product {
     id: string;
@@ -60,6 +68,8 @@ interface CartContextType {
   removeGiftCard: () => void;
   subTotal: number;
   total: number;
+  shippingInfo: ShippingInfo | null;
+  setShippingInfo: (info: ShippingInfo) => void;
 }
 
 // Create the context
@@ -70,6 +80,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<Product[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
+  const [shippingInfo, setShippingInfoState] = useState<ShippingInfo | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load cart from localStorage on initial render
@@ -87,11 +98,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
        if (savedGiftCard) {
         setAppliedGiftCard(JSON.parse(savedGiftCard));
       }
+      const savedShippingInfo = localStorage.getItem('shippingInfo');
+      if (savedShippingInfo) {
+          setShippingInfoState(JSON.parse(savedShippingInfo));
+      }
     } catch (error) {
-        console.error("Failed to parse cart/coupon from localStorage", error);
-        setCart([]);
-        setAppliedCoupon(null);
-        setAppliedGiftCard(null);
+        console.error("Failed to parse data from localStorage", error);
     }
     setIsLoaded(true);
   }, []);
@@ -110,8 +122,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
        } else {
            localStorage.removeItem('appliedGiftCard');
        }
+       if (shippingInfo) {
+           localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+       } else {
+            localStorage.removeItem('shippingInfo');
+       }
     }
-  }, [cart, appliedCoupon, appliedGiftCard, isLoaded]);
+  }, [cart, appliedCoupon, appliedGiftCard, shippingInfo, isLoaded]);
 
   const addToCart = (product: Omit<Product, 'quantity'>, quantity = 1) => {
     setCart(prevCart => {
@@ -151,9 +168,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart([]);
     setAppliedCoupon(null);
     setAppliedGiftCard(null);
+    setShippingInfoState(null);
     localStorage.removeItem('shoppingCart');
     localStorage.removeItem('appliedCoupon');
     localStorage.removeItem('appliedGiftCard');
+    localStorage.removeItem('shippingInfo');
   };
   
   const applyCoupon = (coupon: AppliedCoupon) => {
@@ -171,6 +190,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const removeGiftCard = () => {
       setAppliedGiftCard(null);
   }
+
+   const setShippingInfo = (info: ShippingInfo) => {
+    setShippingInfoState(info);
+  };
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
@@ -216,7 +239,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         applyGiftCard,
         removeGiftCard,
         subTotal,
-        total
+        total,
+        shippingInfo,
+        setShippingInfo
     }}>
       {children}
     </CartContext.Provider>

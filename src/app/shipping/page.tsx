@@ -50,15 +50,15 @@ const savedAddresses = [
 ]
 
 export default function ShippingPage() {
-    const { cart, subTotal, appliedCoupon, total } = useCart();
-    const [selectedAddress, setSelectedAddress] = React.useState<string | undefined>(savedAddresses.length > 0 ? savedAddresses[0].id : undefined);
+    const { cart, subTotal, appliedCoupon, total, setShippingInfo } = useCart();
+    const [selectedAddressId, setSelectedAddressId] = React.useState<string | undefined>(savedAddresses.length > 0 ? savedAddresses[0].id : undefined);
     const [shippingMethod, setShippingMethod] = React.useState<string | undefined>('standard');
     const [activeTab, setActiveTab] = React.useState("saved-address");
     const { toast } = useToast();
     const router = useRouter();
 
 
-    const isSelectionComplete = selectedAddress && shippingMethod;
+    const isSelectionComplete = selectedAddressId && shippingMethod;
 
     const shippingFee = subTotal === 0 ? 0 : (shippingMethod === 'express' ? 250 : 120);
     const taxes = subTotal * 0.05; // 5% tax
@@ -71,10 +71,26 @@ export default function ShippingPage() {
                 description: "Please select a shipping address and shipping method to continue.",
                 variant: "destructive",
             });
-        } else {
-            // Here you would typically save the shipping info to a state/context
-            // before redirecting. For now, we'll just redirect.
+            return;
+        } 
+        
+        const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
+
+        if (selectedAddress) {
+             setShippingInfo({
+                name: selectedAddress.name,
+                email: 'customer@example.com', // Assuming a default or fetched email
+                phone: selectedAddress.phone,
+                fullAddress: selectedAddress.address,
+                method: shippingMethod === 'express' ? 'Express Shipping (1-3 Days)' : 'Standard Shipping (7-10 Days)',
+            });
             router.push('/payment');
+        } else {
+             toast({
+                title: "Address not found",
+                description: "The selected address could not be found. Please try again.",
+                variant: "destructive",
+            });
         }
     }
 
@@ -104,9 +120,9 @@ export default function ShippingPage() {
                                     <Card>
                                         <CardContent className="p-6">
                                             <h2 className="text-2xl font-headline mb-4">Shipping Address</h2>
-                                            <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress} className="space-y-4">
+                                            <RadioGroup value={selectedAddressId} onValueChange={setSelectedAddressId} className="space-y-4">
                                                 {savedAddresses.map((address) => (
-                                                    <Label key={address.id} htmlFor={address.id} className={cn("flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-colors", selectedAddress === address.id && "bg-secondary border-primary")}>
+                                                    <Label key={address.id} htmlFor={address.id} className={cn("flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-colors", selectedAddressId === address.id && "bg-secondary border-primary")}>
                                                         <div className="flex items-start space-x-4">
                                                             <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
                                                             <div>
