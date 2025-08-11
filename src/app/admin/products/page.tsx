@@ -28,62 +28,52 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-// Mock data for products
-const products = [
-  {
-    id: 'prod-001',
-    name: 'Graphic Print T-Shirt',
-    category: 'Men > T-Shirts',
-    status: 'Active',
-    price: 1299,
-    stock: 150,
-    image: 'https://placehold.co/64x64.png',
-    dataAiHint: 'men graphic t-shirt',
-  },
-  {
-    id: 'prod-002',
-    name: 'Embroidered Kurta',
-    category: 'Women > Kurtas',
-    status: 'Active',
-    price: 2499,
-    stock: 80,
-    image: 'https://placehold.co/64x64.png',
-    dataAiHint: 'woman ethnic wear',
-  },
-  {
-    id: 'prod-003',
-    name: 'Remote Control Car',
-    category: 'Kids > Toys',
-    status: 'Archived',
-    price: 1499,
-    stock: 0,
-    image: 'https://placehold.co/64x64.png',
-    dataAiHint: 'remote control car',
-  },
-  {
-    id: 'prod-004',
-    name: 'Cotton Bedsheet',
-    category: 'Home > Bedsheets',
-    status: 'Active',
-    price: 1999,
-    stock: 200,
-    image: 'https://placehold.co/64x64.png',
-    dataAiHint: 'cotton bedsheet',
-  },
-  {
-    id: 'prod-005',
-    name: 'Matte Lipstick',
-    category: 'Beauty > Makeup',
-    status: 'Draft',
-    price: 1799,
-    stock: 50,
-    image: 'https://placehold.co/64x64.png',
-    dataAiHint: 'matte lipstick',
-  },
-];
+interface Product {
+  id: string;
+  name: string;
+  organization: {
+    category: string;
+    status: string;
+  };
+  pricing: {
+    price: number;
+  };
+  inventory: {
+    stock: number;
+  };
+  images: string[];
+}
+
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const productsCollection = collection(db, 'products');
+        const productSnapshot = await getDocs(productsCollection);
+        const productList = productSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Product));
+        setProducts(productList);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -108,6 +98,11 @@ export default function ProductsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {loading ? (
+             <div className="flex justify-center items-center h-48">
+              <p>Loading products...</p>
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -133,27 +128,27 @@ export default function ProductsPage() {
                       alt={product.name}
                       className="aspect-square rounded-md object-cover"
                       height="64"
-                      src={product.image}
+                      src={product.images[0] || 'https://placehold.co/64x64.png'}
                       width="64"
-                      data-ai-hint={product.dataAiHint}
+                      data-ai-hint="product image"
                     />
                   </TableCell>
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        product.status === 'Active'
+                        product.organization?.status === 'active'
                           ? 'default'
                           : 'secondary'
                       }
-                      className={product.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
+                      className={product.organization?.status === 'active' ? 'bg-green-100 text-green-800 capitalize' : 'capitalize'}
                     >
-                      {product.status}
+                      {product.organization?.status || 'N/A'}
                     </Badge>
                   </TableCell>
-                  <TableCell>৳{product.price.toLocaleString()}</TableCell>
+                  <TableCell>৳{product.pricing?.price.toLocaleString() || 'N/A'}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {product.stock}
+                    {product.inventory?.stock ?? 'N/A'}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -178,6 +173,7 @@ export default function ProductsPage() {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>
