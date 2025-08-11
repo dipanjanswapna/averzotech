@@ -6,7 +6,7 @@ import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { app } from '@/lib/firebase';
-import { AdminSidebar } from '@/components/admin-sidebar';
+import { AdminSidebar, AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 
 
@@ -53,12 +53,12 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-secondary/50">
+    <AdminSidebarProvider>
       <AdminSidebar user={user}/>
-      <main className="flex-1 p-4 sm:p-6 md:p-8">
-        {children}
-         <Toaster />
-      </main>
-    </div>
+        <main className="flex-1 p-4 sm:p-6 md:p-8">
+            {children}
+            <Toaster />
+        </main>
+    </AdminSidebarProvider>
   );
 }

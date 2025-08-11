@@ -17,7 +17,7 @@ export default function AdminDashboard() {
     <div className="space-y-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat, index) => (
                 <Card key={index}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
             ))}
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
             <Card className="lg:col-span-4">
                 <CardHeader>
                     <CardTitle>Overview</CardTitle>
