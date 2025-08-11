@@ -78,7 +78,7 @@ export default function MenPageManager() {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
         stateSetter((prev: any) => ({
-            ...(prev || {}),
+            ...(prev || { preview: '', alt: '', dataAiHint: '' }),
             file: file,
             preview: URL.createObjectURL(file)
         }));
@@ -93,7 +93,7 @@ export default function MenPageManager() {
 
   const handleSingleTextChange = (field: string, value: string, stateSetter: React.Dispatch<React.SetStateAction<any>>) => {
     stateSetter((prev: any) => ({
-        ...(prev || {}),
+        ...(prev || { preview: '', alt: '', dataAiHint: '' }),
         [field]: value
     }));
   };
@@ -133,8 +133,9 @@ export default function MenPageManager() {
       const updatedTrending = await processItems(trendingCategories, 'trending');
       const updatedDeals = await processItems(crazyDeals, 'deals');
       const updatedCategories = await processItems(shopByCategory, 'categories');
+      
       const updatedBannerUrl = await uploadImage(banner, 'banner');
-      const updatedBanner = banner ? { url: updatedBannerUrl, alt: banner.alt, dataAiHint: banner.dataAiHint } : null;
+      const updatedBanner = banner ? { url: updatedBannerUrl, alt: banner.alt, dataAiHint: banner.dataAiHint, link: banner.link || '#' } : null;
 
 
       const menPageContent = {
@@ -188,6 +189,7 @@ export default function MenPageManager() {
                 <Image src={image.preview} alt="Hero preview" fill className="object-cover rounded-md" />
               </div>
               <div className="flex-1 space-y-2">
+                <Input placeholder="Link URL" value={image.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setHeroImages, heroImages)} />
                 <Input placeholder="Alt Text" value={image.alt || ''} onChange={(e) => handleTextChange(index, 'alt', e.target.value, setHeroImages, heroImages)} />
                 <Input placeholder="AI Hint" value={image.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setHeroImages, heroImages)} />
                 <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setHeroImages, heroImages)} />
@@ -209,17 +211,22 @@ export default function MenPageManager() {
           <CardDescription>Manage the banner image below the carousel.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-           {banner && (
+           {banner ? (
              <div className="flex items-start gap-4 p-4 border rounded-lg bg-secondary/50">
-                <div className="relative w-96 h-16">
+                <div className="relative w-96 h-24">
                     <Image src={banner.preview} alt="Banner preview" fill className="object-cover rounded-md" />
                 </div>
                 <div className="flex-1 space-y-2">
+                    <Input placeholder="Link URL" value={banner.link || ''} onChange={(e) => handleSingleTextChange('link', e.target.value, setBanner)} />
                     <Input placeholder="Alt Text" value={banner.alt || ''} onChange={(e) => handleSingleTextChange('alt', e.target.value, setBanner)} />
                     <Input placeholder="AI Hint" value={banner.dataAiHint || ''} onChange={(e) => handleSingleTextChange('dataAiHint', e.target.value, setBanner)} />
                     <Input type="file" className="text-xs" onChange={(e) => handleSingleFileChange(e, setBanner)} />
                 </div>
             </div>
+           ) : (
+            <Button variant="outline" onClick={() => setBanner({ preview: 'https://placehold.co/1200x200.png', alt: '', dataAiHint: '', link: '#' })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Banner
+            </Button>
            )}
         </CardContent>
       </Card>
@@ -235,6 +242,7 @@ export default function MenPageManager() {
               <div key={index} className="p-2 border rounded-lg space-y-2">
                 <Image src={item.preview} alt="Preview" width={300} height={400} className="object-cover rounded-md mx-auto aspect-[3/4]" />
                 <Input placeholder="Category Name" value={item.name || ''} onChange={(e) => handleTextChange(index, 'name', e.target.value, setTrendingCategories, trendingCategories)} />
+                <Input placeholder="Link URL" value={item.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setTrendingCategories, trendingCategories)} />
                 <Input placeholder="AI Hint" value={item.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setTrendingCategories, trendingCategories)} />
                 <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setTrendingCategories, trendingCategories)} />
                 <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => handleRemoveItem(index, setTrendingCategories)}><Trash2 className="h-4 w-4 mr-2" /> Remove</Button>
@@ -259,6 +267,7 @@ export default function MenPageManager() {
                 <Image src={item.preview} alt="Preview" width={300} height={400} className="object-cover rounded-md mx-auto aspect-[3/4]" />
                 <Input placeholder="Deal Name (e.g. Innerwear)" value={item.name || ''} onChange={(e) => handleTextChange(index, 'name', e.target.value, setCrazyDeals, crazyDeals)} />
                 <Input placeholder="Discount Text (e.g. MIN. 50% OFF)" value={item.discount || ''} onChange={(e) => handleTextChange(index, 'discount', e.target.value, setCrazyDeals, crazyDeals)} />
+                <Input placeholder="Link URL" value={item.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setCrazyDeals, crazyDeals)} />
                 <Input placeholder="AI Hint" value={item.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setCrazyDeals, crazyDeals)} />
                 <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setCrazyDeals, crazyDeals)} />
                 <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => handleRemoveItem(index, setCrazyDeals)}><Trash2 className="h-4 w-4 mr-2" /> Remove</Button>
@@ -283,6 +292,7 @@ export default function MenPageManager() {
                 <Image src={item.preview} alt="Preview" width={200} height={250} className="object-cover rounded-md mx-auto aspect-[4/5]" />
                 <Input placeholder="Category Name (e.g. T-Shirts)" value={item.name || ''} onChange={(e) => handleTextChange(index, 'name', e.target.value, setShopByCategory, shopByCategory)} />
                 <Input placeholder="Discount Text (e.g. 40-80% OFF)" value={item.discount || ''} onChange={(e) => handleTextChange(index, 'discount', e.target.value, setShopByCategory, shopByCategory)} />
+                <Input placeholder="Link URL" value={item.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setShopByCategory, shopByCategory)} />
                 <Input placeholder="AI Hint" value={item.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setShopByCategory, shopByCategory)} />
                 <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setShopByCategory, shopByCategory)} />
                 <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => handleRemoveItem(index, setShopByCategory)}><Trash2 className="h-4 w-4 mr-2" /> Remove</Button>
