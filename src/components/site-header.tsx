@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, LogOut } from 'lucide-react';
+import { Menu, Search, ShoppingCart, User, Heart, LogOut, MoreVertical } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
@@ -248,32 +248,56 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="md:hidden">
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-              <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                      <Menu className="h-6 w-6" />
-                  </Button>
-              </SheetTrigger>
-              <SheetContent side="left">
-                   <SheetHeader>
-                      <SheetTitle><Logo /></SheetTitle>
-                   </SheetHeader>
-                   <div className="py-4">
-                       <nav className="flex flex-col gap-2">
-                            <Link href="/shop" className="font-semibold text-base py-2.5">Shop</Link>
-                            {categories.map((category) => (
-                                <MegaMenu key={category.name} category={category} isMobile={true} />
-                            ))}
-                       </nav>
-                   </div>
-              </SheetContent>
-          </Sheet>
+
+        {/* Mobile Header */}
+        <div className="md:hidden flex flex-1 items-center justify-between gap-4">
+            <Link href="/">
+              <Logo />
+            </Link>
+             <div className="flex-1 flex justify-center">
+                <div className="relative w-full max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="search" placeholder="Search..." className="h-9 pl-9" />
+                </div>
+            </div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-6 w-6" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                     {user ? (
+                        <>
+                            <DropdownMenuLabel>
+                                <p className='font-bold'>{user.fullName}</p>
+                                <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild><Link href="/profile"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/wishlist"><Heart className="mr-2 h-4 w-4" />Wishlist</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/cart"><ShoppingCart className="mr-2 h-4 w-4" />Cart</Link></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+                                <LogOut className='mr-2 h-4 w-4' />
+                                Logout
+                            </DropdownMenuItem>
+                        </>
+                     ) : (
+                         <>
+                            <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/register">Sign Up</Link></DropdownMenuItem>
+                        </>
+                     )}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
 
-        <div className="flex flex-1 items-center justify-between">
+
+        {/* Desktop Header */}
+        <div className="hidden md:flex flex-1 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="hidden md:block">
+            <Link href="/">
               <Logo />
             </Link>
           </div>
@@ -284,7 +308,7 @@ export function SiteHeader() {
               <Input type="search" placeholder="Search..." className="h-auto w-full sm:w-48 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0" />
             </div>
 
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" asChild>
                 <Link href="/wishlist">
                   <Heart className="h-5 w-5" />
@@ -352,8 +376,7 @@ export function SiteHeader() {
           <div className="container">
             <ScrollArea className="md:hidden -mx-4">
               <nav className="flex items-center gap-6 text-sm font-medium px-4">
-                <Link href="/shop" className="hover:text-primary py-2 flex-shrink-0">Shop</Link>
-                {categories.map((category) => (
+                 {categories.map((category) => (
                     <Link key={category.name} href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
                 ))}
               </nav>
@@ -361,7 +384,6 @@ export function SiteHeader() {
             </ScrollArea>
 
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-               <Link href="/shop" className="hover:text-primary">Shop</Link>
               {categories.map((category) => (
                 <MegaMenu key={category.name} category={category} />
               ))}
