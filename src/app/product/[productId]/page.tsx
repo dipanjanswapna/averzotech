@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
+import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Sparkles } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   Accordion,
@@ -32,6 +32,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
+import { VirtualTryOn } from '@/components/virtual-try-on';
 
 
 interface Product {
@@ -88,6 +89,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const [quantity, setQuantity] = React.useState(1);
   const [selectedSize, setSelectedSize] = React.useState<string>('');
   const [selectedColor, setSelectedColor] = React.useState<{name: string, hex: string} | null>(null);
+  const [isTryOnOpen, setIsTryOnOpen] = React.useState(false);
   const { addToCart } = useCart();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
@@ -374,13 +376,20 @@ export default function ProductPage({ params }: { params: { productId: string } 
               <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleAddToCart}>
                 <ShoppingBag className="mr-2 h-5 w-5" /> ADD TO CART
               </Button>
-              <Button size="lg" variant="secondary" className="flex-1">
-                 BUY NOW
+              <Button size="lg" variant="secondary" className="flex-1" onClick={() => setIsTryOnOpen(true)}>
+                 <Sparkles className="mr-2 h-5 w-5" /> Virtual Try-On
               </Button>
               <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>
                 <Heart className={`mr-2 h-5 w-5 ${isInWishlist ? "fill-current" : ""}`} /> WISHLIST
               </Button>
             </div>
+            
+            <VirtualTryOn 
+                isOpen={isTryOnOpen}
+                onOpenChange={setIsTryOnOpen}
+                productImage={product.images[0]}
+                productName={product.name}
+             />
 
             <Separator className="my-6" />
 
@@ -557,3 +566,4 @@ export default function ProductPage({ params }: { params: { productId: string } 
     </div>
   );
 }
+
