@@ -178,8 +178,8 @@ export default function AddressesPage() {
 
     const handleSubmit = async () => {
         if (!user) return;
-        if (!formData.division || !formData.district || !formData.upazila || !formData.streetAddress) {
-            toast({ title: "Incomplete Address", description: "Please fill all address fields.", variant: "destructive" });
+        if (!formData.division || !formData.district || !formData.upazila || !formData.streetAddress || !formData.phone.trim()) {
+            toast({ title: "Incomplete Address", description: "Please fill all required address fields including phone number.", variant: "destructive" });
             return;
         }
 
