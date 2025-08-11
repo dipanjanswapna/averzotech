@@ -120,7 +120,7 @@ export default function Home() {
             <CarouselContent>
               {heroImages.map((image, index) => (
                 <CarouselItem key={index}>
-                  <div className="relative h-[40vh] md:h-[calc(100vh-128px)]">
+                  <div className="relative h-[40vh] md:h-[calc(100vh-80px)]">
                     <Image
                       src={image.src}
                       alt={image.alt}
@@ -196,9 +196,9 @@ export default function Home() {
                                 </div>
                             </div>
                             <div className="pt-2">
-                                <h3 className="text-xs font-bold text-foreground">{deal.brand}</h3>
+                                <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
                                 <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
-                                <p className="text-xs font-semibold mt-1 text-foreground">
+                                <p className="text-sm font-semibold mt-1 text-foreground">
                                     Rs. {deal.price}{' '}
                                     <span className="text-xs text-muted-foreground line-through">Rs. {deal.originalPrice}</span>{' '}
                                     <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
