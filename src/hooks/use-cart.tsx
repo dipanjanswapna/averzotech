@@ -9,6 +9,10 @@ export interface AppliedCoupon {
     type: 'percentage' | 'fixed';
     value: number;
     discountAmount: number;
+    applicability?: {
+        type: 'all' | 'products';
+        ids: string[];
+    }
 }
 
 // Define the structure of a product in the cart
@@ -140,7 +144,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
-  const discountAmount = appliedCoupon?.discountAmount || 0;
+  
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+
+    let applicableSubtotal = subTotal;
+    if (appliedCoupon.applicability?.type === 'products') {
+        const applicableProductIds = appliedCoupon.applicability.ids;
+        const applicableItems = cart.filter(item => applicableProductIds.includes(item.id));
+        applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
+    }
+
+    if(appliedCoupon.type === 'fixed') {
+        return Math.min(appliedCoupon.value, applicableSubtotal);
+    }
+    if(appliedCoupon.type === 'percentage') {
+        return applicableSubtotal * (appliedCoupon.value / 100);
+    }
+    return 0;
+  }
+  
+  const discountAmount = calculateDiscount();
   const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
   const total = subTotal - discountAmount + shippingFee;
 
@@ -152,7 +176,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         updateQuantity, 
         clearCart, 
         cartCount,
-        appliedCoupon,
+        appliedCoupon: appliedCoupon ? {...appliedCoupon, discountAmount} : null,
         applyCoupon,
         removeCoupon,
         subTotal,

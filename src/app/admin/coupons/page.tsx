@@ -113,7 +113,7 @@ export default function CouponsPage() {
 
   useEffect(() => {
     fetchCoupons();
-  }, [toast]);
+  }, []);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -275,7 +275,11 @@ export default function CouponsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem><Eye className="mr-2 h-4 w-4"/>View Details</DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/coupons/edit/${coupon.id}`}>
+                                <Eye className="mr-2 h-4 w-4"/>View Details
+                            </Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/coupons/edit/${coupon.id}`}>
                                <Pencil className="mr-2 h-4 w-4"/> Edit

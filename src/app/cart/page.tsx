@@ -48,6 +48,11 @@ export default function CartPage() {
         const couponDoc = couponSnap.docs[0];
         const couponData = couponDoc.data();
         const now = new Date();
+        
+        if (couponData.status && couponData.status === 'Disabled') {
+             toast({ title: "Coupon Disabled", description: "This coupon is currently disabled.", variant: "destructive"});
+            return;
+        }
 
         if (new Date(couponData.endDate) < now) {
             toast({ title: "Coupon Expired", description: "This coupon has expired.", variant: "destructive"});
@@ -61,14 +66,26 @@ export default function CartPage() {
             toast({ title: "Coupon Limit Reached", description: "This coupon has reached its usage limit.", variant: "destructive"});
             return;
         }
-        if (couponData.minPurchase > subTotal) {
-            toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase} to use this coupon.`, variant: "destructive"});
+        
+        let applicableSubtotal = subTotal;
+        if (couponData.applicability?.type === 'products') {
+            const applicableProductIds = couponData.applicability.ids;
+            const applicableItems = cart.filter(item => applicableProductIds.includes(item.id));
+            if (applicableItems.length === 0) {
+                 toast({ title: "Coupon Not Applicable", description: "This coupon is not valid for any items in your cart.", variant: "destructive"});
+                 return;
+            }
+            applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
+        }
+
+        if (couponData.minPurchase > applicableSubtotal) {
+            toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase} on applicable items to use this coupon.`, variant: "destructive"});
             return;
         }
 
         let discountAmount = 0;
         if (couponData.type === 'percentage') {
-            discountAmount = subTotal * (couponData.value / 100);
+            discountAmount = applicableSubtotal * (couponData.value / 100);
         } else {
             discountAmount = couponData.value;
         }
@@ -77,7 +94,8 @@ export default function CartPage() {
             code: couponData.code,
             type: couponData.type,
             value: couponData.value,
-            discountAmount: discountAmount
+            discountAmount: discountAmount,
+            applicability: couponData.applicability
         };
         
         applyCoupon(couponToApply);
