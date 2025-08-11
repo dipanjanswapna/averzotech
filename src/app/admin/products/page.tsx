@@ -27,11 +27,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 interface Product {
   id: string;
@@ -53,9 +66,9 @@ interface Product {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
+  const fetchProducts = async () => {
       setLoading(true);
       try {
         const productsCollection = collection(db, 'products');
@@ -72,8 +85,27 @@ export default function ProductsPage() {
       }
     };
 
+  useEffect(() => {
     fetchProducts();
   }, []);
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+        await deleteDoc(doc(db, "products", productId));
+        toast({
+            title: "Product Deleted",
+            description: "The product has been successfully deleted.",
+        });
+        fetchProducts(); // Re-fetch products to update the list
+    } catch (error) {
+        console.error("Error deleting product: ", error);
+        toast({
+            title: "Error Deleting Product",
+            description: "There was a problem deleting the product.",
+            variant: "destructive"
+        })
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -152,36 +184,55 @@ export default function ProductsPage() {
                     {product.inventory?.stock ?? 'N/A'}
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/products/edit/${product.id}`}>
-                                <Eye className="mr-2 h-4 w-4"/> View Details
-                            </Link>
-                         </DropdownMenuItem>
-                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/products/edit/${product.id}`}>
-                                <Pencil className="mr-2 h-4 w-4"/> Edit
-                            </Link>
-                         </DropdownMenuItem>
-                         <DropdownMenuSeparator />
-                         <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                         </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <AlertDialog>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                           <DropdownMenuItem asChild>
+                             <Link href={`/admin/products/edit/${product.id}`}>
+                                  <Eye className="mr-2 h-4 w-4"/> View Details
+                              </Link>
+                           </DropdownMenuItem>
+                           <DropdownMenuItem asChild>
+                             <Link href={`/admin/products/edit/${product.id}`}>
+                                  <Pencil className="mr-2 h-4 w-4"/> Edit
+                              </Link>
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                           </AlertDialogTrigger>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the product
+                                  <span className="font-bold"> {product.name}</span>.
+                              </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteProduct(product.id)} className="bg-destructive hover:bg-destructive/90">
+                                  Continue
+                              </AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
