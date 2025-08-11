@@ -33,35 +33,35 @@ import { Slider } from '@/components/ui/slider';
 
 const allProducts = [
   // Men
-  { id: 'men-1', brand: 'Brand', name: "Men's Jeans", price: 1999, originalPrice: 3999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men jeans' },
-  { id: 'men-2', brand: 'Brand', name: "Casual Shirts", price: 1299, originalPrice: 2599, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men casual shirt' },
-  { id: 'men-3', brand: 'Brand', name: "Activewear", price: 2499, originalPrice: 4999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men activewear' },
-  { id: 'men-4', brand: 'Brand', name: "Sports Shoes", price: 2999, originalPrice: 5999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men sport shoes' },
-  { id: 'men-5', brand: 'Brand', name: "Personal Care", price: 499, originalPrice: 999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men grooming' },
-  { id: 'men-6', brand: 'Brand', name: 'Innerwear', price: 399, originalPrice: 799, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men innerwear' },
-  { id: 'men-7', brand: 'Brand', name: 'T-Shirts', price: 799, originalPrice: 1599, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men t-shirt' },
+  { id: 'men-1', brand: 'BrandX', name: "Men's Jeans", price: 1999, originalPrice: 3999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men jeans' },
+  { id: 'men-2', brand: 'BrandY', name: "Casual Shirts", price: 1299, originalPrice: 2599, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men casual shirt' },
+  { id: 'men-3', brand: 'BrandZ', name: "Activewear", price: 2499, originalPrice: 4999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men activewear' },
+  { id: 'men-4', brand: 'BrandX', name: "Sports Shoes", price: 2999, originalPrice: 5999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men sport shoes' },
+  { id: 'men-5', brand: 'BrandA', name: "Personal Care", price: 499, originalPrice: 999, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men grooming' },
+  { id: 'men-6', brand: 'BrandB', name: 'Innerwear', price: 399, originalPrice: 799, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men innerwear' },
+  { id: 'men-7', brand: 'BrandY', name: 'T-Shirts', price: 799, originalPrice: 1599, discount: 50, category: 'Men', src: 'https://placehold.co/300x400.png', dataAiHint: 'men t-shirt' },
   // Women
-  { id: 'women-1', brand: 'Brand', name: "Sarees & Kurtis", price: 2499, originalPrice: 4999, discount: 50, category: 'Women', src: 'https://placehold.co/300x400.png', dataAiHint: 'saree kurti' },
-  { id: 'women-2', brand: 'Brand', name: "Dresses", price: 1899, originalPrice: 3799, discount: 50, category: 'Women', src: 'https://placehold.co/300x400.png', dataAiHint: 'woman dress' },
-  { id: 'women-3', brand: 'Brand', name: "Handbags", price: 1599, originalPrice: 3199, discount: 50, category: 'Women', src: 'https://placehold.co/300x400.png', dataAiHint: 'handbag' },
+  { id: 'women-1', brand: 'BrandA', name: "Sarees & Kurtis", price: 2499, originalPrice: 4999, discount: 50, category: 'Women', src: 'https://placehold.co/300x400.png', dataAiHint: 'saree kurti' },
+  { id: 'women-2', brand: 'BrandC', name: "Dresses", price: 1899, originalPrice: 3799, discount: 50, category: 'Women', src: 'https://placehold.co/300x400.png', dataAiHint: 'woman dress' },
+  { id: 'women-3', brand: 'BrandD', name: "Handbags", price: 1599, originalPrice: 3199, discount: 50, category: 'Women', src: 'https://placehold.co/300x400.png', dataAiHint: 'handbag' },
   // Kids
-  { id: 'kids-1', brand: 'Brand', name: "Boys' Clothing", price: 999, originalPrice: 1999, discount: 50, category: 'Kids', src: 'https://placehold.co/300x400.png', dataAiHint: 'boy clothing' },
-  { id: 'kids-2', brand: 'Brand', name: "Girls' Clothing", price: 1199, originalPrice: 2399, discount: 50, category: 'Kids', src: 'https://placehold.co/300x400.png', dataAiHint: 'girl clothing' },
+  { id: 'kids-1', brand: 'KidsBrandA', name: "Boys' Clothing", price: 999, originalPrice: 1999, discount: 50, category: 'Kids', src: 'https://placehold.co/300x400.png', dataAiHint: 'boy clothing' },
+  { id: 'kids-2', brand: 'KidsBrandB', name: "Girls' Clothing", price: 1199, originalPrice: 2399, discount: 50, category: 'Kids', src: 'https://placehold.co/300x400.png', dataAiHint: 'girl clothing' },
   // Home & Living
-  { id: 'home-1', brand: 'Brand', name: "Bedsheets", price: 1999, originalPrice: 3999, discount: 50, category: 'Home & Living', src: 'https://placehold.co/300x400.png', dataAiHint: 'bedsheets' },
-  { id: 'home-2', brand: 'Brand', name: "Dinnerware", price: 2999, originalPrice: 5999, discount: 50, category: 'Home & Living', src: 'https://placehold.co/300x400.png', dataAiHint: 'dinnerware set' },
+  { id: 'home-1', brand: 'HomeBrandA', name: "Bedsheets", price: 1999, originalPrice: 3999, discount: 50, category: 'Home & Living', src: 'https://placehold.co/300x400.png', dataAiHint: 'bedsheets' },
+  { id: 'home-2', brand: 'HomeBrandB', name: "Dinnerware", price: 2999, originalPrice: 5999, discount: 50, category: 'Home & Living', src: 'https://placehold.co/300x400.png', dataAiHint: 'dinnerware set' },
   // Beauty
-  { id: 'beauty-1', brand: 'Brand', name: "Lipsticks", price: 899, originalPrice: 1799, discount: 50, category: 'Beauty', src: 'https://placehold.co/300x400.png', dataAiHint: 'lipstick collection' },
-  { id: 'beauty-2', brand: 'Brand', name: "Perfumes", price: 2499, originalPrice: 4999, discount: 50, category: 'Beauty', src: 'https://placehold.co/300x400.png', dataAiHint: 'perfume bottle' },
+  { id: 'beauty-1', brand: 'BeautyBrandA', name: "Lipsticks", price: 899, originalPrice: 1799, discount: 50, category: 'Beauty', src: 'https://placehold.co/300x400.png', dataAiHint: 'lipstick collection' },
+  { id: 'beauty-2', brand: 'BeautyBrandB', name: "Perfumes", price: 2499, originalPrice: 4999, discount: 50, category: 'Beauty', src: 'https://placehold.co/300x400.png', dataAiHint: 'perfume bottle' },
   // Electronics
-  { id: 'electronics-1', brand: 'Brand', name: "Smartphones", price: 15000, originalPrice: 20000, discount: 25, category: 'Electronics', src: 'https://placehold.co/300x400.png', dataAiHint: 'smartphones' },
-  { id: 'electronics-2', brand: 'Brand', name: "Laptops", price: 50000, originalPrice: 65000, discount: 23, category: 'Electronics', src: 'https://placehold.co/300x400.png', dataAiHint: 'laptops' },
+  { id: 'electronics-1', brand: 'TechBrandA', name: "Smartphones", price: 15000, originalPrice: 20000, discount: 25, category: 'Electronics', src: 'https://placehold.co/300x400.png', dataAiHint: 'smartphones' },
+  { id: 'electronics-2', brand: 'TechBrandB', name: "Laptops", price: 50000, originalPrice: 65000, discount: 23, category: 'Electronics', src: 'https://placehold.co/300x400.png', dataAiHint: 'laptops' },
   // Sports
-  { id: 'sports-1', brand: 'Brand', name: "Running Shoes", price: 3500, originalPrice: 5000, discount: 30, category: 'Sports', src: 'https://placehold.co/300x400.png', dataAiHint: 'running shoes' },
-  { id: 'sports-2', brand: 'Brand', name: "Cricket Bats", price: 2500, originalPrice: 4000, discount: 37, category: 'Sports', src: 'https://placehold.co/300x400.png', dataAiHint: 'cricket bat' },
+  { id: 'sports-1', brand: 'SportBrandA', name: "Running Shoes", price: 3500, originalPrice: 5000, discount: 30, category: 'Sports', src: 'https://placehold.co/300x400.png', dataAiHint: 'running shoes' },
+  { id: 'sports-2', brand: 'SportBrandB', name: "Cricket Bats", price: 2500, originalPrice: 4000, discount: 37, category: 'Sports', src: 'https://placehold.co/300x400.png', dataAiHint: 'cricket bat' },
   // Books
-  { id: 'books-1', brand: 'Publisher', name: "Fiction", price: 500, originalPrice: 800, discount: 37, category: 'Books', src: 'https://placehold.co/300x400.png', dataAiHint: 'fiction books' },
-  { id: 'books-2', brand: 'Publisher', name: "Children's Books", price: 300, originalPrice: 500, discount: 40, category: 'Books', src: 'https://placehold.co/300x400.png', dataAiHint: 'childrens books' },
+  { id: 'books-1', brand: 'PublisherA', name: "Fiction", price: 500, originalPrice: 800, discount: 37, category: 'Books', src: 'https://placehold.co/300x400.png', dataAiHint: 'fiction books' },
+  { id: 'books-2', brand: 'PublisherB', name: "Children's Books", price: 300, originalPrice: 500, discount: 40, category: 'Books', src: 'https://placehold.co/300x400.png', dataAiHint: 'childrens books' },
 ];
 
 export default function ShopPage() {
@@ -77,8 +77,40 @@ export default function ShopPage() {
     const categories = [...new Set(allProducts.map(item => item.category))];
 
     const applyFilters = React.useCallback(() => {
-        setDisplayedItems(allProducts);
-    }, []);
+        let items = [...allProducts];
+
+        // Filter by category
+        if (selectedCategory !== 'all') {
+          items = items.filter(item => item.category === selectedCategory);
+        }
+
+        // Filter by brand
+        if (selectedBrand !== 'all') {
+          items = items.filter(item => item.brand === selectedBrand);
+        }
+
+        // Filter by price
+        items = items.filter(item => item.price >= priceRange[0] && item.price <= priceRange[1]);
+
+        // Sort items
+        switch (sortOption) {
+          case 'price-asc':
+            items.sort((a, b) => a.price - b.price);
+            break;
+          case 'price-desc':
+            items.sort((a, b) => b.price - a.price);
+            break;
+          case 'discount':
+            items.sort((a, b) => b.discount - a.discount);
+            break;
+          case 'featured':
+          default:
+            // No specific sorting for featured, show as is or based on a default
+            break;
+        }
+
+        setDisplayedItems(items);
+    }, [selectedCategory, selectedBrand, priceRange, sortOption]);
 
     React.useEffect(() => {
         applyFilters();
