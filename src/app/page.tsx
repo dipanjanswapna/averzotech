@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Clock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -55,14 +55,28 @@ interface FlashSaleItem {
     id: string;
     brand: string;
     name: string;
-    price: number;
-    originalPrice: number;
-    discount: string;
-    src: string;
+    pricing: {
+        price: number;
+        comparePrice?: number;
+        discount?: number;
+    };
+    images: string[];
     dataAiHint: string;
-    stock: number;
-    sold: number;
+    inventory: {
+        stock: number;
+    };
 }
+
+interface Campaign {
+    id: string;
+    name: string;
+    type: string;
+    status: 'Active' | 'Finished' | 'Scheduled';
+    startDate: Timestamp;
+    endDate: Timestamp;
+    products: string[];
+}
+
 
 interface HomepageContent {
   heroImages: HeroImage[];
@@ -73,7 +87,10 @@ interface HomepageContent {
 
 export default function Home() {
   const [content, setContent] = useState<Partial<HomepageContent>>({});
+  const [flashSale, setFlashSale] = useState<Campaign | null>(null);
+  const [flashSaleItems, setFlashSaleItems] = useState<FlashSaleItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [flashSaleLoading, setFlashSaleLoading] = useState(true);
 
    useEffect(() => {
     const fetchHomepageContent = async () => {
@@ -125,86 +142,36 @@ export default function Home() {
       }
       setLoading(false);
     };
+
+    const fetchFlashSaleData = async () => {
+        setFlashSaleLoading(true);
+        try {
+            const campaignsRef = collection(db, 'campaigns');
+            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
+            const campaignSnap = await getDocs(q);
+            
+            if (!campaignSnap.empty) {
+                const campaignDoc = campaignSnap.docs[0];
+                const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
+                setFlashSale(campaignData);
+
+                if(campaignData.products && campaignData.products.length > 0) {
+                    const productPromises = campaignData.products.map(id => getDoc(doc(db, "products", id)));
+                    const productDocs = await Promise.all(productPromises);
+                    const productList = productDocs.map(doc => ({ id: doc.id, ...doc.data() } as FlashSaleItem)).filter(p => p.id);
+                    setFlashSaleItems(productList);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching flash sale data:", error);
+        } finally {
+            setFlashSaleLoading(false);
+        }
+    };
+
     fetchHomepageContent();
+    fetchFlashSaleData();
   }, []);
-
-  const flashSaleItems: FlashSaleItem[] = [
-    {
-      id: 'fs-1',
-      brand: 'Fastrack',
-      name: 'Analog Watch',
-      price: 1250,
-      originalPrice: 2500,
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'analog watch',
-      stock: 100,
-      sold: 67,
-    },
-    {
-      id: 'fs-2',
-      brand: 'Boat',
-      name: 'Wireless Earbuds',
-      price: 1500,
-      originalPrice: 3000,
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'wireless earbuds',
-      stock: 50,
-      sold: 15,
-    },
-    {
-      id: 'fs-3',
-      brand: 'Wildcraft',
-      name: 'Travel Backpack',
-      price: 999,
-      originalPrice: 1999,
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'travel backpack',
-      stock: 75,
-      sold: 50,
-    },
-    {
-      id: 'fs-4',
-      brand: 'Ray-Ban',
-      name: 'Classic Aviators',
-      price: 4500,
-      originalPrice: 9000,
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'aviator sunglasses',
-      stock: 30,
-      sold: 28,
-    },
-     {
-      id: 'fs-5',
-      brand: 'Gucci',
-      name: 'Leather Belt',
-      price: 8000,
-      originalPrice: 16000,
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'leather belt',
-      stock: 20,
-      sold: 5,
-    },
-    {
-      id: 'fs-6',
-      brand: 'Samsung',
-      name: 'Galaxy Watch 5',
-      price: 15000,
-      originalPrice: 30000,
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'smartwatch android',
-      stock: 40,
-      sold: 10,
-    },
-  ];
-
-  // Set flash sale end time to 24 hours from now
-  const flashSaleEndTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -241,70 +208,77 @@ export default function Home() {
             </Carousel>
           )}
         </section>
-
-        <section className="bg-primary/5 py-8 md:py-16">
-            <div className="container">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 gap-4">
-                    <div className='text-center md:text-left'>
-                        <h2 className="font-headline text-xl font-bold uppercase tracking-wider md:text-3xl text-foreground">
-                            Flash Sale!
-                        </h2>
-                        <p className="text-muted-foreground">Hurry, these deals won't last long!</p>
+        
+        {flashSale && flashSaleItems.length > 0 && (
+            <section className="bg-primary/5 py-8 md:py-16">
+                <div className="container">
+                    <div className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 gap-4">
+                        <div className='text-center md:text-left'>
+                            <h2 className="font-headline text-xl font-bold uppercase tracking-wider md:text-3xl text-foreground">
+                                {flashSale.name}
+                            </h2>
+                            <p className="text-muted-foreground">Hurry, these deals won't last long!</p>
+                        </div>
+                        <FlashSaleTimer endTime={flashSale.endDate.toDate()} />
                     </div>
-                    <FlashSaleTimer endTime={flashSaleEndTime} />
+                    {flashSaleLoading ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
+                            {Array(6).fill(0).map((_, i) => <Skeleton key={i} className="w-full aspect-[4/5]" />)}
+                        </div>
+                    ) : (
+                        <Carousel
+                            opts={{ align: "start" }}
+                            className="w-full"
+                        >
+                            <CarouselContent>
+                            {flashSaleItems.map((deal, index) => (
+                                <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
+                                    <Link href={`/product/${deal.id}`} className="group block">
+                                        <div className="relative overflow-hidden rounded-lg">
+                                            <Image
+                                                src={deal.images[0] || 'https://placehold.co/400x500.png'}
+                                                alt={deal.name}
+                                                width={400}
+                                                height={500}
+                                                className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                                data-ai-hint={deal.dataAiHint}
+                                            />
+                                            <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <Button variant="secondary" size="sm" className="w-full text-xs">
+                                                Add to Cart
+                                            </Button>
+                                            </div>
+                                        </div>
+                                        <div className="pt-2">
+                                            <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
+                                            <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
+                                            <p className="text-sm font-semibold mt-1 text-foreground">
+                                                ৳{deal.pricing.price}{' '}
+                                                {deal.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{deal.pricing.comparePrice}</span>}
+                                                {' '}
+                                                {deal.pricing.discount && <span className="text-xs text-orange-400 font-bold">({deal.pricing.discount}% OFF)</span>}
+                                            </p>
+                                            <div className='mt-2'>
+                                                <Progress value={(deal.inventory.stock > 0 ? (deal.inventory.stock - (deal.inventory.stock * 0.33)) / deal.inventory.stock * 100 : 0)} className="h-2" />
+                                                <p className="text-xs text-muted-foreground mt-1">Only a few left!</p>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </CarouselItem>
+                            ))}
+                            </CarouselContent>
+                            <CarouselPrevious className="hidden md:flex" />
+                            <CarouselNext className="hidden md:flex" />
+                        </Carousel>
+                    )}
+                    <div className="text-center mt-8">
+                        <Button asChild size="lg">
+                            <Link href="/flash-sale">View All Deals</Link>
+                        </Button>
+                    </div>
                 </div>
-                 <Carousel
-                    opts={{
-                        align: "start",
-                    }}
-                    className="w-full"
-                    >
-                    <CarouselContent>
-                    {flashSaleItems.map((deal, index) => (
-                        <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
-                            <Link href={`/product/${deal.id}`} className="group block">
-                                <div className="relative overflow-hidden rounded-lg">
-                                    <Image
-                                        src={deal.src}
-                                        alt={deal.name}
-                                        width={400}
-                                        height={500}
-                                        className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                                        data-ai-hint={deal.dataAiHint}
-                                    />
-                                    <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <Button variant="secondary" size="sm" className="w-full text-xs">
-                                        Add to Cart
-                                    </Button>
-                                    </div>
-                                </div>
-                                <div className="pt-2">
-                                    <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
-                                    <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
-                                    <p className="text-sm font-semibold mt-1 text-foreground">
-                                        ৳{deal.price}{' '}
-                                        <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
-                                        <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
-                                    </p>
-                                    <div className='mt-2'>
-                                        <Progress value={(deal.sold / deal.stock) * 100} className="h-2" />
-                                        <p className="text-xs text-muted-foreground mt-1">{deal.sold} of {deal.stock} sold</p>
-                                    </div>
-                                </div>
-                            </Link>
-                         </CarouselItem>
-                    ))}
-                    </CarouselContent>
-                     <CarouselPrevious className="hidden md:flex" />
-                    <CarouselNext className="hidden md:flex" />
-                </Carousel>
-                 <div className="text-center mt-8">
-                    <Button asChild size="lg">
-                        <Link href="/flash-sale">View All Deals</Link>
-                    </Button>
-                </div>
-            </div>
-        </section>
+            </section>
+        )}
 
 
         <section className="py-8 md:py-16">
@@ -492,5 +466,3 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
-
-    

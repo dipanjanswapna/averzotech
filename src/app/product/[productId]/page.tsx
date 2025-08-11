@@ -31,7 +31,7 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
-import { useWishlist } from '@/hooks/use-wishlist';
+import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 
 
 interface Product {
@@ -127,18 +127,26 @@ export default function ProductPage({ params }: { params: { productId: string } 
   
   const handleAddToCart = () => {
     if (!product) return;
-    if (!selectedSize || !selectedColor) {
+    if (!selectedSize && product.variants.sizes.length > 0) {
         toast({
             title: "Selection required",
-            description: "Please select a size and color.",
+            description: "Please select a size.",
+            variant: "destructive"
+        });
+        return;
+    }
+     if (!selectedColor && product.variants.colors.length > 0) {
+        toast({
+            title: "Selection required",
+            description: "Please select a color.",
             variant: "destructive"
         });
         return;
     }
     const productToAdd = {
         ...product,
-        selectedSize,
-        selectedColor: selectedColor.name,
+        selectedSize: selectedSize || 'N/A',
+        selectedColor: selectedColor?.name || 'N/A',
     };
     addToCart(productToAdd, quantity);
     toast({
@@ -150,7 +158,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const handleWishlistToggle = () => {
       if (!product) return;
 
-       const productForWishlist = {
+       const productForWishlist: WishlistItem = {
             id: product.id,
             name: product.name,
             brand: product.brand,
