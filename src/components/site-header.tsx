@@ -354,7 +354,7 @@ export function SiteHeader() {
               <nav className="flex items-center gap-6 text-sm font-medium px-4">
                 <Link href="/shop" className="hover:text-primary py-2 flex-shrink-0">Shop</Link>
                 {categories.map((category) => (
-                  <MegaMenu key={category.name} category={category} />
+                    <Link key={category.name} href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
                 ))}
               </nav>
               <ScrollBar orientation="horizontal" className="invisible" />
