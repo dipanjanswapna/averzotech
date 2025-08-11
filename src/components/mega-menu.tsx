@@ -5,12 +5,15 @@ import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+
 import { Button } from './ui/button';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
@@ -34,26 +37,33 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
 
   if (isMobile) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="justify-between w-full">
-            <Link href={category.href} className='flex-1 text-left'>{category.name}</Link>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" sideOffset={10}>
-          {category.subCategories.map((group: any) => (
-             <DropdownMenuGroup key={group.group}>
-                <DropdownMenuLabel>{group.group}</DropdownMenuLabel>
-                {group.items.map((sub: string) => (
-                    <DropdownMenuItem key={sub}>
-                      <span>{sub}</span>
-                    </DropdownMenuItem>
-                  ))}
-             </DropdownMenuGroup>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+       <Accordion type="single" collapsible className="w-full">
+        <AccordionItem value={category.name} className="border-none">
+          <AccordionTrigger className="py-2.5 font-semibold text-base hover:no-underline">
+             <Link href={category.href} className='flex-1 text-left'>{category.name}</Link>
+          </AccordionTrigger>
+          <AccordionContent className="pl-4">
+              <Accordion type="multiple" collapsible className="w-full">
+                {category.subCategories.map((group: any) => (
+                    <AccordionItem value={group.group} key={group.group} className="border-none">
+                        <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:no-underline">
+                            {group.group}
+                        </AccordionTrigger>
+                         <AccordionContent className="pl-4">
+                            <div className="flex flex-col space-y-2">
+                            {group.items.map((sub: string) => (
+                                <Link key={sub} href="#" className="text-muted-foreground hover:text-foreground text-sm py-1.5">
+                                  {sub}
+                                </Link>
+                              ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+              </Accordion>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     );
   }
 

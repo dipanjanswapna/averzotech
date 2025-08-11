@@ -202,10 +202,10 @@ export function SiteHeader() {
                 <SheetContent side="left" className="w-[300px] p-0">
                   <nav className="flex h-full flex-col">
                     <SheetHeader className="p-6 pb-0">
-                        <SheetTitle className="self-start mb-8">
-                            <Link href="/">
+                        <SheetTitle>
+                           <Link href="/" className="self-start mb-8">
                               <Logo />
-                            </Link>
+                           </Link>
                         </SheetTitle>
                         <div className="mb-6">
                           <div className="relative">
