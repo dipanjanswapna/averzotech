@@ -37,7 +37,7 @@ export function SiteFooter() {
              <div className='col-span-1'>
                 <h3 className="mb-4 font-bold text-xs tracking-widest uppercase">CUSTOMER POLICIES</h3>
                 <ul className="space-y-2">
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Contact Us</Link></li>
+                    <li><Link href="/contact-us" className="text-sm text-muted-foreground hover:text-primary">Contact Us</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">FAQ</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">T&amp;C</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Terms Of Use</Link></li>
