@@ -77,13 +77,17 @@ export function SiteHeader() {
             </div>
 
             <div className="hidden sm:flex items-center gap-2">
-              <Button variant="ghost" size="icon">
-                <Heart className="h-5 w-5" />
-                <span className="sr-only">Wishlist</span>
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="#">
+                  <Heart className="h-5 w-5" />
+                  <span className="sr-only">Wishlist</span>
+                </Link>
               </Button>
-              <Button variant="ghost" size="icon">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="sr-only">Cart</span>
+              <Button variant="ghost" size="icon" asChild>
+                <Link href="/cart">
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="sr-only">Cart</span>
+                </Link>
               </Button>
                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -139,8 +143,8 @@ export function SiteHeader() {
                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" sideOffset={10}>
-                                <DropdownMenuLabel>
-                                  <Link href={category.href} className="flex items-center gap-2">
+                                <DropdownMenuLabel asChild>
+                                  <Link href={category.href} className="flex items-center gap-2 p-2">
                                     <div>
                                       <p className="font-bold">{category.name}</p>
                                       <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
@@ -207,7 +211,7 @@ function NavMenuItem({ category }: { category: any }) {
         onMouseEnter={handleOpen} 
         onMouseLeave={handleClose}
       >
-        <DropdownMenuLabel>
+        <DropdownMenuLabel asChild>
           <Link href={category.href} className="flex items-start gap-4 p-2">
             <div className="mt-1">
               <Logo />
