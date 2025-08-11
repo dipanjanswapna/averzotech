@@ -7,13 +7,37 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Clock } from 'lucide-react';
+import { Clock, Filter, X } from 'lucide-react';
 import React from 'react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
-const flashSaleItems = [
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+
+const allFlashSaleItems = [
     {
       id: 'fs-1',
       brand: 'Fastrack',
+      category: 'Accessories',
       name: 'Analog Watch',
       price: 1250,
       originalPrice: 2500,
@@ -26,6 +50,7 @@ const flashSaleItems = [
     {
       id: 'fs-2',
       brand: 'Boat',
+      category: 'Electronics',
       name: 'Wireless Earbuds',
       price: 1500,
       originalPrice: 3000,
@@ -38,6 +63,7 @@ const flashSaleItems = [
     {
       id: 'fs-3',
       brand: 'Wildcraft',
+      category: 'Bags',
       name: 'Travel Backpack',
       price: 999,
       originalPrice: 1999,
@@ -50,6 +76,7 @@ const flashSaleItems = [
     {
       id: 'fs-4',
       brand: 'Ray-Ban',
+      category: 'Accessories',
       name: 'Classic Aviators',
       price: 4500,
       originalPrice: 9000,
@@ -62,6 +89,7 @@ const flashSaleItems = [
      {
       id: 'fs-5',
       brand: 'Gucci',
+      category: 'Accessories',
       name: 'Leather Belt',
       price: 8000,
       originalPrice: 16000,
@@ -74,6 +102,7 @@ const flashSaleItems = [
     {
       id: 'fs-6',
       brand: 'Samsung',
+      category: 'Electronics',
       name: 'Galaxy Watch 5',
       price: 15000,
       originalPrice: 30000,
@@ -86,6 +115,7 @@ const flashSaleItems = [
       {
       id: 'fs-7',
       brand: 'Sony',
+      category: 'Electronics',
       name: 'WH-1000XM5 Headphones',
       price: 25000,
       originalPrice: 35000,
@@ -98,6 +128,7 @@ const flashSaleItems = [
     {
       id: 'fs-8',
       brand: 'Apple',
+      category: 'Electronics',
       name: 'AirPods Pro 2',
       price: 22000,
       originalPrice: 28000,
@@ -109,11 +140,17 @@ const flashSaleItems = [
     },
 ];
 
-// Set flash sale end time to 24 hours from now
 const flashSaleEndTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
 
-
 export default function FlashSalePage() {
+  const [flashSaleItems, setFlashSaleItems] = React.useState(allFlashSaleItems);
+  const [isFilterOpen, setIsFilterOpen] = React.useState(true);
+
+  // TODO: Implement actual filtering logic here based on state
+  
+  const brands = [...new Set(allFlashSaleItems.map(item => item.brand))];
+  const categories = [...new Set(allFlashSaleItems.map(item => item.category))];
+  
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
@@ -130,49 +167,90 @@ export default function FlashSalePage() {
             </div>
         </section>
 
-        {/* Filters and Sorting placeholder */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 p-4 border rounded-lg bg-secondary/50">
+        <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">All Flash Sale Items ({flashSaleItems.length})</h3>
-            <div className="flex items-center gap-4">
-                 {/* TODO: Add filtering and sorting controls here */}
-                 <Button variant="outline">Filter</Button>
-                 <Button variant="outline">Sort By</Button>
+             <div className="flex items-center gap-4">
+                 <div className="md:hidden">
+                    <Sheet>
+                      <SheetTrigger asChild>
+                         <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
+                      </SheetTrigger>
+                      <SheetContent>
+                        <SheetHeader>
+                          <SheetTitle>Filters</SheetTitle>
+                          <SheetDescription>
+                            Refine your search for the best deals.
+                          </SheetDescription>
+                        </SheetHeader>
+                        <div className="py-4">
+                           <FilterControls brands={brands} categories={categories} />
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                 </div>
+                  <Select>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Sort by: Featured" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="featured">Featured</SelectItem>
+                      <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                      <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                      <SelectItem value="discount">Discount</SelectItem>
+                      <SelectItem value="popular">Popularity</SelectItem>
+                    </SelectContent>
+                  </Select>
             </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
-            {flashSaleItems.map((deal) => (
-                <Link href={`/product/${deal.id}`} key={deal.id} className="group block border p-2 rounded-lg hover:shadow-lg transition-shadow duration-300">
-                    <div className="relative overflow-hidden rounded-lg">
-                        <Image
-                            src={deal.src}
-                            alt={deal.name}
-                            width={400}
-                            height={500}
-                            className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                            data-ai-hint={deal.dataAiHint}
-                        />
-                         <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <Button variant="secondary" size="sm" className="w-full text-xs">
-                                Add to Cart
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="pt-2 px-1">
-                        <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
-                        <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
-                        <p className="text-sm font-semibold mt-1 text-foreground">
-                            ৳{deal.price}{' '}
-                            <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
-                            <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
-                        </p>
-                        <div className='mt-2'>
-                            <Progress value={(deal.sold / deal.stock) * 100} className="h-2" />
-                            <p className="text-xs text-muted-foreground mt-1">{deal.sold} of {deal.stock} sold</p>
-                        </div>
-                    </div>
-                </Link>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="hidden md:block md:col-span-1">
+                 <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <CollapsibleTrigger className="flex justify-between items-center w-full font-semibold text-lg mb-4">
+                      Filters <Filter className="w-5 h-5" />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                       <FilterControls brands={brands} categories={categories} />
+                    </CollapsibleContent>
+                </Collapsible>
+            </div>
+
+            <div className="md:col-span-3">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                    {flashSaleItems.map((deal) => (
+                        <Link href={`/product/${deal.id}`} key={deal.id} className="group block border p-2 rounded-lg hover:shadow-lg transition-shadow duration-300">
+                            <div className="relative overflow-hidden rounded-lg">
+                                <Image
+                                    src={deal.src}
+                                    alt={deal.name}
+                                    width={400}
+                                    height={500}
+                                    className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                    data-ai-hint={deal.dataAiHint}
+                                />
+                                 <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <Button variant="secondary" size="sm" className="w-full text-xs">
+                                        Add to Cart
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="pt-2 px-1">
+                                <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
+                                <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
+                                <p className="text-sm font-semibold mt-1 text-foreground">
+                                    ৳{deal.price}{' '}
+                                    <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
+                                    <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
+                                </p>
+                                <div className='mt-2'>
+                                    <Progress value={(deal.sold / deal.stock) * 100} className="h-2" />
+                                    <p className="text-xs text-muted-foreground mt-1">{deal.sold} of {deal.stock} sold</p>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            </div>
         </div>
         
         <div className="text-center mt-12">
@@ -238,4 +316,61 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
             </div>
         </div>
     );
+}
+
+function FilterControls({ brands, categories }: { brands: string[], categories: string[]}) {
+    const [priceRange, setPriceRange] = React.useState([0, 30000]);
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <Label className="font-semibold">Category</Label>
+                <Select>
+                    <SelectTrigger className="w-full mt-2">
+                        <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories.map(category => (
+                            <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div>
+                <Label className="font-semibold">Brand</Label>
+                 <Select>
+                    <SelectTrigger className="w-full mt-2">
+                        <SelectValue placeholder="All Brands" />
+                    </SelectTrigger>
+                    <SelectContent>
+                       <SelectItem value="all">All Brands</SelectItem>
+                         {brands.map(brand => (
+                            <SelectItem key={brand} value={brand.toLowerCase()}>{brand}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div>
+                <Label htmlFor="price-range" className="font-semibold">Price Range</Label>
+                <Slider
+                    id="price-range"
+                    min={0}
+                    max={30000}
+                    step={100}
+                    value={priceRange}
+                    onValueChange={setPriceRange}
+                    className="mt-4"
+                />
+                <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                    <span>৳{priceRange[0]}</span>
+                    <span>৳{priceRange[1]}</span>
+                </div>
+            </div>
+             <div className="flex justify-between gap-2">
+                <Button variant="secondary" className="flex-1">Reset</Button>
+                <Button className="flex-1">Apply Filters</Button>
+            </div>
+        </div>
+    )
 }
