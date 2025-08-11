@@ -256,9 +256,9 @@ export function SiteHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-2 rounded-md border border-input p-1 pl-3">
+            <div className="flex items-center gap-2 rounded-md border border-input p-1 pl-3 flex-1 sm:flex-none">
               <Search className="h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search..." className="h-auto w-48 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0" />
+              <Input type="search" placeholder="Search..." className="h-auto w-full sm:w-48 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0" />
             </div>
 
             <div className="hidden sm:flex items-center gap-2">
@@ -322,57 +322,6 @@ export function SiteHeader() {
                   </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-
-            {/* Mobile Menu */}
-            <div className="md:hidden">
-              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] p-0">
-                  <nav className="flex h-full flex-col">
-                    <SheetHeader className="p-6 pb-0">
-                        <SheetTitle>
-                           <Link href="/" className="self-start mb-8" onClick={() => setIsSheetOpen(false)}>
-                              <Logo />
-                           </Link>
-                        </SheetTitle>
-                        <div className="mb-6">
-                          <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input type="search" placeholder="Search..." className="pl-9" />
-                          </div>
-                        </div>
-                    </SheetHeader>
-                    <ScrollArea className="flex-1 px-6">
-                        <div className="flex flex-col space-y-2 py-4">
-                           <Link href="/shop" className="font-semibold text-base py-2.5" onClick={() => setIsSheetOpen(false)}>Shop</Link>
-                          {categories.map((category) => (
-                             <MegaMenu key={category.name} category={category} isMobile={true} />
-                          ))}
-                        </div>
-                    </ScrollArea>
-                     <div className="mt-auto flex flex-col gap-2 p-6 border-t">
-                        {user ? (
-                           <>
-                             <p className='text-sm font-semibold'>{user.fullName}</p>
-                             <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/wishlist">Wishlist</Link></Button>
-                             <Button variant="destructive" onClick={() => { handleLogout(); setIsSheetOpen(false); }}>Logout</Button>
-                           </>
-                        ) : (
-                           <>
-                             <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
-                             <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
-                           </>
-                        )}
-                    </div>
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            </div>
           </div>
         </div>
       </div>
@@ -385,19 +334,6 @@ export function SiteHeader() {
               ))}
             </nav>
           </div>
-       </div>
-       <div className="md:hidden border-t">
-          <ScrollArea className="w-full whitespace-nowrap">
-             <div className="container flex h-10 items-center -px-4">
-                 <nav className="flex items-center gap-6 text-sm font-medium px-4">
-                  <Link href="/shop" className="block hover:text-primary">Shop</Link>
-                  {categories.map((category) => (
-                    <Link key={category.name} href={category.href} className="block hover:text-primary">{category.name}</Link>
-                  ))}
-                </nav>
-             </div>
-             <ScrollBar orientation="horizontal" className="invisible" />
-          </ScrollArea>
        </div>
     </header>
   );
