@@ -34,7 +34,7 @@ export default function BooksPage() {
     const crazyDeals = [
         { name: 'Classic Novels', discount: 'MIN. 50% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'classic book' },
         { name: 'Business & Economics', discount: 'MIN. 40% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'business book' },
-        { name 'Fantasy', discount: 'UP TO 60% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'fantasy book' },
+        { name: 'Fantasy', discount: 'UP TO 60% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'fantasy book' },
         { name: 'Comics & Mangas', discount: 'UP TO 30% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'manga book' },
         { name: 'Thrillers', discount: 'TRENDING', src: 'https://placehold.co/300x400.png', dataAiHint: 'thriller book' },
     ];
@@ -59,7 +59,7 @@ export default function BooksPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex-grow">
-        <div className="container py-8">
+        <div className="container py-8 pt-16">
             <h1 className="text-2xl font-bold mb-4">Books</h1>
             <Carousel opts={{ loop: true }} className="mb-8">
                 <CarouselContent>
