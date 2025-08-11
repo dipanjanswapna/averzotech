@@ -4,6 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyC4q4m8pNjCB8ihd5jsU6AvgjZMp22WBAg",
   authDomain: "averzo-marketplace.firebaseapp.com",
