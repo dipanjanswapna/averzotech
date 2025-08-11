@@ -248,9 +248,32 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
+        <div className="md:hidden">
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                      <Menu className="h-6 w-6" />
+                  </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                   <SheetHeader>
+                      <SheetTitle><Logo /></SheetTitle>
+                   </SheetHeader>
+                   <div className="py-4">
+                       <nav className="flex flex-col gap-2">
+                            <Link href="/shop" className="font-semibold text-base py-2.5">Shop</Link>
+                            {categories.map((category) => (
+                                <MegaMenu key={category.name} category={category} isMobile={true} />
+                            ))}
+                       </nav>
+                   </div>
+              </SheetContent>
+          </Sheet>
+        </div>
+
         <div className="flex flex-1 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/">
+            <Link href="/" className="hidden md:block">
               <Logo />
             </Link>
           </div>
@@ -325,9 +348,19 @@ export function SiteHeader() {
           </div>
         </div>
       </div>
-       <div className="hidden md:flex h-10 items-center border-t">
+       <div className="h-10 items-center border-t md:flex">
           <div className="container">
-            <nav className="flex items-center gap-6 text-sm font-medium">
+            <ScrollArea className="md:hidden -mx-4">
+              <nav className="flex items-center gap-6 text-sm font-medium px-4">
+                <Link href="/shop" className="hover:text-primary py-2 flex-shrink-0">Shop</Link>
+                {categories.map((category) => (
+                  <MegaMenu key={category.name} category={category} />
+                ))}
+              </nav>
+              <ScrollBar orientation="horizontal" className="invisible" />
+            </ScrollArea>
+
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
                <Link href="/shop" className="hover:text-primary">Shop</Link>
               {categories.map((category) => (
                 <MegaMenu key={category.name} category={category} />

@@ -35,6 +35,7 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
     }, 150);
   };
 
+  // This logic is for the Sheet-based mobile menu
   if (isMobile) {
     return (
        <Accordion type="single" collapsible className="w-full">
@@ -67,10 +68,11 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
     );
   }
 
+  // This is for the desktop and new mobile horizontal nav
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild onMouseEnter={handleOpen} onMouseLeave={handleClose}>
-        <Button variant="ghost" className="p-0" asChild>
+        <Button variant="ghost" className="p-0 flex-shrink-0" asChild>
           <Link href={category.href}>
             {category.name}
           </Link>
