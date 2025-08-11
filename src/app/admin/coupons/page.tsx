@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Copy, Trash2, ToggleRight, ToggleLeft } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Copy, Trash2, ToggleRight, ToggleLeft, Pencil, Eye } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -275,8 +275,12 @@ export default function CouponsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem><Eye className="mr-2 h-4 w-4"/>View Details</DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/coupons/edit/${coupon.id}`}>
+                               <Pencil className="mr-2 h-4 w-4"/> Edit
+                            </Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleToggleStatus(coupon)}>
                             {coupon.status === 'Disabled' ? <ToggleLeft className="mr-2 h-4 w-4" /> : <ToggleRight className="mr-2 h-4 w-4" />}
                             Change Status
@@ -317,4 +321,3 @@ export default function CouponsPage() {
     </div>
   );
 }
-
