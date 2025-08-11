@@ -96,11 +96,6 @@ const filterHierarchy = {
         "Fragrance": ["Perfumes", "Deodorants", "Body Mists"],
         "Haircare": ["Shampoo", "Conditioner", "Hair Oil", "Styling Tools"]
     },
-    "Electronics": {
-        "Mobiles & Wearables": ["Smartphones", "Smartwatches", "Headphones", "Speakers"],
-        "Laptops & Computers": ["Laptops", "Desktops", "Monitors", "Keyboards", "Mouse"],
-        "Cameras & Drones": ["DSLRs", "Mirrorless Cameras", "Drones", "Action Cameras"]
-    },
     "Sports": {
         "Cricket": ["Cricket Bats", "Balls", "Pads", "Gloves"],
         "Football": ["Footballs", "Jerseys", "Boots", "Shin Guards"],
@@ -176,8 +171,31 @@ export default function ShopPage() {
         );
     };
 
-    const handleMotherCategoryChange = createToggleHandler(setSelectedMotherCategories);
-    const handleGroupChange = createToggleHandler(setSelectedGroups);
+    const handleMotherCategoryChange = (category: string) => {
+        setSelectedMotherCategories(prev => {
+            const newSelection = prev.includes(category)
+                ? prev.filter(c => c !== category)
+                : [...prev, category];
+            
+            // When mother category changes, reset group and subcategory
+            setSelectedGroups([]);
+            setSelectedSubcategories([]);
+            return newSelection;
+        });
+    };
+    
+    const handleGroupChange = (group: string) => {
+        setSelectedGroups(prev => {
+            const newSelection = prev.includes(group)
+                ? prev.filter(g => g !== group)
+                : [...prev, group];
+
+            // When group changes, reset subcategory
+            setSelectedSubcategories([]);
+            return newSelection;
+        });
+    };
+
     const handleSubcategoryChange = createToggleHandler(setSelectedSubcategories);
     const handleBrandChange = createToggleHandler(setSelectedBrands);
 
@@ -210,14 +228,7 @@ export default function ShopPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex-grow container py-8">
-        <section className="mb-8">
-            <h1 className="font-headline text-3xl font-bold uppercase tracking-wider md:text-5xl text-foreground">
-                Shop All
-            </h1>
-            <p className="text-muted-foreground mt-2 text-lg">Browse through our entire collection of products.</p>
-        </section>
-
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4 pt-8">
             <h3 className="text-lg font-semibold">All Products ({displayedItems.length})</h3>
              <div className="flex items-center gap-4">
                  <div className="md:hidden">
@@ -371,7 +382,7 @@ function FilterControls({
             const motherCat = filterHierarchy[mc as keyof FilterHierarchy];
             if (!motherCat) return [];
             return selectedGroups.flatMap(g => {
-                const group = motherCat[g as keyof typeof motherCat] as string[];
+                const group = motherCat[g as keyof typeof motherCat] as string[] | undefined;
                 return group || [];
             });
         });
@@ -397,7 +408,7 @@ function FilterControls({
                 </CollapsibleContent>
             </Collapsible>
             
-            {selectedMotherCategories.length > 0 && (
+            {availableGroups.length > 0 && (
                  <Collapsible defaultOpen={true}>
                     <CollapsibleTrigger className="font-semibold w-full text-left">GROUP</CollapsibleTrigger>
                     <CollapsibleContent className="pt-4 space-y-2">
@@ -414,7 +425,7 @@ function FilterControls({
                 </Collapsible>
             )}
 
-             {selectedGroups.length > 0 && (
+             {availableSubcategories.length > 0 && (
                  <Collapsible defaultOpen={true}>
                     <CollapsibleTrigger className="font-semibold w-full text-left">SUB CATEGORY</CollapsibleTrigger>
                     <CollapsibleContent className="pt-4 space-y-2">
@@ -469,5 +480,3 @@ function FilterControls({
         </div>
     )
 }
-
-    
