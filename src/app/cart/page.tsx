@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from 'react';
@@ -187,7 +188,9 @@ export default function CartPage() {
                 <span>Grand Total</span>
                 <span>₹{grandTotal.toFixed(2)}</span>
               </div>
-              <Button className="w-full" size="lg">Proceed to Checkout</Button>
+              <Button className="w-full" size="lg" asChild>
+                <Link href="/checkout">Proceed to Checkout</Link>
+              </Button>
             </div>
           </div>
         </div>
