@@ -5,22 +5,14 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronRight, Info, PlusCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Tooltip,
   TooltipContent,
@@ -31,31 +23,55 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
 import { useCart } from "@/hooks/use-cart"
+import { useAuth } from "@/hooks/use-auth"
+import { collection, getDocs } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
-const savedAddresses = [
-    {
-        id: 'addr1',
-        name: 'Kamal Hasan',
-        address: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
-        phone: '+880 1712345678',
-    },
-    {
-        id: 'addr2',
-        name: 'Jamila Khatun',
-        address: '456 CDA Avenue, Agrabad, Chittagong - 4100',
-        phone: '+880 1812345678',
-    }
-]
+
+interface SavedAddress {
+    id: string;
+    name: string;
+    streetAddress: string;
+    division: string;
+    district: string;
+    upazila: string;
+    phone: string;
+    isDefault: boolean;
+}
 
 export default function ShippingPage() {
     const { cart, subTotal, appliedCoupon, total, setShippingInfo } = useCart();
-    const [selectedAddressId, setSelectedAddressId] = React.useState<string | undefined>(savedAddresses.length > 0 ? savedAddresses[0].id : undefined);
+    const { user, loading: authLoading } = useAuth();
+    const [savedAddresses, setSavedAddresses] = React.useState<SavedAddress[]>([]);
+    const [loadingAddresses, setLoadingAddresses] = React.useState(true);
+    const [selectedAddressId, setSelectedAddressId] = React.useState<string | undefined>();
     const [shippingMethod, setShippingMethod] = React.useState<string | undefined>('standard');
     const [activeTab, setActiveTab] = React.useState("saved-address");
     const { toast } = useToast();
     const router = useRouter();
+
+    React.useEffect(() => {
+        if (!user) return;
+        
+        const fetchAddresses = async () => {
+            setLoadingAddresses(true);
+            const addressesCol = collection(db, 'users', user.uid, 'addresses');
+            const addressSnapshot = await getDocs(addressesCol);
+            const addressList = addressSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedAddress));
+            setSavedAddresses(addressList);
+
+            // Pre-select default address or the first one
+            const defaultAddress = addressList.find(addr => addr.isDefault) || addressList[0];
+            if (defaultAddress) {
+                setSelectedAddressId(defaultAddress.id);
+            }
+            setLoadingAddresses(false);
+        };
+        
+        fetchAddresses();
+
+    }, [user]);
 
 
     const isSelectionComplete = selectedAddressId && shippingMethod;
@@ -79,9 +95,9 @@ export default function ShippingPage() {
         if (selectedAddress) {
              setShippingInfo({
                 name: selectedAddress.name,
-                email: 'customer@example.com', // Assuming a default or fetched email
+                email: user?.email || 'customer@example.com',
                 phone: selectedAddress.phone,
-                fullAddress: selectedAddress.address,
+                fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.upazila}, ${selectedAddress.district}, ${selectedAddress.division}`,
                 method: shippingMethod === 'express' ? 'Express Shipping (1-3 Days)' : 'Standard Shipping (7-10 Days)',
             });
             router.push('/payment');
@@ -93,6 +109,8 @@ export default function ShippingPage() {
             });
         }
     }
+
+    const fullAddressString = (addr: SavedAddress) => `${addr.streetAddress}, ${addr.upazila}, ${addr.district}, ${addr.division}`;
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -111,98 +129,36 @@ export default function ShippingPage() {
                         </div>
 
                         <div className="space-y-8">
-                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="saved-address">Select Address</TabsTrigger>
-                                    <TabsTrigger value="new-address">Add New Address</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="saved-address">
-                                    <Card>
-                                        <CardContent className="p-6">
-                                            <h2 className="text-2xl font-headline mb-4">Shipping Address</h2>
-                                            <RadioGroup value={selectedAddressId} onValueChange={setSelectedAddressId} className="space-y-4">
-                                                {savedAddresses.map((address) => (
-                                                    <Label key={address.id} htmlFor={address.id} className={cn("flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-colors", selectedAddressId === address.id && "bg-secondary border-primary")}>
-                                                        <div className="flex items-start space-x-4">
-                                                            <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
-                                                            <div>
-                                                                <p className="font-semibold">{address.name}</p>
-                                                                <p className="text-sm text-muted-foreground">{address.address}</p>
-                                                                <p className="text-sm text-muted-foreground">Phone: {address.phone}</p>
-                                                            </div>
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h2 className="text-2xl font-headline mb-4">Shipping Address</h2>
+                                     {loadingAddresses ? (
+                                        <p>Loading addresses...</p>
+                                     ) : savedAddresses.length > 0 ? (
+                                        <RadioGroup value={selectedAddressId} onValueChange={setSelectedAddressId} className="space-y-4">
+                                            {savedAddresses.map((address) => (
+                                                <Label key={address.id} htmlFor={address.id} className={cn("flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-colors", selectedAddressId === address.id && "bg-secondary border-primary")}>
+                                                    <div className="flex items-start space-x-4">
+                                                        <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
+                                                        <div>
+                                                            <p className="font-semibold">{address.name}</p>
+                                                            <p className="text-sm text-muted-foreground">{fullAddressString(address)}</p>
+                                                            <p className="text-sm text-muted-foreground">Phone: {address.phone}</p>
                                                         </div>
-                                                    </Label>
-                                                ))}
-                                                <div 
-                                                    className="flex items-center justify-center rounded-lg border-2 border-dashed p-4 cursor-pointer hover:border-primary transition-colors"
-                                                    onClick={() => setActiveTab("new-address")}
-                                                >
-                                                     <div className="text-center">
-                                                        <PlusCircle className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                                                        <p className="font-semibold">Add New Address</p>
-                                                     </div>
-                                                </div>
-                                            </RadioGroup>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                                <TabsContent value="new-address">
-                                     <Card>
-                                        <CardContent className="p-6">
-                                            <h2 className="text-2xl font-headline mb-4">Add New Address</h2>
-                                            <form className="space-y-4">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="first-name">First Name*</Label>
-                                                        <Input id="first-name" placeholder="Kamal" />
                                                     </div>
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="last-name">Last Name*</Label>
-                                                        <Input id="last-name" placeholder="Hasan" />
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="email">Email*</Label>
-                                                    <Input id="email" type="email" placeholder="m@example.com" />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="phone">Phone number*</Label>
-                                                    <div className="flex">
-                                                        <Select defaultValue="bd">
-                                                            <SelectTrigger className="w-[80px]">
-                                                                <SelectValue placeholder="Country" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="bd">+880</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                        <Input id="phone" placeholder="1234567890" className="flex-1" />
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="address">Address*</Label>
-                                                    <Textarea id="address" placeholder="Enter your full address..." />
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="city">City*</Label>
-                                                        <Input id="city" placeholder="Dhaka" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="state">District*</Label>
-                                                        <Input id="state" placeholder="Dhaka" />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label htmlFor="zip">Zip Code*</Label>
-                                                        <Input id="zip" placeholder="1213" />
-                                                    </div>
-                                                </div>
-                                                <Button type="submit" className="w-full">Save Address</Button>
-                                            </form>
-                                        </CardContent>
-                                     </Card>
-                                </TabsContent>
-                            </Tabs>
+                                                </Label>
+                                            ))}
+                                        </RadioGroup>
+                                     ) : (
+                                        <div className="text-center py-8">
+                                            <p className="text-muted-foreground mb-4">You have no saved addresses.</p>
+                                            <Button asChild>
+                                                <Link href="/profile/addresses"><PlusCircle className="mr-2 h-4 w-4"/> Add Address</Link>
+                                            </Button>
+                                        </div>
+                                     )}
+                                </CardContent>
+                            </Card>
                             
                             <div>
                                 <h2 className="text-2xl font-headline mt-8 mb-4">Shipping Method</h2>
@@ -315,3 +271,5 @@ export default function ShippingPage() {
         </div>
     )
 }
+
+    
