@@ -46,7 +46,7 @@ export function SiteFooter() {
                     <li><Link href="/cancellation-policy" className="text-sm text-muted-foreground hover:text-primary">Cancellation</Link></li>
                     <li><Link href="/returns-policy" className="text-sm text-muted-foreground hover:text-primary">Returns</Link></li>
                     <li><Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary">Privacy policy</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Grievance Redressal</Link></li>
+                    <li><Link href="/grievance-redressal" className="text-sm text-muted-foreground hover:text-primary">Grievance Redressal</Link></li>
                 </ul>
             </div>
              <div className='col-span-2 lg:col-span-1'>
