@@ -30,6 +30,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Product {
   id: string;
@@ -102,7 +103,7 @@ const filterCategories = [
     ]},
 ];
 
-export default function ShopPage() {
+function ShopPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -390,6 +391,14 @@ export default function ShopPage() {
       <SiteFooter />
     </div>
   );
+}
+
+export default function ShopPage() {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <ShopPageContent />
+        </React.Suspense>
+    )
 }
 
 interface FilterControlsProps {
