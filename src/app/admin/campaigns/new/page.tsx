@@ -23,11 +23,12 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check } from 'lucide-react';
+import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check, UploadCloud } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, app } from '@/lib/firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -39,9 +40,15 @@ interface Product {
   images: string[];
 }
 
+interface BannerImage {
+    file?: File;
+    url: string;
+}
+
 export default function NewCampaignPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const storage = getStorage(app);
   const [isLoading, setIsLoading] = useState(false);
 
   // Campaign fields
@@ -51,6 +58,7 @@ export default function NewCampaignPage() {
   const [startDate, setStartDate] = useState<Date | undefined>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [bannerImage, setBannerImage] = useState<BannerImage | null>(null);
   
   // Product selection modal
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -83,6 +91,16 @@ export default function NewCampaignPage() {
         }
     })
   }
+  
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        setBannerImage({
+            file: file,
+            url: URL.createObjectURL(file)
+        });
+      }
+    };
 
   const handleSaveCampaign = async () => {
     if (!name || !type || !status || !startDate || !endDate) {
@@ -96,6 +114,13 @@ export default function NewCampaignPage() {
 
     setIsLoading(true);
     try {
+        let bannerUrl = '';
+        if (bannerImage?.file) {
+            const storageRef = ref(storage, `campaign_banners/${Date.now()}-${bannerImage.file.name}`);
+            await uploadBytes(storageRef, bannerImage.file);
+            bannerUrl = await getDownloadURL(storageRef);
+        }
+
       await addDoc(collection(db, 'campaigns'), {
         name,
         type,
@@ -103,6 +128,7 @@ export default function NewCampaignPage() {
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
         products: selectedProducts.map(p => p.id),
+        bannerUrl,
         createdAt: serverTimestamp(),
       });
       toast({
@@ -166,6 +192,18 @@ export default function NewCampaignPage() {
                                 <SelectItem value="Finished">Finished</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="campaign-banner">Campaign Banner Image (Optional)</Label>
+                    <div className="flex items-center gap-4">
+                        <div className="w-48 h-24 border rounded-md overflow-hidden bg-secondary">
+                          {bannerImage && <Image src={bannerImage.url} alt="Banner Preview" width={192} height={96} className="object-cover w-full h-full" />}
+                        </div>
+                        <div className="flex-1">
+                             <Input id="campaign-banner" type="file" onChange={handleBannerFileChange} disabled={isLoading} />
+                             <p className="text-xs text-muted-foreground mt-1">Upload a banner (e.g., 1200x400px) to display on the homepage.</p>
+                        </div>
                     </div>
                 </div>
             </CardContent>
@@ -267,4 +305,3 @@ export default function NewCampaignPage() {
     </div>
   );
 }
-

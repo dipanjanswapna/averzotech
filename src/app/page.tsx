@@ -75,6 +75,7 @@ interface Campaign {
     startDate: Timestamp;
     endDate: Timestamp;
     products: string[];
+    bannerUrl?: string;
 }
 
 
@@ -88,9 +89,10 @@ interface HomepageContent {
 export default function Home() {
   const [content, setContent] = useState<Partial<HomepageContent>>({});
   const [flashSale, setFlashSale] = useState<Campaign | null>(null);
+  const [otherCampaigns, setOtherCampaigns] = useState<Campaign[]>([]);
   const [flashSaleItems, setFlashSaleItems] = useState<FlashSaleItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [flashSaleLoading, setFlashSaleLoading] = useState(true);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
 
    useEffect(() => {
     const fetchHomepageContent = async () => {
@@ -143,34 +145,38 @@ export default function Home() {
       setLoading(false);
     };
 
-    const fetchFlashSaleData = async () => {
-        setFlashSaleLoading(true);
+    const fetchCampaigns = async () => {
+        setCampaignsLoading(true);
         try {
             const campaignsRef = collection(db, 'campaigns');
-            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
+            const q = query(campaignsRef, where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
             const campaignSnap = await getDocs(q);
             
             if (!campaignSnap.empty) {
-                const campaignDoc = campaignSnap.docs[0];
-                const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
-                setFlashSale(campaignData);
+                const allCampaigns = campaignSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Campaign));
+                
+                const flashSaleCampaign = allCampaigns.find(c => c.type === 'Flash Sale') || null;
+                setFlashSale(flashSaleCampaign);
+                
+                const otherActiveCampaigns = allCampaigns.filter(c => c.type !== 'Flash Sale' && c.bannerUrl);
+                setOtherCampaigns(otherActiveCampaigns);
 
-                if(campaignData.products && campaignData.products.length > 0) {
-                    const productPromises = campaignData.products.map(id => getDoc(doc(db, "products", id)));
+                if(flashSaleCampaign && flashSaleCampaign.products.length > 0) {
+                    const productPromises = flashSaleCampaign.products.map(id => getDoc(doc(db, "products", id)));
                     const productDocs = await Promise.all(productPromises);
                     const productList = productDocs.map(doc => ({ id: doc.id, ...doc.data() } as FlashSaleItem)).filter(p => p.id);
                     setFlashSaleItems(productList);
                 }
             }
         } catch (error) {
-            console.error("Error fetching flash sale data:", error);
+            console.error("Error fetching campaigns data:", error);
         } finally {
-            setFlashSaleLoading(false);
+            setCampaignsLoading(false);
         }
     };
 
     fetchHomepageContent();
-    fetchFlashSaleData();
+    fetchCampaigns();
   }, []);
 
   return (
@@ -221,7 +227,7 @@ export default function Home() {
                         </div>
                         <FlashSaleTimer endTime={flashSale.endDate.toDate()} />
                     </div>
-                    {flashSaleLoading ? (
+                    {campaignsLoading ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
                             {Array(6).fill(0).map((_, i) => <Skeleton key={i} className="w-full aspect-[4/5]" />)}
                         </div>
@@ -363,6 +369,39 @@ export default function Home() {
                 )}
             </div>
         </section>
+
+        {otherCampaigns.length > 0 && (
+            <section className="py-8 md:py-16">
+                <div className="container">
+                    <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
+                        Latest Campaigns & Offers
+                    </h2>
+                    <Carousel
+                        opts={{ align: "start", loop: true }}
+                        className="w-full"
+                    >
+                        <CarouselContent>
+                        {otherCampaigns.map((campaign) => (
+                            <CarouselItem key={campaign.id} className="md:basis-1/2 lg:basis-1/3">
+                                <Link href={`/shop?campaign=${campaign.id}`} className="block group">
+                                     <Image
+                                        src={campaign.bannerUrl!}
+                                        alt={campaign.name}
+                                        width={800}
+                                        height={400}
+                                        className="h-auto w-full object-cover aspect-video rounded-lg transition-transform duration-300 group-hover:scale-105"
+                                        data-ai-hint="campaign banner"
+                                    />
+                                </Link>
+                            </CarouselItem>
+                        ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="hidden md:flex" />
+                        <CarouselNext className="hidden md:flex" />
+                    </Carousel>
+                </div>
+            </section>
+        )}
 
         <section className="bg-secondary py-8 md:py-16">
           <div className="container">

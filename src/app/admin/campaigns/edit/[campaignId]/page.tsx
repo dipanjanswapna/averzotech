@@ -23,11 +23,12 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check } from 'lucide-react';
+import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check, UploadCloud } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, getDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, app } from '@/lib/firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -39,11 +40,17 @@ interface Product {
   images: string[];
 }
 
+interface BannerImage {
+    file?: File;
+    url: string;
+}
+
 export default function EditCampaignPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const campaignId = params.campaignId as string;
+  const storage = getStorage(app);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -55,6 +62,7 @@ export default function EditCampaignPage() {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+  const [bannerImage, setBannerImage] = useState<BannerImage | null>(null);
   
   // Product selection modal
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -77,6 +85,9 @@ export default function EditCampaignPage() {
           setStatus(data.status);
           setStartDate(new Date(data.startDate));
           setEndDate(new Date(data.endDate));
+          if (data.bannerUrl) {
+              setBannerImage({ url: data.bannerUrl });
+          }
           
           // Fetch all products for selector
           const productsCollection = collection(db, 'products');
@@ -107,6 +118,16 @@ export default function EditCampaignPage() {
     fetchCampaignAndProducts();
   }, [campaignId, router, toast]);
 
+    const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        setBannerImage({
+            file: file,
+            url: URL.createObjectURL(file)
+        });
+      }
+    };
+    
   const handleToggleProduct = (product: Product) => {
     setSelectedProducts(prevSelected => {
         const isSelected = prevSelected.some(p => p.id === product.id);
@@ -130,6 +151,13 @@ export default function EditCampaignPage() {
 
     setIsLoading(true);
     try {
+        let bannerUrl = bannerImage?.url || '';
+        if (bannerImage?.file) {
+            const storageRef = ref(storage, `campaign_banners/${Date.now()}-${bannerImage.file.name}`);
+            await uploadBytes(storageRef, bannerImage.file);
+            bannerUrl = await getDownloadURL(storageRef);
+        }
+        
       const campaignRef = doc(db, 'campaigns', campaignId);
       await updateDoc(campaignRef, {
         name,
@@ -138,6 +166,7 @@ export default function EditCampaignPage() {
         startDate: startDate.toISOString().split('T')[0],
         endDate: endDate.toISOString().split('T')[0],
         products: selectedProducts.map(p => p.id),
+        bannerUrl,
       });
       toast({
         title: 'Campaign Updated',
@@ -204,6 +233,18 @@ export default function EditCampaignPage() {
                                 <SelectItem value="Finished">Finished</SelectItem>
                             </SelectContent>
                         </Select>
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="campaign-banner">Campaign Banner Image (Optional)</Label>
+                    <div className="flex items-center gap-4">
+                        <div className="w-48 h-24 border rounded-md overflow-hidden bg-secondary">
+                          {bannerImage && <Image src={bannerImage.url} alt="Banner Preview" width={192} height={96} className="object-cover w-full h-full" />}
+                        </div>
+                        <div className="flex-1">
+                             <Input id="campaign-banner" type="file" onChange={handleBannerFileChange} disabled={isLoading} />
+                             <p className="text-xs text-muted-foreground mt-1">Upload a banner (e.g., 1200x400px) to display on the homepage.</p>
+                        </div>
                     </div>
                 </div>
             </CardContent>
