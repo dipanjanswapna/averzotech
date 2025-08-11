@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -29,6 +29,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 export function AdminSidebar({ user }: { user: any }) {
   const pathname = usePathname();
@@ -62,9 +63,13 @@ export function AdminSidebar({ user }: { user: any }) {
     { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
     { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
     { href: '/admin/gift-cards', label: 'Gift Cards', icon: Gift },
-    { href: '/admin/site-management/home', label: 'Site Management', icon: LayoutDashboard },
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
+
+  const siteManagementItems = [
+      { href: '/admin/site-management/home', label: 'Home Page', icon: Home },
+      { href: '/admin/site-management/men', label: 'Men Page', icon: Shirt },
+  ]
 
   return (
     <Sidebar collapsible="icon">
@@ -84,7 +89,7 @@ export function AdminSidebar({ user }: { user: any }) {
             <SidebarMenuItem key={item.label}>
                 <Link href={item.href}>
                     <SidebarMenuButton 
-                        isActive={pathname.startsWith(item.href)}
+                        isActive={pathname.startsWith(item.href) && item.href !== '/admin/dashboard' ? true : pathname === '/admin/dashboard'}
                         tooltip={{ children: item.label }}
                     >
                         <item.icon />
@@ -93,6 +98,44 @@ export function AdminSidebar({ user }: { user: any }) {
                 </Link>
             </SidebarMenuItem>
           ))}
+           <Accordion type="single" collapsible defaultValue="site-management" className="w-full group-data-[collapsible=icon]:hidden">
+            <AccordionItem value="site-management" className="border-none">
+                <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
+                    <LayoutDashboard />
+                    <span>Site Management</span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-0 pl-5">
+                    <SidebarMenu>
+                       {siteManagementItems.map((item) => (
+                            <SidebarMenuItem key={item.label}>
+                                <Link href={item.href}>
+                                    <SidebarMenuButton 
+                                        isActive={pathname.startsWith(item.href)}
+                                        tooltip={{ children: item.label }}
+                                        size="sm"
+                                    >
+                                        <item.icon />
+                                        <span>{item.label}</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+           <div className="hidden group-data-[collapsible=icon]:block">
+                 <SidebarMenuItem>
+                    <Link href="/admin/site-management/home">
+                        <SidebarMenuButton 
+                            isActive={pathname.startsWith('/admin/site-management')}
+                            tooltip={{ children: 'Site Management' }}
+                        >
+                            <LayoutDashboard />
+                        </SidebarMenuButton>
+                    </Link>
+                 </SidebarMenuItem>
+            </div>
         </SidebarMenu>
       </SidebarContent>
 

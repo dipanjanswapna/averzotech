@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/site-header';
@@ -16,44 +16,63 @@ import {
 } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface ContentItem {
+  url: string;
+  alt: string;
+  dataAiHint: string;
+  link?: string;
+  name?: string;
+  discount?: string;
+}
+
+interface MenPageContent {
+  heroImages: ContentItem[];
+  banner: ContentItem;
+  trendingCategories: ContentItem[];
+  crazyDeals: ContentItem[];
+  shopByCategory: ContentItem[];
+}
+
 
 export default function MenPage() {
-    const mainCarouselImages = [
-        { src: 'https://placehold.co/1200x400.png', alt: 'Fashion Sale Banner', dataAiHint: 'fashion sale men' },
-        { src: 'https://placehold.co/1200x400.png', alt: 'Footwear Offer Banner', dataAiHint: 'mens shoes' },
-    ];
+    const [content, setContent] = useState<Partial<MenPageContent>>({});
+    const [loading, setLoading] = useState(true);
 
-    const trendingCategories = [
-        { name: "Men's Jeans", src: 'https://placehold.co/300x400.png', dataAiHint: 'men jeans' },
-        { name: "Casual Shirts", src: 'https://placehold.co/300x400.png', dataAiHint: 'men casual shirt' },
-        { name: "Activewear", src: 'https://placehold.co/300x400.png', dataAiHint: 'men activewear' },
-        { name: "Sports Shoes", src: 'https://placehold.co/300x400.png', dataAiHint: 'men sport shoes' },
-        { name: "Personal Care", src: 'https://placehold.co/300x400.png', dataAiHint: 'men grooming' },
-    ];
+    useEffect(() => {
+        const fetchMenPageContent = async () => {
+            setLoading(true);
+            const docRef = doc(db, 'site_content', 'men_page');
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setContent(docSnap.data() as MenPageContent);
+            }
+            setLoading(false);
+        };
+        fetchMenPageContent();
+    }, []);
 
-    const crazyDeals = [
-        { name: 'Innerwear', discount: 'MIN. 50% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men innerwear' },
-        { name: 'T-Shirts', discount: 'MIN. 60% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men t-shirt' },
-        { name: 'Formal Shirts', discount: 'MIN. 50% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men formal shirt' },
-        { name: 'Watches', discount: 'UP TO 80% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men watch' },
-        { name: 'Accessories', discount: 'TRENDING', src: 'https://placehold.co/300x400.png', dataAiHint: 'men accessories' },
-    ];
-
-    const shopByCategory = [
-      { name: 'T-Shirts', discount: '40-80% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'man wearing t-shirt' },
-      { name: 'Shirts', discount: 'UP TO 70% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'man wearing shirt' },
-      { name: 'Jeans', discount: '50-80% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'man wearing jeans' },
-      { name: 'Shorts & Trousers', discount: '40-60% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'man wearing shorts' },
-      { name: 'Ethnic Wear', discount: 'UP TO 70% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'man ethnic wear' },
-      { name: 'Casual Shoes', discount: '30-60% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men casual shoes' },
-      { name: 'Sports Shoes', discount: 'UP TO 70% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men sport shoes' },
-      { name: 'Watches', discount: 'UP TO 80% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'wristwatch' },
-      { name: 'Grooming', discount: 'UP TO 50% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men grooming kit' },
-      { name: 'Accessories', discount: '40-70% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men belt wallet' },
-      { name: 'Innerwear', discount: 'UP TO 60% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men innerwear' },
-      { name: 'Personal Care', discount: 'UP TO 40% OFF', src: 'https://placehold.co/300x400.png', dataAiHint: 'men perfume' },
-    ];
-
+    if (loading) {
+        return (
+             <div className="flex min-h-screen flex-col bg-background">
+                <SiteHeader />
+                <main className="flex-grow container py-8 space-y-12">
+                    <Skeleton className="w-full h-[40vh] rounded-lg" />
+                    <Skeleton className="w-full h-[20vh] rounded-lg" />
+                    <div className="space-y-6">
+                        <Skeleton className="h-8 w-1/4 mx-auto" />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                            {Array(5).fill(0).map((_, i) => <Skeleton key={i} className="w-full aspect-[3/4]" />)}
+                        </div>
+                    </div>
+                </main>
+                <SiteFooter />
+            </div>
+        )
+    }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -63,12 +82,12 @@ export default function MenPage() {
             <h1 className="text-2xl font-bold mb-4">Men's Fashion</h1>
             <Carousel opts={{ loop: true }} className="mb-8">
                 <CarouselContent>
-                    {mainCarouselImages.map((image, index) => (
+                    {(content.heroImages || []).map((image, index) => (
                     <CarouselItem key={index}>
-                        <Link href="#">
+                        <Link href={image.link || '#'}>
                             <Image
-                                src={image.src}
-                                alt={image.alt}
+                                src={image.url || 'https://placehold.co/1200x400.png'}
+                                alt={image.alt || 'Men\'s fashion banner'}
                                 width={1200}
                                 height={400}
                                 className="w-full h-auto rounded-lg object-cover"
@@ -82,27 +101,31 @@ export default function MenPage() {
                 <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
             </Carousel>
 
-            <section className="mb-12">
-                <Image
-                    src="https://placehold.co/1200x200.png"
-                    alt="Parade of Savings Banner"
-                    width={1200}
-                    height={200}
-                    className="w-full h-auto rounded-lg"
-                    data-ai-hint="fashion sale banner"
-                />
-            </section>
+            {content.banner && (
+                <section className="mb-12">
+                    <Link href={content.banner.link || '#'}>
+                        <Image
+                            src={content.banner.url || 'https://placehold.co/1200x200.png'}
+                            alt={content.banner.alt || 'Sale banner'}
+                            width={1200}
+                            height={200}
+                            className="w-full h-auto rounded-lg"
+                            data-ai-hint={content.banner.dataAiHint}
+                        />
+                    </Link>
+                </section>
+            )}
 
              <section className="mb-12">
                 <h2 className="text-2xl font-bold text-center mb-6">TRENDING NOW</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                    {trendingCategories.map((category) => (
-                        <Link href="#" key={category.name}>
+                    {(content.trendingCategories || []).map((category, index) => (
+                        <Link href={category.link || '#'} key={index}>
                             <Card className="overflow-hidden group">
                                 <CardContent className="p-0">
                                 <Image
-                                    src={category.src}
-                                    alt={category.name}
+                                    src={category.url || 'https://placehold.co/300x400.png'}
+                                    alt={category.name || 'Trending category'}
                                     width={300}
                                     height={400}
                                     className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
@@ -124,13 +147,13 @@ export default function MenPage() {
                     </Button>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                     {crazyDeals.map((deal) => (
-                        <Link href="#" key={deal.name}>
+                     {(content.crazyDeals || []).map((deal, index) => (
+                        <Link href={deal.link || '#'} key={index}>
                             <Card className="overflow-hidden group">
                                 <CardContent className="p-0">
                                 <Image
-                                    src={deal.src}
-                                    alt={deal.name}
+                                    src={deal.url || 'https://placehold.co/300x400.png'}
+                                    alt={deal.name || 'Deal'}
                                     width={300}
                                     height={400}
                                     className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
@@ -150,12 +173,12 @@ export default function MenPage() {
             <section className="bg-purple-100/50 p-8 rounded-lg">
                 <h2 className="text-2xl font-bold text-center mb-6" style={{color: '#535766'}}>SHOP BY CATEGORY</h2>
                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
-                     {shopByCategory.map((category) => (
-                        <Link href="#" key={category.name} className="group">
+                     {(content.shopByCategory || []).map((category, index) => (
+                        <Link href={category.link || '#'} key={index} className="group">
                             <div className="bg-purple-200/50 rounded-lg overflow-hidden">
                                 <Image
-                                    src={category.src}
-                                    alt={category.name}
+                                    src={category.url || 'https://placehold.co/200x250.png'}
+                                    alt={category.name || 'Category'}
                                     width={200}
                                     height={250}
                                     className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
