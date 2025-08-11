@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -90,7 +91,8 @@ export default function OrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState('');
   const [newNote, setNewNote] = useState('');
-  
+  const [trackingId, setTrackingId] = useState('');
+
   useEffect(() => {
     if (orderId) {
         const fetchOrder = async () => {
@@ -101,6 +103,7 @@ export default function OrderDetailsPage() {
                 const orderData = { id: orderSnap.id, ...orderSnap.data() } as Order;
                 setOrder(orderData);
                 setNewStatus(orderData.status);
+                setTrackingId(orderData.trackingId || '');
             } else {
                 console.error("No such order!");
             }
@@ -125,6 +128,24 @@ export default function OrderDetailsPage() {
       } catch (error) {
           console.error("Error updating status: ", error);
           toast({ title: "Error", description: "Failed to update order status.", variant: "destructive" });
+      }
+  };
+
+  const handleUpdateTracking = async () => {
+      if (!order) return;
+      const orderRef = doc(db, 'orders', order.id);
+      try {
+          await updateDoc(orderRef, { trackingId: trackingId });
+          const noteContent = `Tracking ID updated to ${trackingId}.`;
+          await handleAddNote(noteContent, 'System');
+          setOrder(prev => prev ? { ...prev, trackingId: trackingId } : null);
+          toast({
+              title: "Tracking Updated",
+              description: `The tracking ID has been saved.`
+          });
+      } catch (error) {
+          console.error("Error updating tracking ID: ", error);
+          toast({ title: "Error", description: "Failed to save tracking ID.", variant: "destructive" });
       }
   };
   
@@ -294,6 +315,17 @@ export default function OrderDetailsPage() {
                 </CardContent>
                  <CardFooter>
                     <Button className="w-full" onClick={handleUpdateStatus}>Update Order</Button>
+                </CardFooter>
+            </Card>
+             <Card>
+                 <CardHeader>
+                    <CardTitle>Tracking Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Input placeholder="Enter tracking ID" value={trackingId} onChange={e => setTrackingId(e.target.value)} />
+                </CardContent>
+                 <CardFooter>
+                    <Button className="w-full" variant="secondary" onClick={handleUpdateTracking}>Save Tracking ID</Button>
                 </CardFooter>
             </Card>
             <Card>

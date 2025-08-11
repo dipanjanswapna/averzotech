@@ -165,8 +165,8 @@ export default function OrderConfirmationPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {orderDetails.items.map((item) => (
-                                        <TableRow key={item.id}>
+                                    {orderDetails.items.map((item, index) => (
+                                        <TableRow key={index}>
                                             <TableCell className="hidden md:table-cell">
                                                 <Image src={item.image || 'https://placehold.co/64x64.png'} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
                                             </TableCell>
@@ -175,7 +175,7 @@ export default function OrderConfirmationPage() {
                                                 <p className="text-sm text-muted-foreground">{item.variant}</p>
                                             </TableCell>
                                             <TableCell className="text-center">{item.quantity}</TableCell>
-                                            <TableCell className="text-right font-medium">৳{item.price.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right font-medium">৳{(item.price * item.quantity).toFixed(2)}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
