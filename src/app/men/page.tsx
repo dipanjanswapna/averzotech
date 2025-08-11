@@ -147,7 +147,7 @@ export default function MenPage() {
                 </div>
             </section>
             
-            <section className="bg-green-100/50 p-8 rounded-lg">
+            <section className="bg-purple-100/50 p-8 rounded-lg">
                 <h2 className="text-2xl font-bold text-center mb-6" style={{color: '#535766'}}>SHOP BY CATEGORY</h2>
                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
                      {shopByCategory.map((category) => (
