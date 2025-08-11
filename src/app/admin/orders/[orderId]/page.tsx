@@ -64,6 +64,10 @@ interface Order {
         subtotal: number;
         shipping: number;
         tax: number;
+        coupon?: {
+            code: string;
+            discountAmount: number;
+        } | null;
         total: number;
     };
     notes: { id: string; author: string; date: any; note: string; }[];
@@ -234,6 +238,12 @@ export default function OrderDetailsPage() {
                         <span className="text-muted-foreground">Tax</span>
                         <span>৳{order.payment.tax.toFixed(2)}</span>
                     </div>
+                    {order.payment.coupon && (
+                         <div className="flex justify-between text-green-600">
+                            <span>Discount ({order.payment.coupon.code})</span>
+                            <span className='font-semibold'>- ৳{order.payment.coupon.discountAmount.toFixed(2)}</span>
+                        </div>
+                    )}
                      <Separator />
                      <div className="flex justify-between font-bold text-base">
                         <span>Total</span>

@@ -50,7 +50,7 @@ const savedAddresses = [
 ]
 
 export default function ShippingPage() {
-    const { cart } = useCart();
+    const { cart, subTotal, appliedCoupon, total } = useCart();
     const [selectedAddress, setSelectedAddress] = React.useState<string | undefined>(savedAddresses.length > 0 ? savedAddresses[0].id : undefined);
     const [shippingMethod, setShippingMethod] = React.useState<string | undefined>('standard');
     const [activeTab, setActiveTab] = React.useState("saved-address");
@@ -60,10 +60,9 @@ export default function ShippingPage() {
 
     const isSelectionComplete = selectedAddress && shippingMethod;
 
-    const subtotal = cart.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
-    const shippingFee = shippingMethod === 'express' ? 250 : 120;
-    const taxes = subtotal * 0.05; // 5% tax
-    const total = subtotal + shippingFee + taxes;
+    const shippingFee = subTotal === 0 ? 0 : (shippingMethod === 'express' ? 250 : 120);
+    const taxes = subTotal * 0.05; // 5% tax
+    const finalTotal = subTotal - (appliedCoupon?.discountAmount || 0) + shippingFee + taxes;
 
     const handleProceedToPayment = () => {
         if (!isSelectionComplete) {
@@ -73,6 +72,8 @@ export default function ShippingPage() {
                 variant: "destructive",
             });
         } else {
+            // Here you would typically save the shipping info to a state/context
+            // before redirecting. For now, we'll just redirect.
             router.push('/payment');
         }
     }
@@ -251,16 +252,17 @@ export default function ShippingPage() {
 
                           <Separator className="my-6" />
 
-                          <div className="flex gap-2 mb-6">
-                              <Input placeholder="Discount code" />
-                              <Button variant="secondary">Apply</Button>
-                          </div>
-
                           <div className="space-y-2">
                               <div className="flex justify-between">
                                   <p className="text-muted-foreground">Subtotal</p>
-                                  <p className="font-semibold">৳{subtotal.toFixed(2)}</p>
+                                  <p className="font-semibold">৳{subTotal.toFixed(2)}</p>
                               </div>
+                               {appliedCoupon && (
+                                 <div className="flex justify-between text-green-600">
+                                     <p>Discount ({appliedCoupon.code})</p>
+                                     <p className="font-semibold">- ৳{appliedCoupon.discountAmount.toFixed(2)}</p>
+                                 </div>
+                               )}
                               <div className="flex justify-between">
                                   <p className="text-muted-foreground">Shipping</p>
                                   <p className="font-semibold">৳{shippingFee.toFixed(2)}</p>
@@ -287,7 +289,7 @@ export default function ShippingPage() {
 
                           <div className="flex justify-between text-xl font-bold mb-6">
                               <p>Total</p>
-                              <p>৳{total.toFixed(2)}</p>
+                              <p>৳{finalTotal.toFixed(2)}</p>
                           </div>
                       </div>
                     </div>

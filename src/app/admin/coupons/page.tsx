@@ -178,7 +178,7 @@ export default function CouponsPage() {
                         {coupon.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{coupon.used} / {coupon.limit ?? '∞'}</TableCell>
+                    <TableCell>{coupon.used || 0} / {coupon.limit ?? '∞'}</TableCell>
                      <TableCell>{new Date(coupon.startDate).toLocaleDateString()} - {new Date(coupon.endDate).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
