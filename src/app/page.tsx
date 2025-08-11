@@ -150,12 +150,14 @@ export default function Home() {
         setCampaignsLoading(true);
         try {
             const campaignsRef = collection(db, 'campaigns');
-            const q = query(campaignsRef, where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
+            const q = query(campaignsRef, where("status", "==", "Active"));
             const campaignSnap = await getDocs(q);
+
+            const allCampaigns = campaignSnap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Campaign))
+                .filter(campaign => campaign.endDate.toDate() > new Date());
             
-            if (!campaignSnap.empty) {
-                const allCampaigns = campaignSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Campaign));
-                
+            if (allCampaigns.length > 0) {
                 const flashSaleCampaign = allCampaigns.find(c => c.type === 'Flash Sale') || null;
                 setFlashSale(flashSaleCampaign);
                 

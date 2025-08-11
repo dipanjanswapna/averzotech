@@ -116,12 +116,15 @@ export default function FlashSalePage() {
         setLoading(true);
         try {
             const campaignsRef = collection(db, 'campaigns');
-            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
+            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"));
             const campaignSnap = await getDocs(q);
             
-            if (!campaignSnap.empty) {
-                const campaignDoc = campaignSnap.docs[0];
-                const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
+            const activeCampaigns = campaignSnap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Campaign))
+                .filter(campaign => campaign.endDate.toDate() > new Date());
+
+            if (activeCampaigns.length > 0) {
+                const campaignData = activeCampaigns[0]; // Take the first active flash sale
                 setFlashSale(campaignData);
 
                 if(campaignData.products && campaignData.products.length > 0) {
