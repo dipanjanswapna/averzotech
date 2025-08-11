@@ -139,11 +139,13 @@ export function SiteHeader() {
                                </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56" sideOffset={10}>
-                               <DropdownMenuLabel className="flex items-center gap-2">
-                                  <div>
-                                     <p className="font-bold">{category.name}</p>
-                                     <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
-                                  </div>
+                                <DropdownMenuLabel>
+                                  <Link href={category.href} className="flex items-center gap-2">
+                                    <div>
+                                      <p className="font-bold">{category.name}</p>
+                                      <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
+                                    </div>
+                                  </Link>
                                </DropdownMenuLabel>
                                <DropdownMenuSeparator />
                                <DropdownMenuGroup>
@@ -205,14 +207,16 @@ function NavMenuItem({ category }: { category: any }) {
         onMouseEnter={handleOpen} 
         onMouseLeave={handleClose}
       >
-        <DropdownMenuLabel className="flex items-start gap-4 p-2">
-          <div className="mt-1">
-            <Logo />
-          </div>
-          <div>
-            <p className="font-bold text-base">{category.name}</p>
-            <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
-          </div>
+        <DropdownMenuLabel>
+          <Link href={category.href} className="flex items-start gap-4 p-2">
+            <div className="mt-1">
+              <Logo />
+            </div>
+            <div>
+              <p className="font-bold text-base">{category.name}</p>
+              <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
+            </div>
+          </Link>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
