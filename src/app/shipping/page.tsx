@@ -36,7 +36,7 @@ const cartItems = [
     id: '1',
     name: 'Men Top Black Puffed Jacket',
     variant: 'Men\'s Black',
-    price: 999.00,
+    price: 1200.00,
     quantity: 1,
     image: 'https://placehold.co/80x80.png',
     dataAiHint: 'puffed jacket',
@@ -45,7 +45,7 @@ const cartItems = [
     id: '2',
     name: 'Women Jacket',
     variant: 'Women top',
-    price: 1200.00,
+    price: 1500.00,
     quantity: 1,
     image: 'https://placehold.co/80x80.png',
     dataAiHint: 'women jacket',
@@ -55,21 +55,21 @@ const cartItems = [
 const savedAddresses = [
     {
         id: 'addr1',
-        name: 'Divyansh Agarwal',
-        address: '123, Webyansh, Bangalore, Karnataka - 560021',
-        phone: '+91 6377588843',
+        name: 'Kamal Hasan',
+        address: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
+        phone: '+880 1712345678',
     },
     {
         id: 'addr2',
-        name: 'John Doe',
-        address: '456, Tech Park, Bangalore, Karnataka - 560066',
-        phone: '+91 9876543210',
+        name: 'Jamila Khatun',
+        address: '456 CDA Avenue, Agrabad, Chittagong - 4100',
+        phone: '+880 1812345678',
     }
 ]
 
 const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-const shippingFee = 9.00;
-const taxes = 5.00;
+const shippingFee = 120.00;
+const taxes = 50.00;
 const total = subtotal + shippingFee + taxes;
 
 
@@ -84,8 +84,75 @@ export default function ShippingPage() {
         <div className="flex min-h-screen flex-col bg-background">
             <SiteHeader />
             <main className="flex-grow container mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <div className="lg:col-span-1">
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:flex-row-reverse gap-12">
+                    <div className="lg:col-span-1 bg-secondary/50 p-8 rounded-lg">
+                        <h2 className="text-2xl font-semibold mb-6">Your Cart</h2>
+                        <div className="space-y-4">
+                            {cartItems.map((item) => (
+                            <div key={item.id} className="flex items-center gap-4">
+                                <div className="relative">
+                                    <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
+                                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
+                                </div>
+                                <div className="flex-grow">
+                                    <p className="font-medium">{item.name}</p>
+                                    <p className="text-sm text-muted-foreground">{item.variant}</p>
+                                </div>
+                                <p className="font-semibold">৳{item.price.toFixed(2)}</p>
+                            </div>
+                            ))}
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div className="flex gap-2 mb-6">
+                            <Input placeholder="Discount code" />
+                            <Button variant="secondary">Apply</Button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <p className="text-muted-foreground">Subtotal</p>
+                                <p className="font-semibold">৳{subtotal.toFixed(2)}</p>
+                            </div>
+                            <div className="flex justify-between">
+                                <p className="text-muted-foreground">Shipping</p>
+                                <p className="font-semibold">৳{shippingFee.toFixed(2)}</p>
+                            </div>
+                            <div className="flex justify-between">
+                                <p className="flex items-center gap-1 text-muted-foreground">
+                                    Estimated taxes
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Info className="h-4 w-4" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Taxes are calculated based on your shipping address.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </p>
+                                <p className="font-semibold">৳{taxes.toFixed(2)}</p>
+                            </div>
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div className="flex justify-between text-xl font-bold mb-6">
+                            <p>Total</p>
+                            <p>৳{total.toFixed(2)}</p>
+                        </div>
+                        
+                        <Button 
+                            className="w-full bg-black text-white hover:bg-gray-800" 
+                            size="lg"
+                            disabled={!isSelectionComplete}
+                        >
+                            Continue to Payment
+                        </Button>
+                    </div>
+                     <div className="lg:col-span-1">
                         <div className="mb-6">
                             <p className="text-sm text-muted-foreground">
                                 <Link href="/cart" className="hover:text-primary">Cart</Link>
@@ -140,11 +207,11 @@ export default function ShippingPage() {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label htmlFor="first-name">First Name*</Label>
-                                                        <Input id="first-name" placeholder="Divyansh" />
+                                                        <Input id="first-name" placeholder="Kamal" />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label htmlFor="last-name">Last Name*</Label>
-                                                        <Input id="last-name" placeholder="Agarwal" />
+                                                        <Input id="last-name" placeholder="Hasan" />
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">
@@ -154,17 +221,17 @@ export default function ShippingPage() {
                                                 <div className="space-y-2">
                                                     <Label htmlFor="phone">Phone number*</Label>
                                                     <div className="flex">
-                                                        <Select defaultValue="in">
+                                                        <Select defaultValue="bd">
                                                             <SelectTrigger className="w-[80px]">
                                                                 <SelectValue placeholder="Country" />
                                                             </SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="in">IND</SelectItem>
+                                                                <SelectItem value="bd">BD</SelectItem>
                                                                 <SelectItem value="us">USA</SelectItem>
                                                                 <SelectItem value="uk">UK</SelectItem>
                                                             </SelectContent>
                                                         </Select>
-                                                        <Input id="phone" placeholder="+91 1234567890" className="flex-1" />
+                                                        <Input id="phone" placeholder="+880 1234567890" className="flex-1" />
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2">
@@ -174,15 +241,15 @@ export default function ShippingPage() {
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div className="space-y-2">
                                                         <Label htmlFor="city">City*</Label>
-                                                        <Input id="city" placeholder="Bangalore" />
+                                                        <Input id="city" placeholder="Dhaka" />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label htmlFor="state">State*</Label>
-                                                        <Input id="state" placeholder="Karnataka" />
+                                                        <Label htmlFor="state">District*</Label>
+                                                        <Input id="state" placeholder="Dhaka" />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label htmlFor="zip">Zip Code*</Label>
-                                                        <Input id="zip" placeholder="560021" />
+                                                        <Input id="zip" placeholder="1213" />
                                                     </div>
                                                 </div>
                                                 <Button type="submit" className="w-full">Save Address</Button>
@@ -199,11 +266,11 @@ export default function ShippingPage() {
                                         <div className="flex items-center space-x-4">
                                             <RadioGroupItem value="free" id="free-shipping" />
                                             <div>
-                                                <p className="font-semibold">Free Shipping</p>
-                                                <p className="text-sm text-muted-foreground">7-20 Days</p>
+                                                <p className="font-semibold">Standard Shipping</p>
+                                                <p className="text-sm text-muted-foreground">7-10 Days</p>
                                             </div>
                                         </div>
-                                        <p className="font-semibold">$0</p>
+                                        <p className="font-semibold">৳120</p>
                                     </Label>
                                     <Label htmlFor="express-shipping" className={cn("flex items-center justify-between rounded-lg border p-4 cursor-pointer transition-colors", shippingMethod === 'express' && "bg-accent border-primary")}>
                                         <div className="flex items-center space-x-4">
@@ -213,78 +280,11 @@ export default function ShippingPage() {
                                                 <p className="text-sm text-muted-foreground">1-3 Days</p>
                                             </div>
                                         </div>
-                                        <p className="font-semibold">$9</p>
+                                        <p className="font-semibold">৳250</p>
                                     </Label>
                                 </RadioGroup>
                             </div>
                         </div>
-                    </div>
-                    <div className="lg:col-span-1 bg-secondary/50 p-8 rounded-lg">
-                        <h2 className="text-2xl font-semibold mb-6">Your Cart</h2>
-                        <div className="space-y-4">
-                            {cartItems.map((item) => (
-                            <div key={item.id} className="flex items-center gap-4">
-                                <div className="relative">
-                                    <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
-                                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
-                                </div>
-                                <div className="flex-grow">
-                                    <p className="font-medium">{item.name}</p>
-                                    <p className="text-sm text-muted-foreground">{item.variant}</p>
-                                </div>
-                                <p className="font-semibold">${item.price.toFixed(2)}</p>
-                            </div>
-                            ))}
-                        </div>
-
-                        <Separator className="my-6" />
-
-                        <div className="flex gap-2 mb-6">
-                            <Input placeholder="Discount code" />
-                            <Button variant="secondary">Apply</Button>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <p className="text-muted-foreground">Subtotal</p>
-                                <p className="font-semibold">${subtotal.toFixed(2)}</p>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="text-muted-foreground">Shipping</p>
-                                <p className="font-semibold">${shippingFee.toFixed(2)}</p>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="flex items-center gap-1 text-muted-foreground">
-                                    Estimated taxes
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Info className="h-4 w-4" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Taxes are calculated based on your shipping address.</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </p>
-                                <p className="font-semibold">${taxes.toFixed(2)}</p>
-                            </div>
-                        </div>
-
-                        <Separator className="my-6" />
-
-                        <div className="flex justify-between text-xl font-bold mb-6">
-                            <p>Total</p>
-                            <p>${total.toFixed(2)}</p>
-                        </div>
-                        
-                        <Button 
-                            className="w-full bg-black text-white hover:bg-gray-800" 
-                            size="lg"
-                            disabled={!isSelectionComplete}
-                        >
-                            Continue to Payment
-                        </Button>
                     </div>
                 </div>
             </main>

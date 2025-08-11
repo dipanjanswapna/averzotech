@@ -19,9 +19,9 @@ const cartItems = [
     brand: 'SASSAFRAS',
     size: '28',
     color: 'Black',
-    price: 639,
-    originalPrice: 1399,
-    discount: '54% OFF',
+    price: 750,
+    originalPrice: 1500,
+    discount: '50% OFF',
     quantity: 1,
     image: 'https://placehold.co/150x200.png',
     dataAiHint: 'black tights',
@@ -34,8 +34,8 @@ const cartItems = [
     brand: 'H&M',
     size: '32',
     color: 'Blue',
-    price: 1499,
-    originalPrice: 2999,
+    price: 1800,
+    originalPrice: 3600,
     discount: '50% OFF',
     quantity: 1,
     image: 'https://placehold.co/150x200.png',
@@ -49,8 +49,8 @@ const cartItems = [
     brand: 'Zara',
     size: 'M',
     color: 'Red',
-    price: 2490,
-    originalPrice: 4990,
+    price: 3000,
+    originalPrice: 6000,
     discount: '50% OFF',
     quantity: 1,
     image: 'https://placehold.co/150x200.png',
@@ -79,7 +79,7 @@ export default function CartPage() {
 
   const subTotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const totalDiscount = items.reduce((acc, item) => acc + ((item.originalPrice - item.price) * item.quantity), 0);
-  const shippingFee = subTotal > 1000 ? 0 : 50;
+  const shippingFee = subTotal > 1500 ? 0 : 60;
   const grandTotal = subTotal + shippingFee;
 
 
@@ -117,8 +117,8 @@ export default function CartPage() {
                   </div>
                   <div className="flex flex-col items-start md:items-end justify-between">
                      <div className="flex items-center gap-2">
-                          <p className="font-bold">₹{item.price}</p>
-                          <p className="text-sm line-through text-muted-foreground">₹{item.originalPrice}</p>
+                          <p className="font-bold">৳{item.price}</p>
+                          <p className="text-sm line-through text-muted-foreground">৳{item.originalPrice}</p>
                           <p className="text-sm text-orange-500 font-bold">{item.discount}</p>
                       </div>
                     <div className="flex items-center gap-2 mt-2">
@@ -156,15 +156,15 @@ export default function CartPage() {
               <div className="space-y-2 mb-4">
                   <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>₹{subTotal.toFixed(2)}</span>
+                      <span>৳{subTotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-green-600">
                       <span>Discount</span>
-                      <span>- ₹{totalDiscount.toFixed(2)}</span>
+                      <span>- ৳{totalDiscount.toFixed(2)}</span>
                   </div>
                    <div className="flex justify-between">
                       <span>Shipping Fee</span>
-                      <span>₹{shippingFee.toFixed(2)}</span>
+                      <span>৳{shippingFee.toFixed(2)}</span>
                   </div>
               </div>
 
@@ -186,7 +186,7 @@ export default function CartPage() {
               <Separator className="my-4" />
               <div className="flex justify-between font-bold text-lg mb-4">
                 <span>Grand Total</span>
-                <span>₹{grandTotal.toFixed(2)}</span>
+                <span>৳{grandTotal.toFixed(2)}</span>
               </div>
               <Button className="w-full" size="lg" asChild>
                 <Link href="/shipping">Continue to Shipping</Link>

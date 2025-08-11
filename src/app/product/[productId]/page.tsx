@@ -33,9 +33,9 @@ const product = {
   name: 'Women Black Slim Fit Solid Tights',
   rating: 4.3,
   reviewsCount: 2900,
-  price: 639,
-  mrp: 1399,
-  discount: 54,
+  price: 750,
+  mrp: 1500,
+  discount: 50,
   availability: 'In Stock',
   images: [
     { src: 'https://placehold.co/600x800.png', alt: 'Model wearing black tights front view', dataAiHint: 'woman fashion' },
@@ -53,11 +53,11 @@ const product = {
     { name: 'Navy', hex: '#000080', active: false },
   ],
   delivery: {
-    pincode: '110001',
+    pincode: '1212',
     estimated: '2-3 days',
     shippingCost: 'Free Shipping',
   },
-  emi: 'No Cost EMI starting from ₹213/month',
+  emi: 'No Cost EMI starting from ৳250/month',
   offers: [
     'Applicable on: Orders above Rs. 500 (only on first purchase)',
     'Coupon code: MYNTRAFIRST',
@@ -186,8 +186,8 @@ export default function ProductPage({ params }: { params: { productId: string } 
             <Separator className="my-4" />
 
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">₹{product.price}</span>
-                <span className="text-muted-foreground line-through">MRP ₹{product.mrp}</span>
+                <span className="text-2xl font-bold">৳{product.price}</span>
+                <span className="text-muted-foreground line-through">MRP ৳{product.mrp}</span>
                 <span className="text-orange-500 font-bold">({product.discount}% OFF)</span>
             </div>
             <p className="text-sm text-green-600 font-semibold">inclusive of all taxes</p>
@@ -402,7 +402,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
                             <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
                             <p className="text-xs text-muted-foreground truncate">{item.name}</p>
                             <p className="text-sm font-semibold mt-1 text-foreground">
-                                Rs. {item.price}
+                                ৳ {item.price}
                             </p>
                         </div>
                     </Link>

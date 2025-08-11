@@ -48,9 +48,9 @@ export default function Home() {
       brand: 'Tokyo Talkies',
       name: 'Women Cropped Shirt',
       size: 'S',
-      price: '639',
-      originalPrice: '1599',
-      discount: '60% OFF',
+      price: '750',
+      originalPrice: '1500',
+      discount: '50% OFF',
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'woman white shirt'
     },
@@ -59,8 +59,8 @@ export default function Home() {
       brand: 'H&M',
       name: 'Slim Fit Jeans',
       size: '32',
-      price: '1499',
-      originalPrice: '2999',
+      price: '1800',
+      originalPrice: '3600',
       discount: '50% OFF',
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'blue jeans'
@@ -70,8 +70,8 @@ export default function Home() {
       brand: 'Zara',
       name: 'Floral Print Dress',
       size: 'M',
-      price: '2490',
-      originalPrice: '4990',
+      price: '3000',
+      originalPrice: '6000',
       discount: '50% OFF',
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'summer dress'
@@ -92,9 +92,9 @@ export default function Home() {
       brand: 'Levis',
       name: '511 Slim Fit Jeans',
       size: '34',
-      price: '1999',
-      originalPrice: '3999',
-      discount: '50% OFF',
+      price: '2500',
+      originalPrice: '4000',
+      discount: '37.5% OFF',
       src: 'https://placehold.co/400x500.png',
       dataAiHint: 'dark jeans'
     },
@@ -205,8 +205,8 @@ export default function Home() {
                                 <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
                                 <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
                                 <p className="text-sm font-semibold mt-1 text-foreground">
-                                    Rs. {deal.price}{' '}
-                                    <span className="text-xs text-muted-foreground line-through">Rs. {deal.originalPrice}</span>{' '}
+                                    ৳{deal.price}{' '}
+                                    <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
                                     <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
                                 </p>
                             </div>
