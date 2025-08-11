@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 
 const cartItems = [
   {
@@ -67,13 +68,17 @@ const savedAddresses = [
 ]
 
 const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-const shipping = 9.00;
+const shippingFee = 9.00;
 const taxes = 5.00;
-const total = subtotal + shipping + taxes;
+const total = subtotal + shippingFee + taxes;
 
 
 export default function ShippingPage() {
-    const [selectedAddress, setSelectedAddress] = React.useState(savedAddresses[0].id);
+    const [selectedAddress, setSelectedAddress] = React.useState<string | undefined>();
+    const [shippingMethod, setShippingMethod] = React.useState<string | undefined>();
+    const [activeTab, setActiveTab] = React.useState("saved-address");
+
+    const isSelectionComplete = selectedAddress && shippingMethod;
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -92,7 +97,7 @@ export default function ShippingPage() {
                         </div>
 
                         <div className="space-y-8">
-                            <Tabs defaultValue="saved-address" className="w-full">
+                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="saved-address">Select Address</TabsTrigger>
                                     <TabsTrigger value="new-address">Add New Address</TabsTrigger>
@@ -103,7 +108,7 @@ export default function ShippingPage() {
                                             <h2 className="text-2xl font-semibold mb-4">Shipping Address</h2>
                                             <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress} className="space-y-4">
                                                 {savedAddresses.map((address) => (
-                                                    <Label key={address.id} htmlFor={address.id} className="flex items-start justify-between rounded-lg border p-4 cursor-pointer has-[:checked]:bg-accent has-[:checked]:border-primary transition-colors">
+                                                    <Label key={address.id} htmlFor={address.id} className={cn("flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-colors", selectedAddress === address.id && "bg-accent border-primary")}>
                                                         <div className="flex items-start space-x-4">
                                                             <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
                                                             <div>
@@ -114,12 +119,15 @@ export default function ShippingPage() {
                                                         </div>
                                                     </Label>
                                                 ))}
-                                                <Label htmlFor="add-new" className="flex items-center justify-center rounded-lg border-2 border-dashed p-4 cursor-pointer hover:border-primary transition-colors">
+                                                <div 
+                                                    className="flex items-center justify-center rounded-lg border-2 border-dashed p-4 cursor-pointer hover:border-primary transition-colors"
+                                                    onClick={() => setActiveTab("new-address")}
+                                                >
                                                      <div className="text-center">
                                                         <PlusCircle className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                                                         <p className="font-semibold">Add New Address</p>
                                                      </div>
-                                                </Label>
+                                                </div>
                                             </RadioGroup>
                                         </CardContent>
                                     </Card>
@@ -186,10 +194,10 @@ export default function ShippingPage() {
                             
                             <div>
                                 <h2 className="text-2xl font-semibold mb-4">Shipping Method</h2>
-                                <RadioGroup defaultValue="express" className="space-y-4">
-                                    <Label className="flex items-center justify-between rounded-lg border p-4 cursor-pointer hover:bg-accent has-[:checked]:bg-accent has-[:checked]:border-primary transition-colors">
+                                <RadioGroup value={shippingMethod} onValueChange={setShippingMethod} className="space-y-4">
+                                    <Label htmlFor="free-shipping" className={cn("flex items-center justify-between rounded-lg border p-4 cursor-pointer transition-colors", shippingMethod === 'free' && "bg-accent border-primary")}>
                                         <div className="flex items-center space-x-4">
-                                        <RadioGroupItem value="free" id="free" />
+                                            <RadioGroupItem value="free" id="free-shipping" />
                                             <div>
                                                 <p className="font-semibold">Free Shipping</p>
                                                 <p className="text-sm text-muted-foreground">7-20 Days</p>
@@ -197,9 +205,9 @@ export default function ShippingPage() {
                                         </div>
                                         <p className="font-semibold">$0</p>
                                     </Label>
-                                    <Label className="flex items-center justify-between rounded-lg border p-4 cursor-pointer hover:bg-accent has-[:checked]:bg-accent has-[:checked]:border-primary transition-colors">
+                                    <Label htmlFor="express-shipping" className={cn("flex items-center justify-between rounded-lg border p-4 cursor-pointer transition-colors", shippingMethod === 'express' && "bg-accent border-primary")}>
                                         <div className="flex items-center space-x-4">
-                                            <RadioGroupItem value="express" id="express" />
+                                            <RadioGroupItem value="express" id="express-shipping" />
                                             <div>
                                                 <p className="font-semibold">Express Shipping</p>
                                                 <p className="text-sm text-muted-foreground">1-3 Days</p>
@@ -243,7 +251,7 @@ export default function ShippingPage() {
                             </div>
                             <div className="flex justify-between">
                                 <p className="text-muted-foreground">Shipping</p>
-                                <p className="font-semibold">${shipping.toFixed(2)}</p>
+                                <p className="font-semibold">${shippingFee.toFixed(2)}</p>
                             </div>
                             <div className="flex justify-between">
                                 <p className="flex items-center gap-1 text-muted-foreground">
@@ -270,7 +278,11 @@ export default function ShippingPage() {
                             <p>${total.toFixed(2)}</p>
                         </div>
                         
-                        <Button className="w-full bg-black text-white hover:bg-gray-800" size="lg">
+                        <Button 
+                            className="w-full bg-black text-white hover:bg-gray-800" 
+                            size="lg"
+                            disabled={!isSelectionComplete}
+                        >
                             Continue to Payment
                         </Button>
                     </div>
@@ -279,4 +291,5 @@ export default function ShippingPage() {
             <SiteFooter />
         </div>
     )
-}
+
+    
