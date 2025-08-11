@@ -255,14 +255,11 @@ export default function ShopPage() {
                       <SheetTrigger asChild>
                          <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
                       </SheetTrigger>
-                      <SheetContent className="w-[300px]">
-                        <SheetHeader>
+                      <SheetContent className="w-[300px] p-0">
+                        <SheetHeader className="p-4 border-b">
                           <SheetTitle>Filters</SheetTitle>
-                          <SheetDescription>
-                            Refine your search for the best products.
-                          </SheetDescription>
                         </SheetHeader>
-                        <div className="py-4">
+                        <div className="p-4">
                            {filterControls}
                         </div>
                       </SheetContent>
@@ -292,7 +289,7 @@ export default function ShopPage() {
 
             <div className="md:col-span-3">
               {displayedItems.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {displayedItems.map((item) => (
                         <Link href={`/product/${item.id}`} key={item.id} className="group block border p-2 rounded-lg hover:shadow-lg transition-shadow duration-300">
                             <div className="relative overflow-hidden rounded-lg">
@@ -375,7 +372,7 @@ function FilterControls({
             <Accordion type="multiple" defaultValue={['category', 'brand', 'price']} className="w-full">
                 <AccordionItem value="category">
                     <AccordionTrigger className="font-semibold">Category</AccordionTrigger>
-                    <AccordionContent className="space-y-4">
+                    <AccordionContent className="space-y-4 pt-4">
                         <div>
                             <Label>Mother Category</Label>
                             <Select value={selectedCategory} onValueChange={onCategoryChange}>
@@ -412,9 +409,9 @@ function FilterControls({
                         )}
                     </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="brand">
+                 <AccordionItem value="brand">
                     <AccordionTrigger className="font-semibold">Brand</AccordionTrigger>
-                    <AccordionContent>
+                    <AccordionContent className="pt-4">
                         <Select value={selectedBrand} onValueChange={onBrandChange} disabled={!availableBrands.length}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select Brand" />
@@ -447,8 +444,10 @@ function FilterControls({
             </Accordion>
             <div className="flex justify-between gap-2 mt-6">
                 <Button variant="ghost" className="flex-1" onClick={onReset}>Reset</Button>
-                <Button className="flex-1 md:hidden" onClick={onApply}>Apply</Button>
+                <Button className="flex-1" onClick={onApply}>Apply</Button>
             </div>
         </Card>
     )
 }
+
+    
