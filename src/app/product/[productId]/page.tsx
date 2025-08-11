@@ -31,79 +31,8 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
+import { useWishlist } from '@/hooks/use-wishlist';
 
-const initialProduct = {
-  id: '89073456',
-  sku: 'SAS-BLK-TIGHT-28',
-  brand: 'SASSAFRAS',
-  name: 'Women Black Slim Fit Solid Tights',
-  rating: 4.3,
-  reviewsCount: 2900,
-  pricing: {
-    price: 750,
-    comparePrice: 1500,
-    discount: 50,
-  },
-  inventory: {
-      availability: 'In Stock',
-  },
-  images: [
-    { src: 'https://placehold.co/600x800.png', alt: 'Model wearing black tights front view', dataAiHint: 'woman fashion' },
-    { src: 'https://placehold.co/600x800.png', alt: 'Model wearing black tights side view', dataAiHint: 'woman fashion' },
-    { src: 'https://placehold.co/600x800.png', alt: 'Model wearing black tights back view', dataAiHint: 'woman fashion' },
-    { src: 'https://placehold.co/600x800.png', alt: 'Model wearing black tights full outfit', dataAiHint: 'woman street style' },
-    { src: 'https://placehold.co/600x800.png', alt: 'Close up of the fabric', dataAiHint: 'fabric texture' },
-    { src: 'https://placehold.co/600x800.png', alt: 'Model in a different pose', dataAiHint: 'fashion pose' },
-  ],
-  videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Placeholder YouTube video
-  variants: {
-      sizes: ['28', '30', '32', '34', '36'],
-      colors: [
-        { name: 'Black', hex: '#000000', active: true },
-        { name: 'Beige', hex: '#F5F5DC', active: false },
-        { name: 'Navy', hex: '#000080', active: false },
-      ],
-  },
-  shipping: {
-      deliveryFee: 0,
-      estimatedDelivery: '2-3 days'
-  },
-  emi: 'No Cost EMI starting from ৳250/month',
-  offers: '10% off on HDFC Bank cards',
-  description: 'Black solid full-length leggings, has an elasticated waistband with slip-on closure',
-  specifications: [
-      { label: 'Fabric', value: 'Polyester' },
-      { label: 'Pattern', value: 'Solid' },
-      { label: 'Fit', value: 'Slim Fit' },
-      { label: 'Waist Rise', value: 'High-Rise' },
-      { label: 'Length', value: 'Full Length' },
-  ],
-  vendor: 'RetailNet',
-  returnPolicy: 'Easy 7 days returns and exchanges. Please keep the item in its original condition with the brand outer box, MRP tags attached, and warranty cards.',
-  reviews: [
-    { id: 1, author: 'Priya S.', rating: 5, title: 'Excellent Fit!', content: 'These are the best tights I have ever owned. The fit is perfect and the material is so comfortable. Highly recommend!', date: '2023-10-15', helpful: 12, unhelpful: 0 },
-    { id: 2, author: 'Anjali M.', rating: 4, title: 'Good product', content: 'The quality is good for the price. A little see-through but manageable. Overall a decent purchase.', date: '2023-10-12', helpful: 5, unhelpful: 1 },
-    { id: 3, author: 'Rohan K.', rating: 3, title: 'Average Quality', content: 'The product is okay. The material could have been better. It started pilling after a few washes.', date: '2023-10-10', helpful: 2, unhelpful: 3 },
-  ],
-  qna: [
-    { id: 1, question: 'Is the material stretchable?', answer: 'Yes, it has 5% spandex which makes it quite stretchable.' },
-    { id: 2, question: 'Is this suitable for gym wear?', answer: 'Yes, it is suitable for light workouts and yoga.' },
-  ],
-  recommendedProducts: [
-      { id: '123', name: 'Sports Bra', brand: 'Nike', price: 1299, src: 'https://placehold.co/400x500.png', dataAiHint: 'sports bra' },
-      { id: '456', name: 'Running Shoes', brand: 'Adidas', price: 3499, src: 'https://placehold.co/400x500.png', dataAiHint: 'running shoes' },
-      { id: '789', name: 'Yoga Mat', brand: 'Decathlon', price: 899, src: 'https://placehold.co/400x500.png', dataAiHint: 'yoga mat' },
-      { id: '101', name: 'Track Jacket', brand: 'Puma', price: 2199, src: 'https://placehold.co/400x500.png', dataAiHint: 'track jacket' }
-  ]
-};
-
-const ratingDistribution = [
-    { star: 5, percentage: 60, count: 1740 },
-    { star: 4, percentage: 25, count: 725 },
-    { star: 3, percentage: 8, count: 232 },
-    { star: 2, percentage: 3, count: 87 },
-    { star: 1, percentage: 4, count: 116 },
-];
 
 interface Product {
     id: string;
@@ -160,7 +89,10 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const [selectedSize, setSelectedSize] = React.useState<string>('');
   const [selectedColor, setSelectedColor] = React.useState<{name: string, hex: string} | null>(null);
   const { addToCart } = useCart();
+  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
+
+  const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
   React.useEffect(() => {
     if (params.productId) {
@@ -213,6 +145,27 @@ export default function ProductPage({ params }: { params: { productId: string } 
         title: "Added to Cart",
         description: `${product.name} has been added to your cart.`
     })
+  }
+
+  const handleWishlistToggle = () => {
+      if (!product) return;
+
+       const productForWishlist = {
+            id: product.id,
+            name: product.name,
+            brand: product.brand,
+            pricing: product.pricing,
+            images: product.images,
+            inventory: { availability: product.inventory.availability }
+       };
+
+      if (isInWishlist) {
+          removeFromWishlist(product.id);
+          toast({ title: "Removed from Wishlist" });
+      } else {
+          addToWishlist(productForWishlist);
+          toast({ title: "Added to Wishlist" });
+      }
   }
 
   if (loading) {
@@ -270,26 +223,23 @@ export default function ProductPage({ params }: { params: { productId: string } 
 
   // Use mock data for parts not in DB yet
   const displayProduct = {
-      ...initialProduct,
       ...product,
-      id: product.id,
-      name: product.name,
-      brand: product.brand,
       images: product.images.map(img => ({ src: img, alt: product.name, dataAiHint: 'product image'})),
-      pricing: product.pricing,
-      inventory: product.inventory,
-      sku: product.inventory.sku,
-      variants: product.variants,
-      videoUrl: product.videoUrl,
       offers: product.offers ? product.offers.split('\n') : [],
-      details: {
-          description: product.description,
-          specifications: product.specifications,
-      },
-      returnPolicy: product.returnPolicy,
-      vendor: { name: product.vendor, rating: 4.5, totalProducts: 1204 }, // Mock rating/count
-      shipping: product.shipping
+      rating: product.rating || 4.5,
+      reviewsCount: product.reviewsCount || 123,
+      reviews: product.reviews || [],
+      qna: product.qna || [],
+      recommendedProducts: product.recommendedProducts || [],
   };
+
+  const ratingDistribution = [
+    { star: 5, percentage: 60, count: 1740 },
+    { star: 4, percentage: 25, count: 725 },
+    { star: 3, percentage: 8, count: 232 },
+    { star: 2, percentage: 3, count: 87 },
+    { star: 1, percentage: 4, count: 116 },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -419,8 +369,8 @@ export default function ProductPage({ params }: { params: { productId: string } 
               <Button size="lg" variant="secondary" className="flex-1">
                  BUY NOW
               </Button>
-              <Button size="lg" variant="outline" className="flex-1">
-                <Heart className="mr-2 h-5 w-5" /> WISHLIST
+              <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>
+                <Heart className={`mr-2 h-5 w-5 ${isInWishlist ? "fill-current" : ""}`} /> WISHLIST
               </Button>
             </div>
 
@@ -469,11 +419,11 @@ export default function ProductPage({ params }: { params: { productId: string } 
               <AccordionItem value="item-2">
                 <AccordionTrigger className="font-semibold uppercase text-sm">Product Details</AccordionTrigger>
                 <AccordionContent className="space-y-2 text-sm">
-                    <p>{displayProduct.details.description}</p>
+                    <p>{displayProduct.description}</p>
                     <div>
                         <h4 className="font-semibold mb-1">Specifications:</h4>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                            {displayProduct.details.specifications.map(spec => (
+                            {displayProduct.specifications.map(spec => (
                                 <React.Fragment key={spec.label}>
                                     <div className="text-muted-foreground">{spec.label}</div>
                                     <div>{spec.value}</div>
@@ -486,7 +436,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
               <AccordionItem value="item-3">
                   <AccordionTrigger className="font-semibold uppercase text-sm">Return Policy</AccordionTrigger>
                   <AccordionContent>
-                      <p className="text-sm">{displayProduct.returnPolicy}</p>
+                      <p className="text-sm">{product.returnPolicy}</p>
                   </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-4">
@@ -494,10 +444,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
                   <AccordionContent>
                       <div className="flex items-center justify-between">
                         <div>
-                            <h4 className="font-bold text-primary">{displayProduct.vendor.name}</h4>
-                            <div className="flex items-center text-sm">
-                                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 mr-1"/> {displayProduct.vendor.rating}
-                            </div>
+                            <h4 className="font-bold text-primary">{product.vendor}</h4>
                         </div>
                         <Link href="#" className="text-primary font-semibold text-sm">View Store</Link>
                       </div>

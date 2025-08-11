@@ -11,66 +11,24 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/hooks/use-toast";
-
-const initialWishlistItems = [
-  {
-    id: '89073456',
-    name: 'Women Black Slim Fit Solid Tights',
-    brand: 'SASSAFRAS',
-    size: '28',
-    color: 'Black',
-    price: 750,
-    originalPrice: 1500,
-    discount: '50% OFF',
-    rating: 4.3,
-    image: 'https://placehold.co/400x500.png',
-    dataAiHint: 'black tights fashion',
-    availability: 'In Stock',
-  },
-  {
-    id: '12345678',
-    name: 'Slim Fit Jeans',
-    brand: 'H&M',
-    size: '32',
-    color: 'Blue',
-    price: 1800,
-    originalPrice: 3600,
-    discount: '50% OFF',
-    rating: 4.8,
-    image: 'https://placehold.co/400x500.png',
-    dataAiHint: 'blue jeans style',
-    availability: 'In Stock',
-  },
-  {
-    id: '23456789',
-    name: 'Floral Print Dress',
-    brand: 'Zara',
-    size: 'M',
-    color: 'Red',
-    price: 3000,
-    originalPrice: 6000,
-    discount: '50% OFF',
-    rating: 4.5,
-    image: 'https://placehold.co/400x500.png',
-    dataAiHint: 'floral dress summer',
-    availability: 'Out of Stock',
-  }
-];
+import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
+import { useCart } from '@/hooks/use-cart';
 
 export default function WishlistPage() {
-  const [items, setItems] = React.useState(initialWishlistItems);
+  const { wishlist, removeFromWishlist, clearWishlist } = useWishlist();
+  const { addToCart } = useCart();
   const { toast } = useToast();
 
   const handleRemoveItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id));
+    removeFromWishlist(id);
     toast({
       title: "Item Removed",
       description: "The item has been removed from your wishlist.",
     });
   };
 
-  const handleAddToCart = (item: typeof initialWishlistItems[0]) => {
-     if (item.availability !== 'In Stock') {
+  const handleAddToCart = (item: WishlistItem) => {
+     if (item.inventory?.availability !== 'In Stock') {
         toast({
             title: "Out of Stock",
             description: "This item is currently unavailable.",
@@ -78,8 +36,16 @@ export default function WishlistPage() {
         });
         return;
     }
-    // Here you would typically add the item to the cart state/context
-    console.log(`Added ${item.name} to cart`);
+    // A real app would need to handle variant selection (size, color)
+    const productToAdd = {
+        ...item,
+        selectedSize: 'M', // Default or fetch available
+        selectedColor: 'Default', // Default or fetch available
+        shipping: { estimatedDelivery: '3-5 days' }, // Default or fetch
+        inventory: { sku: 'DEFAULT-SKU', ...item.inventory }
+    };
+
+    addToCart(productToAdd as any);
     toast({
       title: "Added to Cart",
       description: `${item.name} has been successfully added to your cart.`,
@@ -87,11 +53,7 @@ export default function WishlistPage() {
   };
   
   const handleClearWishlist = () => {
-    setItems([]);
-    toast({
-      title: "Wishlist Cleared",
-      description: "All items have been removed from your wishlist.",
-    });
+    clearWishlist();
   };
 
   return (
@@ -100,27 +62,27 @@ export default function WishlistPage() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-6">
             <h1 className="text-3xl font-headline font-bold mb-1">My Wishlist</h1>
-            <p className="text-muted-foreground">You have {items.length} item(s) in your wishlist.</p>
+            <p className="text-muted-foreground">You have {wishlist.length} item(s) in your wishlist.</p>
         </div>
 
-        {items.length > 0 ? (
+        {wishlist.length > 0 ? (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
-              {items.map(item => (
+              {wishlist.map(item => (
                 <div key={item.id} className="group block">
                     <div className="relative overflow-hidden rounded-lg bg-background shadow-sm">
                         <Link href={`/product/${item.id}`}>
                             <Image
-                                src={item.image}
+                                src={item.images[0] || 'https://placehold.co/400x500.png'}
                                 alt={item.name}
                                 width={400}
                                 height={500}
                                 className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                                data-ai-hint={item.dataAiHint}
+                                data-ai-hint="product image"
                             />
                         </Link>
-                         <Badge variant={item.availability === 'In Stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.availability === 'In Stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-                            {item.availability}
+                         <Badge variant={item.inventory?.availability === 'In Stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.inventory?.availability === 'In Stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+                            {item.inventory?.availability}
                         </Badge>
                         <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2">
                            <Button 
@@ -128,7 +90,7 @@ export default function WishlistPage() {
                                 size="sm" 
                                 className="w-full text-xs" 
                                 onClick={() => handleAddToCart(item)}
-                                disabled={item.availability !== 'In Stock'}
+                                disabled={item.inventory?.availability !== 'In Stock'}
                             >
                                 <ShoppingCart className="mr-1 h-3 w-3" /> Add to Cart
                            </Button>
@@ -140,14 +102,10 @@ export default function WishlistPage() {
                     <div className="pt-2">
                         <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
                         <p className="text-xs text-muted-foreground truncate">{item.name}</p>
-                        <div className="flex items-center mt-1">
-                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                            <span className="ml-1 text-xs font-medium">{item.rating}</span>
-                        </div>
                         <p className="text-sm font-semibold mt-1 text-foreground">
-                            ৳{item.price}{' '}
-                            <span className="text-xs text-muted-foreground line-through">৳{item.originalPrice}</span>{' '}
-                            <span className="text-xs text-orange-400 font-bold">({item.discount})</span>
+                            ৳{item.pricing.price}{' '}
+                            {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span> }
+                            {item.pricing.discount && <span className="text-xs text-orange-400 font-bold">({item.pricing.discount}% OFF)</span>}
                         </p>
                     </div>
                 </div>

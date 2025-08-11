@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Filter, Bell, X } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,7 +22,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-
 import {
   Select,
   SelectContent,
@@ -33,184 +32,138 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { collection, getDocs, query, where, Timestamp, getDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const allFlashSaleItems = [
-    {
-      id: 'fs-1',
-      brand: 'Fastrack',
-      category: 'Accessories',
-      name: 'Analog Watch',
-      price: 1250,
-      originalPrice: 2500,
-      discount: 50,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'analog watch',
-      stock: 100,
-      sold: 67,
-    },
-    {
-      id: 'fs-2',
-      brand: 'Boat',
-      category: 'Electronics',
-      name: 'Wireless Earbuds',
-      price: 1500,
-      originalPrice: 3000,
-      discount: 50,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'wireless earbuds',
-      stock: 50,
-      sold: 15,
-    },
-    {
-      id: 'fs-3',
-      brand: 'Wildcraft',
-      category: 'Bags',
-      name: 'Travel Backpack',
-      price: 999,
-      originalPrice: 1999,
-      discount: 50,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'travel backpack',
-      stock: 75,
-      sold: 50,
-    },
-    {
-      id: 'fs-4',
-      brand: 'Ray-Ban',
-      category: 'Accessories',
-      name: 'Classic Aviators',
-      price: 4500,
-      originalPrice: 9000,
-      discount: 50,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'aviator sunglasses',
-      stock: 30,
-      sold: 28,
-    },
-     {
-      id: 'fs-5',
-      brand: 'Gucci',
-      category: 'Accessories',
-      name: 'Leather Belt',
-      price: 8000,
-      originalPrice: 16000,
-      discount: 50,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'leather belt',
-      stock: 20,
-      sold: 5,
-    },
-    {
-      id: 'fs-6',
-      brand: 'Samsung',
-      category: 'Electronics',
-      name: 'Galaxy Watch 5',
-      price: 15000,
-      originalPrice: 30000,
-      discount: 50,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'smartwatch android',
-      stock: 40,
-      sold: 10,
-    },
-      {
-      id: 'fs-7',
-      brand: 'Sony',
-      category: 'Electronics',
-      name: 'WH-1000XM5 Headphones',
-      price: 25000,
-      originalPrice: 35000,
-      discount: 28,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'wireless headphones',
-      stock: 25,
-      sold: 10,
-    },
-    {
-      id: 'fs-8',
-      brand: 'Apple',
-      category: 'Electronics',
-      name: 'AirPods Pro 2',
-      price: 22000,
-      originalPrice: 28000,
-      discount: 21,
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'apple airpods',
-      stock: 60,
-      sold: 45,
-    },
-];
+interface Product {
+    id: string;
+    brand: string;
+    name: string;
+    pricing: {
+        price: number;
+        comparePrice?: number;
+        discount?: number;
+    };
+    images: string[];
+    dataAiHint: string;
+    inventory: {
+        stock: number;
+    };
+    organization: {
+        category: string;
+    }
+}
 
-const upcomingSales = [
-  {
-    id: 'upcoming-1',
-    name: 'Tech Gadget Gala',
-    startTime: new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-    image: 'https://placehold.co/500x300.png',
-    dataAiHint: 'tech gadgets',
-  },
-  {
-    id: 'upcoming-2',
-    name: 'Winter Fashion Fest',
-    startTime: new Date(new Date().getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-    image: 'https://placehold.co/500x300.png',
-    dataAiHint: 'winter fashion',
-  },
-];
+interface Campaign {
+    id: string;
+    name: string;
+    type: string;
+    status: 'Active' | 'Finished' | 'Scheduled';
+    startDate: Timestamp;
+    endDate: Timestamp;
+    products: string[];
+}
 
-const flashSaleEndTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+const LoadingSkeleton = () => (
+    <div className="flex min-h-screen flex-col bg-background">
+      <SiteHeader />
+      <main className="flex-grow container py-8">
+        <Skeleton className="h-40 md:h-32 w-full rounded-lg mb-8" />
+        <div className="flex justify-between items-center mb-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-48" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="hidden md:block md:col-span-1">
+                 <Skeleton className="h-96 w-full" />
+            </div>
+            <div className="md:col-span-3">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                    {Array(8).fill(0).map((_, i) => (
+                        <div key={i} className="space-y-2">
+                             <Skeleton className="w-full aspect-[4/5]" />
+                             <Skeleton className="h-4 w-3/4" />
+                             <Skeleton className="h-4 w-1/2" />
+                             <Skeleton className="h-4 w-full" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+);
+
 
 export default function FlashSalePage() {
   const [isFilterOpen, setIsFilterOpen] = React.useState(true);
-  const [displayedItems, setDisplayedItems] = React.useState(allFlashSaleItems);
+  const [loading, setLoading] = useState(true);
+  const [flashSale, setFlashSale] = useState<Campaign | null>(null);
+  const [allFlashSaleItems, setAllFlashSaleItems] = useState<Product[]>([]);
+  const [displayedItems, setDisplayedItems] = React.useState<Product[]>([]);
   const [sortOption, setSortOption] = React.useState("featured");
   const { toast } = useToast();
   
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedBrand, setSelectedBrand] = React.useState("all");
-  const [priceRange, setPriceRange] = React.useState([0, 30000]);
+  const [priceRange, setPriceRange] = React.useState([0, 120000]);
+
+  useEffect(() => {
+    const fetchFlashSaleData = async () => {
+        setLoading(true);
+        try {
+            const campaignsRef = collection(db, 'campaigns');
+            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
+            const campaignSnap = await getDocs(q);
+            
+            if (!campaignSnap.empty) {
+                const campaignDoc = campaignSnap.docs[0];
+                const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
+                setFlashSale(campaignData);
+
+                if(campaignData.products && campaignData.products.length > 0) {
+                    const productPromises = campaignData.products.map(id => getDoc(doc(db, "products", id)));
+                    const productDocs = await Promise.all(productPromises);
+                    const productList = productDocs.map(doc => ({ id: doc.id, ...doc.data() } as Product)).filter(p => p.id);
+                    setAllFlashSaleItems(productList);
+                    setDisplayedItems(productList);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching flash sale data:", error);
+            toast({ title: "Error", description: "Could not fetch flash sale details.", variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchFlashSaleData();
+  }, [toast]);
 
   const brands = [...new Set(allFlashSaleItems.map(item => item.brand))];
-  const categories = [...new Set(allFlashSaleItems.map(item => item.category))];
+  const categories = [...new Set(allFlashSaleItems.map(item => item.organization.category))];
 
   const applyFilters = React.useCallback(() => {
     let items = [...allFlashSaleItems];
 
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      items = items.filter(item => item.category === selectedCategory);
-    }
+    if (selectedCategory !== 'all') items = items.filter(item => item.organization.category === selectedCategory);
+    if (selectedBrand !== 'all') items = items.filter(item => item.brand === selectedBrand);
+    items = items.filter(item => item.pricing.price >= priceRange[0] && item.pricing.price <= priceRange[1]);
 
-    // Filter by brand
-    if (selectedBrand !== 'all') {
-      items = items.filter(item => item.brand === selectedBrand);
-    }
-
-    // Filter by price
-    items = items.filter(item => item.price >= priceRange[0] && item.price <= priceRange[1]);
-
-    // Sort items
     switch (sortOption) {
       case 'price-asc':
-        items.sort((a, b) => a.price - b.price);
+        items.sort((a, b) => a.pricing.price - b.pricing.price);
         break;
       case 'price-desc':
-        items.sort((a, b) => b.price - a.price);
+        items.sort((a, b) => b.pricing.price - a.pricing.price);
         break;
       case 'discount':
-        items.sort((a, b) => b.discount - a.discount);
-        break;
-      case 'popular':
-        items.sort((a, b) => (b.sold / b.stock) - (a.sold / a.stock));
-        break;
-      case 'featured':
-      default:
-        // No specific sorting for featured, show as is or based on a default
+        items.sort((a, b) => (b.pricing.discount || 0) - (a.pricing.discount || 0));
         break;
     }
-
     setDisplayedItems(items);
-  }, [selectedCategory, selectedBrand, priceRange, sortOption]);
+  }, [selectedCategory, selectedBrand, priceRange, sortOption, allFlashSaleItems]);
   
   React.useEffect(() => {
     applyFilters();
@@ -219,16 +172,25 @@ export default function FlashSalePage() {
   const handleResetFilters = () => {
     setSelectedCategory("all");
     setSelectedBrand("all");
-    setPriceRange([0, 30000]);
-  };
-
-  const handleNotify = (saleName: string) => {
-    toast({
-      title: "Subscription Confirmed!",
-      description: `We'll notify you when the "${saleName}" starts.`,
-    });
+    setPriceRange([0, 120000]);
   };
   
+  if (loading) return <LoadingSkeleton />;
+  
+  if(!flashSale) {
+      return (
+          <div className="flex min-h-screen flex-col bg-background">
+              <SiteHeader />
+              <main className="flex-grow container py-8 text-center">
+                  <h1 className="text-3xl font-bold">No Active Flash Sale</h1>
+                  <p className="text-muted-foreground mt-4">Check back later for exciting deals!</p>
+                   <Button asChild className="mt-6"><Link href="/">Go Home</Link></Button>
+              </main>
+              <SiteFooter />
+          </div>
+      )
+  }
+
   const filterControls = (
       <FilterControls 
         brands={brands}
@@ -252,16 +214,16 @@ export default function FlashSalePage() {
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 gap-6">
                 <div className='text-center md:text-left'>
                     <h1 className="font-headline text-3xl font-bold uppercase tracking-wider md:text-5xl text-foreground">
-                        Flash Sale!
+                        {flashSale.name}
                     </h1>
                     <p className="text-muted-foreground mt-2 text-lg">Hurry, these deals won't last long!</p>
                 </div>
-                <FlashSaleTimer endTime={flashSaleEndTime} />
+                <FlashSaleTimer endTime={flashSale.endDate.toDate()} />
             </div>
         </section>
 
         <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">All Flash Sale Items ({displayedItems.length})</h3>
+            <h3 className="text-lg font-semibold">All Items ({displayedItems.length})</h3>
              <div className="flex items-center gap-4">
                  <div className="md:hidden">
                     <Sheet>
@@ -290,7 +252,6 @@ export default function FlashSalePage() {
                       <SelectItem value="price-asc">Price: Low to High</SelectItem>
                       <SelectItem value="price-desc">Price: High to Low</SelectItem>
                       <SelectItem value="discount">Discount</SelectItem>
-                      <SelectItem value="popular">Popularity</SelectItem>
                     </SelectContent>
                   </Select>
             </div>
@@ -315,7 +276,7 @@ export default function FlashSalePage() {
                         <Link href={`/product/${deal.id}`} key={deal.id} className="group block border p-2 rounded-lg hover:shadow-lg transition-shadow duration-300">
                             <div className="relative overflow-hidden rounded-lg">
                                 <Image
-                                    src={deal.src}
+                                    src={deal.images[0] || 'https://placehold.co/400x500.png'}
                                     alt={deal.name}
                                     width={400}
                                     height={500}
@@ -332,14 +293,10 @@ export default function FlashSalePage() {
                                 <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
                                 <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
                                 <p className="text-sm font-semibold mt-1 text-foreground">
-                                    ৳{deal.price}{' '}
-                                    <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
-                                    <span className="text-xs text-orange-400 font-bold">({deal.discount}% OFF)</span>
+                                    ৳{deal.pricing.price}{' '}
+                                    {deal.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{deal.pricing.comparePrice}</span> }
+                                    {deal.pricing.discount && <span className="text-xs text-orange-400 font-bold">({deal.pricing.discount}% OFF)</span> }
                                 </p>
-                                <div className='mt-2'>
-                                    <Progress value={(deal.sold / deal.stock) * 100} className="h-2" />
-                                    <p className="text-xs text-muted-foreground mt-1">{deal.sold} of {deal.stock} sold</p>
-                                </div>
                             </div>
                         </Link>
                     ))}
@@ -353,35 +310,6 @@ export default function FlashSalePage() {
               )}
             </div>
         </div>
-
-        <section className="mt-16">
-            <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
-                Upcoming Flash Sales
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {upcomingSales.map(sale => (
-                    <div key={sale.id} className="group relative overflow-hidden rounded-lg border">
-                        <Image 
-                            src={sale.image}
-                            alt={sale.name}
-                            width={500}
-                            height={300}
-                            className="w-full h-auto object-cover aspect-video transition-transform duration-300 group-hover:scale-105"
-                            data-ai-hint={sale.dataAiHint}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
-                            <h3 className="text-2xl font-bold text-white font-headline">{sale.name}</h3>
-                            <div className="mt-4">
-                                <FlashSaleTimer endTime={sale.startTime} />
-                            </div>
-                            <Button className="mt-4 w-full md:w-auto" onClick={() => handleNotify(sale.name)}>
-                                <Bell className="mr-2 h-4 w-4" /> Notify Me
-                            </Button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </section>
         
         <div className="text-center mt-12">
             <Button asChild size="lg" variant="outline">
@@ -431,7 +359,7 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
             <Clock className="w-10 h-10 text-primary" />
             <div>
                  <p className="text-sm text-muted-foreground uppercase">
-                    {timeLeft.days > 0 ? "Starts in" : "Ending in"}
+                    Ending in
                  </p>
                  <div className="flex items-center gap-2 font-mono text-2xl md:text-3xl font-bold text-foreground">
                     {timeLeft.days > 0 && (
@@ -520,7 +448,7 @@ function FilterControls({
                 <Slider
                     id="price-range"
                     min={0}
-                    max={30000}
+                    max={120000}
                     step={100}
                     value={priceRange}
                     onValueChange={onPriceChange}
