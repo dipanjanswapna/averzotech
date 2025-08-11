@@ -85,26 +85,25 @@ export default function CheckoutPage() {
 }
 
 function CheckoutStepper() {
-  return (
-    <div className="flex w-full flex-col gap-4">
-      <Stepper initialStep={0} steps={steps} orientation="vertical" >
-        {steps.map((step, index) => {
-            const Icon = step.icon;
-            return (
-                <StepperItem key={step.label} icon={<Icon />}>
-                    <div className="min-h-[400px] flex-col justify-start items-start gap-4">
-                        {index === 0 && <DeliveryInfoForm />}
-                        {index === 1 && <ShippingMethodForm />}
-                        {index === 2 && <PaymentForm />}
-                    </div>
-                </StepperItem>
-            )
-        })}
-        <StepperFooter />
-      </Stepper>
-    </div>
-  )
-}
+    return (
+      <div className="flex w-full flex-col gap-4">
+        <Stepper initialStep={0} steps={steps}>
+          {steps.map((step, index) => {
+              return (
+                  <StepperItem key={step.label} {...step}>
+                      <div className="min-h-[400px] flex-col justify-start items-start gap-4">
+                          {index === 0 && <DeliveryInfoForm />}
+                          {index === 1 && <ShippingMethodForm />}
+                          {index === 2 && <PaymentForm />}
+                      </div>
+                  </StepperItem>
+              )
+          })}
+          <StepperFooter />
+        </Stepper>
+      </div>
+    )
+  }
 
 function DeliveryInfoForm() {
     const form = useForm<z.infer<typeof deliveryInfoSchema>>({
