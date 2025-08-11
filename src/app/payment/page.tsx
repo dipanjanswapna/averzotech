@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
-import { addDoc, collection, doc, getDocs, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore"
+import { addDoc, collection, doc, getDocs, serverTimestamp, updateDoc, writeBatch, query, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 

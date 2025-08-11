@@ -151,6 +151,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart([]);
     setAppliedCoupon(null);
     setAppliedGiftCard(null);
+    localStorage.removeItem('shoppingCart');
     localStorage.removeItem('appliedCoupon');
     localStorage.removeItem('appliedGiftCard');
   };

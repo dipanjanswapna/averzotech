@@ -29,16 +29,16 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface GiftCard {
   id: string;
   code: string;
+  recipientEmail: string;
   initialValue: number;
   currentBalance: number;
-  customer: string;
-  status: 'Partially Used' | 'Active' | 'Used' | 'Expired';
+  status: 'Active' | 'Used' | 'Expired' | 'Disabled';
   expiryDate: string;
 }
 
@@ -52,21 +52,34 @@ export default function GiftCardsPage() {
       setLoading(true);
       try {
         const giftCardsCollection = collection(db, 'giftCards');
-        const giftCardSnapshot = await getDocs(giftCardsCollection);
-        const giftCardList = giftCardSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as GiftCard));
+        const q = query(giftCardsCollection, orderBy('createdAt', 'desc'));
+        const giftCardSnapshot = await getDocs(q);
+        const giftCardList = giftCardSnapshot.docs.map(doc => {
+            const data = doc.data();
+            let status = data.status;
+            if (status === 'Active' && new Date(data.expiryDate) < new Date()) {
+                status = 'Expired';
+            }
+             if (status === 'Active' && data.currentBalance <= 0) {
+                status = 'Used';
+            }
+            return {
+                id: doc.id,
+                ...data,
+                status,
+            } as GiftCard
+        });
         setGiftCards(giftCardList);
       } catch (error) {
         console.error("Error fetching gift cards: ", error);
+        toast({ title: "Error", description: "Could not fetch gift cards.", variant: 'destructive' });
       } finally {
         setLoading(false);
       }
     };
 
     fetchGiftCards();
-  }, []);
+  }, [toast]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -75,6 +88,24 @@ export default function GiftCardsPage() {
       description: "Gift card code copied to clipboard.",
     });
   };
+  
+  const getStatusBadgeVariant = (status: GiftCard['status']) => {
+    switch(status) {
+        case 'Active': return 'default';
+        case 'Used': return 'secondary';
+        case 'Expired': 
+        case 'Disabled': 
+            return 'destructive';
+        default: return 'outline';
+    }
+  }
+
+  const getStatusBadgeClass = (status: GiftCard['status']) => {
+     switch(status) {
+        case 'Active': return 'bg-green-100 text-green-800';
+        default: return '';
+     }
+  }
 
   return (
     <div className="space-y-8">
@@ -107,7 +138,7 @@ export default function GiftCardsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Code</TableHead>
-                  <TableHead>Customer</TableHead>
+                  <TableHead>Recipient</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Expires On</TableHead>
@@ -121,13 +152,13 @@ export default function GiftCardsPage() {
                   <TableRow key={card.id}>
                     <TableCell className="font-mono text-xs">
                        <div className="flex items-center gap-2">
-                          <span>{card.code.substring(0, 14)}...</span>
+                          <span>{card.code}</span>
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(card.code)}>
                               <Copy className="h-3 w-3" />
                           </Button>
                       </div>
                     </TableCell>
-                    <TableCell>{card.customer}</TableCell>
+                    <TableCell>{card.recipientEmail}</TableCell>
                      <TableCell>
                          <div className="flex flex-col gap-1">
                              <span>৳{card.currentBalance.toLocaleString()} / ৳{card.initialValue.toLocaleString()}</span>
@@ -136,16 +167,13 @@ export default function GiftCardsPage() {
                       </TableCell>
                      <TableCell>
                       <Badge
-                        variant={
-                          card.status === 'Active' || card.status === 'Partially Used' ? 'default' :
-                          card.status === 'Used' ? 'secondary' : 'destructive'
-                        }
-                         className={card.status === 'Active' || card.status === 'Partially Used' ? 'bg-blue-100 text-blue-800' : ''}
+                        variant={getStatusBadgeVariant(card.status)}
+                        className={getStatusBadgeClass(card.status)}
                       >
                         {card.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{card.expiryDate}</TableCell>
+                    <TableCell>{new Date(card.expiryDate).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
