@@ -22,7 +22,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Filter } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
 import {
   Collapsible,
   CollapsibleContent,
@@ -30,76 +29,123 @@ import {
 } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const allProducts = [
   // Men
-  { id: 'men-1', brand: 'BrandX', name: "Men's Jeans", price: 1999, originalPrice: 3999, discount: 50, category: 'Men', subcategory: 'Jeans', src: 'https://placehold.co/300x400.png', dataAiHint: 'men jeans' },
-  { id: 'men-2', brand: 'BrandY', name: "Casual Shirts", price: 1299, originalPrice: 2599, discount: 50, category: 'Men', subcategory: 'Casual Shirts', src: 'https://placehold.co/300x400.png', dataAiHint: 'men casual shirt' },
-  { id: 'men-3', brand: 'BrandZ', name: "Activewear", price: 2499, originalPrice: 4999, discount: 50, category: 'Men', subcategory: 'Activewear', src: 'https://placehold.co/300x400.png', dataAiHint: 'men activewear' },
-  { id: 'men-4', brand: 'BrandX', name: "Sports Shoes", price: 2999, originalPrice: 5999, discount: 50, category: 'Men', subcategory: 'Sports Shoes', src: 'https://placehold.co/300x400.png', dataAiHint: 'men sport shoes' },
-  { id: 'men-5', brand: 'BrandA', name: "Personal Care", price: 499, originalPrice: 999, discount: 50, category: 'Men', subcategory: 'Personal Care', src: 'https://placehold.co/300x400.png', dataAiHint: 'men grooming' },
-  { id: 'men-6', brand: 'BrandB', name: 'Innerwear', price: 399, originalPrice: 799, discount: 50, category: 'Men', subcategory: 'Innerwear', src: 'https://placehold.co/300x400.png', dataAiHint: 'men innerwear' },
-  { id: 'men-7', brand: 'BrandY', name: 'T-Shirts', price: 799, originalPrice: 1599, discount: 50, category: 'Men', subcategory: 'T-Shirts', src: 'https://placehold.co/300x400.png', dataAiHint: 'men t-shirt' },
+  { id: 'men-1', brand: 'BrandX', name: "Men's Jeans", price: 1999, originalPrice: 3999, discount: 50, category: 'Men', group: 'Bottomwear', subcategory: 'Jeans', src: 'https://placehold.co/300x400.png', dataAiHint: 'men jeans' },
+  { id: 'men-2', brand: 'BrandY', name: "Casual Shirts", price: 1299, originalPrice: 2599, discount: 50, category: 'Men', group: 'Topwear', subcategory: 'Casual Shirts', src: 'https://placehold.co/300x400.png', dataAiHint: 'men casual shirt' },
+  { id: 'men-3', brand: 'BrandZ', name: "Activewear Top", price: 2499, originalPrice: 4999, discount: 50, category: 'Men', group: 'Activewear', subcategory: 'T-Shirts', src: 'https://placehold.co/300x400.png', dataAiHint: 'men activewear' },
+  { id: 'men-4', brand: 'BrandX', name: "Sports Shoes", price: 2999, originalPrice: 5999, discount: 50, category: 'Men', group: 'Footwear', subcategory: 'Sports Shoes', src: 'https://placehold.co/300x400.png', dataAiHint: 'men sport shoes' },
+  { id: 'men-5', brand: 'BrandA', name: "Grooming Kit", price: 499, originalPrice: 999, discount: 50, category: 'Men', group: 'Accessories', subcategory: 'Personal Care', src: 'https://placehold.co/300x400.png', dataAiHint: 'men grooming' },
+  { id: 'men-6', brand: 'BrandB', name: 'Innerwear Set', price: 399, originalPrice: 799, discount: 50, category: 'Men', group: 'Innerwear', subcategory: 'Innerwear', src: 'https://placehold.co/300x400.png', dataAiHint: 'men innerwear' },
+  { id: 'men-7', brand: 'BrandY', name: 'Graphic T-Shirts', price: 799, originalPrice: 1599, discount: 50, category: 'Men', group: 'Topwear', subcategory: 'T-Shirts', src: 'https://placehold.co/300x400.png', dataAiHint: 'men t-shirt' },
   // Women
-  { id: 'women-1', brand: 'BrandA', name: "Sarees & Kurtis", price: 2499, originalPrice: 4999, discount: 50, category: 'Women', subcategory: 'Sarees & Kurtis', src: 'https://placehold.co/300x400.png', dataAiHint: 'saree kurti' },
-  { id: 'women-2', brand: 'BrandC', name: "Dresses", price: 1899, originalPrice: 3799, discount: 50, category: 'Women', subcategory: 'Dresses', src: 'https://placehold.co/300x400.png', dataAiHint: 'woman dress' },
-  { id: 'women-3', brand: 'BrandD', name: "Handbags", price: 1599, originalPrice: 3199, discount: 50, category: 'Women', subcategory: 'Handbags', src: 'https://placehold.co/300x400.png', dataAiHint: 'handbag' },
+  { id: 'women-1', brand: 'BrandA', name: "Designer Saree", price: 2499, originalPrice: 4999, discount: 50, category: 'Women', group: 'Indian & Fusion Wear', subcategory: 'Sarees', src: 'https://placehold.co/300x400.png', dataAiHint: 'saree kurti' },
+  { id: 'women-2', brand: 'BrandC', name: "Summer Dress", price: 1899, originalPrice: 3799, discount: 50, category: 'Women', group: 'Western Wear', subcategory: 'Dresses', src: 'https://placehold.co/300x400.png', dataAiHint: 'woman dress' },
+  { id: 'women-3', brand: 'BrandD', name: "Leather Handbag", price: 1599, originalPrice: 3199, discount: 50, category: 'Women', group: 'Jewellery & Accessories', subcategory: 'Handbags', src: 'https://placehold.co/300x400.png', dataAiHint: 'handbag' },
   // Kids
-  { id: 'kids-1', brand: 'KidsBrandA', name: "Boys' Clothing", price: 999, originalPrice: 1999, discount: 50, category: 'Kids', subcategory: "Boys' Clothing", src: 'https://placehold.co/300x400.png', dataAiHint: 'boy clothing' },
-  { id: 'kids-2', brand: 'KidsBrandB', name: "Girls' Clothing", price: 1199, originalPrice: 2399, discount: 50, category: 'Kids', subcategory: "Girls' Clothing", src: 'https://placehold.co/300x400.png', dataAiHint: 'girl clothing' },
+  { id: 'kids-1', brand: 'KidsBrandA', name: "Boys' T-Shirt", price: 999, originalPrice: 1999, discount: 50, category: 'Kids', group: "Boys Clothing", subcategory: "T-Shirts", src: 'https://placehold.co/300x400.png', dataAiHint: 'boy clothing' },
+  { id: 'kids-2', brand: 'KidsBrandB', name: "Girls' Frock", price: 1199, originalPrice: 2399, discount: 50, category: 'Kids', group: "Girls Clothing", subcategory: "Dresses", src: 'https://placehold.co/300x400.png', dataAiHint: 'girl clothing' },
   // Home & Living
-  { id: 'home-1', brand: 'HomeBrandA', name: "Bedsheets", price: 1999, originalPrice: 3999, discount: 50, category: 'Home & Living', subcategory: 'Bedsheets', src: 'https://placehold.co/300x400.png', dataAiHint: 'bedsheets' },
-  { id: 'home-2', brand: 'HomeBrandB', name: "Dinnerware", price: 2999, originalPrice: 5999, discount: 50, category: 'Home & Living', subcategory: 'Dinnerware', src: 'https://placehold.co/300x400.png', dataAiHint: 'dinnerware set' },
+  { id: 'home-1', brand: 'HomeBrandA', name: "Cotton Bedsheets", price: 1999, originalPrice: 3999, discount: 50, category: 'Home & Living', group: 'Bed & Bath', subcategory: 'Bedsheets', src: 'https://placehold.co/300x400.png', dataAiHint: 'bedsheets' },
+  { id: 'home-2', brand: 'HomeBrandB', name: "Ceramic Dinnerware", price: 2999, originalPrice: 5999, discount: 50, category: 'Home & Living', group: 'Kitchen & Dining', subcategory: 'Dinnerware', src: 'https://placehold.co/300x400.png', dataAiHint: 'dinnerware set' },
   // Beauty
-  { id: 'beauty-1', brand: 'BeautyBrandA', name: "Lipsticks", price: 899, originalPrice: 1799, discount: 50, category: 'Beauty', subcategory: 'Lipsticks', src: 'https://placehold.co/300x400.png', dataAiHint: 'lipstick collection' },
-  { id: 'beauty-2', brand: 'BeautyBrandB', name: "Perfumes", price: 2499, originalPrice: 4999, discount: 50, category: 'Beauty', subcategory: 'Perfumes', src: 'https://placehold.co/300x400.png', dataAiHint: 'perfume bottle' },
+  { id: 'beauty-1', brand: 'BeautyBrandA', name: "Matte Lipstick", price: 899, originalPrice: 1799, discount: 50, category: 'Beauty', group: 'Makeup', subcategory: 'Lipstick', src: 'https://placehold.co/300x400.png', dataAiHint: 'lipstick collection' },
+  { id: 'beauty-2', brand: 'BeautyBrandB', name: "Luxury Perfume", price: 2499, originalPrice: 4999, discount: 50, category: 'Beauty', group: 'Fragrance', subcategory: 'Perfumes', src: 'https://placehold.co/300x400.png', dataAiHint: 'perfume bottle' },
   // Electronics
-  { id: 'electronics-1', brand: 'TechBrandA', name: "Smartphones", price: 15000, originalPrice: 20000, discount: 25, category: 'Electronics', subcategory: 'Smartphones', src: 'https://placehold.co/300x400.png', dataAiHint: 'smartphones' },
-  { id: 'electronics-2', brand: 'TechBrandB', name: "Laptops", price: 50000, originalPrice: 65000, discount: 23, category: 'Electronics', subcategory: 'Laptops', src: 'https://placehold.co/300x400.png', dataAiHint: 'laptops' },
+  { id: 'electronics-1', brand: 'TechBrandA', name: "Smartphone Pro", price: 15000, originalPrice: 20000, discount: 25, category: 'Electronics', group: 'Mobiles & Wearables', subcategory: 'Smartphones', src: 'https://placehold.co/300x400.png', dataAiHint: 'smartphones' },
+  { id: 'electronics-2', brand: 'TechBrandB', name: "Gaming Laptop", price: 50000, originalPrice: 65000, discount: 23, category: 'Electronics', group: 'Laptops & Computers', subcategory: 'Laptops', src: 'https://placehold.co/300x400.png', dataAiHint: 'laptops' },
   // Sports
-  { id: 'sports-1', brand: 'SportBrandA', name: "Running Shoes", price: 3500, originalPrice: 5000, discount: 30, category: 'Sports', subcategory: 'Running Shoes', src: 'https://placehold.co/300x400.png', dataAiHint: 'running shoes' },
-  { id: 'sports-2', brand: 'SportBrandB', name: "Cricket Bats", price: 2500, originalPrice: 4000, discount: 37, category: 'Sports', subcategory: 'Cricket', src: 'https://placehold.co/300x400.png', dataAiHint: 'cricket bat' },
+  { id: 'sports-1', brand: 'SportBrandA', name: "Pro Running Shoes", price: 3500, originalPrice: 5000, discount: 30, category: 'Sports', group: 'Running', subcategory: 'Running Shoes', src: 'https://placehold.co/300x400.png', dataAiHint: 'running shoes' },
+  { id: 'sports-2', brand: 'SportBrandB', name: "Professional Cricket Bat", price: 2500, originalPrice: 4000, discount: 37, category: 'Sports', group: 'Cricket', subcategory: 'Cricket Bats', src: 'https://placehold.co/300x400.png', dataAiHint: 'cricket bat' },
   // Books
-  { id: 'books-1', brand: 'PublisherA', name: "Fiction", price: 500, originalPrice: 800, discount: 37, category: 'Books', subcategory: 'Fiction', src: 'https://placehold.co/300x400.png', dataAiHint: 'fiction books' },
-  { id: 'books-2', brand: 'PublisherB', name: "Children's Books", price: 300, originalPrice: 500, discount: 40, category: 'Books', subcategory: "Children's Books", src: 'https://placehold.co/300x400.png', dataAiHint: 'childrens books' },
+  { id: 'books-1', brand: 'PublisherA', name: "Mystery Novel", price: 500, originalPrice: 800, discount: 37, category: 'Books', group: 'Fiction', subcategory: 'Mystery', src: 'https://placehold.co/300x400.png', dataAiHint: 'fiction books' },
+  { id: 'books-2', brand: 'PublisherB', name: "Illustrated Children's Book", price: 300, originalPrice: 500, discount: 40, category: 'Books', group: "Children's Books", subcategory: 'Picture Books', src: 'https://placehold.co/300x400.png', dataAiHint: 'childrens books' },
 ];
+
+const filterHierarchy = {
+    "Men": {
+        "Topwear": ["T-Shirts", "Casual Shirts", "Formal Shirts", "Sweatshirts", "Jackets"],
+        "Bottomwear": ["Jeans", "Casual Trousers", "Formal Trousers", "Shorts", "Track Pants"],
+        "Footwear": ["Casual Shoes", "Sports Shoes", "Formal Shoes", "Sneakers", "Sandals"],
+        "Accessories": ["Watches", "Wallets", "Belts", "Sunglasses", "Bags", "Personal Care"],
+        "Innerwear": ["Innerwear"],
+        "Activewear": ["T-Shirts", "Track Pants"]
+    },
+    "Women": {
+        "Indian & Fusion Wear": ["Kurtas & Suits", "Sarees", "Lehengas", "Ethnic Gowns"],
+        "Western Wear": ["Dresses", "Tops", "T-Shirts", "Jeans", "Skirts"],
+        "Footwear": ["Flats", "Heels", "Boots", "Sports Shoes"],
+        "Jewellery & Accessories": ["Earrings", "Necklaces", "Handbags", "Watches"]
+    },
+    "Kids": {
+        "Boys Clothing": ["T-Shirts", "Shirts", "Jeans", "Shorts"],
+        "Girls Clothing": ["Dresses", "Tops", "Skirts", "T-shirts"],
+        "Infants": ["Rompers", "Bodysuits", "Sleepwear"],
+        "Toys & Games": ["Action Figures", "Dolls", "Board Games", "Puzzles"]
+    },
+    "Home & Living": {
+        "Bed & Bath": ["Bedsheets", "Pillows", "Towels", "Bathrobes"],
+        "Decor": ["Vases", "Photo Frames", "Wall Art", "Candles"],
+        "Kitchen & Dining": ["Dinnerware", "Cookware", "Storage", "Cutlery"]
+    },
+    "Beauty": {
+        "Makeup": ["Lipstick", "Foundation", "Mascara", "Eyeshadow"],
+        "Skincare": ["Moisturizer", "Cleanser", "Sunscreen", "Face Masks"],
+        "Fragrance": ["Perfumes", "Deodorants", "Body Mists"],
+        "Haircare": ["Shampoo", "Conditioner", "Hair Oil", "Styling Tools"]
+    },
+    "Electronics": {
+        "Mobiles & Wearables": ["Smartphones", "Smartwatches", "Headphones", "Speakers"],
+        "Laptops & Computers": ["Laptops", "Desktops", "Monitors", "Keyboards", "Mouse"],
+        "Cameras & Drones": ["DSLRs", "Mirrorless Cameras", "Drones", "Action Cameras"]
+    },
+    "Sports": {
+        "Cricket": ["Cricket Bats", "Balls", "Pads", "Gloves"],
+        "Football": ["Footballs", "Jerseys", "Boots", "Shin Guards"],
+        "Fitness": ["Dumbbells", "Yoga Mats", "Resistance Bands", "Trackers"],
+        "Running": ["Running Shoes"]
+    },
+    "Books": {
+        "Fiction": ["Mystery", "Thriller", "Sci-Fi", "Fantasy", "Romance"],
+        "Non-Fiction": ["Biography", "History", "Self-Help", "Business"],
+        "Children's Books": ["Picture Books", "Story Books", "Young Adult"]
+    }
+};
+
+type FilterHierarchy = typeof filterHierarchy;
+
 
 export default function ShopPage() {
     const [isFilterOpen, setIsFilterOpen] = React.useState(true);
     const [displayedItems, setDisplayedItems] = React.useState(allProducts);
     const [sortOption, setSortOption] = React.useState("featured");
   
-    const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
+    const [selectedMotherCategories, setSelectedMotherCategories] = React.useState<string[]>([]);
+    const [selectedGroups, setSelectedGroups] = React.useState<string[]>([]);
+    const [selectedSubcategories, setSelectedSubcategories] = React.useState<string[]>([]);
     const [selectedBrands, setSelectedBrands] = React.useState<string[]>([]);
     const [priceRange, setPriceRange] = React.useState([0, 65000]);
-
-    const categories = [...new Set(allProducts.map(item => item.category))];
-    const allBrands = [...new Set(allProducts.map(item => item.brand))];
     
-    const brands = React.useMemo(() => {
-        if (selectedCategories.length === 0) return allBrands;
-        return [...new Set(allProducts.filter(p => selectedCategories.includes(p.category)).map(p => p.brand))];
-    }, [selectedCategories, allBrands]);
-
     const applyFilters = React.useCallback(() => {
         let items = [...allProducts];
 
-        // Filter by category
-        if (selectedCategories.length > 0) {
-          items = items.filter(item => selectedCategories.includes(item.category));
+        if (selectedMotherCategories.length > 0) {
+            items = items.filter(item => selectedMotherCategories.includes(item.category));
         }
-
-        // Filter by brand
+        if (selectedGroups.length > 0) {
+            items = items.filter(item => selectedGroups.includes(item.group));
+        }
+        if (selectedSubcategories.length > 0) {
+            items = items.filter(item => selectedSubcategories.includes(item.subcategory));
+        }
         if (selectedBrands.length > 0) {
-          items = items.filter(item => selectedBrands.includes(item.brand));
+            items = items.filter(item => selectedBrands.includes(item.brand));
         }
 
-        // Filter by price
         items = items.filter(item => item.price >= priceRange[0] && item.price <= priceRange[1]);
 
-        // Sort items
         switch (sortOption) {
           case 'price-asc':
             items.sort((a, b) => a.price - b.price);
@@ -112,50 +158,49 @@ export default function ShopPage() {
             break;
           case 'featured':
           default:
-            // No specific sorting for featured, show as is or based on a default
             break;
         }
 
         setDisplayedItems(items);
-    }, [selectedCategories, selectedBrands, priceRange, sortOption]);
+    }, [selectedMotherCategories, selectedGroups, selectedSubcategories, selectedBrands, priceRange, sortOption]);
 
     React.useEffect(() => {
         applyFilters();
     }, [applyFilters]);
 
     const handleResetFilters = () => {
-        setSelectedCategories([]);
+        setSelectedMotherCategories([]);
+        setSelectedGroups([]);
+        setSelectedSubcategories([]);
         setSelectedBrands([]);
         setPriceRange([0, 65000]);
     };
     
-    const handleCategoryChange = (category: string) => {
-        setSelectedCategories(prev => 
-            prev.includes(category) 
-            ? prev.filter(c => c !== category) 
-            : [...prev, category]
+    const createToggleHandler = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
+        setter(prev => 
+            prev.includes(value) 
+            ? prev.filter(c => c !== value) 
+            : [...prev, value]
         );
     };
 
-    const handleBrandChange = (brand: string) => {
-        setSelectedBrands(prev => 
-            prev.includes(brand) 
-            ? prev.filter(b => b !== brand) 
-            : [...prev, brand]
-        );
-    };
-
+    const handleMotherCategoryChange = createToggleHandler(setSelectedMotherCategories);
+    const handleGroupChange = createToggleHandler(setSelectedGroups);
+    const handleSubcategoryChange = createToggleHandler(setSelectedSubcategories);
+    const handleBrandChange = createToggleHandler(setSelectedBrands);
 
   const filterControls = (
-      <FilterControls 
-        brands={brands}
-        categories={categories}
+      <FilterControls
         priceRange={priceRange}
         onPriceChange={setPriceRange}
+        selectedMotherCategories={selectedMotherCategories}
+        onMotherCategoryChange={handleMotherCategoryChange}
+        selectedGroups={selectedGroups}
+        onGroupChange={handleGroupChange}
+        selectedSubcategories={selectedSubcategories}
+        onSubcategoryChange={handleSubcategoryChange}
         selectedBrands={selectedBrands}
         onBrandChange={handleBrandChange}
-        selectedCategories={selectedCategories}
-        onCategoryChange={handleCategoryChange}
         onApply={applyFilters}
         onReset={handleResetFilters}
       />
@@ -263,13 +308,35 @@ export default function ShopPage() {
   );
 }
 
+interface FilterCheckboxProps {
+    id: string;
+    label: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+}
+
+function FilterCheckbox({ id, label, checked, onCheckedChange }: FilterCheckboxProps) {
+    return (
+        <div className="flex items-center space-x-2">
+            <Checkbox 
+                id={id} 
+                checked={checked}
+                onCheckedChange={onCheckedChange}
+            />
+            <Label htmlFor={id} className="font-normal">{label}</Label>
+        </div>
+    );
+}
+
 interface FilterControlsProps {
-    brands: string[];
-    categories: string[];
     priceRange: number[];
     onPriceChange: (value: number[]) => void;
-    selectedCategories: string[];
-    onCategoryChange: (category: string) => void;
+    selectedMotherCategories: string[];
+    onMotherCategoryChange: (category: string) => void;
+    selectedGroups: string[];
+    onGroupChange: (group: string) => void;
+    selectedSubcategories: string[];
+    onSubcategoryChange: (subcategory: string) => void;
     selectedBrands: string[];
     onBrandChange: (brand: string) => void;
     onApply: () => void;
@@ -277,48 +344,96 @@ interface FilterControlsProps {
 }
 
 function FilterControls({ 
-    brands, 
-    categories, 
     priceRange, 
     onPriceChange,
-    selectedCategories,
-    onCategoryChange,
+    selectedMotherCategories,
+    onMotherCategoryChange,
+    selectedGroups,
+    onGroupChange,
+    selectedSubcategories,
+    onSubcategoryChange,
     selectedBrands,
     onBrandChange,
     onApply,
     onReset
 }: FilterControlsProps) {
 
+    const motherCategories = Object.keys(filterHierarchy);
+    const availableGroups = selectedMotherCategories.length > 0 
+        ? selectedMotherCategories.flatMap(mc => Object.keys(filterHierarchy[mc as keyof FilterHierarchy]))
+        : [];
+    const availableSubcategories = selectedGroups.length > 0
+        ? selectedGroups.flatMap(g => 
+            selectedMotherCategories.flatMap(mc => {
+                const groups = filterHierarchy[mc as keyof FilterHierarchy];
+                return groups[g as keyof typeof groups] || [];
+            })
+          )
+        : [];
+    const allBrands = [...new Set(allProducts.map(p => p.brand))];
+
     return (
         <div className="space-y-6">
              <Collapsible defaultOpen={true}>
-                <CollapsibleTrigger className="font-semibold w-full text-left">CATEGORIES</CollapsibleTrigger>
+                <CollapsibleTrigger className="font-semibold w-full text-left">MOTHER CATEGORY</CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 space-y-2">
-                     {categories.map(category => (
-                        <div key={category} className="flex items-center space-x-2">
-                           <Checkbox 
-                                id={`cat-${category}`} 
-                                checked={selectedCategories.includes(category)}
-                                onCheckedChange={() => onCategoryChange(category)}
-                            />
-                           <Label htmlFor={`cat-${category}`} className="font-normal">{category}</Label>
-                        </div>
+                     {motherCategories.map(mc => (
+                        <FilterCheckbox
+                            key={mc}
+                            id={`mc-${mc}`}
+                            label={mc}
+                            checked={selectedMotherCategories.includes(mc)}
+                            onCheckedChange={() => onMotherCategoryChange(mc)}
+                        />
                     ))}
                 </CollapsibleContent>
             </Collapsible>
+            
+            {selectedMotherCategories.length > 0 && (
+                 <Collapsible defaultOpen={true}>
+                    <CollapsibleTrigger className="font-semibold w-full text-left">GROUP</CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4 space-y-2">
+                         {[...new Set(availableGroups)].map(group => (
+                             <FilterCheckbox
+                                key={group}
+                                id={`group-${group}`}
+                                label={group}
+                                checked={selectedGroups.includes(group)}
+                                onCheckedChange={() => onGroupChange(group)}
+                            />
+                        ))}
+                    </CollapsibleContent>
+                </Collapsible>
+            )}
+
+             {selectedGroups.length > 0 && (
+                 <Collapsible defaultOpen={true}>
+                    <CollapsibleTrigger className="font-semibold w-full text-left">SUB CATEGORY</CollapsibleTrigger>
+                    <CollapsibleContent className="pt-4 space-y-2">
+                         {[...new Set(availableSubcategories)].map(sub => (
+                             <FilterCheckbox
+                                key={sub}
+                                id={`sub-${sub}`}
+                                label={sub}
+                                checked={selectedSubcategories.includes(sub)}
+                                onCheckedChange={() => onSubcategoryChange(sub)}
+                            />
+                        ))}
+                    </CollapsibleContent>
+                </Collapsible>
+            )}
 
             <Collapsible defaultOpen={true}>
                 <CollapsibleTrigger className="font-semibold w-full text-left">BRAND</CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 space-y-2">
-                     {brands.map(brand => (
-                        <div key={brand} className="flex items-center space-x-2">
-                           <Checkbox 
-                                id={`brand-${brand}`}
-                                checked={selectedBrands.includes(brand)}
-                                onCheckedChange={() => onBrandChange(brand)}
-                            />
-                           <Label htmlFor={`brand-${brand}`} className="font-normal">{brand}</Label>
-                        </div>
+                     {allBrands.map(brand => (
+                        <FilterCheckbox
+                            key={brand}
+                            id={`brand-${brand}`}
+                            label={brand}
+                            checked={selectedBrands.includes(brand)}
+                            onCheckedChange={() => onBrandChange(brand)}
+                         />
                     ))}
                 </CollapsibleContent>
             </Collapsible>
@@ -346,5 +461,3 @@ function FilterControls({
         </div>
     )
 }
-
-    
