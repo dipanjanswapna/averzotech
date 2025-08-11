@@ -30,6 +30,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 const cartItems = [
   {
@@ -77,8 +79,23 @@ export default function ShippingPage() {
     const [selectedAddress, setSelectedAddress] = React.useState<string | undefined>();
     const [shippingMethod, setShippingMethod] = React.useState<string | undefined>();
     const [activeTab, setActiveTab] = React.useState("saved-address");
+    const { toast } = useToast();
+    const router = useRouter();
+
 
     const isSelectionComplete = selectedAddress && shippingMethod;
+
+    const handleProceedToPayment = () => {
+        if (!isSelectionComplete) {
+            toast({
+                title: "Incomplete Information",
+                description: "Please select a shipping address and shipping method to continue.",
+                variant: "destructive",
+            });
+        } else {
+            router.push('/payment');
+        }
+    }
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -226,9 +243,9 @@ export default function ShippingPage() {
                                 className="w-auto" 
                                 size="lg"
                                 disabled={!isSelectionComplete}
-                                asChild
+                                onClick={handleProceedToPayment}
                             >
-                               <Link href={isSelectionComplete ? "/payment" : "#"}>Continue to Payment</Link>
+                               Continue to Payment
                             </Button>
                         </div>
                     </div>
@@ -300,3 +317,5 @@ export default function ShippingPage() {
         </div>
     )
 }
+
+    
