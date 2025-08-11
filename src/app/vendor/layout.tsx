@@ -55,7 +55,7 @@ export default function VendorLayout({
   return (
     <AdminSidebarProvider>
       <VendorSidebar user={user}/>
-        <main className="flex-1 p-4 sm:p-6 md:p-8 lg:ml-[--sidebar-width-icon] group-data-[state=expanded]:lg:ml-[--sidebar-width]">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 lg:ml-[--sidebar-width-icon] group-data-[state=expanded]:lg:ml-[--sidebar-width] transition-[margin-left] ease-in-out duration-300">
             {children}
             <Toaster />
         </main>
