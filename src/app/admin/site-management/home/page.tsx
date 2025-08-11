@@ -9,7 +9,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,21 +27,16 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-interface HeroImage {
+interface ContentItem {
+  id?: string;
   file?: File;
   preview: string;
   alt: string;
   dataAiHint: string;
   url?: string;
-}
-
-interface Brand {
-    id: string;
-    file?: File;
-    preview: string;
-    alt: string;
-    dataAiHint: string;
-    url?: string;
+  link?: string;
+  name?: string;
+  discount?: string;
 }
 
 interface DealProduct {
@@ -50,17 +44,6 @@ interface DealProduct {
     name: string;
     brand: string;
     image: string;
-}
-
-interface CategoryCard {
-    id: string;
-    file?: File;
-    preview: string;
-    name: string;
-    discount: string;
-    link: string;
-    dataAiHint: string;
-    url?: string;
 }
 
 interface ProductForSelection {
@@ -75,28 +58,29 @@ export default function HomePageManager() {
   const { toast } = useToast();
   const storage = getStorage(app);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<ProductForSelection[]>([]);
 
-  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
+  const [heroImages, setHeroImages] = useState<ContentItem[]>([]);
+  const [brands, setBrands] = useState<ContentItem[]>([]);
   const [deals, setDeals] = useState<DealProduct[]>([]);
-  const [categories, setCategories] = useState<CategoryCard[]>([]);
+  const [categories, setCategories] = useState<ContentItem[]>([]);
   
   // Fetch all content from Firestore
   useEffect(() => {
     const fetchHomepageContent = async () => {
-      setIsLoading(true);
+      setIsFetching(true);
       const docRef = doc(db, 'site_content', 'homepage');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setHeroImages(data.heroImages?.map((img: any) => ({ ...img, preview: img.url })) || []);
-        setBrands(data.brands?.map((brand: any) => ({ ...brand, preview: brand.url })) || []);
+        setHeroImages(data.heroImages?.map((img: any) => ({ ...img, preview: img.url, id: Math.random().toString() })) || []);
+        setBrands(data.brands?.map((brand: any) => ({ ...brand, preview: brand.url, id: Math.random().toString() })) || []);
         setDeals(data.deals || []);
-        setCategories(data.categories?.map((cat: any) => ({ ...cat, preview: cat.url })) || []);
+        setCategories(data.categories?.map((cat: any) => ({ ...cat, preview: cat.url, id: Math.random().toString() })) || []);
       }
-      setIsLoading(false);
+      setIsFetching(false);
     };
     
     const fetchProducts = async () => {
@@ -124,9 +108,18 @@ export default function HomePageManager() {
           const newArray = [...stateArray];
           newArray[index].file = file;
           newArray[index].preview = URL.createObjectURL(file);
+          newArray[index].url = ''; // Clear existing URL if a file is chosen
           stateSetter(newArray);
       }
   };
+
+  const handleUrlChange = (index: number, value: string, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
+      const newArray = [...stateArray];
+      newArray[index].url = value;
+      newArray[index].preview = value;
+      newArray[index].file = undefined; // Clear existing file if a URL is provided
+      stateSetter(newArray);
+  }
 
   const handleTextChange = (index: number, field: string, value: string, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
       const newArray = [...stateArray];
@@ -135,7 +128,7 @@ export default function HomePageManager() {
   };
 
   const handleAddItem = (stateSetter: React.Dispatch<React.SetStateAction<any[]>>, newItem: any) => {
-      stateSetter(prev => [...prev, newItem]);
+      stateSetter(prev => [...prev, {...newItem, id: Date.now().toString() }]);
   };
   
   const handleRemoveItem = (index: number, stateSetter: React.Dispatch<React.SetStateAction<any[]>>) => {
@@ -156,7 +149,7 @@ export default function HomePageManager() {
   const handleSaveChanges = async () => {
     setIsLoading(true);
     try {
-      const uploadImage = async (item: any, path: string) => {
+      const uploadImage = async (item: ContentItem, path: string) => {
         if (item.file) {
           const storageRef = ref(storage, `${path}/${Date.now()}_${item.file.name}`);
           await uploadBytes(storageRef, item.file);
@@ -165,37 +158,21 @@ export default function HomePageManager() {
         return item.url || item.preview;
       };
 
-      const updatedHeroImages = await Promise.all(
-        heroImages.map(async (image) => ({
-          url: await uploadImage(image, 'site_content/homepage/hero'),
-          alt: image.alt,
-          dataAiHint: image.dataAiHint,
-        }))
-      );
-
-      const updatedBrands = await Promise.all(
-        brands.map(async (brand) => ({
-            url: await uploadImage(brand, 'site_content/homepage/brands'),
-            alt: brand.alt,
-            dataAiHint: brand.dataAiHint,
-        }))
-      );
-
-      const updatedCategories = await Promise.all(
-        categories.map(async (category) => ({
-            url: await uploadImage(category, 'site_content/homepage/categories'),
-            name: category.name,
-            discount: category.discount,
-            link: category.link,
-            dataAiHint: category.dataAiHint,
-        }))
-      );
+      const processItems = async (items: ContentItem[], path: string) => {
+        return Promise.all(
+          items.map(async (item) => {
+            const url = await uploadImage(item, path);
+            const { file, preview, id, ...rest } = item;
+            return { ...rest, url };
+          })
+        );
+      }
 
       const homepageContent = {
-        heroImages: updatedHeroImages,
-        brands: updatedBrands,
-        deals, // Deals just reference product IDs, no upload needed
-        categories: updatedCategories,
+        heroImages: await processItems(heroImages, 'site_content/homepage/hero'),
+        brands: await processItems(brands, 'site_content/homepage/brands'),
+        deals,
+        categories: await processItems(categories, 'site_content/homepage/categories'),
       };
 
       await setDoc(doc(db, 'site_content', 'homepage'), homepageContent, { merge: true });
@@ -217,6 +194,10 @@ export default function HomePageManager() {
   };
 
 
+  if (isFetching) {
+      return <p>Loading content...</p>
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -235,12 +216,13 @@ export default function HomePageManager() {
         </CardHeader>
         <CardContent className="space-y-4">
             {heroImages.map((image, index) => (
-              <div key={index} className="flex items-start gap-4 p-4 border rounded-lg bg-secondary/50">
+              <div key={image.id} className="flex items-start gap-4 p-4 border rounded-lg bg-secondary/50">
                 <GripVertical className="h-5 w-5 text-muted-foreground mt-8 cursor-grab" />
                 <div className="relative w-48 h-24">
-                  <Image src={image.preview} alt="Hero preview" fill className="object-cover rounded-md" />
+                  <Image src={image.preview || 'https://placehold.co/800x450.png'} alt="Hero preview" fill className="object-cover rounded-md" />
                 </div>
                 <div className="flex-1 space-y-2">
+                  <Input placeholder="Image URL" value={image.url || ''} onChange={(e) => handleUrlChange(index, e.target.value, setHeroImages, heroImages)} />
                   <Input placeholder="Alt Text" value={image.alt} onChange={(e) => handleTextChange(index, 'alt', e.target.value, setHeroImages, heroImages)} />
                   <Input placeholder="AI Hint" value={image.dataAiHint} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setHeroImages, heroImages)} />
                   <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setHeroImages, heroImages)} />
@@ -264,8 +246,9 @@ export default function HomePageManager() {
         <CardContent className="space-y-4">
            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {brands.map((brand, index) => (
-                <div key={index} className="p-2 border rounded-lg space-y-2">
-                    <Image src={brand.preview} alt="Brand preview" width={100} height={100} className="object-contain rounded-md mx-auto aspect-square" />
+                <div key={brand.id} className="p-2 border rounded-lg space-y-2">
+                    <Image src={brand.preview || 'https://placehold.co/200x200.png'} alt="Brand preview" width={100} height={100} className="object-contain rounded-md mx-auto aspect-square" />
+                    <Input placeholder="Image URL" value={brand.url || ''} onChange={(e) => handleUrlChange(index, e.target.value, setBrands, brands)} />
                     <Input placeholder="Alt text" value={brand.alt} onChange={(e) => handleTextChange(index, 'alt', e.target.value, setBrands, brands)}/>
                     <Input placeholder="AI Hint" value={brand.dataAiHint} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setBrands, brands)}/>
                     <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setBrands, brands)}/>
@@ -275,7 +258,7 @@ export default function HomePageManager() {
                 </div>
             ))}
             </div>
-            <Button variant="outline" className="mt-4" onClick={() => handleAddItem(setBrands, { id: Date.now().toString(), preview: 'https://placehold.co/200x200.png', alt: '', dataAiHint: '' })}>
+            <Button variant="outline" className="mt-4" onClick={() => handleAddItem(setBrands, { preview: 'https://placehold.co/200x200.png', alt: '', dataAiHint: '' })}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Brand
             </Button>
         </CardContent>
@@ -334,12 +317,13 @@ export default function HomePageManager() {
         <CardContent className="space-y-4">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {categories.map((category, index) => (
-                <div key={index} className="p-4 border rounded-lg space-y-2">
-                    <Image src={category.preview} alt={category.name} width={400} height={500} className="object-cover rounded-md mx-auto aspect-[4/5]" />
-                    <Input placeholder="Category Name (e.g. T-Shirts)" value={category.name} onChange={(e) => handleTextChange(index, 'name', e.target.value, setCategories, categories)}/>
-                    <Input placeholder="Discount Text (e.g. 40-80% OFF)" value={category.discount} onChange={(e) => handleTextChange(index, 'discount', e.target.value, setCategories, categories)}/>
-                    <Input placeholder="Link (e.g. /shop?category=Men)" value={category.link} onChange={(e) => handleTextChange(index, 'link', e.target.value, setCategories, categories)}/>
-                    <Input placeholder="AI Hint" value={category.dataAiHint} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setCategories, categories)}/>
+                <div key={category.id} className="p-4 border rounded-lg space-y-2">
+                    <Image src={category.preview || 'https://placehold.co/400x500.png'} alt={category.name || ''} width={400} height={500} className="object-cover rounded-md mx-auto aspect-[4/5]" />
+                    <Input placeholder="Image URL" value={category.url || ''} onChange={(e) => handleUrlChange(index, e.target.value, setCategories, categories)} />
+                    <Input placeholder="Category Name (e.g. T-Shirts)" value={category.name || ''} onChange={(e) => handleTextChange(index, 'name', e.target.value, setCategories, categories)}/>
+                    <Input placeholder="Discount Text (e.g. 40-80% OFF)" value={category.discount || ''} onChange={(e) => handleTextChange(index, 'discount', e.target.value, setCategories, categories)}/>
+                    <Input placeholder="Link (e.g. /shop?category=Men)" value={category.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setCategories, categories)}/>
+                    <Input placeholder="AI Hint" value={category.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setCategories, categories)}/>
                     <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setCategories, categories)}/>
                     <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => handleRemoveItem(index, setCategories)}>
                         <Trash2 className="h-4 w-4 mr-2"/> Remove
@@ -347,19 +331,17 @@ export default function HomePageManager() {
                 </div>
             ))}
             </div>
-            <Button variant="outline" className="mt-4" onClick={() => handleAddItem(setCategories, { id: Date.now().toString(), preview: 'https://placehold.co/400x500.png', name: '', discount: '', link: '', dataAiHint: '' })}>
+            <Button variant="outline" className="mt-4" onClick={() => handleAddItem(setCategories, { preview: 'https://placehold.co/400x500.png', name: '', discount: '', link: '', dataAiHint: '' })}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Category Card
             </Button>
         </CardContent>
       </Card>
 
       <div className="flex justify-end sticky bottom-4">
-          <Button onClick={handleSaveChanges} disabled={isLoading} size="lg" className="shadow-lg">
+          <Button onClick={handleSaveChanges} disabled={isLoading || isFetching} size="lg" className="shadow-lg">
             {isLoading ? 'Saving...' : 'Save All Homepage Changes'}
           </Button>
       </div>
     </div>
   );
 }
-
-    
