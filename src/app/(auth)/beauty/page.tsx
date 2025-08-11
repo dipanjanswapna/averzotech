@@ -6,7 +6,7 @@ export default function BeautyPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
-      <main className="flex-grow container py-8">
+      <main className="flex-grow container pt-8">
         <h1 className="text-4xl font-bold mb-4">Beauty Products</h1>
         <p>Browse our latest beauty products.</p>
         {/* Add products and filters here */}
