@@ -168,14 +168,6 @@ export default function ShopPage() {
         applyFilters();
     }, [applyFilters]);
 
-    const handleResetFilters = () => {
-        setSelectedMotherCategories([]);
-        setSelectedGroups([]);
-        setSelectedSubcategories([]);
-        setSelectedBrands([]);
-        setPriceRange([0, 65000]);
-    };
-    
     const createToggleHandler = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
         setter(prev => 
             prev.includes(value) 
@@ -184,26 +176,19 @@ export default function ShopPage() {
         );
     };
 
-    const handleMotherCategoryChange = (category: string) => {
-        const newSelection = selectedMotherCategories.includes(category) 
-            ? selectedMotherCategories.filter(c => c !== category)
-            : [...selectedMotherCategories, category];
-        setSelectedMotherCategories(newSelection);
-        setSelectedGroups([]);
-        setSelectedSubcategories([]);
-    };
-
-    const handleGroupChange = (group: string) => {
-        const newSelection = selectedGroups.includes(group)
-            ? selectedGroups.filter(g => g !== group)
-            : [...selectedGroups, group];
-        setSelectedGroups(newSelection);
-        setSelectedSubcategories([]);
-    };
-    
+    const handleMotherCategoryChange = createToggleHandler(setSelectedMotherCategories);
+    const handleGroupChange = createToggleHandler(setSelectedGroups);
     const handleSubcategoryChange = createToggleHandler(setSelectedSubcategories);
     const handleBrandChange = createToggleHandler(setSelectedBrands);
 
+    const handleResetFilters = () => {
+        setSelectedMotherCategories([]);
+        setSelectedGroups([]);
+        setSelectedSubcategories([]);
+        setSelectedBrands([]);
+        setPriceRange([0, 65000]);
+    };
+    
   const filterControls = (
       <FilterControls
         priceRange={priceRange}
@@ -374,16 +359,24 @@ function FilterControls({
 }: FilterControlsProps) {
 
     const motherCategories = Object.keys(filterHierarchy);
-    const availableGroups = selectedMotherCategories.length > 0
-        ? selectedMotherCategories.flatMap(mc => Object.keys(filterHierarchy[mc as keyof FilterHierarchy]))
-        : [];
     
-    const availableSubcategories = (selectedMotherCategories.length > 0 && selectedGroups.length > 0)
-        ? selectedMotherCategories.flatMap(mc => {
+    const availableGroups = React.useMemo(() => {
+        if (selectedMotherCategories.length === 0) return [];
+        return [...new Set(selectedMotherCategories.flatMap(mc => Object.keys(filterHierarchy[mc as keyof FilterHierarchy])))];
+    }, [selectedMotherCategories]);
+
+    const availableSubcategories = React.useMemo(() => {
+        if (selectedMotherCategories.length === 0 || selectedGroups.length === 0) return [];
+        const subcategories = selectedMotherCategories.flatMap(mc => {
             const motherCat = filterHierarchy[mc as keyof FilterHierarchy];
-            return selectedGroups.flatMap(g => motherCat[g as keyof typeof motherCat] || []);
-          })
-        : [];
+            if (!motherCat) return [];
+            return selectedGroups.flatMap(g => {
+                const group = motherCat[g as keyof typeof motherCat] as string[];
+                return group || [];
+            });
+        });
+        return [...new Set(subcategories)];
+    }, [selectedMotherCategories, selectedGroups]);
         
     const allBrands = [...new Set(allProducts.map(p => p.brand))];
 
@@ -408,7 +401,7 @@ function FilterControls({
                  <Collapsible defaultOpen={true}>
                     <CollapsibleTrigger className="font-semibold w-full text-left">GROUP</CollapsibleTrigger>
                     <CollapsibleContent className="pt-4 space-y-2">
-                         {[...new Set(availableGroups)].map(group => (
+                         {availableGroups.map(group => (
                              <FilterCheckbox
                                 key={group}
                                 id={`group-${group}`}
@@ -425,7 +418,7 @@ function FilterControls({
                  <Collapsible defaultOpen={true}>
                     <CollapsibleTrigger className="font-semibold w-full text-left">SUB CATEGORY</CollapsibleTrigger>
                     <CollapsibleContent className="pt-4 space-y-2">
-                         {[...new Set(availableSubcategories)].map(sub => (
+                         {availableSubcategories.map(sub => (
                              <FilterCheckbox
                                 key={sub}
                                 id={`sub-${sub}`}
@@ -476,3 +469,5 @@ function FilterControls({
         </div>
     )
 }
+
+    
