@@ -35,7 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -114,12 +114,29 @@ export default function OrderDetailsPage() {
   }, [orderId]);
 
   const handleUpdateStatus = async () => {
-      if (!order || !newStatus) return;
+      if (!order || !newStatus || newStatus === order.status) return;
+
+      const batch = writeBatch(db);
       const orderRef = doc(db, 'orders', order.id);
+
       try {
-          await updateDoc(orderRef, { status: newStatus });
-          const noteContent = `Order status changed to ${newStatus}.`;
-          await handleAddNote(noteContent, 'System');
+          batch.update(orderRef, { status: newStatus });
+          const noteContent = `Order status changed from ${order.status} to ${newStatus}.`;
+          
+          const notesCollectionRef = collection(db, 'orders', order.id, 'notes');
+          const newNoteRef = doc(notesCollectionRef);
+          batch.set(newNoteRef, { note: noteContent, author: 'System', date: serverTimestamp() });
+
+          // If order is cancelled, restock products
+          if (newStatus === 'Cancelled' && order.status !== 'Cancelled') {
+              for (const item of order.items) {
+                  const productRef = doc(db, 'products', item.id);
+                  batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+              }
+          }
+
+          await batch.commit();
+          
           setOrder(prev => prev ? { ...prev, status: newStatus as any } : null);
           toast({
               title: "Order Updated",
