@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { CheckCircle, Printer, ShoppingBag } from "lucide-react"
+import { CheckCircle, Printer, ShoppingBag, Truck, ShieldCheck } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,8 @@ import { Logo } from "@/components/logo"
 
 const orderDetails = {
     orderId: 'AVZ-2024-12345',
-    orderDate: new Date().toLocaleDateString('en-GB'),
+    trackingId: 'AVZTRK987654',
+    orderDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
     paymentMethod: 'Credit Card',
     shippingAddress: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
     billingAddress: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
@@ -80,24 +81,37 @@ export default function OrderConfirmationPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 md:p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                            <div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+                            <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Shipping Address</h3>
                                 <address className="not-italic text-muted-foreground text-sm">
                                     {orderDetails.customer.name}<br/>
                                     {orderDetails.shippingAddress}
                                 </address>
                             </div>
-                             <div>
+                             <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Billing Address</h3>
                                 <address className="not-italic text-muted-foreground text-sm">
                                     {orderDetails.customer.name}<br/>
                                     {orderDetails.billingAddress}
                                 </address>
                             </div>
-                             <div>
+                             <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Payment Method</h3>
                                 <p className="text-muted-foreground text-sm">{orderDetails.paymentMethod}</p>
+                            </div>
+                             <div className="md:col-span-2 lg:col-span-2">
+                                <h3 className="font-semibold mb-2 flex items-center"><Truck className="mr-2 h-5 w-5 text-primary"/>Order Tracking</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    Your tracking ID is: <span className="font-medium text-foreground">{orderDetails.trackingId}</span>.
+                                    You can <Link href="#" className="text-primary hover:underline">track your shipment here</Link>.
+                                </p>
+                            </div>
+                            <div className="lg:col-span-1">
+                                <h3 className="font-semibold mb-2 flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-primary"/>Refund Policy</h3>
+                                <p className="text-muted-foreground text-sm">
+                                    We offer a 7-day return policy. <Link href="#" className="text-primary hover:underline">Learn More</Link>
+                                </p>
                             </div>
                         </div>
 
@@ -165,7 +179,7 @@ export default function OrderConfirmationPage() {
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={handlePrint}>
                                     <Printer className="mr-2 h-4 w-4" />
-                                    Print Invoice
+                                    Print / Download PDF
                                 </Button>
                                 <Button onClick={() => router.push('/')}>
                                     <ShoppingBag className="mr-2 h-4 w-4" />
