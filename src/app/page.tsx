@@ -14,15 +14,40 @@ import {
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
 import { Heart, Clock } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface HeroImage {
+  url: string;
+  alt: string;
+  dataAiHint: string;
+}
 
 export default function Home() {
-  const heroImages = [
-    { src: 'https://placehold.co/800x450.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
-    { src: 'https://placehold.co/800x450.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Ethnic wear banner', dataAiHint: 'ethnic wear' },
-  ];
+  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+   useEffect(() => {
+    const fetchHomepageContent = async () => {
+      setLoading(true);
+      const docRef = doc(db, 'site_content', 'homepage');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setHeroImages(docSnap.data().heroImages || []);
+      } else {
+        // Fallback to default images if nothing is set in Firestore
+        setHeroImages([
+          { url: 'https://placehold.co/800x450.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
+          { url: 'https://placehold.co/800x450.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
+        ]);
+      }
+      setLoading(false);
+    };
+    fetchHomepageContent();
+  }, []);
 
   const brands = [
     { src: 'https://placehold.co/200x200.png', alt: 'Brand 1', dataAiHint: 'fashion logo' },
@@ -198,31 +223,35 @@ export default function Home() {
       <SiteHeader />
       <main className="flex-grow">
         <section className="relative w-full">
-          <Carousel
-            className="w-full"
-            opts={{
-              loop: true,
-            }}
-          >
-            <CarouselContent>
-              {heroImages.map((image, index) => (
-                <CarouselItem key={index}>
-                  <div className="relative h-[40vh] md:h-[calc(100vh-80px)]">
-                    <Image
-                      src={image.src}
-                      alt={image.alt}
-                      fill
-                      className="object-cover"
-                      data-ai-hint={image.dataAiHint}
-                      priority={index === 0}
-                    />
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
-            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
-          </Carousel>
+          {loading ? (
+            <Skeleton className="w-full h-[40vh] md:h-[calc(100vh-80px)]" />
+          ) : (
+            <Carousel
+              className="w-full"
+              opts={{
+                loop: true,
+              }}
+            >
+              <CarouselContent>
+                {heroImages.map((image, index) => (
+                  <CarouselItem key={index}>
+                    <div className="relative h-[40vh] md:h-[calc(100vh-80px)]">
+                      <Image
+                        src={image.url}
+                        alt={image.alt}
+                        fill
+                        className="object-cover"
+                        data-ai-hint={image.dataAiHint}
+                        priority={index === 0}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
+              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
+            </Carousel>
+          )}
         </section>
 
         <section className="bg-primary/5 py-8 md:py-16">
