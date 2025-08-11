@@ -1,5 +1,8 @@
+"use client";
+
 import Link from 'next/link';
 import { Menu, Search, ShoppingCart, User, Heart, ChevronDown } from 'lucide-react';
+import React from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -12,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Logo } from '@/components/logo';
 import { Input } from './ui/input';
 
@@ -20,26 +22,31 @@ export function SiteHeader() {
   const categories = [
     { 
       name: 'Men',
+      href: '/men',
       description: 'Find the latest trends for men.',
       subCategories: ['T-shirts', 'Jeans', 'Jackets', 'Shoes']
     },
     { 
       name: 'Women', 
+      href: '/women',
       description: 'Shop stylish apparel for women.', 
       subCategories: ['Dresses', 'Tops', 'Skirts', 'Handbags'] 
     },
     { 
-      name: 'Kids', 
+      name: 'Kids',
+      href: '/kids', 
       description: 'Adorable outfits for the little ones.', 
       subCategories: ['Boys', 'Girls', 'Infants', 'Toys'] 
     },
     { 
       name: 'Home & Living', 
+      href: '/home-living',
       description: 'Decorate your space with style.', 
       subCategories: ['Furniture', 'Decor', 'Bedding', 'Kitchen'] 
     },
     { 
       name: 'Beauty', 
+      href: '/beauty',
       description: 'Discover your new favorite products.', 
       subCategories: ['Makeup', 'Skincare', 'Fragrance', 'Haircare'] 
     },
@@ -58,32 +65,7 @@ export function SiteHeader() {
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
              {categories.map((category) => (
-                <DropdownMenu key={category.name}>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="p-0">
-                      {category.name}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64" sideOffset={10}>
-                     <DropdownMenuLabel className="flex items-start gap-4 p-2">
-                        <div className="mt-1">
-                          <Logo />
-                        </div>
-                        <div>
-                           <p className="font-bold text-base">{category.name}</p>
-                           <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
-                        </div>
-                     </DropdownMenuLabel>
-                     <DropdownMenuSeparator />
-                     <DropdownMenuGroup>
-                        {category.subCategories.map((sub) => (
-                          <DropdownMenuItem key={sub}>
-                            <span>{sub}</span>
-                          </DropdownMenuItem>
-                        ))}
-                     </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <NavMenuItem key={category.name} category={category} />
               ))}
           </nav>
 
@@ -151,8 +133,8 @@ export function SiteHeader() {
                       {categories.map((category) => (
                          <DropdownMenu key={category.name}>
                             <DropdownMenuTrigger asChild>
-                               <Button variant="ghost" className="justify-between">
-                                  <span>{category.name}</span>
+                               <Button variant="ghost" className="justify-between w-full">
+                                  <Link href={category.href} className='flex-1 text-left'>{category.name}</Link>
                                   <ChevronDown className="h-4 w-4" />
                                </Button>
                             </DropdownMenuTrigger>
@@ -187,5 +169,60 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+
+function NavMenuItem({ category }: { category: any }) {
+  const [open, setOpen] = React.useState(false);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleOpen = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    timerRef.current = setTimeout(() => {
+      setOpen(false);
+    }, 150);
+  };
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild onMouseEnter={handleOpen} onMouseLeave={handleClose}>
+        <Button variant="ghost" className="p-0" asChild>
+          <Link href={category.href}>
+            {category.name}
+          </Link>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        className="w-64" 
+        sideOffset={10} 
+        onMouseEnter={handleOpen} 
+        onMouseLeave={handleClose}
+      >
+        <DropdownMenuLabel className="flex items-start gap-4 p-2">
+          <div className="mt-1">
+            <Logo />
+          </div>
+          <div>
+            <p className="font-bold text-base">{category.name}</p>
+            <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          {category.subCategories.map((sub: string) => (
+            <DropdownMenuItem key={sub}>
+              <span>{sub}</span>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
