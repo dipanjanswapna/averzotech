@@ -94,12 +94,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center space-y-2">
+    <>
+      <CardHeader className="text-center space-y-2 px-0">
         <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
         <CardDescription>Join AVERZO today!</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         <form onSubmit={handleRegister} className="grid gap-4">
            <div className="grid gap-2">
             <Label htmlFor="fullName">Full Name</Label>
@@ -184,7 +184,7 @@ export default function RegisterPage() {
             Google
         </Button>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="px-0">
         <p className="w-full text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
@@ -192,6 +192,6 @@ export default function RegisterPage() {
           </Link>
         </p>
       </CardFooter>
-    </Card>
+    </>
   );
 }

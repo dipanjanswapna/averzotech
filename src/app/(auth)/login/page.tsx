@@ -114,12 +114,12 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="text-center space-y-2">
+    <>
+      <CardHeader className="text-center space-y-2 px-0">
         <CardTitle className="font-headline text-2xl">Login</CardTitle>
         <CardDescription>Welcome back to AVERZO</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         <form onSubmit={handleLogin} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
@@ -163,7 +163,7 @@ export default function LoginPage() {
             Google
         </Button>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="px-0">
         <p className="w-full text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="font-semibold text-primary underline-offset-4 hover:underline">
@@ -171,6 +171,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </CardFooter>
-    </Card>
+    </>
   );
 }

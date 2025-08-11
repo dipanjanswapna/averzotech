@@ -64,6 +64,7 @@ interface FlashSaleItem {
     dataAiHint: string;
     inventory: {
         stock: number;
+        sold?: number; // Optional, can be calculated or stored
     };
 }
 
@@ -265,7 +266,7 @@ export default function Home() {
                                                 {deal.pricing.discount && <span className="text-xs text-orange-400 font-bold">({deal.pricing.discount}% OFF)</span>}
                                             </p>
                                             <div className='mt-2'>
-                                                <Progress value={(deal.inventory.stock > 0 ? (deal.inventory.stock - (deal.inventory.stock * 0.33)) / deal.inventory.stock * 100 : 0)} className="h-2" />
+                                                 <Progress value={((deal.inventory.stock - (deal.inventory.sold || 0)) / deal.inventory.stock) * 100} className="h-2" />
                                                 <p className="text-xs text-muted-foreground mt-1">Only a few left!</p>
                                             </div>
                                         </div>
