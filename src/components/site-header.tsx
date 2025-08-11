@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -29,7 +30,7 @@ interface AppUser {
     uid: string;
     email: string | null;
     fullName: string;
-    role: 'customer' | 'vendor';
+    role: 'customer' | 'vendor' | 'admin';
     photoURL?: string | null;
 }
 
@@ -51,9 +52,9 @@ export function SiteHeader() {
             setUser({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
-                fullName: userData.fullName,
+                fullName: userData.fullName || firebaseUser.displayName || 'User',
                 role: userData.role,
-                photoURL: firebaseUser.photoURL,
+                photoURL: userData.photoURL || firebaseUser.photoURL,
             });
         } else {
              setUser({
@@ -88,6 +89,18 @@ export function SiteHeader() {
       });
     }
   };
+
+  const getDashboardLink = () => {
+    if (!user) return null;
+    switch (user.role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'vendor':
+        return '/vendor/dashboard';
+      default:
+        return null;
+    }
+  }
 
   const categories = [
     { 
@@ -260,6 +273,8 @@ export function SiteHeader() {
     },
   ];
 
+  const dashboardLink = getDashboardLink();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -294,7 +309,7 @@ export function SiteHeader() {
                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
-                            <AvatarFallback>{user ? user.fullName.charAt(0) : <User className='h-5 w-5' />}</AvatarFallback>
+                            <AvatarFallback>{user ? user.fullName.charAt(0).toUpperCase() : <User className='h-5 w-5' />}</AvatarFallback>
                         </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
@@ -311,7 +326,11 @@ export function SiteHeader() {
                             <DropdownMenuItem asChild>
                               <Link href="/wishlist">Wishlist</Link>
                             </DropdownMenuItem>
-                            {user.role === 'vendor' && <DropdownMenuItem>Dashboard</DropdownMenuItem>}
+                            {dashboardLink && (
+                              <DropdownMenuItem asChild>
+                                <Link href={dashboardLink}>Dashboard</Link>
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
                                 <LogOut className='mr-2 h-4 w-4' />
