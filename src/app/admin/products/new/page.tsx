@@ -24,8 +24,19 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import React from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
-const filterCategories = [
+const initialFilterCategories = [
     { 
       name: 'Men',
       groups: [
@@ -80,8 +91,14 @@ const filterCategories = [
 
 export default function NewProductPage() {
   const [specifications, setSpecifications] = React.useState([{ label: '', value: '' }]);
+  
+  const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
   const [selectedCategory, setSelectedCategory] = React.useState('');
   const [selectedGroup, setSelectedGroup] = React.useState('');
+  
+  const [newGroupName, setNewGroupName] = React.useState('');
+  const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
+
 
   const handleAddSpecification = () => {
     setSpecifications([...specifications, { label: '', value: '' }]);
@@ -98,11 +115,63 @@ export default function NewProductPage() {
     setSpecifications(newSpecifications);
   };
 
+  const handleAddNewGroup = () => {
+    if (newGroupName && selectedCategory) {
+      setFilterCategories(prevCategories => {
+        return prevCategories.map(cat => {
+          if (cat.name === selectedCategory) {
+            // Check if group already exists
+            if (cat.groups.some(g => g.name.toLowerCase() === newGroupName.toLowerCase())) {
+              return cat;
+            }
+            return {
+              ...cat,
+              groups: [...cat.groups, { name: newGroupName, subcategories: [] }]
+            };
+          }
+          return cat;
+        });
+      });
+      setSelectedGroup(newGroupName);
+      setNewGroupName('');
+    }
+  };
+
+  const handleAddNewSubcategory = () => {
+    if (newSubcategoryName && selectedCategory && selectedGroup) {
+      setFilterCategories(prevCategories => {
+        return prevCategories.map(cat => {
+          if (cat.name === selectedCategory) {
+            return {
+              ...cat,
+              groups: cat.groups.map(group => {
+                if (group.name === selectedGroup) {
+                   // Check if subcategory already exists
+                   if (group.subcategories.some(s => s.toLowerCase() === newSubcategoryName.toLowerCase())) {
+                       return group;
+                   }
+                  return {
+                    ...group,
+                    subcategories: [...group.subcategories, newSubcategoryName]
+                  };
+                }
+                return group;
+              })
+            };
+          }
+          return cat;
+        });
+      });
+      // Optionally select the new subcategory
+      setNewSubcategoryName('');
+    }
+  };
+
   const availableGroups = React.useMemo(() => {
     if (!selectedCategory) return [];
     const category = filterCategories.find(c => c.name === selectedCategory);
     return category ? category.groups : [];
-  }, [selectedCategory]);
+  }, [selectedCategory, filterCategories]);
 
   const availableSubcategories = React.useMemo(() => {
     if (!selectedGroup) return [];
@@ -286,7 +355,29 @@ export default function NewProductPage() {
               </div>
               {selectedCategory && (
                 <div className="space-y-2">
-                  <Label>Group</Label>
+                    <div className="flex justify-between items-center">
+                        <Label>Group</Label>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" disabled={!selectedCategory}>
+                                <PlusCircle className="h-4 w-4 mr-1" /> Add New
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Add New Group</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Enter the name for the new group under the "{selectedCategory}" category.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <Input placeholder="e.g. Festive Wear" value={newGroupName} onChange={e => setNewGroupName(e.target.value)} />
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleAddNewGroup}>Add Group</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
                   <Select onValueChange={setSelectedGroup} value={selectedGroup}>
                     <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                     <SelectContent>
@@ -297,7 +388,29 @@ export default function NewProductPage() {
               )}
                {selectedGroup && (
                 <div className="space-y-2">
-                  <Label>Sub-category</Label>
+                   <div className="flex justify-between items-center">
+                        <Label>Sub-category</Label>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <Button variant="ghost" size="sm" disabled={!selectedGroup}>
+                                <PlusCircle className="h-4 w-4 mr-1" /> Add New
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Add New Sub-category</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Enter the name for the new sub-category under "{selectedGroup}".
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <Input placeholder="e.g. Panjabis" value={newSubcategoryName} onChange={e => setNewSubcategoryName(e.target.value)} />
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleAddNewSubcategory}>Add Sub-category</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
                   <Select>
                     <SelectTrigger><SelectValue placeholder="Select sub-category" /></SelectTrigger>
                     <SelectContent>
@@ -325,3 +438,6 @@ export default function NewProductPage() {
     </div>
   );
 }
+
+
+    
