@@ -57,21 +57,26 @@ const Stepper = React.forwardRef<
     errorIcon,
     styles,
     variables,
+    // Extract Stepper-specific props so they don't get passed to the div
+    initialStep,
+    steps,
+    expandVerticalSteps,
+    onClickStep,
     ...rest
   } = props
 
-  const [activeStep, setActiveStep] = React.useState(props.initialStep)
+  const [activeStep, setActiveStep] = React.useState(initialStep)
   const [isLastStep, setIsLastStep] = React.useState(false)
 
   React.useEffect(() => {
-    setIsLastStep(activeStep === props.steps.length - 1)
-  }, [activeStep, props.steps.length])
+    setIsLastStep(activeStep === steps.length - 1)
+  }, [activeStep, steps.length])
 
   const isVertical = orientationProp === "vertical"
-  const isClickable = !!props.onClickStep
+  const isClickable = !!onClickStep
 
   const nextStep = () => {
-    setActiveStep((prev) => Math.min(prev + 1, props.steps.length - 1))
+    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1))
   }
 
   const prevStep = () => {
@@ -79,26 +84,29 @@ const Stepper = React.forwardRef<
   }
 
   const resetSteps = () => {
-    setActiveStep(props.initialStep)
+    setActiveStep(initialStep)
   }
 
   const setStep = (step: number) => {
-    setActiveStep(Math.max(0, Math.min(step, props.steps.length - 1)))
+    setActiveStep(Math.max(0, Math.min(step, steps.length - 1)))
   }
+  
+  const contextValue = {
+      ...props,
+      activeStep,
+      isLastStep,
+      isVertical,
+      isClickable,
+      nextStep,
+      prevStep,
+      resetSteps,
+      setStep,
+  };
+
 
   return (
     <StepperContext.Provider
-      value={{
-        ...props,
-        activeStep,
-        isLastStep,
-        isVertical,
-        isClickable,
-        nextStep,
-        prevStep,
-        resetSteps,
-        setStep,
-      }}
+      value={contextValue}
     >
       <div
         ref={ref}
@@ -293,7 +301,7 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
                     className={cn(
                         "stepper-connector-line",
                         "rounded-full",
-                        isVertical ? 'h-[var(--connector-length)] w-[var(--connector-width)]' : 'h-[var(--connector-width)] w-full',
+                        isVertical ? 'h-[var(--connector-length)] w-[var(--connector-width)]' : 'bg-border',
                         isStepCompleted ? 'bg-primary' : 'bg-border',
                     )}
                 />
@@ -318,5 +326,3 @@ StepperItem.defaultProps = {
 }
 
 export { Stepper, StepperItem, useStepper }
-
-    
