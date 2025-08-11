@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { app, db } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -94,6 +95,11 @@ const initialFilterCategories = [
     ]},
 ];
 
+interface ImageObject {
+    file?: File;
+    url: string;
+}
+
 export default function NewProductPage() {
     const storage = getStorage(app);
     const { toast } = useToast();
@@ -108,8 +114,8 @@ export default function NewProductPage() {
     const [vendor, setVendor] = useState('');
     
     // Media
-    const [images, setImages] = useState<File[]>([]);
-    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [images, setImages] = useState<ImageObject[]>([]);
+    const [imageUrlInput, setImageUrlInput] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
     
     // Variants
@@ -149,19 +155,32 @@ export default function NewProductPage() {
     const [newGroupName, setNewGroupName] = React.useState('');
     const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
         const filesArray = Array.from(e.target.files);
-        setImages(prev => [...prev, ...filesArray]);
-
-        const previewsArray = filesArray.map(file => URL.createObjectURL(file));
-        setImagePreviews(prev => [...prev, ...previewsArray]);
+        const imageObjects = filesArray.map(file => ({
+            file: file,
+            url: URL.createObjectURL(file)
+        }));
+        setImages(prev => [...prev, ...imageObjects]);
       }
     };
+    
+    const handleAddImageUrl = () => {
+        if (imageUrlInput && imageUrlInput.startsWith('http')) {
+            setImages(prev => [...prev, { url: imageUrlInput }]);
+            setImageUrlInput('');
+        } else {
+            toast({
+                title: 'Invalid URL',
+                description: 'Please enter a valid image URL (starting with http).',
+                variant: 'destructive',
+            })
+        }
+    }
 
     const handleRemoveImage = (index: number) => {
       setImages(prev => prev.filter((_, i) => i !== index));
-      setImagePreviews(prev => prev.filter((_, i) => i !== index));
     };
     
     const handleAddSpecification = () => setSpecifications([...specifications, { label: '', value: '' }]);
@@ -253,12 +272,15 @@ export default function NewProductPage() {
     const handleSaveProduct = async () => {
         setIsLoading(true);
         try {
-            // 1. Upload images to Firebase Storage
+            // 1. Upload images to Firebase Storage if they are files
             const imageUrls = await Promise.all(
-                images.map(async (image) => {
-                    const storageRef = ref(storage, `products/${Date.now()}-${image.name}`);
-                    await uploadBytes(storageRef, image);
-                    return await getDownloadURL(storageRef);
+                images.map(async (imageObj) => {
+                    if (imageObj.file) {
+                        const storageRef = ref(storage, `products/${Date.now()}-${imageObj.file.name}`);
+                        await uploadBytes(storageRef, imageObj.file);
+                        return await getDownloadURL(storageRef);
+                    }
+                    return imageObj.url;
                 })
             );
 
@@ -369,30 +391,51 @@ export default function NewProductPage() {
               <CardDescription>Upload images and video for your product. The first image will be the main one.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 mb-4">
-                <Label>Product Images</Label>
-                 <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center">
-                    <input type="file" id="image-upload" multiple onChange={handleImageChange} className="hidden" disabled={isLoading}/>
-                    <Label htmlFor="image-upload" className="cursor-pointer">
-                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <p className="mt-4 text-sm text-muted-foreground">
-                        Drag and drop your images here, or{' '}
-                        <span className="font-semibold text-primary">click to browse</span>
-                        </p>
-                    </Label>
+                <Tabs defaultValue="upload">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="upload"><UploadCloud className="mr-2 h-4 w-4"/> Upload Files</TabsTrigger>
+                        <TabsTrigger value="url"><LinkIcon className="mr-2 h-4 w-4"/> Add from URL</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="upload">
+                        <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center mt-4">
+                            <input type="file" id="image-upload" multiple onChange={handleFileChange} className="hidden" disabled={isLoading}/>
+                            <Label htmlFor="image-upload" className="cursor-pointer">
+                                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <p className="mt-4 text-sm text-muted-foreground">
+                                Drag and drop your images here, or{' '}
+                                <span className="font-semibold text-primary">click to browse</span>
+                                </p>
+                            </Label>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="url">
+                        <div className="flex gap-2 mt-4">
+                            <Input 
+                                placeholder="https://example.com/image.png" 
+                                value={imageUrlInput} 
+                                onChange={(e) => setImageUrlInput(e.target.value)}
+                                disabled={isLoading}
+                            />
+                            <Button onClick={handleAddImageUrl} disabled={isLoading}>Add Image</Button>
+                        </div>
+                    </TabsContent>
+                </Tabs>
+
+                <div className="mt-4">
+                    <Label>Image Previews</Label>
+                    <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {images.map((image, index) => (
+                        <div key={index} className="relative group">
+                            <Image src={image.url} alt={`Product Image ${index + 1}`} width={150} height={150} className="rounded-md aspect-square object-cover" />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(index)} disabled={isLoading}><Trash2 className="w-4 h-4"/></Button>
+                            </div>
+                        </div>
+                        ))}
+                    </div>
                 </div>
-                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative group">
-                          <Image src={preview} alt={`Product Image ${index + 1}`} width={150} height={150} className="rounded-md aspect-square object-cover" />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                             <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(index)} disabled={isLoading}><Trash2 className="w-4 h-4"/></Button>
-                          </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-               <div className="space-y-2">
+
+              <div className="space-y-2 mt-6">
                 <Label htmlFor="product-video">YouTube Video URL</Label>
                 <Input id="product-video" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} disabled={isLoading} />
               </div>
@@ -565,7 +608,7 @@ export default function NewProductPage() {
                               <AlertDialogTrigger asChild>
                                  <Button variant="ghost" size="sm" disabled={!selectedGroup || isLoading}>
                                     <PlusCircle className="h-4 w-4 mr-1" /> Add New
-                                </Button>
+                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
