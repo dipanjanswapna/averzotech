@@ -85,7 +85,7 @@ export default function ShippingPage() {
             <SiteHeader />
             <main className="flex-grow container mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <div className="lg:col-span-1 order-2 lg:order-1">
+                    <div className="lg:col-span-1">
                         <div className="mb-6">
                             <p className="text-sm text-muted-foreground">
                                 <Link href="/cart" className="hover:text-primary">Cart</Link>
@@ -219,7 +219,7 @@ export default function ShippingPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="lg:col-span-1 order-1 lg:order-2 bg-secondary/50 p-8 rounded-lg">
+                    <div className="lg:col-span-1 bg-secondary/50 p-8 rounded-lg">
                         <h2 className="text-2xl font-semibold mb-6">Your Cart</h2>
                         <div className="space-y-4">
                             {cartItems.map((item) => (
@@ -291,5 +291,7 @@ export default function ShippingPage() {
             <SiteFooter />
         </div>
     )
+
+    
 
     
