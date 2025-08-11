@@ -133,7 +133,7 @@ type StepperProps = {
   steps: {
     label: string
     description?: string
-    icon?: React.ReactNode
+    icon?: React.ElementType
   }[]
   orientation?: "vertical" | "horizontal"
   state?: "loading" | "error"
@@ -171,7 +171,7 @@ type StepperItemProps = React.HTMLAttributes<HTMLDivElement> & {
   isKeepError?: boolean
   label?: string
   description?: string
-  icon?: React.ReactNode
+  icon?: React.ElementType
 }
 
 const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
@@ -180,7 +180,7 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
       className,
       children,
       description,
-      icon,
+      icon: PasedIcon,
       label,
       isCompletedStep,
       isKeepError,
@@ -215,15 +215,19 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
 
     const isStepDisabled =
       !isStepPassed && !isCurrentStep && !isStepLoading && !isError
-
+      
+    const Icon = PasedIcon ?? steps[stepIndex]?.icon
+    
     const iconToRender = isStepLoading ? (
       <Loader2 className="animate-spin" />
     ) : stepIsError ? (
       errorIcon
     ) : isStepCompleted ? (
       checkIcon
+    ) : Icon ? (
+      <Icon />
     ) : (
-      icon ?? stepIndex + 1
+      stepIndex + 1
     )
 
     const renderChildren = () => {
@@ -354,10 +358,8 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
 )
 
 StepperItem.defaultProps = {
-  icon: <Check />,
   checkIcon: <Check />,
   errorIcon: <Check />,
 }
 
 export { Stepper, StepperItem, useStepper }
-
