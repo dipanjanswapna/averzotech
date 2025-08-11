@@ -267,7 +267,7 @@ export function SiteHeader() {
                         <MoreVertical className="h-6 w-6" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px]">
+                <SheetContent side="left" className="w-[300px] flex flex-col">
                     <SheetHeader>
                          {user ? (
                             <div className="flex items-center gap-3">
@@ -285,24 +285,34 @@ export function SiteHeader() {
                          )}
                     </SheetHeader>
                     <Separator className="my-4" />
-                    <nav className="flex flex-col space-y-2">
-                       {user ? (
-                        <>
-                            <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
-                            <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
-                            <Link href="/cart" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><ShoppingCart className="mr-2 h-5 w-5" />Cart</Link>
-                            <Separator className="my-2" />
-                             <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
-                                <LogOut className="mr-2 h-5 w-5" /> Logout
-                            </Button>
-                        </>
-                       ) : (
-                        <>
-                           <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
-                           <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
-                        </>
-                       )}
-                    </nav>
+                    <ScrollArea className="flex-1 -mx-6">
+                      <div className="px-6">
+                        <nav className="flex flex-col space-y-2">
+                          {user ? (
+                            <>
+                                <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
+                                <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                                <Link href="/cart" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><ShoppingCart className="mr-2 h-5 w-5" />Cart</Link>
+                                <Separator className="my-2" />
+                                <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
+                                    <LogOut className="mr-2 h-5 w-5" /> Logout
+                                </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
+                              <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
+                            </>
+                          )}
+                        </nav>
+                        <Separator className="my-4" />
+                        <div className="flex flex-col space-y-1">
+                          {categories.map((category) => (
+                            <MegaMenu key={category.name} category={category} isMobile={true} />
+                          ))}
+                        </div>
+                      </div>
+                    </ScrollArea>
                 </SheetContent>
             </Sheet>
         </div>
