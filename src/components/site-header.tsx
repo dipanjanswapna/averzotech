@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -78,7 +79,7 @@ export function SiteHeader() {
 
             <div className="hidden sm:flex items-center gap-2">
               <Button variant="ghost" size="icon" asChild>
-                <Link href="#">
+                <Link href="/wishlist">
                   <Heart className="h-5 w-5" />
                   <span className="sr-only">Wishlist</span>
                 </Link>
@@ -101,7 +102,9 @@ export function SiteHeader() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>Profile</DropdownMenuItem>
                     <DropdownMenuItem>Orders</DropdownMenuItem>
-                    <DropdownMenuItem>Wishlist</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Link href="/wishlist">Wishlist</Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
                       <Link href="/login">Login</Link>
@@ -164,6 +167,7 @@ export function SiteHeader() {
                       ))}
                     </div>
                     <div className="mt-auto flex flex-col gap-2">
+                       <Button variant="outline" asChild><Link href="/wishlist">Wishlist</Link></Button>
                       <Button variant="outline" asChild><Link href="/login">Login</Link></Button>
                       <Button asChild><Link href="/register">Sign Up</Link></Button>
                     </div>
