@@ -29,6 +29,8 @@ import { Input } from '@/components/ui/input';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCart } from '@/hooks/use-cart';
+import { useToast } from '@/hooks/use-toast';
 
 const initialProduct = {
   id: '89073456',
@@ -155,6 +157,10 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
+  const [selectedSize, setSelectedSize] = React.useState<string>('');
+  const [selectedColor, setSelectedColor] = React.useState<{name: string, hex: string} | null>(null);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
 
   React.useEffect(() => {
     if (params.productId) {
@@ -165,7 +171,14 @@ export default function ProductPage({ params }: { params: { productId: string } 
           const docSnap = await getDoc(docRef);
 
           if (docSnap.exists()) {
-            setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+            const productData = { id: docSnap.id, ...docSnap.data() } as Product;
+            setProduct(productData);
+            if (productData.variants.sizes.length > 0) {
+              setSelectedSize(productData.variants.sizes[0]);
+            }
+            if (productData.variants.colors.length > 0) {
+              setSelectedColor(productData.variants.colors[0]);
+            }
           } else {
             setError('Product not found.');
           }
@@ -180,6 +193,28 @@ export default function ProductPage({ params }: { params: { productId: string } 
     }
   }, [params.productId]);
   
+  const handleAddToCart = () => {
+    if (!product) return;
+    if (!selectedSize || !selectedColor) {
+        toast({
+            title: "Selection required",
+            description: "Please select a size and color.",
+            variant: "destructive"
+        });
+        return;
+    }
+    const productToAdd = {
+        ...product,
+        selectedSize,
+        selectedColor: selectedColor.name,
+    };
+    addToCart(productToAdd, quantity);
+    toast({
+        title: "Added to Cart",
+        description: `${product.name} has been added to your cart.`
+    })
+  }
+
   if (loading) {
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -241,27 +276,19 @@ export default function ProductPage({ params }: { params: { productId: string } 
       name: product.name,
       brand: product.brand,
       images: product.images.map(img => ({ src: img, alt: product.name, dataAiHint: 'product image'})),
-      price: product.pricing.price,
-      mrp: product.pricing.comparePrice,
-      discount: product.pricing.discount,
-      availability: product.inventory.availability,
+      pricing: product.pricing,
+      inventory: product.inventory,
       sku: product.inventory.sku,
-      sizes: product.variants.sizes,
-      colors: product.variants.colors,
+      variants: product.variants,
       videoUrl: product.videoUrl,
       offers: product.offers ? product.offers.split('\n') : [],
       details: {
           description: product.description,
-          sizeAndFit: '', // This data is not in the builder
-          materialAndCare: '', // This data is not in the builder
           specifications: product.specifications,
       },
       returnPolicy: product.returnPolicy,
       vendor: { name: product.vendor, rating: 4.5, totalProducts: 1204 }, // Mock rating/count
-      delivery: {
-          estimated: product.shipping.estimatedDelivery,
-          shippingCost: product.shipping.deliveryFee === 0 ? 'Free Shipping' : `৳${product.shipping.deliveryFee}`
-      }
+      shipping: product.shipping
   };
 
   return (
@@ -342,20 +369,20 @@ export default function ProductPage({ params }: { params: { productId: string } 
             <Separator className="my-4" />
 
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">৳{displayProduct.price}</span>
-                {displayProduct.mrp && <span className="text-muted-foreground line-through">MRP ৳{displayProduct.mrp}</span>}
-                {displayProduct.discount && <span className="text-orange-500 font-bold">({displayProduct.discount}% OFF)</span>}
+                <span className="text-2xl font-bold">৳{displayProduct.pricing.price}</span>
+                {displayProduct.pricing.comparePrice && <span className="text-muted-foreground line-through">MRP ৳{displayProduct.pricing.comparePrice}</span>}
+                {displayProduct.pricing.discount && <span className="text-orange-500 font-bold">({displayProduct.pricing.discount}% OFF)</span>}
             </div>
             <p className="text-sm text-green-600 font-semibold">inclusive of all taxes</p>
-            <Badge variant="outline" className="mt-2">{displayProduct.availability}</Badge>
-            <p className="text-sm text-muted-foreground mt-1">SKU: {displayProduct.sku}</p>
+            <Badge variant="outline" className="mt-2">{displayProduct.inventory.availability}</Badge>
+            <p className="text-sm text-muted-foreground mt-1">SKU: {displayProduct.inventory.sku}</p>
 
             
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-foreground mb-2">COLOR</h3>
               <div className="flex flex-wrap gap-2">
-                {displayProduct.colors.map((color) => (
-                   <Button key={color.name} variant="outline" size="icon" className={`rounded-full border-2 ${color.active ? 'border-primary' : 'border-border'}`}>
+                {displayProduct.variants.colors.map((color) => (
+                   <Button key={color.name} variant="outline" size="icon" className={`rounded-full border-2 ${selectedColor?.name === color.name ? 'border-primary' : 'border-border'}`} onClick={() => setSelectedColor(color)}>
                      <span className="block w-6 h-6 rounded-full" style={{ backgroundColor: color.hex }} />
                    </Button>
                 ))}
@@ -368,8 +395,8 @@ export default function ProductPage({ params }: { params: { productId: string } 
                 <Link href="#" className="text-sm font-semibold text-primary">SIZE CHART &gt;</Link>
               </div>
               <div className="flex flex-wrap gap-2">
-                {displayProduct.sizes.map((size) => (
-                  <Button key={size} variant="outline" className="rounded-full w-14 h-14 border-2 focus:border-primary focus:bg-primary/10">
+                {displayProduct.variants.sizes.map((size) => (
+                  <Button key={size} variant={selectedSize === size ? "default" : "outline"} className="rounded-full w-14 h-14 border-2" onClick={() => setSelectedSize(size)}>
                     {size}
                   </Button>
                 ))}
@@ -386,7 +413,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
-              <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleAddToCart}>
                 <ShoppingBag className="mr-2 h-5 w-5" /> ADD TO CART
               </Button>
               <Button size="lg" variant="secondary" className="flex-1">
@@ -409,8 +436,8 @@ export default function ProductPage({ params }: { params: { productId: string } 
             </div>
             
             <div className="text-sm mt-4 space-y-1">
-                <p>Estimated Delivery: <span className="font-semibold">{displayProduct.delivery.estimated}</span></p>
-                <p>Shipping: <span className="font-semibold">{displayProduct.delivery.shippingCost}</span></p>
+                <p>Estimated Delivery: <span className="font-semibold">{displayProduct.shipping.estimatedDelivery}</span></p>
+                <p>Shipping: <span className="font-semibold">{displayProduct.shipping.deliveryFee === 0 ? 'Free Shipping' : `৳${displayProduct.shipping.deliveryFee}`}</span></p>
             </div>
 
              <div className="mt-4 flex gap-4">
@@ -575,5 +602,3 @@ export default function ProductPage({ params }: { params: { productId: string } 
     </div>
   );
 }
-
-    

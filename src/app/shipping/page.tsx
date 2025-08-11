@@ -32,27 +32,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-
-const cartItems = [
-  {
-    id: '1',
-    name: 'Men Top Black Puffed Jacket',
-    variant: 'Men\'s Black',
-    price: 1200.00,
-    quantity: 1,
-    image: 'https://placehold.co/80x80.png',
-    dataAiHint: 'puffed jacket',
-  },
-  {
-    id: '2',
-    name: 'Women Jacket',
-    variant: 'Women top',
-    price: 1500.00,
-    quantity: 1,
-    image: 'https://placehold.co/80x80.png',
-    dataAiHint: 'women jacket',
-  },
-];
+import { useCart } from "@/hooks/use-cart"
 
 const savedAddresses = [
     {
@@ -69,21 +49,21 @@ const savedAddresses = [
     }
 ]
 
-const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-const shippingFee = 120.00;
-const taxes = 50.00;
-const total = subtotal + shippingFee + taxes;
-
-
 export default function ShippingPage() {
-    const [selectedAddress, setSelectedAddress] = React.useState<string | undefined>();
-    const [shippingMethod, setShippingMethod] = React.useState<string | undefined>();
+    const { cart } = useCart();
+    const [selectedAddress, setSelectedAddress] = React.useState<string | undefined>(savedAddresses.length > 0 ? savedAddresses[0].id : undefined);
+    const [shippingMethod, setShippingMethod] = React.useState<string | undefined>('standard');
     const [activeTab, setActiveTab] = React.useState("saved-address");
     const { toast } = useToast();
     const router = useRouter();
 
 
     const isSelectionComplete = selectedAddress && shippingMethod;
+
+    const subtotal = cart.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
+    const shippingFee = shippingMethod === 'express' ? 250 : 120;
+    const taxes = subtotal * 0.05; // 5% tax
+    const total = subtotal + shippingFee + taxes;
 
     const handleProceedToPayment = () => {
         if (!isSelectionComplete) {
@@ -254,17 +234,17 @@ export default function ShippingPage() {
                       <div className="bg-secondary p-8 rounded-lg">
                           <h2 className="text-2xl font-headline mb-6">Your Cart</h2>
                           <div className="space-y-4">
-                              {cartItems.map((item) => (
+                              {cart.map((item) => (
                               <div key={item.id} className="flex items-center gap-4">
                                   <div className="relative">
-                                      <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
+                                      <Image src={item.images[0] || 'https://placehold.co/80x80.png'} alt={item.name} width={64} height={64} className="rounded-md" />
                                       <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
                                   </div>
                                   <div className="flex-grow">
                                       <p className="font-medium">{item.name}</p>
-                                      <p className="text-sm text-muted-foreground">{item.variant}</p>
+                                      <p className="text-sm text-muted-foreground">{item.selectedSize} / {item.selectedColor}</p>
                                   </div>
-                                  <p className="font-semibold">৳{item.price.toFixed(2)}</p>
+                                  <p className="font-semibold">৳{item.pricing.price.toFixed(2)}</p>
                               </div>
                               ))}
                           </div>
