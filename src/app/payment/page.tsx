@@ -5,6 +5,7 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ChevronRight, CreditCard, Landmark, Truck, Info, ShieldCheck } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -56,6 +57,7 @@ const shippingInfo = {
 
 
 export default function PaymentPage() {
+    const router = useRouter();
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -168,6 +170,7 @@ export default function PaymentPage() {
                             <Button 
                                 className="w-auto" 
                                 size="lg"
+                                onClick={() => router.push('/order-confirmation')}
                             >
                                Pay Now
                             </Button>
