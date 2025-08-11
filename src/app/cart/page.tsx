@@ -16,10 +16,12 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard } = useCart();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = React.useState('');
+  const [giftCardCode, setGiftCardCode] = React.useState('');
   const [isCheckingCoupon, setIsCheckingCoupon] = React.useState(false);
+  const [isCheckingGiftCard, setIsCheckingGiftCard] = React.useState(false);
 
   const handleRemoveItem = (productId: string) => {
     removeFromCart(productId);
@@ -108,11 +110,57 @@ export default function CartPage() {
         setIsCheckingCoupon(false);
     }
   }
+
+  const handleApplyGiftCard = async () => {
+    if (!giftCardCode.trim()) {
+        toast({ title: "Gift Card Code Required", description: "Please enter a gift card code.", variant: "destructive" });
+        return;
+    }
+    setIsCheckingGiftCard(true);
+    try {
+        const giftCardsRef = collection(db, 'giftCards');
+        const q = query(giftCardsRef, where("code", "==", giftCardCode));
+        const giftCardSnap = await getDocs(q);
+
+        if (giftCardSnap.empty) {
+            toast({ title: "Invalid Gift Card", description: "The gift card code you entered is not valid.", variant: "destructive" });
+            return;
+        }
+
+        const giftCardDoc = giftCardSnap.docs[0];
+        const giftCardData = giftCardDoc.data();
+
+        if (giftCardData.status !== 'Active' || giftCardData.currentBalance <= 0) {
+            toast({ title: "Gift Card Not Usable", description: "This gift card is either used or inactive.", variant: "destructive" });
+            return;
+        }
+
+        if (new Date(giftCardData.expiryDate) < new Date()) {
+             toast({ title: "Gift Card Expired", description: "This gift card has expired.", variant: "destructive" });
+            return;
+        }
+
+        applyGiftCard({ code: giftCardData.code, balance: giftCardData.currentBalance });
+        toast({ title: "Gift Card Applied!", description: `৳${giftCardData.currentBalance.toFixed(2)} has been applied to your order.` });
+
+    } catch (error) {
+        console.error("Error applying gift card:", error);
+        toast({ title: "Error", description: "Could not apply gift card.", variant: "destructive" });
+    } finally {
+        setIsCheckingGiftCard(false);
+    }
+  }
   
   const handleRemoveCoupon = () => {
       removeCoupon();
       setCouponCode('');
       toast({ title: "Coupon Removed" });
+  }
+
+  const handleRemoveGiftCard = () => {
+    removeGiftCard();
+    setGiftCardCode('');
+    toast({ title: "Gift Card Removed" });
   }
 
   const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
@@ -199,33 +247,53 @@ export default function CartPage() {
                       <span>- ৳{appliedCoupon.discountAmount.toFixed(2)}</span>
                     </div>
                   )}
-              </div>
-
-               <div className="mb-4">
-                    <label htmlFor="coupon" className="text-sm font-medium mb-1 block">Have a Coupon?</label>
-                    {appliedCoupon ? (
-                        <div className="flex items-center justify-between p-2 bg-secondary rounded-md">
-                            <p className="text-sm font-semibold text-green-600">Applied: {appliedCoupon.code}</p>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRemoveCoupon}>
-                                <X className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex gap-2">
-                            <Input id="coupon" placeholder="Enter coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} disabled={isCheckingCoupon} />
-                            <Button variant="secondary" onClick={handleApplyCoupon} disabled={isCheckingCoupon}>
-                                {isCheckingCoupon ? 'Applying...' : 'Apply'}
-                            </Button>
-                        </div>
-                    )}
-              </div>
-
-               <div className="mb-4">
-                    <div className="flex items-center">
-                        <input type="checkbox" id="gift" className="mr-2" />
-                        <label htmlFor="gift" className="text-sm">This is a gift <Gift className="inline h-4 w-4" /></label>
+                  {appliedGiftCard && (
+                     <div className="flex justify-between text-green-600 font-semibold">
+                      <span>Gift Card ({appliedGiftCard.code.substring(0, 4)}...)</span>
+                      <span>- ৳{appliedGiftCard.balance.toFixed(2)}</span>
                     </div>
-                </div>
+                  )}
+              </div>
+
+               <div className="mb-4 space-y-4">
+                    <div>
+                        <label htmlFor="coupon" className="text-sm font-medium mb-1 block">Have a Coupon?</label>
+                        {appliedCoupon ? (
+                            <div className="flex items-center justify-between p-2 bg-secondary rounded-md">
+                                <p className="text-sm font-semibold text-green-600">Applied: {appliedCoupon.code}</p>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRemoveCoupon}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex gap-2">
+                                <Input id="coupon" placeholder="Enter coupon code" value={couponCode} onChange={e => setCouponCode(e.target.value)} disabled={isCheckingCoupon} />
+                                <Button variant="secondary" onClick={handleApplyCoupon} disabled={isCheckingCoupon}>
+                                    {isCheckingCoupon ? 'Applying...' : 'Apply'}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                         <label htmlFor="gift-card" className="text-sm font-medium mb-1 block">Apply Gift Card</label>
+                        {appliedGiftCard ? (
+                             <div className="flex items-center justify-between p-2 bg-secondary rounded-md">
+                                <p className="text-sm font-semibold text-green-600">Applied: {appliedGiftCard.code.substring(0, 9)}...</p>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRemoveGiftCard}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                             <div className="flex gap-2">
+                                <Input id="gift-card" placeholder="Enter gift card code" value={giftCardCode} onChange={e => setGiftCardCode(e.target.value)} disabled={isCheckingGiftCard} />
+                                <Button variant="secondary" onClick={handleApplyGiftCard} disabled={isCheckingGiftCard}>
+                                    {isCheckingGiftCard ? 'Applying...' : 'Apply'}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+              </div>
+
 
               <Separator className="my-4" />
               <div className="flex justify-between font-bold text-lg mb-4">

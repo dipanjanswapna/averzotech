@@ -23,7 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
-import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore"
+import { addDoc, collection, doc, getDocs, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
 
@@ -31,7 +31,7 @@ import { useToast } from "@/hooks/use-toast"
 export default function PaymentPage() {
     const router = useRouter();
     const { user } = useAuth();
-    const { cart, clearCart, subTotal, total, appliedCoupon } = useCart();
+    const { cart, clearCart, subTotal, total, appliedCoupon, appliedGiftCard } = useCart();
     const { toast } = useToast();
     const [paymentMethod, setPaymentMethod] = React.useState('card');
     const [loading, setLoading] = React.useState(false);
@@ -80,31 +80,50 @@ export default function PaymentPage() {
                 shipping: shippingFee,
                 tax: taxes,
                 coupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : null,
+                giftCard: appliedGiftCard ? { code: appliedGiftCard.code, usedAmount: Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) } : null,
                 total: total,
             },
             total: total
         };
 
         try {
-            const docRef = await addDoc(collection(db, "orders"), orderData);
+            const batch = writeBatch(db);
+
+            const orderRef = doc(collection(db, "orders"));
+            batch.set(orderRef, orderData);
             
             // If a coupon was used, increment its 'used' count in Firestore
             if (appliedCoupon) {
                 const couponQuery = query(collection(db, "coupons"), where("code", "==", appliedCoupon.code));
                 const couponSnap = await getDocs(couponQuery);
                 if (!couponSnap.empty) {
-                    const couponDoc = couponSnap.docs[0];
-                    const newUsedCount = (couponDoc.data().used || 0) + 1;
-                    await updateDoc(couponDoc.ref, { used: newUsedCount });
+                    const couponDocRef = couponSnap.docs[0].ref;
+                    const newUsedCount = (couponSnap.docs[0].data().used || 0) + 1;
+                    batch.update(couponDocRef, { used: newUsedCount });
                 }
             }
+            
+            // If a gift card was used, update its balance
+            if (appliedGiftCard) {
+                const giftCardQuery = query(collection(db, 'giftCards'), where('code', '==', appliedGiftCard.code));
+                const giftCardSnap = await getDocs(giftCardQuery);
+                if (!giftCardSnap.empty) {
+                    const giftCardDocRef = giftCardSnap.docs[0].ref;
+                    const usedAmount = Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0));
+                    const newBalance = appliedGiftCard.balance - usedAmount;
+                    const newStatus = newBalance > 0 ? 'Active' : 'Used';
+                    batch.update(giftCardDocRef, { currentBalance: newBalance, status: newStatus });
+                }
+            }
+            
+            await batch.commit();
 
             toast({
                 title: "Order Placed!",
                 description: "Your order has been placed successfully."
             });
             clearCart();
-            router.push(`/order-confirmation?orderId=${docRef.id}`);
+            router.push(`/order-confirmation?orderId=${orderRef.id}`);
 
         } catch (error) {
             console.error("Error placing order: ", error);
@@ -267,6 +286,12 @@ export default function PaymentPage() {
                                  <div className="flex justify-between text-green-600">
                                      <p>Discount ({appliedCoupon.code})</p>
                                      <p className="font-semibold">- ৳{appliedCoupon.discountAmount.toFixed(2)}</p>
+                                 </div>
+                               )}
+                               {appliedGiftCard && (
+                                 <div className="flex justify-between text-green-600">
+                                     <p>Gift Card ({appliedGiftCard.code.substring(0,9)}...)</p>
+                                     <p className="font-semibold">- ৳{Math.min(appliedGiftCard.balance, subTotal).toFixed(2)}</p>
                                  </div>
                                )}
                               <div className="flex justify-between">
