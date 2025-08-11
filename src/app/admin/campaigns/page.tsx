@@ -18,16 +18,28 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Pencil } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -46,28 +58,47 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      setLoading(true);
-      try {
-        const campaignsCollection = collection(db, 'campaigns');
-        const q = query(campaignsCollection, orderBy('createdAt', 'desc'));
-        const campaignSnapshot = await getDocs(q);
-        const campaignList = campaignSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Campaign));
-        setCampaigns(campaignList);
-      } catch (error) {
-        console.error("Error fetching campaigns: ", error);
-        toast({ title: "Error", description: "Could not fetch campaigns from the database.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCampaigns = async () => {
+    setLoading(true);
+    try {
+      const campaignsCollection = collection(db, 'campaigns');
+      const q = query(campaignsCollection, orderBy('createdAt', 'desc'));
+      const campaignSnapshot = await getDocs(q);
+      const campaignList = campaignSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Campaign));
+      setCampaigns(campaignList);
+    } catch (error) {
+      console.error("Error fetching campaigns: ", error);
+      toast({ title: "Error", description: "Could not fetch campaigns from the database.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+
+  useEffect(() => {
     fetchCampaigns();
   }, [toast]);
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    try {
+        await deleteDoc(doc(db, "campaigns", campaignId));
+        toast({
+            title: "Campaign Deleted",
+            description: "The campaign has been successfully deleted.",
+        });
+        fetchCampaigns(); // Re-fetch campaigns to update the list
+    } catch (error) {
+        console.error("Error deleting campaign: ", error);
+        toast({
+            title: "Error Deleting Campaign",
+            description: "There was a problem deleting the campaign.",
+            variant: "destructive"
+        })
+    }
+  }
 
   const getStatusBadgeVariant = (status: Campaign['status']) => {
     switch (status) {
@@ -167,9 +198,34 @@ export default function CampaignsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
+                           <DropdownMenuItem asChild>
+                            <Link href={`/admin/campaigns/edit/${campaign.id}`}>
+                                <Pencil className="mr-2 h-4 w-4"/> Edit
+                            </Link>
+                          </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete the campaign
+                                          <span className="font-bold"> {campaign.name}</span>.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteCampaign(campaign.id)} className="bg-destructive hover:bg-destructive/90">
+                                          Continue
+                                      </AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
