@@ -28,49 +28,26 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-const allProducts = [
-    // Men's Products
-    { id: 'm-tshirt-1', name: 'Graphic Print T-Shirt', brand: 'H&M', price: 1299, originalPrice: 1999, discount: '35% OFF', category: 'Men', group: 'Topwear', subcategory: 'T-Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'men graphic t-shirt' },
-    { id: 'm-shirt-1', name: 'Linen Casual Shirt', brand: 'Zara', price: 2999, originalPrice: 4999, discount: '40% OFF', category: 'Men', group: 'Topwear', subcategory: 'Casual Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'men linen shirt' },
-    { id: 'm-jeans-1', name: 'Slim Fit Jeans', brand: 'Levis', price: 3999, originalPrice: 5999, discount: '33% OFF', category: 'Men', group: 'Bottomwear', subcategory: 'Jeans', src: 'https://placehold.co/400x500.png', dataAiHint: 'men slim jeans' },
-    { id: 'm-shoes-1', name: 'Running Shoes', brand: 'Nike', price: 7999, originalPrice: 9999, discount: '20% OFF', category: 'Men', group: 'Footwear', subcategory: 'Sports Shoes', src: 'https://placehold.co/400x500.png', dataAiHint: 'men running shoes' },
-    { id: 'm-watch-1', name: 'Chronograph Watch', brand: 'Fossil', price: 9999, originalPrice: 14999, discount: '33% OFF', category: 'Men', group: 'Accessories', subcategory: 'Watches', src: 'https://placehold.co/400x500.png', dataAiHint: 'men chronograph watch' },
-    { id: 'm-trousers-1', name: 'Chino Trousers', brand: 'Celio', price: 2499, originalPrice: 3499, discount: '28% OFF', category: 'Men', group: 'Bottomwear', subcategory: 'Casual Trousers', src: 'https://placehold.co/400x500.png', dataAiHint: 'men chino trousers' },
-
-    // Women's Products
-    { id: 'w-kurta-1', name: 'Embroidered Kurta', brand: 'Biba', price: 2499, originalPrice: 3999, discount: '37% OFF', category: 'Women', group: 'Indian & Fusion Wear', subcategory: 'Kurtas & Suits', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman ethnic wear' },
-    { id: 'w-dress-1', name: 'Floral Maxi Dress', brand: 'Zara', price: 4999, originalPrice: 6999, discount: '28% OFF', category: 'Women', group: 'Western Wear', subcategory: 'Dresses', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman floral dress' },
-    { id: 'w-jeans-1', name: 'High-Waist Jeans', brand: 'Vero Moda', price: 3499, originalPrice: 4999, discount: '30% OFF', category: 'Women', group: 'Western Wear', subcategory: 'Jeans', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman high-waist jeans' },
-    { id: 'w-heels-1', name: 'Stiletto Heels', brand: 'Catwalk', price: 2999, originalPrice: 4499, discount: '33% OFF', category: 'Women', group: 'Footwear', subcategory: 'Heels', src: 'https://placehold.co/400x500.png', dataAiHint: 'stiletto heels' },
-    { id: 'w-bag-1', name: 'Leather Handbag', brand: 'Caprese', price: 3999, originalPrice: 5999, discount: '33% OFF', category: 'Women', group: 'Jewellery & Accessories', subcategory: 'Handbags', src: 'https://placehold.co/400x500.png', dataAiHint: 'leather handbag' },
-    { id: 'w-saree-1', name: 'Silk Saree', brand: 'Manyavar', price: 7999, originalPrice: 12999, discount: '38% OFF', category: 'Women', group: 'Indian & Fusion Wear', subcategory: 'Sarees', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman in saree' },
-
-    // Kids' Products
-    { id: 'k-tshirt-1', name: 'Dino Print T-Shirt', brand: "Gini & Jony", price: 799, originalPrice: 1299, discount: '38% OFF', category: 'Kids', group: 'Boys Clothing', subcategory: 'T-Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'dinosaur t-shirt' },
-    { id: 'k-dress-1', name: 'Princess Dress', brand: 'Barbie', price: 1999, originalPrice: 2999, discount: '33% OFF', category: 'Kids', group: 'Girls Clothing', subcategory: 'Dresses', src: 'https://placehold.co/400x500.png', dataAiHint: 'girl princess dress' },
-    { id: 'k-toy-1', name: 'Remote Control Car', brand: 'Hot Wheels', price: 1499, originalPrice: 2499, discount: '40% OFF', category: 'Kids', group: 'Toys & Games', subcategory: 'Action Figures', src: 'https://placehold.co/400x500.png', dataAiHint: 'remote control car' },
-    
-    // Home & Living Products
-    { id: 'h-bedsheet-1', name: 'Cotton Bedsheet', brand: 'Spaces', price: 1999, originalPrice: 2999, discount: '33% OFF', category: 'Home & Living', group: 'Bed & Bath', subcategory: 'Bedsheets', src: 'https://placehold.co/400x500.png', dataAiHint: 'cotton bedsheet' },
-    { id: 'h-decor-1', name: 'Ceramic Vase', brand: 'Home Centre', price: 999, originalPrice: 1499, discount: '33% OFF', category: 'Home & Living', group: 'Decor', subcategory: 'Vases', src: 'https://placehold.co/400x500.png', dataAiHint: 'ceramic vase' },
-
-    // Beauty Products
-    { id: 'b-lipstick-1', name: 'Matte Lipstick', brand: 'MAC', price: 1799, originalPrice: 1999, discount: '10% OFF', category: 'Beauty', group: 'Makeup', subcategory: 'Lipstick', src: 'https://placehold.co/400x500.png', dataAiHint: 'matte lipstick' },
-    { id: 'b-sunscreen-1', name: 'SPF 50 Sunscreen', brand: 'Neutrogena', price: 899, originalPrice: 1199, discount: '25% OFF', category: 'Beauty', group: 'Skincare', subcategory: 'Sunscreen', src: 'https://placehold.co/400x500.png', dataAiHint: 'sunscreen bottle' },
-
-    // Electronics Products
-    { id: 'e-phone-1', name: 'Smartphone Pro', brand: 'Samsung', price: 79999, originalPrice: 89999, discount: '11% OFF', category: 'Electronics', group: 'Mobiles & Wearables', subcategory: 'Smartphones', src: 'https://placehold.co/400x500.png', dataAiHint: 'smartphone' },
-    { id: 'e-laptop-1', name: 'Ultrabook Laptop', brand: 'Dell', price: 99999, originalPrice: 119999, discount: '16% OFF', category: 'Electronics', group: 'Laptops & Computers', subcategory: 'Laptops', src: 'https://placehold.co/400x500.png', dataAiHint: 'ultrabook laptop' },
-    
-    // Sports Products
-    { id: 's-bat-1', name: 'Cricket Bat', brand: 'MRF', price: 4999, originalPrice: 6999, discount: '28% OFF', category: 'Sports', group: 'Cricket', subcategory: 'Bats', src: 'https://placehold.co/400x500.png', dataAiHint: 'cricket bat' },
-    { id: 's-shoes-1', name: 'Football Boots', brand: 'Adidas', price: 6999, originalPrice: 8999, discount: '22% OFF', category: 'Sports', group: 'Football', subcategory: 'Boots', src: 'https://placehold.co/400x500.png', dataAiHint: 'football boots' },
-    
-    // Books Products
-    { id: 'bk-fiction-1', name: 'Mystery Novel', brand: 'Penguin', price: 499, originalPrice: 699, discount: '28% OFF', category: 'Books', group: 'Fiction', subcategory: 'Mystery', src: 'https://placehold.co/400x500.png', dataAiHint: 'mystery book' },
-    { id: 'bk-nonfic-1', name: 'Historical Biography', brand: 'HarperCollins', price: 799, originalPrice: 999, discount: '20% OFF', category: 'Books', group: 'Non-Fiction', subcategory: 'Biography', src: 'https://placehold.co/400x500.png', dataAiHint: 'history book' },
-];
+interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  pricing: {
+    price: number;
+    comparePrice?: number;
+    discount?: number;
+  };
+  organization: {
+    category: string;
+    group: string;
+    subcategory: string;
+  };
+  images: string[];
+  dataAiHint?: string;
+}
 
 const filterCategories = [
     { 
@@ -130,8 +107,10 @@ export default function ShopPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [allProducts, setAllProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = React.useState(false);
-  const [displayedItems, setDisplayedItems] = React.useState(allProducts);
+  const [displayedItems, setDisplayedItems] = React.useState<Product[]>([]);
 
   // State initialization from URL search params
   const [selectedCategory, setSelectedCategory] = React.useState<string>(searchParams.get('category') || 'all');
@@ -144,6 +123,26 @@ export default function ShopPage() {
     return [min ? Number(min) : 0, max ? Number(max) : 120000];
   });
   const [sortOption, setSortOption] = React.useState<string>(searchParams.get('sort') || 'featured');
+
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const productsCollection = collection(db, 'products');
+        const productSnapshot = await getDocs(productsCollection);
+        const productList = productSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Product));
+        setAllProducts(productList);
+      } catch (error) {
+        console.error("Error fetching products: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const updateURL = React.useCallback((newFilters: Record<string, string | number | number[]>) => {
     const params = new URLSearchParams(searchParams);
@@ -181,18 +180,19 @@ export default function ShopPage() {
    const availableBrands = React.useMemo(() => {
     let brands = allProducts;
     if (selectedCategory !== 'all') {
-      brands = brands.filter(p => p.category === selectedCategory);
+      brands = brands.filter(p => p.organization.category === selectedCategory);
     }
     if (selectedGroup !== 'all') {
-      brands = brands.filter(p => p.group === selectedGroup);
+      brands = brands.filter(p => p.organization.group === selectedGroup);
     }
     if (selectedSubcategory !== 'all') {
-      brands = brands.filter(p => p.subcategory === selectedSubcategory);
+      brands = brands.filter(p => p.organization.subcategory === selectedSubcategory);
     }
     return [...new Set(brands.map(item => item.brand))];
-  }, [selectedCategory, selectedGroup, selectedSubcategory]);
+  }, [allProducts, selectedCategory, selectedGroup, selectedSubcategory]);
 
   const applyFilters = React.useCallback(() => {
+    if (loading) return;
     let items = [...allProducts];
     const currentParams = new URLSearchParams(searchParams);
 
@@ -204,26 +204,28 @@ export default function ShopPage() {
     const maxPrice = Number(currentParams.get('maxPrice') || 120000);
     const sort = currentParams.get('sort') || 'featured';
 
-    if (category !== 'all') items = items.filter(item => item.category === category);
-    if (group !== 'all') items = items.filter(item => item.group === group);
-    if (subcategory !== 'all') items = items.filter(item => item.subcategory === subcategory);
+    if (category !== 'all') items = items.filter(item => item.organization.category === category);
+    if (group !== 'all') items = items.filter(item => item.organization.group === group);
+    if (subcategory !== 'all') items = items.filter(item => item.organization.subcategory === subcategory);
     if (brand !== 'all') items = items.filter(item => item.brand === brand);
     
-    items = items.filter(item => item.price >= minPrice && item.price <= maxPrice);
+    items = items.filter(item => item.pricing.price >= minPrice && item.pricing.price <= maxPrice);
 
     switch (sort) {
       case 'price-asc':
-        items.sort((a, b) => a.price - b.price);
+        items.sort((a, b) => a.pricing.price - b.pricing.price);
         break;
       case 'price-desc':
-        items.sort((a, b) => b.price - a.price);
+        items.sort((a, b) => b.pricing.price - a.pricing.price);
         break;
       case 'newest':
-        items.reverse(); // Assuming higher ID is newer.
+        // Assuming Firestore data has a timestamp, which it does ('createdAt')
+        // but we are not fetching it in the Product interface yet. For now, reverse is fine.
+        items.reverse();
         break;
     }
     setDisplayedItems(items);
-  }, [searchParams]);
+  }, [searchParams, allProducts, loading]);
 
   React.useEffect(() => {
     applyFilters();
@@ -339,18 +341,22 @@ export default function ShopPage() {
               <div className="mb-4">
                 <p className="text-sm text-muted-foreground">Showing {displayedItems.length} of {allProducts.length} products</p>
               </div>
-              {displayedItems.length > 0 ? (
+              {loading ? (
+                <div className="text-center py-16 col-span-full">
+                  <p>Loading products...</p>
+                </div>
+              ) : displayedItems.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
                     {displayedItems.map((item) => (
                        <Link href={`/product/${item.id}`} key={item.id} className="group block">
                             <div className="relative overflow-hidden rounded-lg">
                                 <Image
-                                    src={item.src}
+                                    src={item.images[0] || 'https://placehold.co/400x500.png'}
                                     alt={item.name}
                                     width={400}
                                     height={500}
                                     className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={item.dataAiHint}
+                                    data-ai-hint={item.dataAiHint || 'product image'}
                                 />
                                 <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                    <Button variant="outline" size="sm" className="w-full bg-white hover:bg-gray-200 border-gray-300 text-xs text-black">
@@ -362,10 +368,10 @@ export default function ShopPage() {
                                 <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
                                 <p className="text-xs text-muted-foreground truncate">{item.name}</p>
                                 <p className="text-sm font-semibold mt-1 text-foreground">
-                                    ৳{item.price}{' '}
-                                    {item.originalPrice && <span className="text-xs text-muted-foreground line-through">৳{item.originalPrice}</span>}
+                                    ৳{item.pricing.price}{' '}
+                                    {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span>}
                                     {' '}
-                                    {item.discount && <span className="text-xs text-orange-400 font-bold">({item.discount})</span>}
+                                    {item.pricing.discount && <span className="text-xs text-orange-400 font-bold">({item.pricing.discount}% OFF)</span>}
                                 </p>
                             </div>
                         </Link>
@@ -505,5 +511,3 @@ function FilterControls({
         </Card>
     )
 }
-
-    
