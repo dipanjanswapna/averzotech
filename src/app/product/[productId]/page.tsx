@@ -148,16 +148,18 @@ export default function ProductPage({ params }: { params: { productId: string } 
                   </div>
 
                   {/* Product Video */}
-                  <div className="aspect-video overflow-hidden rounded-lg">
-                      <iframe
-                          width="100%"
-                          height="100%"
-                          src={product.videoUrl}
-                          title="Product Video"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                      ></iframe>
-                  </div>
+                  {product.videoUrl && (
+                    <div className="aspect-video overflow-hidden rounded-lg">
+                        <iframe
+                            width="100%"
+                            height="100%"
+                            src={product.videoUrl}
+                            title="Product Video"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                  )}
               </div>
           </div>
 
