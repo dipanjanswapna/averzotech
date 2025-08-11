@@ -10,7 +10,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="w-full lg:grid lg:grid-cols-2 min-h-screen">
-       <div className="hidden bg-muted lg:block relative h-screen order-first">
+       <div className="hidden bg-muted lg:block relative order-first">
         <Image
           src="https://placehold.co/1080x1920.png"
           alt="Image"
@@ -20,7 +20,7 @@ export default function AuthLayout({
           data-ai-hint="fashion advertisement"
         />
       </div>
-      <div className="flex h-screen items-center justify-center order-last">
+      <div className="flex min-h-screen items-center justify-center py-12 order-last">
         <div className="mx-auto grid w-[350px] gap-6">
             <div className="grid gap-2 text-center">
                  <Logo />
