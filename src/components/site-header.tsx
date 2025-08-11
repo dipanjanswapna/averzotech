@@ -273,7 +273,6 @@ export function SiteHeader() {
                     </SheetHeader>
                     <ScrollArea className="flex-1 px-6">
                         <div className="flex flex-col space-y-2 py-4">
-                          <Link href="/shop" className="py-2.5 font-semibold text-base">Shop All</Link>
                           {categories.map((category) => (
                              <MegaMenu key={category.name} category={category} isMobile={true} />
                           ))}
@@ -294,7 +293,6 @@ export function SiteHeader() {
        <div className="hidden md:flex h-10 items-center border-t">
           <div className="container">
             <nav className="flex items-center gap-6 text-sm font-medium">
-               <Link href="/shop" className="hover:text-primary">Shop All</Link>
               {categories.map((category) => (
                 <MegaMenu key={category.name} category={category} />
               ))}
@@ -305,7 +303,6 @@ export function SiteHeader() {
           <ScrollArea className="w-full whitespace-nowrap">
              <div className="container flex h-10 items-center -px-4">
                  <nav className="flex items-center gap-6 text-sm font-medium px-4">
-                  <Link href="/shop" className="block hover:text-primary">Shop All</Link>
                   {categories.map((category) => (
                     <Link key={category.name} href={category.href} className="block hover:text-primary">{category.name}</Link>
                   ))}
@@ -317,5 +314,3 @@ export function SiteHeader() {
     </header>
   );
 }
-
-    
