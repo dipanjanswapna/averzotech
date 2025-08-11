@@ -133,6 +133,63 @@ export function SiteHeader() {
         }
       ] 
     },
+    {
+      name: 'Electronics',
+      href: '/electronics',
+      description: 'Get the latest gadgets.',
+      subCategories: [
+        {
+          group: 'Mobiles & Wearables',
+          items: ['Smartphones', 'Smartwatches', 'Headphones', 'Speakers'],
+        },
+        {
+          group: 'Laptops & Computers',
+          items: ['Laptops', 'Desktops', 'Monitors', 'Keyboards', 'Mouse'],
+        },
+        {
+          group: 'Cameras & Drones',
+          items: ['DSLRs', 'Mirrorless Cameras', 'Drones', 'Action Cameras'],
+        },
+      ],
+    },
+    {
+      name: 'Sports',
+      href: '/sports',
+      description: 'Gear up for your favorite sports.',
+      subCategories: [
+        {
+          group: 'Cricket',
+          items: ['Bats', 'Balls', 'Pads', 'Gloves'],
+        },
+        {
+          group: 'Football',
+          items: ['Footballs', 'Jerseys', 'Boots', 'Shin Guards'],
+        },
+        {
+          group: 'Fitness',
+          items: ['Dumbbells', 'Yoga Mats', 'Resistance Bands', 'Trackers'],
+        },
+      ],
+    },
+    {
+      name: 'Books',
+      href: '/books',
+      description: 'Explore a world of stories.',
+      subCategories: [
+        {
+          group: 'Fiction',
+          items: ['Mystery', 'Thriller', 'Sci-Fi', 'Fantasy', 'Romance'],
+        },
+        {
+          group: 'Non-Fiction',
+          items: ['Biography', 'History', 'Self-Help', 'Business'],
+        },
+        {
+          group: "Children's Books",
+          items: ['Picture Books', 'Story Books', 'Young Adult'],
+        },
+      ],
+    },
   ];
 
   return (
