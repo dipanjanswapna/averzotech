@@ -14,6 +14,8 @@ import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Chrome } from 'lucide-react';
+import Image from 'next/image';
+import { Logo } from '@/components/logo';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -94,104 +96,121 @@ export default function RegisterPage() {
   }
 
   return (
-    <>
-      <CardHeader className="text-center space-y-2 px-0">
-        <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
-        <CardDescription>Join AVERZO today!</CardDescription>
-      </CardHeader>
-      <CardContent className="px-0">
-        <form onSubmit={handleRegister} className="grid gap-4">
-           <div className="grid gap-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input 
-              id="fullName" 
-              type="text" 
-              placeholder="Kamal Hasan" 
-              required 
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="m@example.com" 
-              required 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>I am a</Label>
-            <RadioGroup 
-                defaultValue="customer" 
-                className="grid grid-cols-2 gap-4"
-                value={role}
-                onValueChange={(value) => setRole(value as 'customer' | 'vendor')}
-                disabled={isLoading}
-            >
-                <div>
-                    <RadioGroupItem value="customer" id="customer" className="peer sr-only" />
-                    <Label
-                    htmlFor="customer"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                    Customer
-                    </Label>
+    <div className="w-full lg:grid lg:grid-cols-2 min-h-screen">
+       <div className="hidden bg-muted lg:block relative order-first">
+        <Image
+          src="https://placehold.co/1080x1920.png"
+          alt="Image"
+          layout="fill"
+          objectFit="cover"
+          className="dark:brightness-[0.2] dark:grayscale"
+          data-ai-hint="fashion advertisement"
+        />
+      </div>
+      <div className="flex items-center justify-center py-12 order-last">
+        <div className="mx-auto grid w-[350px] gap-6">
+            <div className="grid gap-2 text-center">
+                 <Logo />
+            </div>
+             <CardHeader className="text-center space-y-2 px-0">
+                <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
+                <CardDescription>Join AVERZO today!</CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+                <form onSubmit={handleRegister} className="grid gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="fullName">Full Name</Label>
+                    <Input 
+                    id="fullName" 
+                    type="text" 
+                    placeholder="Kamal Hasan" 
+                    required 
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    disabled={isLoading}
+                    />
                 </div>
-                <div>
-                    <RadioGroupItem value="vendor" id="vendor" className="peer sr-only" />
-                    <Label
-                    htmlFor="vendor"
-                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                    Vendor
-                    </Label>
+                <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="m@example.com" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
+                    />
                 </div>
-            </RadioGroup>
-          </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Creating Account...' : 'Create Account'}
-          </Button>
-        </form>
-         <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or sign up with
-            </span>
-          </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input 
+                    id="password" 
+                    type="password" 
+                    required 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    />
+                </div>
+                <div className="grid gap-2">
+                    <Label>I am a</Label>
+                    <RadioGroup 
+                        defaultValue="customer" 
+                        className="grid grid-cols-2 gap-4"
+                        value={role}
+                        onValueChange={(value) => setRole(value as 'customer' | 'vendor')}
+                        disabled={isLoading}
+                    >
+                        <div>
+                            <RadioGroupItem value="customer" id="customer" className="peer sr-only" />
+                            <Label
+                            htmlFor="customer"
+                            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                            >
+                            Customer
+                            </Label>
+                        </div>
+                        <div>
+                            <RadioGroupItem value="vendor" id="vendor" className="peer sr-only" />
+                            <Label
+                            htmlFor="vendor"
+                            className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                            >
+                            Vendor
+                            </Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Creating Account...' : 'Create Account'}
+                </Button>
+                </form>
+                <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                    Or sign up with
+                    </span>
+                </div>
+                </div>
+                <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
+                    <Chrome className="mr-2 h-4 w-4" />
+                    Google
+                </Button>
+            </CardContent>
+            <CardFooter className="px-0">
+                <p className="w-full text-center text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
+                    Login
+                </Link>
+                </p>
+            </CardFooter>
         </div>
-         <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isLoading}>
-            <Chrome className="mr-2 h-4 w-4" />
-            Google
-        </Button>
-      </CardContent>
-      <CardFooter className="px-0">
-        <p className="w-full text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
-            Login
-          </Link>
-        </p>
-      </CardFooter>
-    </>
+      </div>
+    </div>
   );
 }
