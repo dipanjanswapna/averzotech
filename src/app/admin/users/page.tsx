@@ -60,8 +60,7 @@ export default function UsersPage() {
   };
   
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'N/A';
-    // Assuming timestamp is a Firestore Timestamp
+    if (!timestamp || !timestamp.seconds) return 'N/A';
     return new Date(timestamp.seconds * 1000).toLocaleDateString();
   };
 
@@ -101,7 +100,7 @@ export default function UsersPage() {
                      <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage src={user.photoURL} alt={user.fullName} />
-                          <AvatarFallback>{user.fullName?.[0]}</AvatarFallback>
+                          <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
                         </Avatar>
                         {user.fullName}
                       </div>
