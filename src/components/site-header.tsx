@@ -199,23 +199,27 @@ export function SiteHeader() {
                     <span className="sr-only">Toggle Menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px]">
-                  <nav className="flex h-full flex-col p-6">
-                    <Link href="/" className="mb-8">
-                      <Logo />
-                    </Link>
-                    <div className="mb-6">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input type="search" placeholder="Search..." className="pl-9" />
-                      </div>
+                <SheetContent side="left" className="w-[300px] p-0">
+                  <nav className="flex h-full flex-col">
+                    <div className="p-6 pb-0">
+                        <Link href="/" className="mb-8 block">
+                          <Logo />
+                        </Link>
+                        <div className="mb-6">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input type="search" placeholder="Search..." className="pl-9" />
+                          </div>
+                        </div>
                     </div>
-                    <div className="flex flex-col space-y-2">
-                      {categories.map((category) => (
-                         <MegaMenu key={category.name} category={category} isMobile={true} />
-                      ))}
-                    </div>
-                    <div className="mt-auto flex flex-col gap-2">
+                    <ScrollArea className="flex-1 px-6">
+                        <div className="flex flex-col space-y-2">
+                          {categories.map((category) => (
+                             <MegaMenu key={category.name} category={category} isMobile={true} />
+                          ))}
+                        </div>
+                    </ScrollArea>
+                    <div className="mt-auto flex flex-col gap-2 p-6 border-t">
                        <Button variant="outline" asChild><Link href="/wishlist">Wishlist</Link></Button>
                       <Button variant="outline" asChild><Link href="/login">Login</Link></Button>
                       <Button asChild><Link href="/register">Sign Up</Link></Button>
