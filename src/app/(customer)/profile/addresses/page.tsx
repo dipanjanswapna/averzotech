@@ -28,15 +28,18 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { divisions } from '@/lib/bangladesh-geo';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Address {
     id: string;
     type: string;
     name: string;
-    address: string;
-    city: string;
-    zip: string;
+    streetAddress: string;
+    division: string;
+    district: string;
+    upazila: string;
     phone: string;
     isDefault: boolean;
 }
@@ -48,15 +51,45 @@ export default function AddressesPage() {
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+
+    // Form state
     const [formData, setFormData] = useState({
         type: 'Home',
         name: '',
-        address: '',
-        city: '',
-        zip: '',
+        streetAddress: '',
+        division: '',
+        district: '',
+        upazila: '',
         phone: '',
         isDefault: false,
     });
+    
+    // Dependent dropdown options
+    const [districts, setDistricts] = useState<string[]>([]);
+    const [upazilas, setUpazilas] = useState<string[]>([]);
+
+    useEffect(() => {
+        if(formData.division) {
+            const divisionData = divisions.find(d => d.name === formData.division);
+            setDistricts(divisionData ? divisionData.districts.map(dist => dist.name) : []);
+            setFormData(prev => ({ ...prev, district: '', upazila: '' }));
+        } else {
+            setDistricts([]);
+            setUpazilas([]);
+        }
+    }, [formData.division]);
+
+    useEffect(() => {
+        if(formData.district) {
+            const divisionData = divisions.find(d => d.name === formData.division);
+            const districtData = divisionData?.districts.find(d => d.name === formData.district);
+            setUpazilas(districtData ? districtData.upazilas : []);
+             setFormData(prev => ({ ...prev, upazila: '' }));
+        } else {
+            setUpazilas([]);
+        }
+    }, [formData.district, formData.division]);
+
 
     const fetchAddresses = async () => {
         if (!user) return;
@@ -75,7 +108,9 @@ export default function AddressesPage() {
     };
 
     useEffect(() => {
-        fetchAddresses();
+        if(user) {
+            fetchAddresses();
+        }
     }, [user]);
 
     useEffect(() => {
@@ -83,9 +118,10 @@ export default function AddressesPage() {
             setFormData({
                 type: editingAddress.type,
                 name: editingAddress.name,
-                address: editingAddress.address,
-                city: editingAddress.city,
-                zip: editingAddress.zip,
+                streetAddress: editingAddress.streetAddress,
+                division: editingAddress.division,
+                district: editingAddress.district,
+                upazila: editingAddress.upazila,
                 phone: editingAddress.phone,
                 isDefault: editingAddress.isDefault,
             });
@@ -98,24 +134,28 @@ export default function AddressesPage() {
         setFormData({
             type: 'Home',
             name: user?.fullName || '',
-            address: '',
-            city: '',
-            zip: '',
+            streetAddress: '',
+            division: '',
+            district: '',
+            upazila: '',
             phone: '',
             isDefault: false,
         });
     };
 
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
     };
     
+    const handleSelectChange = (field: keyof typeof formData) => (value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
     const handleSetDefault = async (addressId: string) => {
         if(!user) return;
         const batch = writeBatch(db);
         
-        // Unset any other default address
         addresses.forEach(addr => {
             if (addr.isDefault && addr.id !== addressId) {
                 const docRef = doc(db, 'users', user.uid, 'addresses', addr.id);
@@ -123,7 +163,6 @@ export default function AddressesPage() {
             }
         });
 
-        // Set the new default address
         const docRef = doc(db, 'users', user.uid, 'addresses', addressId);
         batch.update(docRef, { isDefault: true });
 
@@ -139,6 +178,11 @@ export default function AddressesPage() {
 
     const handleSubmit = async () => {
         if (!user) return;
+        if (!formData.division || !formData.district || !formData.upazila || !formData.streetAddress) {
+            toast({ title: "Incomplete Address", description: "Please fill all address fields.", variant: "destructive" });
+            return;
+        }
+
         const addressesCol = collection(db, 'users', user.uid, 'addresses');
         
         try {
@@ -154,12 +198,10 @@ export default function AddressesPage() {
             }
 
             if (editingAddress) {
-                // Update existing address
                 const docRef = doc(db, 'users', user.uid, 'addresses', editingAddress.id);
                 await updateDoc(docRef, formData);
                 toast({ title: "Address Updated" });
             } else {
-                // Add new address
                 await addDoc(addressesCol, formData);
                 toast({ title: "Address Added" });
             }
@@ -220,8 +262,8 @@ export default function AddressesPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="font-semibold">{addr.name}</p>
-                        <p className="text-muted-foreground">{addr.address}</p>
-                        <p className="text-muted-foreground">{addr.city} - {addr.zip}</p>
+                        <p className="text-muted-foreground">{addr.streetAddress}</p>
+                        <p className="text-muted-foreground">{addr.upazila}, {addr.district}, {addr.division}</p>
                         <p className="text-muted-foreground mt-2">Mobile: <span className="font-medium text-foreground">{addr.phone}</span></p>
                     </CardContent>
                     <CardFooter className="flex justify-between">
@@ -247,8 +289,8 @@ export default function AddressesPage() {
         )}
       </div>
 
-       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+       <Dialog open={isDialogOpen} onOpenChange={(isOpen) => { setIsDialogOpen(isOpen); if(!isOpen) setEditingAddress(null); }}>
+          <DialogContent className="max-w-xl">
             <DialogHeader>
               <DialogTitle>{editingAddress ? 'Edit Address' : 'Add New Address'}</DialogTitle>
             </DialogHeader>
@@ -261,17 +303,32 @@ export default function AddressesPage() {
                 <Label htmlFor="name" className="text-right">Name</Label>
                 <Input id="name" value={formData.name} onChange={handleFormChange} className="col-span-3" />
               </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">Address</Label>
-                <Input id="address" value={formData.address} onChange={handleFormChange} className="col-span-3" />
-              </div>
-               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="city" className="text-right">City</Label>
-                <Input id="city" value={formData.city} onChange={handleFormChange} className="col-span-3" />
+               <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="streetAddress" className="text-right pt-2">Street Address</Label>
+                <Textarea id="streetAddress" value={formData.streetAddress} onChange={handleFormChange} className="col-span-3" placeholder="e.g. House 123, Road 4, Block F" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="zip" className="text-right">Zip Code</Label>
-                <Input id="zip" value={formData.zip} onChange={handleFormChange} className="col-span-3" />
+                    <Label className="text-right">Location</Label>
+                    <div className="col-span-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <Select value={formData.division} onValueChange={handleSelectChange('division')}>
+                            <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
+                            <SelectContent>
+                                {divisions.map(d => <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
+                            <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                            <SelectContent>
+                                {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
+                            <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
+                            <SelectContent>
+                                {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="phone" className="text-right">Phone</Label>
