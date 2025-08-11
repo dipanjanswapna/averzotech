@@ -244,7 +244,7 @@ export default function Home() {
                     >
                     <CarouselContent>
                     {flashSaleItems.map((deal, index) => (
-                        <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+                        <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
                             <Link href={`/product/${deal.id}`} className="group block">
                                 <div className="relative overflow-hidden rounded-lg">
                                     <Image
