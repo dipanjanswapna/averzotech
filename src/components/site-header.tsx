@@ -1,94 +1,148 @@
 import Link from 'next/link';
-import { Menu, Search, ShoppingBag, Heart, User } from 'lucide-react';
+import { Menu, Search, ShoppingCart, Truck, ChevronRight, ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Logo } from '@/components/logo';
 
 export function SiteHeader() {
-  const navItems = [
-    { name: 'Men', href: '#' },
-    { name: 'Women', href: '#' },
-    { name: 'Kids', href: '#' },
-    { name: 'Home & Living', href: '#' },
-    { name: 'Beauty', href: '#' },
+  const categories = [
+    { 
+      name: 'Stationery',
+      description: 'View all products in the stationery category.',
+      subCategories: ['New Group', 'kkkkkkkkkkkkkkkk', 'kkkkklllll', 'iiiiiiiiii']
+    },
+    { name: 'Electronics', description: 'Gadgets and gizmos.', subCategories: ['Phones', 'Laptops', 'Tablets'] },
+    { name: 'Apparel', description: 'Clothing for all seasons.', subCategories: ['T-shirts', 'Jeans', 'Jackets'] },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 md:h-20 items-center">
-        <div className="flex items-center md:hidden">
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                        <Menu className="h-6 w-6" />
-                        <span className="sr-only">Toggle Menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px]">
-                    <nav className="flex h-full flex-col p-6">
-                        <Link href="/" className="mb-8">
-                            <h1 className="font-headline text-3xl font-bold text-primary">averzo</h1>
-                        </Link>
-                        <div className="flex flex-col space-y-6">
-                            {navItems.map((item) => (
-                                <Link key={item.name} href={item.href} className="text-lg font-bold uppercase tracking-wide text-foreground/80 transition-colors hover:text-primary">
-                                    {item.name}
-                                </Link>
-                            ))}
-                        </div>
-                    </nav>
-                </SheetContent>
-            </Sheet>
-        </div>
-
-        <div className="flex items-center justify-center md:justify-start w-full md:w-auto">
-            <Link href="/" className="ml-4 md:ml-0 md:mr-6 flex items-center">
-                <h1 className="font-headline text-2xl md:text-3xl font-bold text-primary">averzo</h1>
-            </Link>
-            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-                {navItems.map((item) => (
-                <Link
-                    key={item.name}
-                    href={item.href}
-                    className="font-bold uppercase tracking-wide text-foreground/60 transition-colors hover:text-foreground/80"
-                >
-                    {item.name}
+    <header className="sticky top-0 z-50 w-full bg-primary text-primary-foreground">
+      <div className="container flex h-16 items-center">
+        {/* Mobile Menu */}
+        <div className="md:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] bg-primary text-primary-foreground">
+              <nav className="flex h-full flex-col p-6">
+                <Link href="/" className="mb-8">
+                  <Logo />
                 </Link>
-                ))}
-            </nav>
+                <div className="flex flex-col space-y-4">
+                  {categories.map((category) => (
+                     <DropdownMenu key={category.name}>
+                        <DropdownMenuTrigger asChild>
+                           <Button variant="ghost" className="justify-between">
+                              <span>{category.name}</span>
+                              <ChevronDown className="h-4 w-4" />
+                           </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56" sideOffset={10}>
+                           <DropdownMenuLabel className="flex items-center gap-4">
+                             <Logo />
+                              <div>
+                                 <p className="font-bold">{category.name}</p>
+                                 <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
+                              </div>
+                           </DropdownMenuLabel>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuGroup>
+                              {category.subCategories.map((sub) => (
+                                <DropdownMenuItem key={sub}>
+                                  <span>{sub}</span>
+                                  {sub === 'New Group' && <ChevronRight className="ml-auto h-4 w-4" />}
+                                </DropdownMenuItem>
+                              ))}
+                           </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                     </DropdownMenu>
+                  ))}
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
 
-        <div className="flex flex-1 items-center justify-end space-x-1 md:space-x-4">
-          <div className="hidden sm:block flex-1 sm:max-w-xs">
-            <form>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search products..."
-                  className="w-full rounded-full bg-secondary pl-9"
-                />
-              </div>
-            </form>
+        {/* Desktop Header */}
+        <div className="hidden md:flex flex-1 items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link href="/">
+              <Logo />
+            </Link>
           </div>
-          <nav className="flex items-center space-x-0 md:space-x-1">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/login">
-                <User className="h-5 w-5" />
-                <span className="sr-only">Profile</span>
-              </Link>
+
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" className="text-sm font-medium">
+              My Orders
             </Button>
             <Button variant="ghost" size="icon">
-              <Heart className="h-5 w-5" />
-              <span className="sr-only">Wishlist</span>
+              <Truck className="h-5 w-5" />
+              <span className="sr-only">Shipping</span>
             </Button>
             <Button variant="ghost" size="icon">
-              <ShoppingBag className="h-5 w-5" />
-              <span className="sr-only">Bag</span>
+              <ShoppingCart className="h-5 w-5" />
+              <span className="sr-only">Cart</span>
             </Button>
-          </nav>
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="https://placehold.co/40x40.png" alt="User profile" data-ai-hint="man portrait" />
+              <AvatarFallback>U</AvatarFallback>
+            </Avatar>
+          </div>
         </div>
+      </div>
+      {/* Secondary Nav */}
+      <div className="hidden md:flex bg-secondary text-secondary-foreground border-t border-b border-border">
+          <div className="container flex items-center h-12">
+            <nav className="flex items-center gap-2">
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              {categories.map((category, index) => (
+                <DropdownMenu key={category.name}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant={index === 0 ? "accent" : "ghost"} className="gap-2">
+                      <span>{category.name}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64" sideOffset={10}>
+                     <DropdownMenuLabel className="flex items-start gap-4 p-2">
+                        <Logo className="h-10 w-10 mt-1" />
+                        <div>
+                           <p className="font-bold text-base">{category.name}</p>
+                           <p className="text-xs font-normal text-muted-foreground">{category.description}</p>
+                        </div>
+                     </DropdownMenuLabel>
+                     <DropdownMenuSeparator />
+                     <DropdownMenuGroup>
+                        {category.subCategories.map((sub) => (
+                          <DropdownMenuItem key={sub}>
+                            <div className="flex justify-between w-full items-center">
+                              <span>{sub}</span>
+                              {sub === 'New Group' && <span className="text-pink-500 text-xs">New Group &rarr;</span>}
+                            </div>
+                          </DropdownMenuItem>
+                        ))}
+                     </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ))}
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </nav>
+          </div>
       </div>
     </header>
   );

@@ -9,7 +9,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center space-y-2">
         <CardTitle className="font-headline text-2xl">Login</CardTitle>
-        <CardDescription>Welcome back to Averzo</CardDescription>
+        <CardDescription>Welcome back to RDC Store</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid gap-4">
@@ -29,7 +29,7 @@ export default function LoginPage() {
       <CardFooter>
         <p className="w-full text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-semibold text-primary underline-offset-4 hover:underline">
+          <Link href="/register" className="font-semibold text-accent underline-offset-4 hover:underline">
             Sign up
           </Link>
         </p>

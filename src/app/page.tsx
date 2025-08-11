@@ -107,7 +107,7 @@ export default function Home() {
 
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex-grow">
         <section className="relative w-full">
@@ -120,7 +120,7 @@ export default function Home() {
             <CarouselContent>
               {heroImages.map((image, index) => (
                 <CarouselItem key={index}>
-                  <div className="relative h-[40vh] md:h-[calc(100vh-80px)]">
+                  <div className="relative h-[40vh] md:h-[calc(100vh-128px)]">
                     <Image
                       src={image.src}
                       alt={image.alt}
@@ -140,7 +140,7 @@ export default function Home() {
 
         <section className="py-8 md:py-16">
           <div className="container">
-            <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8">
+            <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
               Medal-Worthy Brands To Bag
             </h2>
             <Carousel
@@ -174,7 +174,7 @@ export default function Home() {
 
         <section className="py-8 md:py-16">
             <div className="container">
-                <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8">
+                <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
                     Deals Of The Day
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
@@ -189,19 +189,19 @@ export default function Home() {
                                     className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
                                     data-ai-hint={deal.dataAiHint}
                                 />
-                                <div className="absolute bottom-0 left-0 right-0 p-1 bg-white/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                   <Button variant="outline" size="sm" className="w-full bg-white hover:bg-gray-50 border-gray-300 text-xs">
+                                <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                   <Button variant="outline" size="sm" className="w-full bg-white hover:bg-gray-200 border-gray-300 text-xs text-black">
                                       <Heart className="mr-1 h-3 w-3" /> Wishlist
                                    </Button>
                                 </div>
                             </div>
                             <div className="pt-2">
-                                <h3 className="text-xs font-bold">{deal.brand}</h3>
+                                <h3 className="text-xs font-bold text-foreground">{deal.brand}</h3>
                                 <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
-                                <p className="text-xs font-semibold mt-1">
+                                <p className="text-xs font-semibold mt-1 text-foreground">
                                     Rs. {deal.price}{' '}
                                     <span className="text-xs text-muted-foreground line-through">Rs. {deal.originalPrice}</span>{' '}
-                                    <span className="text-xs text-accent-foreground font-bold text-orange-500">({deal.discount})</span>
+                                    <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
                                 </p>
                             </div>
                         </Link>
@@ -212,7 +212,7 @@ export default function Home() {
 
         <section className="bg-secondary py-8 md:py-16">
           <div className="container">
-            <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8">
+            <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-secondary-foreground">
               Shop By Category
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 md:gap-6">
@@ -228,7 +228,7 @@ export default function Home() {
                       data-ai-hint={category.dataAiHint}
                     />
                   </div>
-                  <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
                     <h3 className="font-headline text-white text-xl md:text-2xl font-bold">{category.name}</h3>
                   </div>
                 </Link>

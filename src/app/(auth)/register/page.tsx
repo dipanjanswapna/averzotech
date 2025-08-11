@@ -10,7 +10,7 @@ export default function RegisterPage() {
     <Card className="w-full max-w-sm">
       <CardHeader className="text-center space-y-2">
         <CardTitle className="font-headline text-2xl">Sign Up</CardTitle>
-        <CardDescription>Create your Averzo account</CardDescription>
+        <CardDescription>Create your RDC Store account</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid gap-4">
@@ -47,7 +47,7 @@ export default function RegisterPage() {
       <CardFooter>
         <p className="w-full text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
+          <Link href="/login" className="font-semibold text-accent underline-offset-4 hover:underline">
             Login
           </Link>
         </p>
