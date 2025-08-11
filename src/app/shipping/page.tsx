@@ -84,74 +84,7 @@ export default function ShippingPage() {
         <div className="flex min-h-screen flex-col bg-background">
             <SiteHeader />
             <main className="flex-grow container mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 lg:flex-row-reverse gap-12">
-                    <div className="lg:col-span-1 bg-secondary/50 p-8 rounded-lg">
-                        <h2 className="text-2xl font-semibold mb-6">Your Cart</h2>
-                        <div className="space-y-4">
-                            {cartItems.map((item) => (
-                            <div key={item.id} className="flex items-center gap-4">
-                                <div className="relative">
-                                    <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
-                                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
-                                </div>
-                                <div className="flex-grow">
-                                    <p className="font-medium">{item.name}</p>
-                                    <p className="text-sm text-muted-foreground">{item.variant}</p>
-                                </div>
-                                <p className="font-semibold">৳{item.price.toFixed(2)}</p>
-                            </div>
-                            ))}
-                        </div>
-
-                        <Separator className="my-6" />
-
-                        <div className="flex gap-2 mb-6">
-                            <Input placeholder="Discount code" />
-                            <Button variant="secondary">Apply</Button>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <p className="text-muted-foreground">Subtotal</p>
-                                <p className="font-semibold">৳{subtotal.toFixed(2)}</p>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="text-muted-foreground">Shipping</p>
-                                <p className="font-semibold">৳{shippingFee.toFixed(2)}</p>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="flex items-center gap-1 text-muted-foreground">
-                                    Estimated taxes
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Info className="h-4 w-4" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Taxes are calculated based on your shipping address.</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </p>
-                                <p className="font-semibold">৳{taxes.toFixed(2)}</p>
-                            </div>
-                        </div>
-
-                        <Separator className="my-6" />
-
-                        <div className="flex justify-between text-xl font-bold mb-6">
-                            <p>Total</p>
-                            <p>৳{total.toFixed(2)}</p>
-                        </div>
-                        
-                        <Button 
-                            className="w-full bg-black text-white hover:bg-gray-800" 
-                            size="lg"
-                            disabled={!isSelectionComplete}
-                        >
-                            Continue to Payment
-                        </Button>
-                    </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                      <div className="lg:col-span-1">
                         <div className="mb-6">
                             <p className="text-sm text-muted-foreground">
@@ -286,12 +219,78 @@ export default function ShippingPage() {
                             </div>
                         </div>
                     </div>
+                    <div className="lg:col-span-1 bg-secondary/50 p-8 rounded-lg">
+                        <h2 className="text-2xl font-semibold mb-6">Your Cart</h2>
+                        <div className="space-y-4">
+                            {cartItems.map((item) => (
+                            <div key={item.id} className="flex items-center gap-4">
+                                <div className="relative">
+                                    <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
+                                    <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
+                                </div>
+                                <div className="flex-grow">
+                                    <p className="font-medium">{item.name}</p>
+                                    <p className="text-sm text-muted-foreground">{item.variant}</p>
+                                </div>
+                                <p className="font-semibold">৳{item.price.toFixed(2)}</p>
+                            </div>
+                            ))}
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div className="flex gap-2 mb-6">
+                            <Input placeholder="Discount code" />
+                            <Button variant="secondary">Apply</Button>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <p className="text-muted-foreground">Subtotal</p>
+                                <p className="font-semibold">৳{subtotal.toFixed(2)}</p>
+                            </div>
+                            <div className="flex justify-between">
+                                <p className="text-muted-foreground">Shipping</p>
+                                <p className="font-semibold">৳{shippingFee.toFixed(2)}</p>
+                            </div>
+                            <div className="flex justify-between">
+                                <p className="flex items-center gap-1 text-muted-foreground">
+                                    Estimated taxes
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Info className="h-4 w-4" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Taxes are calculated based on your shipping address.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </p>
+                                <p className="font-semibold">৳{taxes.toFixed(2)}</p>
+                            </div>
+                        </div>
+
+                        <Separator className="my-6" />
+
+                        <div className="flex justify-between text-xl font-bold mb-6">
+                            <p>Total</p>
+                            <p>৳{total.toFixed(2)}</p>
+                        </div>
+                        
+                        <Button 
+                            className="w-full bg-black text-white hover:bg-gray-800" 
+                            size="lg"
+                            disabled={!isSelectionComplete}
+                        >
+                            Continue to Payment
+                        </Button>
+                    </div>
                 </div>
             </main>
             <SiteFooter />
         </div>
     )
-
-    
+}
 
     
