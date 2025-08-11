@@ -38,12 +38,12 @@ export default function Home() {
   ];
 
   const categories = [
-    { name: 'Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing shirt' },
-    { name: 'Jeans', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman wearing jeans' },
-    { name: 'Dresses', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman in dress' },
-    { name: 'Shoes', src: 'https://placehold.co/400x500.png', dataAiHint: 'stylish shoes' },
-    { name: 'Watches', src: 'https://placehold.co/400x500.png', dataAiHint: 'luxury watch' },
-    { name: 'Handbags', src: 'https://placehold.co/400x500.png', dataAiHint: 'leather handbag' },
+    { name: 'T-Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing t-shirt', discount: '40-80% OFF' },
+    { name: 'Sports Shoes', src: 'https://placehold.co/400x500.png', dataAiHint: 'stylish shoes', discount: '40-80% OFF' },
+    { name: 'Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing shirt', discount: '40-80% OFF' },
+    { name: 'Jeans', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman wearing jeans', discount: '40-80% OFF' },
+    { name: 'Kurtas & Sets', src: 'https://placehold.co/400x500.png', dataAiHint: 'ethnic wear', discount: '50-80% OFF' },
+    { name: 'Trousers', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing trousers', discount: '40-80% OFF' },
   ];
 
   const deals = [
@@ -369,7 +369,7 @@ export default function Home() {
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 md:gap-6">
               {categories.map((category, index) => (
-                <Link href="#" key={index} className="group block relative">
+                <Link href="#" key={index} className="group block text-center">
                   <div className="overflow-hidden rounded-lg">
                     <Image
                       src={category.src}
@@ -380,8 +380,10 @@ export default function Home() {
                       data-ai-hint={category.dataAiHint}
                     />
                   </div>
-                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                    <h3 className="font-headline text-white text-xl md:text-2xl font-bold">{category.name}</h3>
+                  <div className="bg-primary/80 text-primary-foreground p-4 -mt-16 relative z-10 mx-4 rounded-lg backdrop-blur-sm">
+                      <h3 className="font-bold text-md">{category.name}</h3>
+                      <p className="text-sm font-semibold text-orange-300">{category.discount}</p>
+                      <p className="text-xs mt-1 hover:underline">Shop Now</p>
                   </div>
                 </Link>
               ))}
@@ -444,4 +446,3 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
-
