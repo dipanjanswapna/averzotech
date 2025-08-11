@@ -1,3 +1,4 @@
+"use client"
 
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
@@ -420,5 +421,3 @@ export default function ProductPage({ params }: { params: { productId: string } 
     </div>
   );
 }
-
-    
