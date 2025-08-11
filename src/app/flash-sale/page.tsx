@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Filter, X } from 'lucide-react';
+import { Clock, Filter, Bell, X } from 'lucide-react';
 import React from 'react';
 import {
   Collapsible,
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select"
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 const allFlashSaleItems = [
     {
@@ -140,12 +141,30 @@ const allFlashSaleItems = [
     },
 ];
 
+const upcomingSales = [
+  {
+    id: 'upcoming-1',
+    name: 'Tech Gadget Gala',
+    startTime: new Date(new Date().getTime() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+    image: 'https://placehold.co/500x300.png',
+    dataAiHint: 'tech gadgets',
+  },
+  {
+    id: 'upcoming-2',
+    name: 'Winter Fashion Fest',
+    startTime: new Date(new Date().getTime() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+    image: 'https://placehold.co/500x300.png',
+    dataAiHint: 'winter fashion',
+  },
+];
+
 const flashSaleEndTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
 
 export default function FlashSalePage() {
   const [isFilterOpen, setIsFilterOpen] = React.useState(true);
   const [displayedItems, setDisplayedItems] = React.useState(allFlashSaleItems);
   const [sortOption, setSortOption] = React.useState("featured");
+  const { toast } = useToast();
   
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedBrand, setSelectedBrand] = React.useState("all");
@@ -201,6 +220,13 @@ export default function FlashSalePage() {
     setSelectedCategory("all");
     setSelectedBrand("all");
     setPriceRange([0, 30000]);
+  };
+
+  const handleNotify = (saleName: string) => {
+    toast({
+      title: "Subscription Confirmed!",
+      description: `We'll notify you when the "${saleName}" starts.`,
+    });
   };
   
   const filterControls = (
@@ -327,6 +353,35 @@ export default function FlashSalePage() {
               )}
             </div>
         </div>
+
+        <section className="mt-16">
+            <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
+                Upcoming Flash Sales
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {upcomingSales.map(sale => (
+                    <div key={sale.id} className="group relative overflow-hidden rounded-lg border">
+                        <Image 
+                            src={sale.image}
+                            alt={sale.name}
+                            width={500}
+                            height={300}
+                            className="w-full h-auto object-cover aspect-video transition-transform duration-300 group-hover:scale-105"
+                            data-ai-hint={sale.dataAiHint}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
+                            <h3 className="text-2xl font-bold text-white font-headline">{sale.name}</h3>
+                            <div className="mt-4">
+                                <FlashSaleTimer endTime={sale.startTime} />
+                            </div>
+                            <Button className="mt-4 w-full md:w-auto" onClick={() => handleNotify(sale.name)}>
+                                <Bell className="mr-2 h-4 w-4" /> Notify Me
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
         
         <div className="text-center mt-12">
             <Button asChild size="lg" variant="outline">
@@ -341,15 +396,16 @@ export default function FlashSalePage() {
 
 
 function FlashSaleTimer({ endTime }: { endTime: Date }) {
-    const [timeLeft, setTimeLeft] = React.useState({ hours: 0, minutes: 0, seconds: 0 });
+    const [timeLeft, setTimeLeft] = React.useState({ days:0, hours: 0, minutes: 0, seconds: 0 });
 
     React.useEffect(() => {
         const calculateTimeLeft = () => {
             const difference = +endTime - +new Date();
-            let timeLeft = { hours: 0, minutes: 0, seconds: 0 };
+            let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
             if (difference > 0) {
                 timeLeft = {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
                     hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
                     minutes: Math.floor((difference / 1000 / 60) % 60),
                     seconds: Math.floor((difference / 1000) % 60)
@@ -374,8 +430,18 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         <div className="flex items-center gap-2 text-center">
             <Clock className="w-10 h-10 text-primary" />
             <div>
-                 <p className="text-sm text-muted-foreground uppercase">Ending in</p>
+                 <p className="text-sm text-muted-foreground uppercase">
+                    {timeLeft.days > 0 ? "Starts in" : "Ending in"}
+                 </p>
                  <div className="flex items-center gap-2 font-mono text-2xl md:text-3xl font-bold text-foreground">
+                    {timeLeft.days > 0 && (
+                        <>
+                        <div className="flex flex-col items-center">
+                            <span className="p-2 bg-secondary rounded-md min-w-[48px]">{formatTime(timeLeft.days)}</span>
+                        </div>
+                        <span className="text-2xl">:</span>
+                        </>
+                    )}
                     <div className="flex flex-col items-center">
                         <span className="p-2 bg-secondary rounded-md min-w-[48px]">{formatTime(timeLeft.hours)}</span>
                     </div>
