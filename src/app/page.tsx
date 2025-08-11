@@ -44,6 +44,7 @@ export default function Home() {
 
   const deals = [
     {
+      id: '89073456',
       brand: 'Tokyo Talkies',
       name: 'Women Cropped Shirt',
       size: 'S',
@@ -54,6 +55,7 @@ export default function Home() {
       dataAiHint: 'woman white shirt'
     },
     {
+      id: '12345678',
       brand: 'H&M',
       name: 'Slim Fit Jeans',
       size: '32',
@@ -64,6 +66,7 @@ export default function Home() {
       dataAiHint: 'blue jeans'
     },
     {
+      id: '23456789',
       brand: 'Zara',
       name: 'Floral Print Dress',
       size: 'M',
@@ -74,6 +77,7 @@ export default function Home() {
       dataAiHint: 'summer dress'
     },
     {
+      id: '34567890',
       brand: 'Nike',
       name: 'Air Max Sneakers',
       size: '9',
@@ -84,6 +88,7 @@ export default function Home() {
       dataAiHint: 'running shoes'
     },
     {
+      id: '45678901',
       brand: 'Levis',
       name: '511 Slim Fit Jeans',
       size: '34',
@@ -94,6 +99,7 @@ export default function Home() {
       dataAiHint: 'dark jeans'
     },
     {
+      id: '56789012',
       brand: 'Puma',
       name: 'Running Shoes',
       size: '10',
@@ -179,7 +185,7 @@ export default function Home() {
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
                     {deals.map((deal, index) => (
-                        <Link href="#" key={index} className="group block">
+                        <Link href={`/product/${deal.id}`} key={index} className="group block">
                             <div className="relative overflow-hidden rounded-lg">
                                 <Image
                                     src={deal.src}
