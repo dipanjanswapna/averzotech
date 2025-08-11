@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -29,10 +29,22 @@ interface ContentItem {
   discount?: string;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  images: string[];
+  pricing: {
+      price: number;
+      comparePrice?: number;
+      discount?: number;
+  }
+}
+
 interface MenPageContent {
   heroImages: ContentItem[];
   banner: ContentItem;
-  trendingCategories: ContentItem[];
+  trendingProducts: { id: string }[];
   crazyDeals: ContentItem[];
   shopByCategory: ContentItem[];
 }
@@ -40,6 +52,7 @@ interface MenPageContent {
 
 export default function MenPage() {
     const [content, setContent] = useState<Partial<MenPageContent>>({});
+    const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -47,8 +60,22 @@ export default function MenPage() {
             setLoading(true);
             const docRef = doc(db, 'site_content', 'men_page');
             const docSnap = await getDoc(docRef);
+            
             if (docSnap.exists()) {
-                setContent(docSnap.data() as MenPageContent);
+                const data = docSnap.data() as MenPageContent;
+                setContent(data);
+
+                if (data.trendingProducts && data.trendingProducts.length > 0) {
+                    const productIds = data.trendingProducts.map(p => p.id);
+                    const productsRef = collection(db, 'products');
+                    const q = query(productsRef, where(documentId(), 'in', productIds));
+                    const productSnap = await getDocs(q);
+                    const productList = productSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+                    
+                    // Maintain the order from Firestore
+                    const orderedProducts = productIds.map(id => productList.find(p => p.id === id)).filter(Boolean) as Product[];
+                    setTrendingProducts(orderedProducts);
+                }
             }
             setLoading(false);
         };
@@ -116,28 +143,40 @@ export default function MenPage() {
                 </section>
             )}
 
-             <section className="mb-12">
-                <h2 className="text-2xl font-bold text-center mb-6">TRENDING NOW</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                    {(content.trendingCategories || []).map((category, index) => (
-                        <Link href={category.link || '#'} key={index}>
-                            <Card className="overflow-hidden group">
-                                <CardContent className="p-0">
-                                <Image
-                                    src={category.url || 'https://placehold.co/300x400.png'}
-                                    alt={category.name || 'Trending category'}
-                                    width={300}
-                                    height={400}
-                                    className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={category.dataAiHint}
-                                />
-                                </CardContent>
-                            </Card>
-                            <p className="text-center font-semibold mt-2">{category.name}</p>
-                        </Link>
-                    ))}
-                </div>
-            </section>
+            {trendingProducts.length > 0 && (
+                 <section className="mb-12">
+                    <h2 className="text-2xl font-bold text-center mb-6">TRENDING NOW</h2>
+                    <Carousel opts={{ align: "start" }} className="w-full">
+                        <CarouselContent>
+                            {trendingProducts.map((product, index) => (
+                                <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+                                    <Link href={`/product/${product.id}`} className="group block">
+                                        <Card className="overflow-hidden group">
+                                            <CardContent className="p-0">
+                                            <Image
+                                                src={product.images[0] || 'https://placehold.co/300x400.png'}
+                                                alt={product.name}
+                                                width={300}
+                                                height={400}
+                                                className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105 aspect-[4/5]"
+                                                data-ai-hint={product.name.toLowerCase()}
+                                            />
+                                            </CardContent>
+                                        </Card>
+                                        <div className="pt-2">
+                                            <p className="text-sm font-semibold truncate">{product.name}</p>
+                                            <p className="text-xs text-muted-foreground">{product.brand}</p>
+                                            <p className="text-sm font-bold text-primary mt-1">৳{product.pricing.price}</p>
+                                        </div>
+                                    </Link>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="hidden md:flex" />
+                        <CarouselNext className="hidden md:flex" />
+                    </Carousel>
+                </section>
+            )}
 
             <section className="mb-12">
                 <div className="flex justify-between items-center mb-6">
@@ -200,3 +239,5 @@ export default function MenPage() {
     </div>
   );
 }
+
+    

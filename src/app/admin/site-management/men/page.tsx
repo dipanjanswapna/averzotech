@@ -11,13 +11,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Trash2, GripVertical, PlusCircle } from 'lucide-react';
+import { Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { db, app } from '@/lib/firebase';
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ContentItem {
   file?: File;
@@ -30,15 +31,31 @@ interface ContentItem {
   discount?: string;
 }
 
+interface ProductForSelection {
+    id: string;
+    name: string;
+    brand: string;
+    images: string[];
+}
+
+interface TrendingProduct {
+    id: string;
+    name: string;
+    brand: string;
+    image: string;
+}
+
 export default function MenPageManager() {
   const { toast } = useToast();
   const storage = getStorage(app);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
+  const [allProducts, setAllProducts] = useState<ProductForSelection[]>([]);
 
   const [heroImages, setHeroImages] = useState<ContentItem[]>([]);
   const [banner, setBanner] = useState<ContentItem | null>(null);
-  const [trendingCategories, setTrendingCategories] = useState<ContentItem[]>([]);
+  const [trendingProducts, setTrendingProducts] = useState<TrendingProduct[]>([]);
   const [crazyDeals, setCrazyDeals] = useState<ContentItem[]>([]);
   const [shopByCategory, setShopByCategory] = useState<ContentItem[]>([]);
 
@@ -54,14 +71,30 @@ export default function MenPageManager() {
         if (data.banner) {
           setBanner({ ...data.banner, preview: data.banner.url });
         }
-        setTrendingCategories(data.trendingCategories?.map((item: any) => ({ ...item, preview: item.url })) || []);
+        setTrendingProducts(data.trendingProducts || []);
         setCrazyDeals(data.crazyDeals?.map((item: any) => ({ ...item, preview: item.url })) || []);
         setShopByCategory(data.shopByCategory?.map((item: any) => ({ ...item, preview: item.url })) || []);
       }
       setIsFetching(false);
     };
 
+    const fetchProducts = async () => {
+        const productsCollection = collection(db, 'products');
+        const productSnapshot = await getDocs(productsCollection);
+        const productList = productSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name,
+              brand: data.brand,
+              images: data.images
+            } as ProductForSelection;
+        });
+        setAllProducts(productList);
+    }
+
     fetchMenPageContent();
+    fetchProducts();
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
@@ -105,6 +138,17 @@ export default function MenPageManager() {
   const handleRemoveItem = (index: number, stateSetter: React.Dispatch<React.SetStateAction<any[]>>) => {
     stateSetter(prev => prev.filter((_, i) => i !== index));
   };
+  
+  const handleToggleTrendingProduct = (product: ProductForSelection) => {
+      setTrendingProducts(prevProducts => {
+          const isExisting = prevProducts.some(p => p.id === product.id);
+          if (isExisting) {
+              return prevProducts.filter(p => p.id !== product.id);
+          } else {
+              return [...prevProducts, { id: product.id, name: product.name, brand: product.brand, image: product.images[0] }];
+          }
+      });
+  };
 
   const handleSaveChanges = async () => {
     setIsLoading(true);
@@ -130,18 +174,16 @@ export default function MenPageManager() {
       };
 
       const updatedHeroImages = await processItems(heroImages, 'hero');
-      const updatedTrending = await processItems(trendingCategories, 'trending');
       const updatedDeals = await processItems(crazyDeals, 'deals');
       const updatedCategories = await processItems(shopByCategory, 'categories');
       
       const updatedBannerUrl = await uploadImage(banner, 'banner');
       const updatedBanner = banner ? { url: updatedBannerUrl, alt: banner.alt, dataAiHint: banner.dataAiHint, link: banner.link || '#' } : null;
 
-
       const menPageContent = {
         heroImages: updatedHeroImages,
         banner: updatedBanner,
-        trendingCategories: updatedTrending,
+        trendingProducts,
         crazyDeals: updatedDeals,
         shopByCategory: updatedCategories,
       };
@@ -231,28 +273,49 @@ export default function MenPageManager() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Trending Now</CardTitle>
-          <CardDescription>Manage the "Trending Now" category cards.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {trendingCategories.map((item, index) => (
-              <div key={index} className="p-2 border rounded-lg space-y-2">
-                <Image src={item.preview} alt="Preview" width={300} height={400} className="object-cover rounded-md mx-auto aspect-[3/4]" />
-                <Input placeholder="Category Name" value={item.name || ''} onChange={(e) => handleTextChange(index, 'name', e.target.value, setTrendingCategories, trendingCategories)} />
-                <Input placeholder="Link URL" value={item.link || ''} onChange={(e) => handleTextChange(index, 'link', e.target.value, setTrendingCategories, trendingCategories)} />
-                <Input placeholder="AI Hint" value={item.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setTrendingCategories, trendingCategories)} />
-                <Input type="file" className="text-xs" onChange={(e) => handleFileChange(e, index, setTrendingCategories, trendingCategories)} />
-                <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => handleRemoveItem(index, setTrendingCategories)}><Trash2 className="h-4 w-4 mr-2" /> Remove</Button>
+       <Card>
+          <CardHeader>
+              <CardTitle>Trending Now</CardTitle>
+              <CardDescription>Select which products to feature in the "Trending Now" carousel.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  {trendingProducts.map(product => (
+                      <div key={product.id} className="border rounded-lg p-2 text-center relative group">
+                          <Image src={product.image} alt={product.name} width={100} height={100} className="object-cover rounded-md mx-auto aspect-square"/>
+                          <p className="text-xs font-semibold mt-1 truncate">{product.name}</p>
+                          <p className="text-xs text-muted-foreground">{product.brand}</p>
+                          <Button variant="destructive" size="icon" className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleToggleTrendingProduct({id: product.id, name: product.name, brand: product.brand, images: [product.image]})}>
+                              <Trash2 className="h-3 w-3" />
+                          </Button>
+                      </div>
+                  ))}
               </div>
-            ))}
-          </div>
-          <Button variant="outline" className="mt-4" onClick={() => handleAddItem(setTrendingCategories, { preview: 'https://placehold.co/300x400.png', name: '', dataAiHint: '' })}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Trending Item
-          </Button>
-        </CardContent>
+               <Dialog open={isProductSelectorOpen} onOpenChange={setIsProductSelectorOpen}>
+                  <DialogTrigger asChild>
+                      <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Select Trending Products</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                          <DialogTitle>Select "Trending Now" Products</DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="h-96">
+                          <div className="grid grid-cols-3 gap-4 p-4">
+                              {allProducts.map(product => {
+                                  const isSelected = trendingProducts.some(p => p.id === product.id);
+                                  return (
+                                      <div key={product.id} className={`border rounded-lg p-2 text-center cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`} onClick={() => handleToggleTrendingProduct(product)}>
+                                          <Image src={product.images[0]} alt={product.name} width={100} height={100} className="object-cover rounded-md mx-auto aspect-square"/>
+                                          <p className="text-xs font-semibold mt-1 truncate">{product.name}</p>
+                                          <p className="text-xs text-muted-foreground">{product.brand}</p>
+                                      </div>
+                                  )
+                              })}
+                          </div>
+                      </ScrollArea>
+                  </DialogContent>
+              </Dialog>
+          </CardContent>
       </Card>
       
        <Card>
@@ -313,3 +376,5 @@ export default function MenPageManager() {
     </div>
   );
 }
+
+    
