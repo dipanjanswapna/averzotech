@@ -73,11 +73,21 @@ body {
 }
 
 .stepper-step-container[data-active="true"] .stepper-button-container {
-    @apply border-teal-500 bg-teal-500 text-white;
+    @apply border-primary bg-primary text-primary-foreground;
 }
 
 .stepper-step-container[data-completed="true"] .stepper-button-container {
-    @apply border-teal-500 bg-teal-500 text-white;
+    @apply border-primary bg-primary text-primary-foreground;
 }
 
-    
+.stepper-step-container .stepper-button-container {
+    @apply bg-secondary text-secondary-foreground;
+}
+
+.stepper-separator {
+    @apply bg-border;
+}
+
+.stepper-step-container[data-completed="true"] ~ .stepper-separator {
+     @apply bg-primary;
+}

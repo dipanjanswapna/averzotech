@@ -1,66 +1,61 @@
 
 'use client';
 
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { app } from '@/lib/firebase';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity, Users, CreditCard, DollarSign } from "lucide-react";
 
 export default function AdminDashboard() {
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && userDoc.data().role === 'admin') {
-          setUser({ ...firebaseUser, ...userDoc.data() });
-        } else {
-          // If not an admin, redirect to home
-          router.push('/');
-        }
-      } else {
-        // If not logged in, redirect to login
-        router.push('/login');
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [auth, db, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // or a redirect component
-  }
+  const stats = [
+    { title: "Total Revenue", value: "৳45,231.89", icon: DollarSign, change: "+20.1% from last month" },
+    { title: "Subscriptions", value: "+2350", icon: Users, change: "+180.1% from last month" },
+    { title: "Sales", value: "+12,234", icon: CreditCard, change: "+19% from last month" },
+    { title: "Active Now", value: "+573", icon: Activity, change: "+201 since last hour" },
+  ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-        <SiteHeader />
-        <main className="flex-grow container py-8">
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-lg mt-2">Welcome, {user.fullName}!</p>
-            <div className="mt-8">
-                {/* Admin specific content goes here */}
-                <p>This is the admin-only area. Here you can manage users, products, and site settings.</p>
-            </div>
-        </main>
-        <SiteFooter />
+    <div className="space-y-8">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, index) => (
+                <Card key={index}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                        <stat.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stat.value}</div>
+                        <p className="text-xs text-muted-foreground">{stat.change}</p>
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+            <Card className="lg:col-span-4">
+                <CardHeader>
+                    <CardTitle>Overview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {/* Placeholder for a graph */}
+                    <div className="h-[350px] bg-secondary rounded-md flex items-center justify-center">
+                        <p className="text-muted-foreground">Graph will be here</p>
+                    </div>
+                </CardContent>
+            </Card>
+            <Card className="lg:col-span-3">
+                 <CardHeader>
+                    <CardTitle>Recent Sales</CardTitle>
+                </CardHeader>
+                <CardContent>
+                     {/* Placeholder for recent sales */}
+                    <div className="h-[350px] bg-secondary rounded-md flex items-center justify-center">
+                        <p className="text-muted-foreground">Recent sales list will be here</p>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     </div>
   );
 }
