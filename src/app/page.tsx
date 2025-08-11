@@ -398,15 +398,16 @@ export default function Home() {
 
 
 function FlashSaleTimer({ endTime }: { endTime: Date }) {
-    const [timeLeft, setTimeLeft] = React.useState({ hours: 0, minutes: 0, seconds: 0 });
+    const [timeLeft, setTimeLeft] = React.useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
     React.useEffect(() => {
         const calculateTimeLeft = () => {
             const difference = +endTime - +new Date();
-            let timeLeft = { hours: 0, minutes: 0, seconds: 0 };
+            let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
             if (difference > 0) {
                 timeLeft = {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
                     hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
                     minutes: Math.floor((difference / 1000 / 60) % 60),
                     seconds: Math.floor((difference / 1000) % 60)
@@ -418,6 +419,9 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         const timer = setInterval(() => {
             setTimeLeft(calculateTimeLeft());
         }, 1000);
+        
+        // Set initial time
+        setTimeLeft(calculateTimeLeft());
 
         return () => clearInterval(timer);
     }, [endTime]);
@@ -430,14 +434,22 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
             <div>
                  <p className="text-xs text-muted-foreground uppercase">Ending in</p>
                  <div className="flex items-center gap-2 font-mono text-xl md:text-2xl font-bold text-foreground">
+                    {timeLeft.days > 0 && (
+                        <>
+                        <div className="flex flex-col items-center">
+                            <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.days)}</span>
+                        </div>
+                        <span className="text-xl">:</span>
+                        </>
+                    )}
                     <div className="flex flex-col items-center">
                         <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.hours)}</span>
                     </div>
-                    <span>:</span>
+                    <span className="text-xl">:</span>
                     <div className="flex flex-col items-center">
                          <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.minutes)}</span>
                     </div>
-                    <span>:</span>
+                    <span className="text-xl">:</span>
                      <div className="flex flex-col items-center">
                          <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.seconds)}</span>
                     </div>
