@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from '@/components/ui/textarea';
+import { useParams } from 'next/navigation';
 
 // Mock data for a single order
 const order = {
@@ -87,7 +88,10 @@ const orderSteps = [
 const currentStatusIndex = orderSteps.findIndex(step => step.label === (order.status === 'Fulfilled' ? 'Delivered' : order.status)) + 1;
 
 
-export default function OrderDetailsPage({ params }: { params: { orderId: string } }) {
+export default function OrderDetailsPage() {
+  const params = useParams();
+  const orderId = params.orderId as string;
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
@@ -97,7 +101,7 @@ export default function OrderDetailsPage({ params }: { params: { orderId: string
           </Link>
         </Button>
         <div>
-            <h1 className="text-2xl font-bold">Order {params.orderId}</h1>
+            <h1 className="text-2xl font-bold">Order {orderId}</h1>
             <p className="text-muted-foreground text-sm">Date: {order.date}</p>
         </div>
       </div>
