@@ -13,6 +13,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import * as React from 'react';
 
 const product = {
   id: '89073456',
@@ -68,19 +76,32 @@ export default function ProductPage({ params }: { params: { productId: string } 
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery */}
-          <div className="grid grid-cols-2 gap-4">
-            {product.images.map((image, index) => (
-              <div key={index} className="aspect-w-3 aspect-h-4">
-                 <Image
-                  src={image.src}
-                  alt={image.alt}
-                  width={600}
-                  height={800}
-                  className="object-cover w-full h-full rounded-lg"
-                  data-ai-hint={image.dataAiHint}
-                />
-              </div>
-            ))}
+          <div className="lg:col-span-1">
+            <Carousel
+              className="w-full"
+              opts={{
+                loop: true,
+              }}
+            >
+              <CarouselContent>
+                {product.images.map((image, index) => (
+                  <CarouselItem key={index}>
+                    <div className="aspect-w-3 aspect-h-4">
+                      <Image
+                        src={image.src}
+                        alt={image.alt}
+                        width={600}
+                        height={800}
+                        className="object-cover w-full h-full rounded-lg"
+                        data-ai-hint={image.dataAiHint}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
+              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
+            </Carousel>
           </div>
 
           {/* Product Info */}
@@ -194,5 +215,3 @@ export default function ProductPage({ params }: { params: { productId: string } 
     </div>
   );
 }
-
-import * as React from 'react';
