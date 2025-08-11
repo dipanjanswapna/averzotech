@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
+import { Separator } from './ui/separator';
 
 
 interface AppUser {
@@ -260,37 +261,50 @@ export function SiteHeader() {
                     <Input type="search" placeholder="Search..." className="h-9 pl-9" />
                 </div>
             </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
                         <MoreVertical className="h-6 w-6" />
                     </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                     {user ? (
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px]">
+                    <SheetHeader>
+                         {user ? (
+                            <div className="flex items-center gap-3">
+                                 <Avatar className="h-12 w-12">
+                                    <AvatarImage src={user.photoURL || ''} alt={user.fullName} />
+                                    <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-bold">{user.fullName}</p>
+                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                                </div>
+                            </div>
+                         ) : (
+                            <SheetTitle>Welcome Guest</SheetTitle>
+                         )}
+                    </SheetHeader>
+                    <Separator className="my-4" />
+                    <nav className="flex flex-col space-y-2">
+                       {user ? (
                         <>
-                            <DropdownMenuLabel>
-                                <p className='font-bold'>{user.fullName}</p>
-                                <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild><Link href="/profile"><User className="mr-2 h-4 w-4" />Profile</Link></DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link href="/wishlist"><Heart className="mr-2 h-4 w-4" />Wishlist</Link></DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link href="/cart"><ShoppingCart className="mr-2 h-4 w-4" />Cart</Link></DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
-                                <LogOut className='mr-2 h-4 w-4' />
-                                Logout
-                            </DropdownMenuItem>
+                            <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
+                            <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                            <Link href="/cart" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><ShoppingCart className="mr-2 h-5 w-5" />Cart</Link>
+                            <Separator className="my-2" />
+                             <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
+                                <LogOut className="mr-2 h-5 w-5" /> Logout
+                            </Button>
                         </>
-                     ) : (
-                         <>
-                            <DropdownMenuItem asChild><Link href="/login">Login</Link></DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link href="/register">Sign Up</Link></DropdownMenuItem>
+                       ) : (
+                        <>
+                           <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
+                           <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
                         </>
-                     )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                       )}
+                    </nav>
+                </SheetContent>
+            </Sheet>
         </div>
 
 
@@ -372,7 +386,7 @@ export function SiteHeader() {
           </div>
         </div>
       </div>
-       <div className="h-10 items-center border-t md:flex">
+       <div className="h-10 items-center border-t flex">
           <div className="container">
             <ScrollArea className="md:hidden -mx-4">
               <nav className="flex items-center gap-6 text-sm font-medium px-4">
