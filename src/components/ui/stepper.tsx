@@ -103,21 +103,21 @@ const Stepper = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "stepper-horizontal-container",
           "flex w-full flex-wrap justify-between gap-x-2",
-          isVertical && "stepper-vertical-container flex-col",
+          isVertical ? "flex-col gap-y-4" : "flex-row",
           className,
           responsive && "flex-col md:flex-row"
         )}
         style={
           {
-            "--step-color": variables?.["--step-color"],
-            "--active-step-color": variables?.["--active-step-color"],
-            "--step-border-color": variables?.["--step-border-color"],
-            "--step-border-width": variables?.["--step-border-width"],
-            "--border-color": variables?.["--border-color"],
-            "--connector-length": variables?.["--connector-length"],
-            "--connector-width": variables?.["--connector-width"],
+            "--step-color": "hsl(var(--accent))",
+            "--active-step-color": "hsl(var(--primary))",
+            "--step-border-color": "hsl(var(--border))",
+            "--step-border-width": "2px",
+            "--border-color": "hsl(var(--border))",
+            "--connector-length": "2rem",
+            "--connector-width": "2px",
+            ...variables
           } as React.CSSProperties
         }
         {...rest}
@@ -133,7 +133,7 @@ type StepperProps = {
   steps: {
     label: string
     description?: string
-    icon?: React.ElementType
+    icon?: React.ElementType | React.ReactNode
   }[]
   orientation?: "vertical" | "horizontal"
   state?: "loading" | "error"
@@ -171,7 +171,7 @@ type StepperItemProps = React.HTMLAttributes<HTMLDivElement> & {
   isKeepError?: boolean
   label?: string
   description?: string
-  icon?: React.ElementType
+  icon?: React.ElementType | React.ReactNode
 }
 
 const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
@@ -180,7 +180,7 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
       className,
       children,
       description,
-      icon: PasedIcon,
+      icon: PassedIcon,
       label,
       isCompletedStep,
       isKeepError,
@@ -213,10 +213,7 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
 
     const stepIsError = isError && isCurrentStep && !isStepLoading
 
-    const isStepDisabled =
-      !isStepPassed && !isCurrentStep && !isStepLoading && !isError
-      
-    const Icon = PasedIcon ?? steps[stepIndex]?.icon
+    const Icon = PassedIcon ?? steps[stepIndex]?.icon
     
     const iconToRender = isStepLoading ? (
       <Loader2 className="animate-spin" />
@@ -224,17 +221,15 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
       errorIcon
     ) : isStepCompleted ? (
       checkIcon
-    ) : Icon ? (
-      <Icon />
     ) : (
-      stepIndex + 1
+      Icon
     )
 
     const renderChildren = () => {
-      if (isVertical && !expandVerticalSteps && !isCurrentStep) {
-        return null
-      }
-      return children
+        if (!isVertical) return children;
+        if (isVertical && expandVerticalSteps) return children;
+        if (isVertical && isCurrentStep) return children;
+        return null;
     }
 
     return (
@@ -242,115 +237,75 @@ const StepperItem = React.forwardRef<HTMLDivElement, StepperItemProps>(
         ref={ref}
         className={cn(
           "stepper-step-container",
-          "flex items-center",
+          "flex items-start",
           "relative",
           isVertical ? "flex-col" : "flex-row",
-          "[&:not(:last-child)]:flex-1",
+          isVertical ? "" : "[&:not(:last-child)]:flex-1",
           className,
           styles?.["step-container"]
         )}
         {...rest}
       >
-        <div
-          className={cn(
+        <div className={cn(
             "stepper-step-inner-container",
             "flex items-center gap-4",
             isVertical ? "w-full" : "",
             styles?.["step-inner-container"]
-          )}
-        >
-          <div
-            data-optional={stepIndex > activeStep}
-            data-completed={isStepCompleted}
-            data-active={isCurrentStep}
-            data-loading={isStepLoading}
-            data-error={stepIsError}
-            className={cn(
-              "stepper-button-container",
-              "flex items-center justify-center",
-              "rounded-full border-2",
-              "h-10 w-10 shrink-0",
-              "transition-all duration-200",
-              isStepDisabled
-                ? "border-muted-foreground/20 bg-muted text-muted-foreground"
-                : "",
-              isCurrentStep ? "border-primary bg-primary text-primary-foreground" : "",
-              isStepCompleted
-                ? "border-primary bg-primary text-primary-foreground"
-                : "",
-              stepIsError ? "border-destructive bg-destructive text-destructive-foreground" : "",
-              styles?.["step-button-container"],
-              isClickable && "cursor-pointer"
-            )}
-            onClick={() => isClickable && setStep(stepIndex)}
-          >
-            {iconToRender}
-          </div>
-          <div
-            className={cn(
-              "stepper-step-label-container",
-              "flex flex-col justify-center",
-              isVertical ? "w-full" : "",
-              styles?.["step-label-container"]
-            )}
-          >
-            <p
-              className={cn(
-                "stepper-step-label",
-                "text-sm font-medium",
-                isStepPassed ? "text-muted-foreground" : "",
-                isCurrentStep ? "text-primary" : "",
-                stepIsError ? "text-destructive" : "",
-                styles?.["step-label"]
-              )}
+        )}>
+
+            <div
+                data-completed={isStepCompleted}
+                data-active={isCurrentStep}
+                data-loading={isStepLoading}
+                data-error={stepIsError}
+                className={cn(
+                "stepper-button-container",
+                "flex items-center justify-center",
+                "rounded-full border-2",
+                "h-10 w-10 shrink-0",
+                "transition-all duration-200",
+                isStepCompleted ? 'bg-primary border-primary text-primary-foreground' : 'bg-background border-border',
+                isCurrentStep ? 'border-primary' : '',
+                stepIsError ? 'bg-destructive border-destructive text-destructive-foreground' : '',
+                isClickable && "cursor-pointer"
+                )}
+                onClick={() => isClickable && setStep(stepIndex)}
             >
-              {label}
-            </p>
-            <p
-              className={cn(
-                "stepper-step-description",
-                "text-xs text-muted-foreground",
-                styles?.["step-description"]
-              )}
+                {iconToRender}
+            </div>
+            
+            {!isVertical && label &&
+              <div>
+                <p className="font-semibold">{label}</p>
+                {description && <p className="text-sm text-muted-foreground">{description}</p>}
+              </div>
+            }
+        </div>
+        {!isLastStep &&
+            <div
+                className={cn(
+                    "stepper-connector-container",
+                    isVertical ? 'ms-5' : 'flex-1 mx-4',
+                )}
             >
-              {description}
-            </p>
-          </div>
-        </div>
-        <div
-          className={cn(
-            "stepper-connector-container",
-            "w-full",
-            isVertical ? "mt-4" : "ms-4",
-            isLastStep ? "hidden" : "",
-            styles?.["connector-container"]
-          )}
-        >
-          <div
-            data-completed={isStepCompleted}
-            className={cn(
-              "stepper-connector-line",
-              "h-1 w-full rounded-full",
-              isStepPassed ? "bg-primary" : "bg-muted",
-              styles?.["connector-line"]
-            )}
-          />
-        </div>
-        <div
-          className={cn(
+                <div
+                    data-completed={isStepCompleted}
+                    className={cn(
+                        "stepper-connector-line",
+                        "rounded-full",
+                        isVertical ? 'h-[var(--connector-length)] w-[var(--connector-width)]' : 'h-[var(--connector-width)] w-full',
+                        isStepCompleted ? 'bg-primary' : 'bg-border',
+                    )}
+                />
+            </div>
+        }
+        <div className={cn(
             "stepper-step-content-container",
             "w-full",
-            isVertical ? "ms-4 border-s-2" : "mt-4",
-            isVertical && isLastStep ? "border-none" : "",
-            isVertical && isStepCompleted ? "border-primary" : "",
-            isVertical && stepIsError ? "border-destructive" : "",
-            isVertical && expandVerticalSteps ? "min-h-40" : "",
+            isVertical ? "pl-14 pt-2 -mt-10 pb-4" : "mt-4",
             styles?.["step-content-container"]
-          )}
-        >
-          <div className={cn("stepper-step-content", styles?.["step-content"])}>
+        )}>
             {renderChildren()}
-          </div>
         </div>
       </div>
     )
@@ -363,3 +318,5 @@ StepperItem.defaultProps = {
 }
 
 export { Stepper, StepperItem, useStepper }
+
+    
