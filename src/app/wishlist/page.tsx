@@ -23,7 +23,7 @@ const initialWishlistItems = [
     originalPrice: 1500,
     discount: '50% OFF',
     rating: 4.3,
-    image: 'https://placehold.co/200x250.png',
+    image: 'https://placehold.co/400x500.png',
     dataAiHint: 'black tights fashion',
     availability: 'In Stock',
   },
@@ -37,7 +37,7 @@ const initialWishlistItems = [
     originalPrice: 3600,
     discount: '50% OFF',
     rating: 4.8,
-    image: 'https://placehold.co/200x250.png',
+    image: 'https://placehold.co/400x500.png',
     dataAiHint: 'blue jeans style',
     availability: 'In Stock',
   },
@@ -51,7 +51,7 @@ const initialWishlistItems = [
     originalPrice: 6000,
     discount: '50% OFF',
     rating: 4.5,
-    image: 'https://placehold.co/200x250.png',
+    image: 'https://placehold.co/400x500.png',
     dataAiHint: 'floral dress summer',
     availability: 'Out of Stock',
   }
@@ -105,48 +105,51 @@ export default function WishlistPage() {
 
         {items.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
               {items.map(item => (
-                <div key={item.id} className="bg-background rounded-lg border shadow-sm overflow-hidden group">
-                  <div className="relative">
-                    <Link href={`/product/${item.id}`}>
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={300}
-                        height={375}
-                        className="w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                        data-ai-hint={item.dataAiHint}
-                      />
-                    </Link>
-                    <Badge variant={item.availability === 'In Stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.availability === 'In Stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-                        {item.availability}
-                    </Badge>
-                     <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)} className="absolute top-2 right-2 bg-white/70 hover:bg-white rounded-full">
-                        <Trash2 className="h-5 w-5 text-destructive" />
-                      </Button>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-sm mb-1 truncate">{item.brand}</h3>
-                    <p className="text-muted-foreground text-xs mb-2 truncate">{item.name}</p>
-                    <div className="flex items-center mb-2">
-                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span className="ml-1 text-xs font-medium">{item.rating}</span>
+                <div key={item.id} className="group block">
+                    <div className="relative overflow-hidden rounded-lg">
+                        <Link href={`/product/${item.id}`}>
+                            <Image
+                                src={item.image}
+                                alt={item.name}
+                                width={400}
+                                height={500}
+                                className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                data-ai-hint={item.dataAiHint}
+                            />
+                        </Link>
+                         <Badge variant={item.availability === 'In Stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.availability === 'In Stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+                            {item.availability}
+                        </Badge>
+                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2">
+                           <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                className="w-full text-xs" 
+                                onClick={() => handleAddToCart(item)}
+                                disabled={item.availability !== 'In Stock'}
+                            >
+                                <ShoppingCart className="mr-1 h-3 w-3" /> Add to Cart
+                           </Button>
+                           <Button variant="destructive" size="icon" onClick={() => handleRemoveItem(item.id)} className="h-8 w-8 flex-shrink-0">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
-                    <div className="flex items-baseline gap-2 mb-4">
-                        <p className="font-bold text-lg">৳{item.price}</p>
-                        <p className="text-sm line-through text-muted-foreground">৳{item.originalPrice}</p>
-                        <p className="text-sm text-orange-500 font-bold">{item.discount}</p>
+                    <div className="pt-2">
+                        <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
+                        <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                        <div className="flex items-center mt-1">
+                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                            <span className="ml-1 text-xs font-medium">{item.rating}</span>
+                        </div>
+                        <p className="text-sm font-semibold mt-1 text-foreground">
+                            ৳{item.price}{' '}
+                            <span className="text-xs text-muted-foreground line-through">৳{item.originalPrice}</span>{' '}
+                            <span className="text-xs text-orange-400 font-bold">({item.discount})</span>
+                        </p>
                     </div>
-                     <Button 
-                        className="w-full" 
-                        onClick={() => handleAddToCart(item)}
-                        disabled={item.availability !== 'In Stock'}
-                     >
-                        <ShoppingCart className="mr-2 h-4 w-4"/>
-                        Add to Cart
-                    </Button>
-                  </div>
                 </div>
               ))}
             </div>
