@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Trash2, Pencil } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Trash2, Pencil, Eye } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -198,6 +198,11 @@ export default function CampaignsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                           <DropdownMenuItem asChild>
+                                <Link href={`/admin/campaigns/edit/${campaign.id}`}>
+                                    <Eye className="mr-2 h-4 w-4"/> View Details
+                                </Link>
+                           </DropdownMenuItem>
                            <DropdownMenuItem asChild>
                             <Link href={`/admin/campaigns/edit/${campaign.id}`}>
                                 <Pencil className="mr-2 h-4 w-4"/> Edit

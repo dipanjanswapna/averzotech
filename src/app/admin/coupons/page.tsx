@@ -74,7 +74,7 @@ export default function CouponsPage() {
         const data = doc.data();
         
         let status: Coupon['status'] = 'Disabled';
-        if (data.status === 'Disabled') {
+        if (data.status && data.status === 'Disabled') {
             status = 'Disabled';
         } else if (new Date() < new Date(data.startDate)) {
             status = 'Scheduled';
@@ -142,13 +142,16 @@ export default function CouponsPage() {
   }
 
   const handleToggleStatus = async (coupon: Coupon) => {
-    const newStatus = coupon.status === 'Disabled' ? 'Active' : 'Disabled';
+    const newStatus = coupon.status === 'Disabled' ? 'Active' : 'Disabled'; // This logic might need adjustment based on other statuses
     const couponRef = doc(db, 'coupons', coupon.id);
     try {
-        await updateDoc(couponRef, { status: newStatus });
+        // We are only toggling the 'Disabled' status. If it's Expired/Scheduled, it should remain so.
+        // A more robust logic might be needed if we want to force re-activation.
+        // For now, we assume we are only disabling active/scheduled coupons.
+        await updateDoc(couponRef, { status: newStatus }); 
         toast({
             title: "Status Updated",
-            description: `Coupon "${coupon.code}" has been ${newStatus.toLowerCase()}.`
+            description: `Coupon "${coupon.code}" has been set to ${newStatus}.`
         });
         fetchCoupons();
     } catch (error) {
@@ -286,7 +289,7 @@ export default function CouponsPage() {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleToggleStatus(coupon)}>
-                            {coupon.status === 'Disabled' ? <ToggleLeft className="mr-2 h-4 w-4" /> : <ToggleRight className="mr-2 h-4 w-4" />}
+                            {coupon.status === 'Disabled' ? <ToggleRight className="mr-2 h-4 w-4" /> : <ToggleLeft className="mr-2 h-4 w-4" />}
                             Change Status
                           </DropdownMenuItem>
                            <DropdownMenuSeparator />

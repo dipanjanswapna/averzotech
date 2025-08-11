@@ -18,12 +18,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Eye, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
@@ -164,8 +165,21 @@ export default function ProductsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                         <DropdownMenuItem asChild>
+                           <Link href={`/admin/products/edit/${product.id}`}>
+                                <Eye className="mr-2 h-4 w-4"/> View Details
+                            </Link>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem asChild>
+                           <Link href={`/admin/products/edit/${product.id}`}>
+                                <Pencil className="mr-2 h-4 w-4"/> Edit
+                            </Link>
+                         </DropdownMenuItem>
+                         <DropdownMenuSeparator />
+                         <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
