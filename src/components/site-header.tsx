@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/logo';
 import { Input } from './ui/input';
 import { MegaMenu } from './mega-menu';
@@ -201,17 +201,19 @@ export function SiteHeader() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] p-0">
                   <nav className="flex h-full flex-col">
-                    <div className="p-6 pb-0">
-                        <Link href="/" className="mb-8 block">
-                          <Logo />
-                        </Link>
+                    <SheetHeader className="p-6 pb-0">
+                        <SheetTitle className="self-start mb-8">
+                            <Link href="/">
+                              <Logo />
+                            </Link>
+                        </SheetTitle>
                         <div className="mb-6">
                           <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input type="search" placeholder="Search..." className="pl-9" />
                           </div>
                         </div>
-                    </div>
+                    </SheetHeader>
                     <ScrollArea className="flex-1 px-6">
                         <div className="flex flex-col space-y-2">
                           {categories.map((category) => (
