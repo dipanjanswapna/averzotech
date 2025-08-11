@@ -184,8 +184,23 @@ export default function ShopPage() {
         );
     };
 
-    const handleMotherCategoryChange = createToggleHandler(setSelectedMotherCategories);
-    const handleGroupChange = createToggleHandler(setSelectedGroups);
+    const handleMotherCategoryChange = (category: string) => {
+        const newSelection = selectedMotherCategories.includes(category) 
+            ? selectedMotherCategories.filter(c => c !== category)
+            : [...selectedMotherCategories, category];
+        setSelectedMotherCategories(newSelection);
+        setSelectedGroups([]);
+        setSelectedSubcategories([]);
+    };
+
+    const handleGroupChange = (group: string) => {
+        const newSelection = selectedGroups.includes(group)
+            ? selectedGroups.filter(g => g !== group)
+            : [...selectedGroups, group];
+        setSelectedGroups(newSelection);
+        setSelectedSubcategories([]);
+    };
+    
     const handleSubcategoryChange = createToggleHandler(setSelectedSubcategories);
     const handleBrandChange = createToggleHandler(setSelectedBrands);
 
@@ -359,17 +374,17 @@ function FilterControls({
 }: FilterControlsProps) {
 
     const motherCategories = Object.keys(filterHierarchy);
-    const availableGroups = selectedMotherCategories.length > 0 
+    const availableGroups = selectedMotherCategories.length > 0
         ? selectedMotherCategories.flatMap(mc => Object.keys(filterHierarchy[mc as keyof FilterHierarchy]))
         : [];
-    const availableSubcategories = selectedGroups.length > 0
-        ? selectedGroups.flatMap(g => 
-            selectedMotherCategories.flatMap(mc => {
-                const groups = filterHierarchy[mc as keyof FilterHierarchy];
-                return groups[g as keyof typeof groups] || [];
-            })
-          )
+    
+    const availableSubcategories = (selectedMotherCategories.length > 0 && selectedGroups.length > 0)
+        ? selectedMotherCategories.flatMap(mc => {
+            const motherCat = filterHierarchy[mc as keyof FilterHierarchy];
+            return selectedGroups.flatMap(g => motherCat[g as keyof typeof motherCat] || []);
+          })
         : [];
+        
     const allBrands = [...new Set(allProducts.map(p => p.brand))];
 
     return (
