@@ -11,6 +11,7 @@ import { Trash2, Heart, Tag, Gift, ChevronLeft } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 const cartItems = [
   {
@@ -62,6 +63,7 @@ const cartItems = [
 
 export default function CartPage() {
   const [items, setItems] = React.useState(cartItems);
+  const { toast } = useToast();
 
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity >= 1) {
@@ -71,10 +73,18 @@ export default function CartPage() {
 
   const handleRemoveItem = (id: string) => {
     setItems(items.filter(item => item.id !== id));
+     toast({
+      title: "Item Removed",
+      description: "The item has been removed from your cart.",
+    });
   };
   
   const handleClearCart = () => {
     setItems([]);
+     toast({
+      title: "Cart Cleared",
+      description: "All items have been removed from your cart.",
+    });
   };
 
   const subTotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
