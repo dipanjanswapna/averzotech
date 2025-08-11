@@ -23,7 +23,7 @@ import { UploadCloud, ChevronLeft, PlusCircle, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +34,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { app, db } from '@/lib/firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const initialFilterCategories = [
     { 
@@ -90,91 +95,234 @@ const initialFilterCategories = [
 ];
 
 export default function NewProductPage() {
-  const [specifications, setSpecifications] = React.useState([{ label: '', value: '' }]);
-  const [colors, setColors] = React.useState([{ name: '', hex: '#000000' }]);
-  const [sizes, setSizes] = React.useState(['']);
-  
-  const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
-  const [selectedCategory, setSelectedCategory] = React.useState('');
-  const [selectedGroup, setSelectedGroup] = React.useState('');
-  
-  const [newGroupName, setNewGroupName] = React.useState('');
-  const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
+    const storage = getStorage(app);
+    const { toast } = useToast();
+    const router = useRouter();
 
+    const [isLoading, setIsLoading] = useState(false);
 
-  const handleAddSpecification = () => setSpecifications([...specifications, { label: '', value: '' }]);
-  const handleRemoveSpecification = (index: number) => setSpecifications(specifications.filter((_, i) => i !== index));
-  const handleSpecificationChange = (index: number, field: 'label' | 'value', value: string) => {
-    const newSpecifications = [...specifications];
-    newSpecifications[index][field] = value;
-    setSpecifications(newSpecifications);
-  };
-  
-  const handleAddColor = () => setColors([...colors, { name: '', hex: '#000000' }]);
-  const handleRemoveColor = (index: number) => setColors(colors.filter((_, i) => i !== index));
-  const handleColorChange = (index: number, field: 'name' | 'hex', value: string) => {
-    const newColors = [...colors];
-    newColors[index][field] = value;
-    setColors(newColors);
-  };
+    // Product Details
+    const [productName, setProductName] = useState('');
+    const [description, setDescription] = useState('');
+    const [brand, setBrand] = useState('');
+    const [vendor, setVendor] = useState('');
+    
+    // Media
+    const [images, setImages] = useState<File[]>([]);
+    const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+    const [videoUrl, setVideoUrl] = useState('');
+    
+    // Variants
+    const [colors, setColors] = useState([{ name: '', hex: '#000000' }]);
+    const [sizes, setSizes] = useState(['']);
 
-  const handleAddSize = () => setSizes([...sizes, '']);
-  const handleRemoveSize = (index: number) => setSizes(sizes.filter((_, i) => i !== index));
-  const handleSizeChange = (index: number, value: string) => {
-    const newSizes = [...sizes];
-    newSizes[index] = value;
-    setSizes(newSizes);
-  };
-  
+    // Specifications
+    const [specifications, setSpecifications] = useState([{ label: '', value: '' }]);
 
-  const handleAddNewGroup = () => {
-    if (newGroupName && selectedCategory) {
-      setFilterCategories(prevCategories => {
-        return prevCategories.map(cat => {
-          if (cat.name === selectedCategory) {
-            if (cat.groups.some(g => g.name.toLowerCase() === newGroupName.toLowerCase())) return cat;
-            return { ...cat, groups: [...cat.groups, { name: newGroupName, subcategories: [] }] };
-          }
-          return cat;
-        });
-      });
-      setSelectedGroup(newGroupName);
-      setNewGroupName('');
-    }
-  };
+    // Offers & Policies
+    const [offers, setOffers] = useState('');
+    const [returnPolicy, setReturnPolicy] = useState('');
 
-  const handleAddNewSubcategory = () => {
-    if (newSubcategoryName && selectedCategory && selectedGroup) {
-      setFilterCategories(prevCategories => {
-        return prevCategories.map(cat => {
-          if (cat.name === selectedCategory) {
-            return {
-              ...cat,
-              groups: cat.groups.map(group => {
-                if (group.name === selectedGroup) {
-                   if (group.subcategories.some(s => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
-                  return { ...group, subcategories: [...group.subcategories, newSubcategoryName] };
-                }
-                return group;
-              })
+    // Organization
+    const [status, setStatus] = useState('draft');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [selectedGroup, setSelectedGroup] = useState('');
+    const [selectedSubcategory, setSelectedSubcategory] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [currentTag, setCurrentTag] = useState('');
+
+    // Pricing & Inventory
+    const [price, setPrice] = useState('');
+    const [comparePrice, setComparePrice] = useState('');
+    const [discount, setDiscount] = useState('');
+    const [tax, setTax] = useState('');
+    const [sku, setSku] = useState('');
+    const [stock, setStock] = useState('');
+    const [availability, setAvailability] = useState('in-stock');
+
+    // Shipping
+    const [deliveryFee, setDeliveryFee] = useState('');
+    const [estimatedDelivery, setEstimatedDelivery] = useState('');
+    
+    // Dynamic Categories
+    const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
+    const [newGroupName, setNewGroupName] = React.useState('');
+    const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        const filesArray = Array.from(e.target.files);
+        setImages(prev => [...prev, ...filesArray]);
+
+        const previewsArray = filesArray.map(file => URL.createObjectURL(file));
+        setImagePreviews(prev => [...prev, ...previewsArray]);
+      }
+    };
+
+    const handleRemoveImage = (index: number) => {
+      setImages(prev => prev.filter((_, i) => i !== index));
+      setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    };
+    
+    const handleAddSpecification = () => setSpecifications([...specifications, { label: '', value: '' }]);
+    const handleRemoveSpecification = (index: number) => setSpecifications(specifications.filter((_, i) => i !== index));
+    const handleSpecificationChange = (index: number, field: 'label' | 'value', value: string) => {
+        const newSpecifications = [...specifications];
+        newSpecifications[index][field] = value;
+        setSpecifications(newSpecifications);
+    };
+
+    const handleAddColor = () => setColors([...colors, { name: '', hex: '#000000' }]);
+    const handleRemoveColor = (index: number) => setColors(colors.filter((_, i) => i !== index));
+    const handleColorChange = (index: number, field: 'name' | 'hex', value: string) => {
+        const newColors = [...colors];
+        newColors[index][field] = value;
+        setColors(newColors);
+    };
+
+    const handleAddSize = () => setSizes([...sizes, '']);
+    const handleRemoveSize = (index: number) => setSizes(sizes.filter((_, i) => i !== index));
+    const handleSizeChange = (index: number, value: string) => {
+        const newSizes = [...sizes];
+        newSizes[index] = value;
+        setSizes(newSizes);
+    };
+
+    const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && currentTag) {
+            e.preventDefault();
+            if (!tags.includes(currentTag.trim())) {
+                setTags([...tags, currentTag.trim()]);
+            }
+            setCurrentTag('');
+        }
+    };
+    const handleRemoveTag = (tagToRemove: string) => {
+        setTags(tags.filter(tag => tag !== tagToRemove));
+    };
+
+    const handleAddNewGroup = () => {
+        if (newGroupName && selectedCategory) {
+          setFilterCategories(prevCategories => {
+            return prevCategories.map(cat => {
+              if (cat.name === selectedCategory) {
+                if (cat.groups.some(g => g.name.toLowerCase() === newGroupName.toLowerCase())) return cat;
+                return { ...cat, groups: [...cat.groups, { name: newGroupName, subcategories: [] }] };
+              }
+              return cat;
+            });
+          });
+          setSelectedGroup(newGroupName);
+          setNewGroupName('');
+        }
+      };
+    
+      const handleAddNewSubcategory = () => {
+        if (newSubcategoryName && selectedCategory && selectedGroup) {
+          setFilterCategories(prevCategories => {
+            return prevCategories.map(cat => {
+              if (cat.name === selectedCategory) {
+                return {
+                  ...cat,
+                  groups: cat.groups.map(group => {
+                    if (group.name === selectedGroup) {
+                       if (group.subcategories.some(s => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
+                      return { ...group, subcategories: [...group.subcategories, newSubcategoryName] };
+                    }
+                    return group;
+                  })
+                };
+              }
+              return cat;
+            });
+          });
+          setNewSubcategoryName('');
+        }
+      };
+
+    const availableGroups = useMemo(() => {
+        if (!selectedCategory) return [];
+        return filterCategories.find(c => c.name === selectedCategory)?.groups || [];
+    }, [selectedCategory, filterCategories]);
+
+    const availableSubcategories = useMemo(() => {
+        if (!selectedGroup) return [];
+        return availableGroups.find(g => g.name === selectedGroup)?.subcategories || [];
+    }, [selectedGroup, availableGroups]);
+
+    const handleSaveProduct = async () => {
+        setIsLoading(true);
+        try {
+            // 1. Upload images to Firebase Storage
+            const imageUrls = await Promise.all(
+                images.map(async (image) => {
+                    const storageRef = ref(storage, `products/${Date.now()}-${image.name}`);
+                    await uploadBytes(storageRef, image);
+                    return await getDownloadURL(storageRef);
+                })
+            );
+
+            // 2. Prepare product data object
+            const productData = {
+                name: productName,
+                description,
+                brand,
+                vendor,
+                images: imageUrls,
+                videoUrl,
+                variants: {
+                    colors: colors.filter(c => c.name),
+                    sizes: sizes.filter(s => s),
+                },
+                specifications: specifications.filter(s => s.label && s.value),
+                offers,
+                returnPolicy,
+                organization: {
+                    status,
+                    category: selectedCategory,
+                    group: selectedGroup,
+                    subcategory: selectedSubcategory,
+                    tags,
+                },
+                pricing: {
+                    price: parseFloat(price) || 0,
+                    comparePrice: parseFloat(comparePrice) || 0,
+                    discount: parseFloat(discount) || 0,
+                    tax: parseFloat(tax) || 0,
+                },
+                inventory: {
+                    sku,
+                    stock: parseInt(stock, 10) || 0,
+                    availability,
+                },
+                shipping: {
+                    deliveryFee: parseFloat(deliveryFee) || 0,
+                    estimatedDelivery,
+                },
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             };
-          }
-          return cat;
-        });
-      });
-      setNewSubcategoryName('');
-    }
-  };
 
-  const availableGroups = React.useMemo(() => {
-    if (!selectedCategory) return [];
-    return filterCategories.find(c => c.name === selectedCategory)?.groups || [];
-  }, [selectedCategory, filterCategories]);
+            // 3. Save product data to Firestore
+            await addDoc(collection(db, 'products'), productData);
 
-  const availableSubcategories = React.useMemo(() => {
-    if (!selectedGroup) return [];
-    return availableGroups.find(g => g.name === selectedGroup)?.subcategories || [];
-  }, [selectedGroup, availableGroups]);
+            toast({
+                title: 'Product Saved!',
+                description: 'Your new product has been successfully added to the store.',
+            });
+            router.push('/admin/products');
+
+        } catch (error: any) {
+            console.error('Error saving product:', error);
+            toast({
+                title: 'Error Saving Product',
+                description: error.message,
+                variant: 'destructive',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
 
   return (
@@ -198,19 +346,19 @@ export default function NewProductPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="product-name">Product Name</Label>
-                <Input id="product-name" placeholder="e.g. Stylish T-Shirt"/>
+                <Input id="product-name" placeholder="e.g. Stylish T-Shirt" value={productName} onChange={e => setProductName(e.target.value)} disabled={isLoading} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-description">Description</Label>
-                <Textarea id="product-description" placeholder="Provide a detailed description of the product..."/>
+                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-brand">Brand</Label>
-                <Input id="product-brand" placeholder="e.g. Averzo" />
+                <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
-                <Input id="product-vendor" placeholder="e.g. RetailNet" />
+                <Input id="product-vendor" placeholder="e.g. RetailNet" value={vendor} onChange={e => setVendor(e.target.value)} disabled={isLoading} />
               </div>
             </CardContent>
           </Card>
@@ -223,25 +371,30 @@ export default function NewProductPage() {
             <CardContent>
               <div className="space-y-2 mb-4">
                 <Label>Product Images</Label>
-                <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center">
-                  <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    Drag and drop your images here, or{' '}
-                    <span className="font-semibold text-primary">click to browse</span>
-                  </p>
+                 <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center">
+                    <input type="file" id="image-upload" multiple onChange={handleImageChange} className="hidden" disabled={isLoading}/>
+                    <Label htmlFor="image-upload" className="cursor-pointer">
+                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <p className="mt-4 text-sm text-muted-foreground">
+                        Drag and drop your images here, or{' '}
+                        <span className="font-semibold text-primary">click to browse</span>
+                        </p>
+                    </Label>
                 </div>
                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    <div className="relative group">
-                        <Image src="https://placehold.co/150x150.png" alt="Product Image" width={150} height={150} className="rounded-md aspect-square object-cover" data-ai-hint="fashion product" />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                           <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full"><Trash2 className="w-4 h-4"/></Button>
-                        </div>
-                    </div>
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                          <Image src={preview} alt={`Product Image ${index + 1}`} width={150} height={150} className="rounded-md aspect-square object-cover" />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                             <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(index)} disabled={isLoading}><Trash2 className="w-4 h-4"/></Button>
+                          </div>
+                      </div>
+                    ))}
                 </div>
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-video">YouTube Video URL</Label>
-                <Input id="product-video" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ"/>
+                <Input id="product-video" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ" value={videoUrl} onChange={e => setVideoUrl(e.target.value)} disabled={isLoading} />
               </div>
             </CardContent>
           </Card>
@@ -259,22 +412,22 @@ export default function NewProductPage() {
                             <div key={index} className="flex items-end gap-4">
                                 <div className="flex-1 space-y-2">
                                     <Label htmlFor={`color-name-${index}`} className="text-xs">Color Name</Label>
-                                    <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} />
+                                    <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} disabled={isLoading} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor={`color-hex-${index}`} className="text-xs">Hex</Label>
                                     <div className="flex items-center gap-2">
-                                        <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} />
-                                        <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" />
+                                        <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} disabled={isLoading} />
+                                        <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" disabled={isLoading} />
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)}>
+                                <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)} disabled={isLoading}>
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </div>
                         ))}
                     </div>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor}>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor} disabled={isLoading}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Color
                     </Button>
                 </div>
@@ -285,15 +438,15 @@ export default function NewProductPage() {
                             <div key={index} className="flex items-end gap-4">
                                 <div className="flex-1 space-y-2">
                                     <Label htmlFor={`size-value-${index}`} className="text-xs">Size</Label>
-                                    <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} />
+                                    <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} disabled={isLoading}/>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)}>
+                                <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)} disabled={isLoading}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </div>
                         ))}
                     </div>
-                     <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize}>
+                     <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize} disabled={isLoading}>
                         <PlusCircle className="mr-2 h-4 w-4" /> Add Size
                     </Button>
                 </div>
@@ -312,19 +465,19 @@ export default function NewProductPage() {
                           <div key={index} className="flex items-end gap-4">
                               <div className="flex-1 space-y-2">
                                   <Label htmlFor={`spec-label-${index}`}>Label</Label>
-                                  <Input id={`spec-label-${index}`} placeholder="e.g. Fabric" value={spec.label} onChange={(e) => handleSpecificationChange(index, 'label', e.target.value)} />
+                                  <Input id={`spec-label-${index}`} placeholder="e.g. Fabric" value={spec.label} onChange={(e) => handleSpecificationChange(index, 'label', e.target.value)} disabled={isLoading}/>
                               </div>
                               <div className="flex-1 space-y-2">
                                   <Label htmlFor={`spec-value-${index}`}>Value</Label>
-                                  <Input id={`spec-value-${index}`} placeholder="e.g. Polyester" value={spec.value} onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)} />
+                                  <Input id={`spec-value-${index}`} placeholder="e.g. Polyester" value={spec.value} onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)} disabled={isLoading}/>
                               </div>
-                              <Button variant="ghost" size="icon" onClick={() => handleRemoveSpecification(index)}>
+                              <Button variant="ghost" size="icon" onClick={() => handleRemoveSpecification(index)} disabled={isLoading}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
                           </div>
                       ))}
                   </div>
-                  <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSpecification}>
+                  <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSpecification} disabled={isLoading}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Specification
                   </Button>
               </CardContent>
@@ -337,11 +490,11 @@ export default function NewProductPage() {
               <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="product-offers">Best Offers</Label>
-                    <Textarea id="product-offers" placeholder="Enter each offer on a new line... e.g. 10% off on HDFC Bank cards" />
+                    <Textarea id="product-offers" placeholder="Enter each offer on a new line... e.g. 10% off on HDFC Bank cards" value={offers} onChange={e => setOffers(e.target.value)} disabled={isLoading}/>
                   </div>
                    <div className="space-y-2">
                     <Label htmlFor="product-return-policy">Return Policy</Label>
-                    <Textarea id="product-return-policy" placeholder="e.g. Easy 7 days returns and exchanges." />
+                    <Textarea id="product-return-policy" placeholder="e.g. Easy 7 days returns and exchanges." value={returnPolicy} onChange={e => setReturnPolicy(e.target.value)} disabled={isLoading}/>
                   </div>
               </CardContent>
           </Card>
@@ -355,7 +508,7 @@ export default function NewProductPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="product-status">Status</Label>
-                    <Select defaultValue="draft">
+                    <Select defaultValue="draft" onValueChange={setStatus} value={status} disabled={isLoading}>
                       <SelectTrigger id="product-status"><SelectValue placeholder="Select status" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
@@ -366,7 +519,7 @@ export default function NewProductPage() {
                   </div>
                    <div className="space-y-2">
                     <Label>Category</Label>
-                    <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); }}>
+                    <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); setSelectedSubcategory(''); }} value={selectedCategory} disabled={isLoading}>
                       <SelectTrigger><SelectValue placeholder="Select mother category" /></SelectTrigger>
                       <SelectContent>
                         {filterCategories.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
@@ -379,7 +532,7 @@ export default function NewProductPage() {
                             <Label>Group</Label>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" disabled={!selectedCategory}>
+                                <Button variant="ghost" size="sm" disabled={!selectedCategory || isLoading}>
                                     <PlusCircle className="h-4 w-4 mr-1" /> Add New
                                 </Button>
                               </AlertDialogTrigger>
@@ -396,7 +549,7 @@ export default function NewProductPage() {
                               </AlertDialogContent>
                             </AlertDialog>
                         </div>
-                      <Select onValueChange={setSelectedGroup} value={selectedGroup}>
+                      <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
                           {availableGroups.map(g => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
@@ -410,7 +563,7 @@ export default function NewProductPage() {
                             <Label>Sub-category</Label>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                 <Button variant="ghost" size="sm" disabled={!selectedGroup}>
+                                 <Button variant="ghost" size="sm" disabled={!selectedGroup || isLoading}>
                                     <PlusCircle className="h-4 w-4 mr-1" /> Add New
                                 </Button>
                               </AlertDialogTrigger>
@@ -427,7 +580,7 @@ export default function NewProductPage() {
                               </AlertDialogContent>
                             </AlertDialog>
                         </div>
-                      <Select>
+                      <Select onValueChange={setSelectedSubcategory} value={selectedSubcategory} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select sub-category" /></SelectTrigger>
                         <SelectContent>
                           {availableSubcategories.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
@@ -437,10 +590,21 @@ export default function NewProductPage() {
                   )}
                   <div className="space-y-2">
                       <Label htmlFor="product-tags">Tags</Label>
-                      <Input id="product-tags" placeholder="e.g. summer, cotton, casual" />
+                      <Input 
+                        id="product-tags" 
+                        placeholder="e.g. summer, cotton, casual (press Enter)"
+                        value={currentTag}
+                        onChange={e => setCurrentTag(e.target.value)}
+                        onKeyDown={handleTagKeyDown}
+                        disabled={isLoading}
+                      />
                       <div className="flex flex-wrap gap-2 pt-2">
-                          <Badge variant="secondary">summer <button className='ml-1 text-xs'>&times;</button></Badge>
-                          <Badge variant="secondary">cotton <button className='ml-1 text-xs'>&times;</button></Badge>
+                          {tags.map(tag => (
+                            <Badge key={tag} variant="secondary">
+                                {tag} 
+                                <button className='ml-1 text-xs' onClick={() => handleRemoveTag(tag)}>&times;</button>
+                            </Badge>
+                          ))}
                       </div>
                   </div>
                 </CardContent>
@@ -450,31 +614,31 @@ export default function NewProductPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="product-price">Price (৳)</Label>
-                        <Input id="product-price" type="number" placeholder="1299" />
+                        <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-compare-price">Compare-at Price (MRP ৳)</Label>
-                        <Input id="product-compare-price" type="number" placeholder="1999"/>
+                        <Input id="product-compare-price" type="number" placeholder="1999" value={comparePrice} onChange={e => setComparePrice(e.target.value)} disabled={isLoading}/>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="product-discount">Discount (%)</Label>
-                        <Input id="product-discount" type="number" placeholder="10" />
+                        <Input id="product-discount" type="number" placeholder="10" value={discount} onChange={e => setDiscount(e.target.value)} disabled={isLoading}/>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="product-tax">Taxes (%)</Label>
-                        <Input id="product-tax" type="number" placeholder="5" />
+                        <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-sku">SKU</Label>
-                        <Input id="product-sku" placeholder="TSHIRT-BLK-L" />
+                        <Input id="product-sku" placeholder="TSHIRT-BLK-L" value={sku} onChange={e => setSku(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-stock">Stock Quantity</Label>
-                        <Input id="product-stock" type="number" placeholder="100" />
+                        <Input id="product-stock" type="number" placeholder="100" value={stock} onChange={e => setStock(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-availability">Availability</Label>
-                        <Select defaultValue="in-stock">
+                        <Select defaultValue="in-stock" onValueChange={setAvailability} value={availability} disabled={isLoading}>
                             <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="in-stock">In Stock</SelectItem>
@@ -490,25 +654,23 @@ export default function NewProductPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="delivery-fee">Delivery Fee (৳)</Label>
-                        <Input id="delivery-fee" type="number" placeholder="60" />
+                        <Input id="delivery-fee" type="number" placeholder="60" value={deliveryFee} onChange={e => setDeliveryFee(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
-                        <Input id="estimated-delivery" placeholder="e.g. 2-3 days" />
+                        <Input id="estimated-delivery" placeholder="e.g. 2-3 days" value={estimatedDelivery} onChange={e => setEstimatedDelivery(e.target.value)} disabled={isLoading}/>
                     </div>
                 </CardContent>
             </Card>
 
            <div className="flex justify-end gap-2">
-                <Button variant="outline">Discard</Button>
-                <Button>Save Product</Button>
+                <Button variant="outline" disabled={isLoading}>Discard</Button>
+                <Button onClick={handleSaveProduct} disabled={isLoading}>
+                    {isLoading ? 'Saving...' : 'Save Product'}
+                </Button>
             </div>
         </div>
       </div>
     </div>
   );
 }
-
-    
-
-    
