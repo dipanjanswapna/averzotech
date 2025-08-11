@@ -1,4 +1,6 @@
 
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/site-header';
@@ -11,7 +13,9 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Button } from '@/components/ui/button';
-import { Heart } from 'lucide-react';
+import { Heart, Clock } from 'lucide-react';
+import React from 'react';
+import { Progress } from '@/components/ui/progress';
 
 export default function Home() {
   const heroImages = [
@@ -111,6 +115,83 @@ export default function Home() {
     },
   ];
 
+  const flashSaleItems = [
+    {
+      id: 'fs-1',
+      brand: 'Fastrack',
+      name: 'Analog Watch',
+      price: 1250,
+      originalPrice: 2500,
+      discount: '50% OFF',
+      src: 'https://placehold.co/400x500.png',
+      dataAiHint: 'analog watch',
+      stock: 100,
+      sold: 67,
+    },
+    {
+      id: 'fs-2',
+      brand: 'Boat',
+      name: 'Wireless Earbuds',
+      price: 1500,
+      originalPrice: 3000,
+      discount: '50% OFF',
+      src: 'https://placehold.co/400x500.png',
+      dataAiHint: 'wireless earbuds',
+      stock: 50,
+      sold: 15,
+    },
+    {
+      id: 'fs-3',
+      brand: 'Wildcraft',
+      name: 'Travel Backpack',
+      price: 999,
+      originalPrice: 1999,
+      discount: '50% OFF',
+      src: 'https://placehold.co/400x500.png',
+      dataAiHint: 'travel backpack',
+      stock: 75,
+      sold: 50,
+    },
+    {
+      id: 'fs-4',
+      brand: 'Ray-Ban',
+      name: 'Classic Aviators',
+      price: 4500,
+      originalPrice: 9000,
+      discount: '50% OFF',
+      src: 'https://placehold.co/400x500.png',
+      dataAiHint: 'aviator sunglasses',
+      stock: 30,
+      sold: 28,
+    },
+     {
+      id: 'fs-5',
+      brand: 'Gucci',
+      name: 'Leather Belt',
+      price: 8000,
+      originalPrice: 16000,
+      discount: '50% OFF',
+      src: 'https://placehold.co/400x500.png',
+      dataAiHint: 'leather belt',
+      stock: 20,
+      sold: 5,
+    },
+    {
+      id: 'fs-6',
+      brand: 'Samsung',
+      name: 'Galaxy Watch 5',
+      price: 15000,
+      originalPrice: 30000,
+      discount: '50% OFF',
+      src: 'https://placehold.co/400x500.png',
+      dataAiHint: 'smartwatch android',
+      stock: 40,
+      sold: 10,
+    },
+  ];
+
+  // Set flash sale end time to 24 hours from now
+  const flashSaleEndTime = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -143,6 +224,71 @@ export default function Home() {
             <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
           </Carousel>
         </section>
+
+        <section className="bg-primary/5 py-8 md:py-16">
+            <div className="container">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-6 md:mb-8 gap-4">
+                    <div className='text-center md:text-left'>
+                        <h2 className="font-headline text-xl font-bold uppercase tracking-wider md:text-3xl text-foreground">
+                            Flash Sale!
+                        </h2>
+                        <p className="text-muted-foreground">Hurry, these deals won't last long!</p>
+                    </div>
+                    <FlashSaleTimer endTime={flashSaleEndTime} />
+                </div>
+                 <Carousel
+                    opts={{
+                        align: "start",
+                    }}
+                    className="w-full"
+                    >
+                    <CarouselContent>
+                    {flashSaleItems.map((deal, index) => (
+                        <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5">
+                            <Link href={`/product/${deal.id}`} className="group block">
+                                <div className="relative overflow-hidden rounded-lg">
+                                    <Image
+                                        src={deal.src}
+                                        alt={deal.name}
+                                        width={400}
+                                        height={500}
+                                        className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                        data-ai-hint={deal.dataAiHint}
+                                    />
+                                    <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <Button variant="secondary" size="sm" className="w-full text-xs">
+                                        Add to Cart
+                                    </Button>
+                                    </div>
+                                </div>
+                                <div className="pt-2">
+                                    <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
+                                    <p className="text-sm font-semibold mt-1 text-foreground">
+                                        ৳{deal.price}{' '}
+                                        <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
+                                        <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
+                                    </p>
+                                    <div className='mt-2'>
+                                        <Progress value={(deal.sold / deal.stock) * 100} className="h-2" />
+                                        <p className="text-xs text-muted-foreground mt-1">{deal.sold} of {deal.stock} sold</p>
+                                    </div>
+                                </div>
+                            </Link>
+                         </CarouselItem>
+                    ))}
+                    </CarouselContent>
+                     <CarouselPrevious className="hidden md:flex" />
+                    <CarouselNext className="hidden md:flex" />
+                </Carousel>
+                 <div className="text-center mt-8">
+                    <Button asChild size="lg">
+                        <Link href="/flash-sale">View All Deals</Link>
+                    </Button>
+                </div>
+            </div>
+        </section>
+
 
         <section className="py-8 md:py-16">
           <div className="container">
@@ -247,3 +393,55 @@ export default function Home() {
     </div>
   );
 }
+
+
+function FlashSaleTimer({ endTime }: { endTime: Date }) {
+    const [timeLeft, setTimeLeft] = React.useState({ hours: 0, minutes: 0, seconds: 0 });
+
+    React.useEffect(() => {
+        const calculateTimeLeft = () => {
+            const difference = +endTime - +new Date();
+            let timeLeft = { hours: 0, minutes: 0, seconds: 0 };
+
+            if (difference > 0) {
+                timeLeft = {
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60)
+                };
+            }
+            return timeLeft;
+        }
+
+        const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [endTime]);
+
+    const formatTime = (time: number) => time.toString().padStart(2, '0');
+
+    return (
+        <div className="flex items-center gap-2 text-center">
+            <Clock className="w-8 h-8 text-primary" />
+            <div>
+                 <p className="text-xs text-muted-foreground uppercase">Ending in</p>
+                 <div className="flex items-center gap-2 font-mono text-xl md:text-2xl font-bold text-foreground">
+                    <div className="flex flex-col items-center">
+                        <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.hours)}</span>
+                    </div>
+                    <span>:</span>
+                    <div className="flex flex-col items-center">
+                         <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.minutes)}</span>
+                    </div>
+                    <span>:</span>
+                     <div className="flex flex-col items-center">
+                         <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.seconds)}</span>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    );
+}
+
