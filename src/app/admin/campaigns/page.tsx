@@ -27,8 +27,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 interface Campaign {
   id: string;
@@ -37,18 +38,21 @@ interface Campaign {
   status: 'Active' | 'Finished' | 'Scheduled';
   startDate: string;
   endDate: string;
+  products: string[];
 }
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchCampaigns = async () => {
       setLoading(true);
       try {
         const campaignsCollection = collection(db, 'campaigns');
-        const campaignSnapshot = await getDocs(campaignsCollection);
+        const q = query(campaignsCollection, orderBy('createdAt', 'desc'));
+        const campaignSnapshot = await getDocs(q);
         const campaignList = campaignSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -56,13 +60,38 @@ export default function CampaignsPage() {
         setCampaigns(campaignList);
       } catch (error) {
         console.error("Error fetching campaigns: ", error);
+        toast({ title: "Error", description: "Could not fetch campaigns from the database.", variant: "destructive" });
       } finally {
         setLoading(false);
       }
     };
 
     fetchCampaigns();
-  }, []);
+  }, [toast]);
+
+  const getStatusBadgeVariant = (status: Campaign['status']) => {
+    switch (status) {
+        case 'Active':
+            return 'default';
+        case 'Scheduled':
+            return 'secondary';
+        case 'Finished':
+            return 'destructive';
+        default:
+            return 'outline';
+    }
+  };
+
+  const getStatusBadgeClass = (status: Campaign['status']) => {
+      switch (status) {
+          case 'Active':
+              return 'bg-green-100 text-green-800';
+          case 'Scheduled':
+              return 'bg-yellow-100 text-yellow-800';
+          default:
+              return '';
+      }
+  };
 
   return (
     <div className="space-y-8">
@@ -96,6 +125,7 @@ export default function CampaignsPage() {
                 <TableRow>
                   <TableHead>Campaign Name</TableHead>
                   <TableHead>Type</TableHead>
+                  <TableHead>Products</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Start Date</TableHead>
                   <TableHead>End Date</TableHead>
@@ -112,18 +142,18 @@ export default function CampaignsPage() {
                        <Badge variant="outline">{campaign.type}</Badge>
                     </TableCell>
                     <TableCell>
+                        {campaign.products?.length || 0} product(s)
+                    </TableCell>
+                    <TableCell>
                       <Badge
-                        variant={
-                          campaign.status === 'Active' ? 'default' :
-                          campaign.status === 'Scheduled' ? 'secondary' : 'destructive'
-                        }
-                        className={campaign.status === 'Active' ? 'bg-green-100 text-green-800' : ''}
+                        variant={getStatusBadgeVariant(campaign.status)}
+                        className={getStatusBadgeClass(campaign.status)}
                       >
                         {campaign.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{campaign.startDate}</TableCell>
-                    <TableCell>{campaign.endDate}</TableCell>
+                    <TableCell>{new Date(campaign.startDate).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(campaign.endDate).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -139,6 +169,7 @@ export default function CampaignsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>View Details</DropdownMenuItem>
                           <DropdownMenuItem>Edit</DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
