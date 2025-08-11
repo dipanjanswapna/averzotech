@@ -39,13 +39,13 @@ export function SiteFooter() {
                 <ul className="space-y-2">
                     <li><Link href="/contact-us" className="text-sm text-muted-foreground hover:text-primary">Contact Us</Link></li>
                     <li><Link href="/faq" className="text-sm text-muted-foreground hover:text-primary">FAQ</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">T&amp;C</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Terms Of Use</Link></li>
+                    <li><Link href="/terms-and-conditions" className="text-sm text-muted-foreground hover:text-primary">T&amp;C</Link></li>
+                    <li><Link href="/terms-and-conditions" className="text-sm text-muted-foreground hover:text-primary">Terms Of Use</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Track Orders</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Shipping</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Cancellation</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Returns</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Privacy policy</Link></li>
+                    <li><Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary">Privacy policy</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Grievance Redressal</Link></li>
                 </ul>
             </div>
