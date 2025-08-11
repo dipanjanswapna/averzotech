@@ -18,17 +18,29 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Copy } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Copy, Trash2, ToggleRight, ToggleLeft } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface Coupon {
@@ -36,7 +48,7 @@ interface Coupon {
   code: string;
   type: string;
   value: number;
-  status: 'Active' | 'Expired' | 'Scheduled';
+  status: 'Active' | 'Expired' | 'Scheduled' | 'Disabled';
   used: number;
   limit: number | null;
   startDate: string;
@@ -52,41 +64,54 @@ export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCoupons = async () => {
-      setLoading(true);
-      try {
-        const couponsCollection = collection(db, 'coupons');
-        const q = query(couponsCollection, orderBy('createdAt', 'desc'));
-        const couponSnapshot = await getDocs(q);
-        const couponList = couponSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            code: data.code,
-            type: data.type,
-            value: data.value,
-            used: data.used,
-            limit: data.limit,
-            startDate: data.startDate,
-            endDate: data.endDate,
-            applicability: data.applicability,
-            status: new Date() < new Date(data.startDate) ? 'Scheduled' : new Date() > new Date(data.endDate) ? 'Expired' : 'Active'
-          } as Coupon
-        });
-        setCoupons(couponList);
-      } catch (error) {
-        console.error("Error fetching coupons: ", error);
-        toast({
-            title: "Error fetching coupons",
-            description: "Could not retrieve coupon data from the database.",
-            variant: "destructive"
-        })
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCoupons = async () => {
+    setLoading(true);
+    try {
+      const couponsCollection = collection(db, 'coupons');
+      const q = query(couponsCollection, orderBy('createdAt', 'desc'));
+      const couponSnapshot = await getDocs(q);
+      const couponList = couponSnapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        let status: Coupon['status'] = 'Disabled';
+        if (data.status === 'Disabled') {
+            status = 'Disabled';
+        } else if (new Date() < new Date(data.startDate)) {
+            status = 'Scheduled';
+        } else if (new Date() > new Date(data.endDate)) {
+            status = 'Expired';
+        } else {
+            status = 'Active';
+        }
 
+        return {
+          id: doc.id,
+          code: data.code,
+          type: data.type,
+          value: data.value,
+          used: data.used,
+          limit: data.limit,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          applicability: data.applicability,
+          status: status,
+        } as Coupon
+      });
+      setCoupons(couponList);
+    } catch (error) {
+      console.error("Error fetching coupons: ", error);
+      toast({
+          title: "Error fetching coupons",
+          description: "Could not retrieve coupon data from the database.",
+          variant: "destructive"
+      })
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
     fetchCoupons();
   }, [toast]);
 
@@ -98,23 +123,64 @@ export default function CouponsPage() {
     });
   };
   
-  const getStatusBadgeVariant = (status: string) => {
+  const handleDeleteCoupon = async (couponId: string) => {
+    try {
+        await deleteDoc(doc(db, "coupons", couponId));
+        toast({
+            title: "Coupon Deleted",
+            description: "The coupon has been successfully deleted.",
+        });
+        fetchCoupons(); // Re-fetch coupons to update the list
+    } catch (error) {
+        console.error("Error deleting coupon: ", error);
+        toast({
+            title: "Error Deleting Coupon",
+            description: "There was a problem deleting the coupon.",
+            variant: "destructive"
+        })
+    }
+  }
+
+  const handleToggleStatus = async (coupon: Coupon) => {
+    const newStatus = coupon.status === 'Disabled' ? 'Active' : 'Disabled';
+    const couponRef = doc(db, 'coupons', coupon.id);
+    try {
+        await updateDoc(couponRef, { status: newStatus });
+        toast({
+            title: "Status Updated",
+            description: `Coupon "${coupon.code}" has been ${newStatus.toLowerCase()}.`
+        });
+        fetchCoupons();
+    } catch (error) {
+        console.error("Error updating status: ", error);
+        toast({
+            title: "Error",
+            description: "Failed to update coupon status.",
+            variant: "destructive"
+        })
+    }
+  }
+  
+  const getStatusBadgeVariant = (status: Coupon['status']) => {
         switch (status) {
             case 'Active':
                 return 'default';
             case 'Scheduled':
                 return 'secondary';
             case 'Expired':
+            case 'Disabled':
                 return 'destructive';
             default:
                 return 'outline';
         }
     };
 
-    const getStatusBadgeClass = (status: string) => {
+    const getStatusBadgeClass = (status: Coupon['status']) => {
         switch (status) {
             case 'Active':
                 return 'bg-green-100 text-green-800';
+            case 'Disabled':
+                return 'bg-gray-100 text-gray-800 border-gray-300';
             default:
                 return '';
         }
@@ -211,7 +277,33 @@ export default function CouponsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>View Details</DropdownMenuItem>
                           <DropdownMenuItem>Edit</DropdownMenuItem>
-                           <DropdownMenuItem className="text-red-600">Disable</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleStatus(coupon)}>
+                            {coupon.status === 'Disabled' ? <ToggleLeft className="mr-2 h-4 w-4" /> : <ToggleRight className="mr-2 h-4 w-4" />}
+                            Change Status
+                          </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          This action cannot be undone. This will permanently delete the coupon
+                                          <span className="font-bold"> {coupon.code}</span>.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteCoupon(coupon.id)} className="bg-destructive hover:bg-destructive/90">
+                                          Continue
+                                      </AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -225,3 +317,4 @@ export default function CouponsPage() {
     </div>
   );
 }
+
