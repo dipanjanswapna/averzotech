@@ -215,7 +215,7 @@ export function SiteHeader() {
                         </div>
                     </SheetHeader>
                     <ScrollArea className="flex-1 px-6">
-                        <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-2 py-4">
                           {categories.map((category) => (
                              <MegaMenu key={category.name} category={category} isMobile={true} />
                           ))}
