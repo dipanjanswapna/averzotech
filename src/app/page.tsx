@@ -26,8 +26,53 @@ interface HeroImage {
   dataAiHint: string;
 }
 
+interface Brand {
+    url: string;
+    alt: string;
+    dataAiHint: string;
+}
+
+interface Deal {
+    id: string;
+    brand: string;
+    name: string;
+    price: number;
+    originalPrice?: number;
+    discount?: string;
+    image: string;
+    dataAiHint?: string;
+}
+
+interface CategoryCard {
+    url: string;
+    name: string;
+    discount: string;
+    link: string;
+    dataAiHint: string;
+}
+
+interface FlashSaleItem {
+    id: string;
+    brand: string;
+    name: string;
+    price: number;
+    originalPrice: number;
+    discount: string;
+    src: string;
+    dataAiHint: string;
+    stock: number;
+    sold: number;
+}
+
+interface HomepageContent {
+  heroImages: HeroImage[];
+  brands: Brand[];
+  deals: Deal[];
+  categories: CategoryCard[];
+}
+
 export default function Home() {
-  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
+  const [content, setContent] = useState<Partial<HomepageContent>>({});
   const [loading, setLoading] = useState(true);
 
    useEffect(() => {
@@ -36,111 +81,54 @@ export default function Home() {
       const docRef = doc(db, 'site_content', 'homepage');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setHeroImages(docSnap.data().heroImages || []);
+        const data = docSnap.data();
+        // Fetch full product details for deals
+        const dealPromises = (data.deals || []).map(async (deal: any) => {
+            const productRef = doc(db, 'products', deal.id);
+            const productSnap = await getDoc(productRef);
+            if (productSnap.exists()) {
+                const productData = productSnap.data();
+                return {
+                    id: productSnap.id,
+                    name: productData.name,
+                    brand: productData.brand,
+                    price: productData.pricing.price,
+                    originalPrice: productData.pricing.comparePrice,
+                    discount: `${productData.pricing.discount}% OFF`,
+                    image: productData.images[0],
+                    dataAiHint: productData.name.toLowerCase(),
+                };
+            }
+            return null;
+        });
+
+        const resolvedDeals = (await Promise.all(dealPromises)).filter(Boolean) as Deal[];
+        
+        setContent({
+            heroImages: data.heroImages || [],
+            brands: data.brands || [],
+            deals: resolvedDeals,
+            categories: data.categories || [],
+        });
+
       } else {
         // Fallback to default images if nothing is set in Firestore
-        setHeroImages([
-          { url: 'https://placehold.co/800x450.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
-          { url: 'https://placehold.co/800x450.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
-        ]);
+        setContent({
+            heroImages: [
+                { url: 'https://placehold.co/1200x600.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
+                { url: 'https://placehold.co/1200x600.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
+            ],
+            brands: Array(10).fill({ url: 'https://placehold.co/200x200.png', alt: 'Brand logo', dataAiHint: 'brand logo' }),
+            deals: [],
+            categories: Array(6).fill({ url: 'https://placehold.co/400x500.png', name: 'Category', discount: 'Up to 50% Off', link: '#', dataAiHint: 'fashion category' }),
+        });
       }
       setLoading(false);
     };
     fetchHomepageContent();
   }, []);
 
-  const brands = [
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 1', dataAiHint: 'fashion logo' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 2', dataAiHint: 'clothing brand' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 3', dataAiHint: 'luxury logo' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 4', dataAiHint: 'shoe brand' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 5', dataAiHint: 'watch brand' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 6', dataAiHint: 'cosmetics logo' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 7', dataAiHint: 'sports brand' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 8', dataAiHint: 'eyewear logo' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 9', dataAiHint: 'handbag brand' },
-    { src: 'https://placehold.co/200x200.png', alt: 'Brand 10', dataAiHint: 'jewelry logo' },
-  ];
-
-  const categories = [
-    { name: 'T-Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing t-shirt', discount: '40-80% OFF' },
-    { name: 'Sports Shoes', src: 'https://placehold.co/400x500.png', dataAiHint: 'stylish shoes', discount: '40-80% OFF' },
-    { name: 'Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing shirt', discount: '40-80% OFF' },
-    { name: 'Jeans', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman wearing jeans', discount: '40-80% OFF' },
-    { name: 'Kurtas & Sets', src: 'https://placehold.co/400x500.png', dataAiHint: 'ethnic wear', discount: '50-80% OFF' },
-    { name: 'Trousers', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing trousers', discount: '40-80% OFF' },
-  ];
-
-  const deals = [
-    {
-      id: '89073456',
-      brand: 'Tokyo Talkies',
-      name: 'Women Cropped Shirt',
-      size: 'S',
-      price: '750',
-      originalPrice: '1500',
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'woman white shirt'
-    },
-    {
-      id: '12345678',
-      brand: 'H&M',
-      name: 'Slim Fit Jeans',
-      size: '32',
-      price: '1800',
-      originalPrice: '3600',
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'blue jeans'
-    },
-    {
-      id: '23456789',
-      brand: 'Zara',
-      name: 'Floral Print Dress',
-      size: 'M',
-      price: '3000',
-      originalPrice: '6000',
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'summer dress'
-    },
-    {
-      id: '34567890',
-      brand: 'Nike',
-      name: 'Air Max Sneakers',
-      size: '9',
-      price: '8295',
-      originalPrice: '10295',
-      discount: '20% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'running shoes'
-    },
-    {
-      id: '45678901',
-      brand: 'Levis',
-      name: '511 Slim Fit Jeans',
-      size: '34',
-      price: '2500',
-      originalPrice: '4000',
-      discount: '37.5% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'dark jeans'
-    },
-    {
-      id: '56789012',
-      brand: 'Puma',
-      name: 'Running Shoes',
-      size: '10',
-      price: '2499',
-      originalPrice: '4999',
-      discount: '50% OFF',
-      src: 'https://placehold.co/400x500.png',
-      dataAiHint: 'athletic shoes'
-    },
-  ];
-
-  const flashSaleItems = [
+  const flashSaleItems: FlashSaleItem[] = [
     {
       id: 'fs-1',
       brand: 'Fastrack',
@@ -233,7 +221,7 @@ export default function Home() {
               }}
             >
               <CarouselContent>
-                {heroImages.map((image, index) => (
+                {(content.heroImages || []).map((image, index) => (
                   <CarouselItem key={index}>
                     <div className="relative h-[40vh] md:h-[calc(100vh-80px)]">
                       <Image
@@ -324,32 +312,36 @@ export default function Home() {
             <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
               Medal-Worthy Brands To Bag
             </h2>
-            <Carousel
-              opts={{
-                align: "start",
-                dragFree: true,
-              }}
-              className="w-full"
-            >
-              <CarouselContent>
-                {brands.map((brand, index) => (
-                  <CarouselItem key={index} className="basis-1/3 sm:basis-1/4 md:basis-1/6 lg:basis-1/8">
-                    <Link href="#" className="block">
-                      <Image
-                        src={brand.src}
-                        alt={brand.alt}
-                        width={200}
-                        height={200}
-                        className="aspect-square h-auto w-full rounded-full object-cover"
-                        data-ai-hint={brand.dataAiHint}
-                      />
-                    </Link>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex" />
-              <CarouselNext className="hidden md:flex" />
-            </Carousel>
+            {loading ? (
+                <div className="flex justify-center gap-4"><Skeleton className="w-32 h-32 rounded-full" /><Skeleton className="w-32 h-32 rounded-full" /><Skeleton className="w-32 h-32 rounded-full" /></div>
+            ) : (
+                <Carousel
+                  opts={{
+                    align: "start",
+                    dragFree: true,
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {(content.brands || []).map((brand, index) => (
+                      <CarouselItem key={index} className="basis-1/3 sm:basis-1/4 md:basis-1/6 lg:basis-1/8">
+                        <Link href="#" className="block">
+                          <Image
+                            src={brand.url}
+                            alt={brand.alt}
+                            width={200}
+                            height={200}
+                            className="aspect-square h-auto w-full rounded-full object-cover"
+                            data-ai-hint={brand.dataAiHint}
+                          />
+                        </Link>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="hidden md:flex" />
+                  <CarouselNext className="hidden md:flex" />
+                </Carousel>
+            )}
           </div>
         </section>
 
@@ -358,36 +350,43 @@ export default function Home() {
                 <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
                     Deals Of The Day
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
-                    {deals.map((deal, index) => (
-                        <Link href={`/product/${deal.id}`} key={index} className="group block">
-                            <div className="relative overflow-hidden rounded-lg">
-                                <Image
-                                    src={deal.src}
-                                    alt={deal.name}
-                                    width={400}
-                                    height={500}
-                                    className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={deal.dataAiHint}
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                   <Button variant="outline" size="sm" className="w-full bg-white hover:bg-gray-200 border-gray-300 text-xs text-black">
-                                      <Heart className="mr-1 h-3 w-3" /> Wishlist
-                                   </Button>
+                {loading ? (
+                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
+                        {Array(6).fill(0).map((_, i) => <Skeleton key={i} className="w-full aspect-[4/5]" />)}
+                     </div>
+                ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
+                        {(content.deals || []).map((deal, index) => (
+                            <Link href={`/product/${deal.id}`} key={index} className="group block">
+                                <div className="relative overflow-hidden rounded-lg">
+                                    <Image
+                                        src={deal.image}
+                                        alt={deal.name}
+                                        width={400}
+                                        height={500}
+                                        className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                        data-ai-hint={deal.dataAiHint || 'product image'}
+                                    />
+                                    <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                       <Button variant="outline" size="sm" className="w-full bg-white hover:bg-gray-200 border-gray-300 text-xs text-black">
+                                          <Heart className="mr-1 h-3 w-3" /> Wishlist
+                                       </Button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="pt-2">
-                                <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
-                                <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
-                                <p className="text-sm font-semibold mt-1 text-foreground">
-                                    ৳{deal.price}{' '}
-                                    <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>{' '}
-                                    <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>
-                                </p>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
+                                <div className="pt-2">
+                                    <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
+                                    <p className="text-sm font-semibold mt-1 text-foreground">
+                                        ৳{deal.price}{' '}
+                                        {deal.originalPrice && <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>}
+                                        {' '}
+                                        {deal.discount && <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>}
+                                    </p>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
 
@@ -396,27 +395,33 @@ export default function Home() {
             <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-secondary-foreground">
               Shop By Category
             </h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 md:gap-6">
-              {categories.map((category, index) => (
-                <Link href="#" key={index} className="group block text-center">
-                  <div className="overflow-hidden rounded-lg">
-                    <Image
-                      src={category.src}
-                      alt={category.name}
-                      width={400}
-                      height={500}
-                      className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                      data-ai-hint={category.dataAiHint}
-                    />
-                  </div>
-                  <div className="bg-primary/80 text-primary-foreground p-4 -mt-16 relative z-10 mx-4 rounded-lg backdrop-blur-sm">
-                      <h3 className="font-bold text-md">{category.name}</h3>
-                      <p className="text-sm font-semibold text-orange-300">{category.discount}</p>
-                      <p className="text-xs mt-1 hover:underline">Shop Now</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {loading ? (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 md:gap-6">
+                   {Array(6).fill(0).map((_, i) => <Skeleton key={i} className="w-full aspect-[4/5]" />)}
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6 md:gap-6">
+                  {(content.categories || []).map((category, index) => (
+                    <Link href={category.link} key={index} className="group block text-center">
+                      <div className="overflow-hidden rounded-lg">
+                        <Image
+                          src={category.url}
+                          alt={category.name}
+                          width={400}
+                          height={500}
+                          className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                          data-ai-hint={category.dataAiHint}
+                        />
+                      </div>
+                      <div className="bg-primary/80 text-primary-foreground p-4 -mt-16 relative z-10 mx-4 rounded-lg backdrop-blur-sm">
+                          <h3 className="font-bold text-md">{category.name}</h3>
+                          <p className="text-sm font-semibold text-orange-300">{category.discount}</p>
+                          <p className="text-xs mt-1 hover:underline">Shop Now</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+            )}
           </div>
         </section>
       </main>
@@ -487,3 +492,5 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
+
+    
