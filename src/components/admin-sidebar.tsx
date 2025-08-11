@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -75,6 +75,7 @@ export function AdminSidebar({ user }: { user: any }) {
       { href: '/admin/site-management/beauty', label: 'Beauty Page', icon: Sparkles },
       { href: '/admin/site-management/electronics', label: 'Electronics Page', icon: Laptop },
       { href: '/admin/site-management/sports', label: 'Sports Page', icon: Trophy },
+      { href: '/admin/site-management/books', label: 'Books Page', icon: BookOpen },
   ]
 
   return (
@@ -179,5 +180,3 @@ export function AdminSidebar({ user }: { user: any }) {
     </Sidebar>
   );
 }
-
-    
