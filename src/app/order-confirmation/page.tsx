@@ -5,7 +5,7 @@ import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { CheckCircle, Printer, ShoppingBag, Truck, ShieldCheck } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -14,52 +14,86 @@ import { SiteFooter } from "@/components/site-footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Logo } from "@/components/logo"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
 
-const orderDetails = {
-    orderId: 'AVZ-2024-12345',
-    trackingId: 'AVZTRK987654',
-    orderDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-    paymentMethod: 'Credit Card',
-    shippingAddress: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
-    billingAddress: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
-    customer: {
-        name: 'Kamal Hasan',
-        email: 'kamal.hasan@example.com'
-    },
-    items: [
-      {
-        id: '1',
-        name: 'Men Top Black Puffed Jacket',
-        variant: 'Men\'s Black',
-        price: 1200.00,
-        quantity: 1,
-        image: 'https://placehold.co/80x80.png',
-        dataAiHint: 'puffed jacket',
-      },
-      {
-        id: '2',
-        name: 'Women Jacket',
-        variant: 'Women top',
-        price: 1500.00,
-        quantity: 1,
-        image: 'https://placehold.co/80x80.png',
-        dataAiHint: 'women jacket',
-      },
-    ],
-    subtotal: 2700.00,
-    shippingFee: 120.00,
-    taxes: 50.00,
-    discount: 0.00,
-    total: 2870.00,
-};
+
+interface Order {
+    id: string;
+    createdAt: any;
+    status: 'Pending' | 'Processing' | 'Shipped' | 'Fulfilled' | 'Cancelled';
+    total: number;
+    shippingAddress: {
+        name: string;
+        email: string;
+        phone: string;
+        fullAddress: string;
+    };
+    items: {
+        id: string;
+        name: string;
+        image: string;
+        price: number;
+        quantity: number;
+        dataAiHint: string;
+        variant: string;
+    }[];
+    payment: {
+        method: string;
+        subtotal: number;
+        shipping: number;
+        tax: number;
+        total: number;
+    };
+    trackingId?: string;
+}
 
 
 export default function OrderConfirmationPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const orderId = searchParams.get('orderId');
+
+    const [orderDetails, setOrderDetails] = React.useState<Order | null>(null);
+    const [loading, setLoading] = React.useState(true);
+    
+    React.useEffect(() => {
+        if (!orderId) {
+            // Redirect if no orderId is present
+            router.push('/');
+            return;
+        }
+
+        const fetchOrder = async () => {
+            setLoading(true);
+            const orderRef = doc(db, 'orders', orderId);
+            const orderSnap = await getDoc(orderRef);
+            if (orderSnap.exists()) {
+                setOrderDetails({ id: orderSnap.id, ...orderSnap.data() } as Order);
+            } else {
+                console.error("Order not found!");
+                router.push('/');
+            }
+            setLoading(false);
+        };
+
+        fetchOrder();
+    }, [orderId, router]);
+
 
     const handlePrint = () => {
         window.print();
     };
+    
+    if (loading) {
+        return <div className="flex justify-center items-center min-h-screen">Loading order confirmation...</div>
+    }
+    
+    if (!orderDetails) {
+        return <div className="flex justify-center items-center min-h-screen">Could not load order details.</div>
+    }
+    
+    const orderDate = orderDetails.createdAt ? new Date(orderDetails.createdAt.seconds * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -71,12 +105,12 @@ export default function OrderConfirmationPage() {
                             <div>
                                 <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
                                 <CardTitle className="text-2xl md:text-3xl font-headline">Thank you for your order!</CardTitle>
-                                <CardDescription className="mt-2 text-md">Your order has been placed successfully. A confirmation email has been sent to {orderDetails.customer.email}.</CardDescription>
+                                <CardDescription className="mt-2 text-md">Your order has been placed successfully. A confirmation email has been sent to {orderDetails.shippingAddress.email}.</CardDescription>
                             </div>
                             <div className="text-left md:text-right">
                                <Logo />
-                                <p className="text-sm text-muted-foreground mt-2">Invoice #{orderDetails.orderId}</p>
-                                <p className="text-sm text-muted-foreground">Date: {orderDetails.orderDate}</p>
+                                <p className="text-sm text-muted-foreground mt-2">Invoice #{orderDetails.id.substring(0,7)}...</p>
+                                <p className="text-sm text-muted-foreground">Date: {orderDate}</p>
                             </div>
                         </div>
                     </CardHeader>
@@ -85,26 +119,26 @@ export default function OrderConfirmationPage() {
                             <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Shipping Address</h3>
                                 <address className="not-italic text-muted-foreground text-sm">
-                                    {orderDetails.customer.name}<br/>
-                                    {orderDetails.shippingAddress}
+                                    {orderDetails.shippingAddress.name}<br/>
+                                    {orderDetails.shippingAddress.fullAddress}
                                 </address>
                             </div>
                              <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Billing Address</h3>
                                 <address className="not-italic text-muted-foreground text-sm">
-                                    {orderDetails.customer.name}<br/>
-                                    {orderDetails.billingAddress}
+                                    {orderDetails.shippingAddress.name}<br/>
+                                     {orderDetails.shippingAddress.fullAddress}
                                 </address>
                             </div>
                              <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Payment Method</h3>
-                                <p className="text-muted-foreground text-sm">{orderDetails.paymentMethod}</p>
+                                <p className="text-muted-foreground text-sm">{orderDetails.payment.method}</p>
                             </div>
                              <div className="md:col-span-2 lg:col-span-2">
                                 <h3 className="font-semibold mb-2 flex items-center"><Truck className="mr-2 h-5 w-5 text-primary"/>Order Tracking</h3>
                                 <p className="text-muted-foreground text-sm">
-                                    Your tracking ID is: <span className="font-medium text-foreground">{orderDetails.trackingId}</span>.
-                                    You can <Link href="#" className="text-primary hover:underline">track your shipment here</Link>.
+                                    Your tracking ID is: <span className="font-medium text-foreground">{orderDetails.trackingId || 'Pending'}</span>.
+                                    {orderDetails.trackingId && <Link href="#" className="text-primary hover:underline ml-1">Track your shipment here</Link>}
                                 </p>
                             </div>
                             <div className="lg:col-span-1">
@@ -130,7 +164,7 @@ export default function OrderConfirmationPage() {
                                     {orderDetails.items.map((item) => (
                                         <TableRow key={item.id}>
                                             <TableCell className="hidden md:table-cell">
-                                                <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
+                                                <Image src={item.image || 'https://placehold.co/64x64.png'} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
                                             </TableCell>
                                             <TableCell>
                                                 <p className="font-medium">{item.name}</p>
@@ -148,26 +182,20 @@ export default function OrderConfirmationPage() {
                             <div className="w-full max-w-sm space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <p className="text-muted-foreground">Subtotal</p>
-                                    <p className="font-semibold">৳{orderDetails.subtotal.toFixed(2)}</p>
+                                    <p className="font-semibold">৳{orderDetails.payment.subtotal.toFixed(2)}</p>
                                 </div>
                                 <div className="flex justify-between">
                                     <p className="text-muted-foreground">Shipping Fee</p>
-                                    <p className="font-semibold">৳{orderDetails.shippingFee.toFixed(2)}</p>
+                                    <p className="font-semibold">৳{orderDetails.payment.shipping.toFixed(2)}</p>
                                 </div>
                                 <div className="flex justify-between">
                                     <p className="text-muted-foreground">Taxes</p>
-                                    <p className="font-semibold">৳{orderDetails.taxes.toFixed(2)}</p>
+                                    <p className="font-semibold">৳{orderDetails.payment.tax.toFixed(2)}</p>
                                 </div>
-                                {orderDetails.discount > 0 && (
-                                    <div className="flex justify-between">
-                                        <p className="text-muted-foreground">Discount</p>
-                                        <p className="font-semibold">- ৳{orderDetails.discount.toFixed(2)}</p>
-                                    </div>
-                                )}
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-bold text-lg">
                                     <p>Grand Total</p>
-                                    <p>৳{orderDetails.total.toFixed(2)}</p>
+                                    <p>৳{orderDetails.payment.total}</p>
                                 </div>
                             </div>
                         </div>

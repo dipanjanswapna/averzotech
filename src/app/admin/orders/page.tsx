@@ -26,40 +26,76 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
-// Mock data for orders
-const orders = [
-  {
-    orderId: 'ORD-001',
-    customer: 'Kamal Hasan',
-    date: '2023-11-23',
-    status: 'Fulfilled',
-    total: 2499.0,
-  },
-  {
-    orderId: 'ORD-002',
-    customer: 'Jamal Khan',
-    date: '2023-11-22',
-    status: 'Processing',
-    total: 1299.0,
-  },
-  {
-    orderId: 'ORD-003',
-    customer: 'Priya Sharma',
-    date: '2023-11-21',
-    status: 'Cancelled',
-    total: 799.0,
-  },
-  {
-    orderId: 'ORD-004',
-    customer: 'Rina Akter',
-    date: '2023-11-20',
-    status: 'Fulfilled',
-    total: 3999.0,
-  },
-];
+interface Order {
+    id: string;
+    customerName: string;
+    createdAt: any;
+    status: 'Fulfilled' | 'Processing' | 'Cancelled' | 'Pending';
+    total: number;
+}
 
 export default function OrdersPage() {
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const ordersCollection = collection(db, 'orders');
+                const q = query(ordersCollection, orderBy('createdAt', 'desc'));
+                const orderSnapshot = await getDocs(q);
+                const orderList = orderSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                } as Order));
+                setOrders(orderList);
+            } catch (error) {
+                console.error("Error fetching orders: ", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOrders();
+    }, []);
+
+    const getStatusBadgeVariant = (status: string) => {
+        switch (status) {
+            case 'Fulfilled':
+                return 'default';
+            case 'Processing':
+                return 'secondary';
+            case 'Cancelled':
+                return 'destructive';
+            default:
+                return 'outline';
+        }
+    };
+
+    const getStatusBadgeClass = (status: string) => {
+        switch (status) {
+            case 'Fulfilled':
+                return 'bg-green-100 text-green-800';
+            case 'Processing':
+                return 'bg-blue-100 text-blue-800';
+            default:
+                return '';
+        }
+    };
+    
+    const formatDate = (timestamp: any) => {
+        if (!timestamp || !timestamp.seconds) return 'N/A';
+        return new Date(timestamp.seconds * 1000).toLocaleDateString();
+    };
+
+    if (loading) {
+        return <div className="space-y-8"><h1 className="text-3xl font-bold">Orders</h1><p>Loading orders...</p></div>
+    }
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">Orders</h1>
@@ -86,20 +122,14 @@ export default function OrdersPage() {
             </TableHeader>
             <TableBody>
               {orders.map((order) => (
-                <TableRow key={order.orderId}>
-                  <TableCell className="font-medium">{order.orderId}</TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell>{order.date}</TableCell>
+                <TableRow key={order.id}>
+                  <TableCell className="font-medium">{order.id.substring(0,7)}...</TableCell>
+                  <TableCell>{order.customerName}</TableCell>
+                  <TableCell>{formatDate(order.createdAt)}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={
-                        order.status === 'Fulfilled'
-                          ? 'default'
-                          : order.status === 'Processing'
-                          ? 'secondary'
-                          : 'destructive'
-                      }
-                      className={order.status === 'Fulfilled' ? 'bg-green-100 text-green-800' : order.status === 'Processing' ? 'bg-blue-100 text-blue-800' : ''}
+                      variant={getStatusBadgeVariant(order.status)}
+                      className={getStatusBadgeClass(order.status)}
                     >
                       {order.status}
                     </Badge>
@@ -121,7 +151,7 @@ export default function OrdersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/orders/${order.orderId}`}>View Details</Link>
+                           <Link href={`/admin/orders/${order.id}`}>View Details</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>Update Status</DropdownMenuItem>
                       </DropdownMenuContent>

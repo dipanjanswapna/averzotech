@@ -33,64 +33,128 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from '@/components/ui/textarea';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock data for a single order
-const order = {
-  orderId: 'ORD-001',
-  date: '2023-11-23',
-  status: 'Fulfilled',
-  total: 2499.0,
-  customer: {
-    name: 'Kamal Hasan',
-    email: 'kamal.h@example.com',
-    phone: '+8801712345678',
-    shippingAddress: 'House 123, Road 4, Block F, Banani, Dhaka, 1213, Bangladesh',
-  },
-  items: [
-    {
-      id: 'prod-001',
-      name: 'Graphic Print T-Shirt',
-      image: 'https://placehold.co/64x64.png',
-      dataAiHint: 'men graphic t-shirt',
-      sku: 'TSH-GR-BLK-M',
-      price: 1299,
-      quantity: 1,
-    },
-    {
-      id: 'prod-002',
-      name: 'Embroidered Kurta',
-      image: 'https://placehold.co/64x64.png',
-      dataAiHint: 'woman ethnic wear',
-      sku: 'KUR-EMB-RED-L',
-      price: 1200,
-      quantity: 1,
-    },
-  ],
-  payment: {
-    method: 'Cash on Delivery',
-    subtotal: 2499,
-    shipping: 60,
-    tax: 0,
-    total: 2559,
-  },
-  notes: [
-      { id: 1, author: 'Admin', date: '2023-11-23 11:00 AM', note: 'Customer called to confirm the address. Address verified.'},
-      { id: 2, author: 'System', date: '2023-11-23 10:05 AM', note: 'Order status changed from Pending to Processing.'},
-  ]
-};
+
+interface Order {
+    id: string;
+    createdAt: any;
+    status: 'Pending' | 'Processing' | 'Shipped' | 'Fulfilled' | 'Cancelled';
+    total: number;
+    shippingAddress: {
+        name: string;
+        email: string;
+        phone: string;
+        fullAddress: string;
+    };
+    items: {
+        id: string;
+        name: string;
+        image: string;
+        sku: string;
+        price: number;
+        quantity: number;
+        dataAiHint: string;
+    }[];
+    payment: {
+        method: string;
+        subtotal: number;
+        shipping: number;
+        tax: number;
+        total: number;
+    };
+    notes: { id: string; author: string; date: any; note: string; }[];
+    trackingId?: string;
+}
 
 const orderSteps = [
-    { label: 'Order Placed', date: 'Nov 23, 2023 10:00 AM' },
-    { label: 'Processing', date: 'Nov 23, 2023 10:05 AM' },
-    { label: 'Shipped', date: 'Nov 23, 2023 05:00 PM' },
-    { label: 'Delivered', date: 'Nov 24, 2023 02:00 PM' }
+    { label: 'Pending', date: null },
+    { label: 'Processing', date: null },
+    { label: 'Shipped', date: null },
+    { label: 'Fulfilled', date: null }
 ];
-const currentStatusIndex = orderSteps.findIndex(step => step.label === (order.status === 'Fulfilled' ? 'Delivered' : order.status)) + 1;
-
 
 export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.orderId as string;
+  const { toast } = useToast();
+
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [newStatus, setNewStatus] = useState('');
+  const [newNote, setNewNote] = useState('');
+  
+  useEffect(() => {
+    if (orderId) {
+        const fetchOrder = async () => {
+            setLoading(true);
+            const orderRef = doc(db, 'orders', orderId);
+            const orderSnap = await getDoc(orderRef);
+            if (orderSnap.exists()) {
+                const orderData = { id: orderSnap.id, ...orderSnap.data() } as Order;
+                setOrder(orderData);
+                setNewStatus(orderData.status);
+            } else {
+                console.error("No such order!");
+            }
+            setLoading(false);
+        };
+        fetchOrder();
+    }
+  }, [orderId]);
+
+  const handleUpdateStatus = async () => {
+      if (!order || !newStatus) return;
+      const orderRef = doc(db, 'orders', order.id);
+      try {
+          await updateDoc(orderRef, { status: newStatus });
+          const noteContent = `Order status changed to ${newStatus}.`;
+          await handleAddNote(noteContent, 'System');
+          setOrder(prev => prev ? { ...prev, status: newStatus as any } : null);
+          toast({
+              title: "Order Updated",
+              description: `Order status has been changed to ${newStatus}.`
+          });
+      } catch (error) {
+          console.error("Error updating status: ", error);
+          toast({ title: "Error", description: "Failed to update order status.", variant: "destructive" });
+      }
+  };
+  
+  const handleAddNote = async (noteContent: string, author = 'Admin') => {
+    if (!order || !noteContent.trim()) return;
+    const notesCollection = collection(db, 'orders', order.id, 'notes');
+    try {
+        const newNoteDoc = {
+            note: noteContent,
+            author: author,
+            date: serverTimestamp()
+        };
+        await addDoc(notesCollection, newNoteDoc);
+        setNewNote('');
+        // Optimistically update UI
+        setOrder(prev => prev ? { ...prev, notes: [...prev.notes, { ...newNoteDoc, id: 'temp', date: new Date() }] } : null);
+         toast({
+              title: "Note Added",
+              description: "The note has been successfully added to the order."
+          });
+    } catch(error) {
+        console.error("Error adding note: ", error);
+        toast({ title: "Error", description: "Failed to add note.", variant: "destructive" });
+    }
+  };
+  
+  if (loading) return <p>Loading order details...</p>;
+  if (!order) return <p>Order not found.</p>;
+  
+  const currentStatusIndex = orderSteps.findIndex(step => step.label === order.status) + 1;
+  const formatDate = (timestamp: any) => {
+    if (!timestamp || !timestamp.seconds) return new Date().toLocaleString();
+    return new Date(timestamp.seconds * 1000).toLocaleString();
+  };
 
   return (
     <div className="space-y-8">
@@ -101,12 +165,12 @@ export default function OrderDetailsPage() {
           </Link>
         </Button>
         <div>
-            <h1 className="text-2xl font-bold">Order {orderId}</h1>
-            <p className="text-muted-foreground text-sm">Date: {order.date}</p>
+            <h1 className="text-2xl font-bold">Order {order.id.substring(0,7)}...</h1>
+            <p className="text-muted-foreground text-sm">Date: {formatDate(order.createdAt)}</p>
         </div>
       </div>
         <div className="mx-auto w-full max-w-5xl">
-            <Stepper initialStep={0} activeStep={currentStatusIndex} steps={orderSteps.map(s => ({label: s.label, description: s.date}))} />
+            <Stepper initialStep={0} activeStep={currentStatusIndex} steps={orderSteps.map(s => ({label: s.label, description: s.date ? formatDate(s.date) : ''}))} />
         </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -134,9 +198,9 @@ export default function OrderDetailsPage() {
                             alt={item.name}
                             className="aspect-square rounded-md object-cover"
                             height="64"
-                            src={item.image}
+                            src={item.image || 'https://placehold.co/64x64.png'}
                             width="64"
-                            data-ai-hint={item.dataAiHint}
+                            data-ai-hint={item.dataAiHint || 'product image'}
                             />
                       </TableCell>
                       <TableCell>
@@ -190,13 +254,13 @@ export default function OrderDetailsPage() {
                     <Button variant="ghost" size="icon" asChild><Link href="#"><User className="h-4 w-4"/></Link></Button>
                 </CardHeader>
                 <CardContent>
-                    <p className="font-semibold">{order.customer.name}</p>
-                    <p className="text-sm text-muted-foreground">{order.customer.email}</p>
-                    <p className="text-sm text-muted-foreground">{order.customer.phone}</p>
+                    <p className="font-semibold">{order.shippingAddress.name}</p>
+                    <p className="text-sm text-muted-foreground">{order.shippingAddress.email}</p>
+                    <p className="text-sm text-muted-foreground">{order.shippingAddress.phone}</p>
                     <Separator className="my-4"/>
                     <h4 className="font-semibold mb-2">Shipping Address</h4>
                     <address className="text-sm not-italic text-muted-foreground">
-                        {order.customer.shippingAddress}
+                        {order.shippingAddress.fullAddress}
                     </address>
                 </CardContent>
             </Card>
@@ -205,11 +269,12 @@ export default function OrderDetailsPage() {
                     <CardTitle>Update Status</CardTitle>
                 </CardHeader>
                 <CardContent>
-                     <Select defaultValue={order.status}>
+                     <Select value={newStatus} onValueChange={setNewStatus}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
                         <SelectItem value="Processing">Processing</SelectItem>
                         <SelectItem value="Shipped">Shipped</SelectItem>
                         <SelectItem value="Fulfilled">Fulfilled</SelectItem>
@@ -218,7 +283,7 @@ export default function OrderDetailsPage() {
                     </Select>
                 </CardContent>
                  <CardFooter>
-                    <Button className="w-full">Update Order</Button>
+                    <Button className="w-full" onClick={handleUpdateStatus}>Update Order</Button>
                 </CardFooter>
             </Card>
             <Card>
@@ -229,13 +294,13 @@ export default function OrderDetailsPage() {
                      <div className="space-y-3 max-h-48 overflow-y-auto">
                         {order.notes.map(note => (
                             <div key={note.id} className="text-xs">
-                                <p className="text-muted-foreground">{note.date} by <span className="font-semibold text-foreground">{note.author}</span></p>
+                                <p className="text-muted-foreground">{formatDate(note.date)} by <span className="font-semibold text-foreground">{note.author}</span></p>
                                 <p>{note.note}</p>
                             </div>
                         ))}
                      </div>
-                     <Textarea placeholder="Add a note..."/>
-                     <Button size="sm">Add Note</Button>
+                     <Textarea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
+                     <Button size="sm" onClick={() => handleAddNote(newNote)}>Add Note</Button>
                 </CardContent>
             </Card>
             <Card>

@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, CreditCard, Landmark, Truck, Info, ShieldCheck } from "lucide-react"
+import { ChevronRight, CreditCard, Landmark, Truck, Info } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -21,42 +21,91 @@ import {
 } from "@/components/ui/tooltip"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-const cartItems = [
-  {
-    id: '1',
-    name: 'Men Top Black Puffed Jacket',
-    variant: 'Men\'s Black',
-    price: 1200.00,
-    quantity: 1,
-    image: 'https://placehold.co/80x80.png',
-    dataAiHint: 'puffed jacket',
-  },
-  {
-    id: '2',
-    name: 'Women Jacket',
-    variant: 'Women top',
-    price: 1500.00,
-    quantity: 1,
-    image: 'https://placehold.co/80x80.png',
-    dataAiHint: 'women jacket',
-  },
-];
-
-const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-const shippingFee = 120.00;
-const taxes = 50.00;
-const total = subtotal + shippingFee + taxes;
-
-const shippingInfo = {
-    name: 'Kamal Hasan',
-    address: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
-    method: 'Express Shipping (1-3 Days)'
-}
+import { useCart } from "@/hooks/use-cart"
+import { useAuth } from "@/hooks/use-auth"
+import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+import { useToast } from "@/hooks/use-toast"
 
 
 export default function PaymentPage() {
     const router = useRouter();
+    const { user } = useAuth();
+    const { cart, clearCart } = useCart();
+    const { toast } = useToast();
+    const [paymentMethod, setPaymentMethod] = React.useState('card');
+    const [loading, setLoading] = React.useState(false);
+    
+    // In a real app, this would come from the shipping page selection
+    const [shippingInfo, setShippingInfo] = React.useState({
+        name: 'Kamal Hasan',
+        email: 'kamal@example.com',
+        phone: '+8801712345678',
+        fullAddress: 'House 123, Road 4, Block F, Banani, Dhaka - 1213',
+        method: 'Express Shipping (1-3 Days)'
+    });
+
+    const subtotal = cart.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
+    const shippingFee = subtotal > 2000 ? 0 : 60;
+    const taxes = subtotal * 0.05; // 5% tax
+    const total = subtotal + shippingFee + taxes;
+
+    const handlePlaceOrder = async () => {
+        if (!user || cart.length === 0) {
+            toast({
+                title: "Error",
+                description: "You must be logged in and have items in your cart to place an order.",
+                variant: "destructive"
+            })
+            return;
+        }
+        setLoading(true);
+
+        const orderData = {
+            userId: user.uid,
+            customerName: shippingInfo.name,
+            createdAt: serverTimestamp(),
+            status: 'Pending',
+            items: cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                image: item.images[0] || '',
+                variant: `${item.selectedColor} / ${item.selectedSize}`,
+                price: item.pricing.price,
+                quantity: item.quantity,
+                sku: item.inventory.sku
+            })),
+            shippingAddress: shippingInfo,
+            payment: {
+                method: paymentMethod,
+                subtotal: subtotal,
+                shipping: shippingFee,
+                tax: taxes,
+                total: total,
+            },
+            total: total
+        };
+
+        try {
+            const docRef = await addDoc(collection(db, "orders"), orderData);
+            toast({
+                title: "Order Placed!",
+                description: "Your order has been placed successfully."
+            });
+            clearCart();
+            router.push(`/order-confirmation?orderId=${docRef.id}`);
+
+        } catch (error) {
+            console.error("Error placing order: ", error);
+            toast({
+                title: "Order Failed",
+                description: "There was an error placing your order. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -78,11 +127,11 @@ export default function PaymentPage() {
                             <CardContent className="p-6 grid sm:grid-cols-2 gap-4 text-sm">
                                 <div>
                                     <p className="text-muted-foreground">Contact</p>
-                                    <p className="font-medium">+880 1712345678</p>
+                                    <p className="font-medium">{shippingInfo.phone}</p>
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Ship to</p>
-                                    <p className="font-medium">{shippingInfo.address}</p>
+                                    <p className="font-medium">{shippingInfo.fullAddress}</p>
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Method</p>
@@ -98,7 +147,7 @@ export default function PaymentPage() {
                         <div className="space-y-8">
                              <h2 className="text-2xl font-headline mb-4">Payment</h2>
                              <p className="text-muted-foreground">All transactions are secure and encrypted.</p>
-                             <Tabs defaultValue="card" className="w-full">
+                             <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
                                 <TabsList className="grid w-full grid-cols-3">
                                     <TabsTrigger value="card"><CreditCard className="w-4 h-4 mr-2"/> Card</TabsTrigger>
                                     <TabsTrigger value="mobile-banking"> <Landmark className="w-4 h-4 mr-2" />Mobile Banking</TabsTrigger>
@@ -169,9 +218,10 @@ export default function PaymentPage() {
                             <Button 
                                 className="w-auto" 
                                 size="lg"
-                                onClick={() => router.push('/order-confirmation')}
+                                onClick={handlePlaceOrder}
+                                disabled={loading || cart.length === 0}
                             >
-                               Pay Now
+                               {loading ? 'Placing Order...' : `Pay ৳${total.toFixed(2)}`}
                             </Button>
                         </div>
                     </div>
@@ -180,17 +230,17 @@ export default function PaymentPage() {
                       <div className="bg-secondary p-8 rounded-lg">
                           <h2 className="text-2xl font-headline mb-6">Order Summary</h2>
                           <div className="space-y-4">
-                              {cartItems.map((item) => (
+                              {cart.map((item) => (
                               <div key={item.id} className="flex items-center gap-4">
                                   <div className="relative">
-                                      <Image src={item.image} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.dataAiHint} />
+                                      <Image src={item.images[0] || 'https://placehold.co/64x64.png'} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.name} />
                                       <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
                                   </div>
                                   <div className="flex-grow">
                                       <p className="font-medium">{item.name}</p>
-                                      <p className="text-sm text-muted-foreground">{item.variant}</p>
+                                      <p className="text-sm text-muted-foreground">{item.selectedSize} / {item.selectedColor}</p>
                                   </div>
-                                  <p className="font-semibold">৳{item.price.toFixed(2)}</p>
+                                  <p className="font-semibold">৳{item.pricing.price.toFixed(2)}</p>
                               </div>
                               ))}
                           </div>
