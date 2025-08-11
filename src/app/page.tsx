@@ -14,34 +14,34 @@ import { Button } from '@/components/ui/button';
 
 export default function Home() {
   const heroImages = [
-    { src: 'https://placehold.co/1600x800', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
-    { src: 'https://placehold.co/1600x800', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
-    { src: 'https://placehold.co/1600x800', alt: 'Ethnic wear banner', dataAiHint: 'ethnic wear' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
+    { src: 'https://placehold.co/800x450.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Ethnic wear banner', dataAiHint: 'ethnic wear' },
   ];
 
   const brands = [
-    { src: 'https://placehold.co/200x200', alt: 'Brand 1', dataAiHint: 'fashion logo' },
-    { src: 'https://placehold.co/200x200', alt: 'Brand 2', dataAiHint: 'clothing brand' },
-    { src: 'https://placehold.co/200x200', alt: 'Brand 3', dataAiHint: 'luxury logo' },
-    { src: 'https://placehold.co/200x200', alt: 'Brand 4', dataAiHint: 'shoe brand' },
-    { src: 'https://placehold.co/200x200', alt: 'Brand 5', dataAiHint: 'watch brand' },
-    { src: 'https://placehold.co/200x200', alt: 'Brand 6', dataAiHint: 'cosmetics logo' },
-    { src: 'https://placehold.co/200x200', alt: 'Brand 7', dataAiHint: 'sports brand' },
-    { src: 'https://placehold.co/200x200', alt: 'Brand 8', dataAiHint: 'eyewear logo' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 1', dataAiHint: 'fashion logo' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 2', dataAiHint: 'clothing brand' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 3', dataAiHint: 'luxury logo' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 4', dataAiHint: 'shoe brand' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 5', dataAiHint: 'watch brand' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 6', dataAiHint: 'cosmetics logo' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 7', dataAiHint: 'sports brand' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Brand 8', dataAiHint: 'eyewear logo' },
   ];
 
   const categories = [
-    { name: 'Shirts', src: 'https://placehold.co/400x500', dataAiHint: 'man wearing shirt' },
-    { name: 'Jeans', src: 'https://placehold.co/400x500', dataAiHint: 'woman wearing jeans' },
-    { name: 'Dresses', src: 'https://placehold.co/400x500', dataAiHint: 'woman in dress' },
-    { name: 'Shoes', src: 'https://placehold.co/400x500', dataAiHint: 'stylish shoes' },
-    { name: 'Watches', src: 'https://placehold.co/400x500', dataAiHint: 'luxury watch' },
-    { name: 'Handbags', src: 'https://placehold.co/400x500', dataAiHint: 'leather handbag' },
+    { name: 'Shirts', src: 'https://placehold.co/800x450.png', dataAiHint: 'man wearing shirt' },
+    { name: 'Jeans', src: 'https://placehold.co/800x450.png', dataAiHint: 'woman wearing jeans' },
+    { name: 'Dresses', src: 'https://placehold.co/800x450.png', dataAiHint: 'woman in dress' },
+    { name: 'Shoes', src: 'https://placehold.co/800x450.png', dataAiHint: 'stylish shoes' },
+    { name: 'Watches', src: 'https://placehold.co/800x450.png', dataAiHint: 'luxury watch' },
+    { name: 'Handbags', src: 'https://placehold.co/800x450.png', dataAiHint: 'leather handbag' },
   ];
 
   const deals = [
-    { src: 'https://placehold.co/600x400', alt: 'Deal 1', dataAiHint: 'fashion discount' },
-    { src: 'https://placehold.co/600x400', alt: 'Deal 2', dataAiHint: 'special offer' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Deal 1', dataAiHint: 'fashion discount' },
+    { src: 'https://placehold.co/800x450.png', alt: 'Deal 2', dataAiHint: 'special offer' },
   ];
 
 
