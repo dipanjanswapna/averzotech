@@ -109,7 +109,7 @@ export default function CartPage() {
                     <Link href={`/product/${item.id}`} className="font-semibold hover:text-primary">{item.name}</Link>
                     <p className="text-sm text-muted-foreground">{item.brand}</p>
                     <p className="text-sm text-muted-foreground">Size: {item.size} | Color: {item.color}</p>
-                    <Badge variant={item.availability === 'In Stock' ? "default" : "destructive"} className="mt-1 bg-green-100 text-green-800">
+                    <Badge variant={item.availability === 'In Stock' ? "default" : "destructive"} className={`mt-1 ${item.availability === 'In Stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {item.availability}
                     </Badge>
                      <p className="text-sm text-muted-foreground mt-1">Delivery by: {item.deliveryBy}</p>
