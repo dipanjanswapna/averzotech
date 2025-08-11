@@ -11,7 +11,6 @@ import React from 'react';
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -28,6 +27,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 const allProducts = [
     // Men's Products
@@ -126,29 +126,45 @@ const filterCategories = [
 ];
 
 export default function ShopPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [isFilterSheetOpen, setIsFilterSheetOpen] = React.useState(false);
   const [displayedItems, setDisplayedItems] = React.useState(allProducts);
-  
-  const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
-  const [selectedGroup, setSelectedGroup] = React.useState<string>("all");
-  const [selectedSubcategory, setSelectedSubcategory] = React.useState<string>("all");
-  const [selectedBrand, setSelectedBrand] = React.useState<string>("all");
-  const [priceRange, setPriceRange] = React.useState([0, 120000]);
-  const [sortOption, setSortOption] = React.useState("featured");
 
-  const availableBrands = React.useMemo(() => {
-    let brands = allProducts;
-    if (selectedCategory !== 'all') {
-      brands = brands.filter(p => p.category === selectedCategory);
-    }
-    if (selectedGroup !== 'all') {
-      brands = brands.filter(p => p.group === selectedGroup);
-    }
-    if (selectedSubcategory !== 'all') {
-      brands = brands.filter(p => p.subcategory === selectedSubcategory);
-    }
-    return [...new Set(brands.map(item => item.brand))];
-  }, [selectedCategory, selectedGroup, selectedSubcategory]);
+  // State initialization from URL search params
+  const [selectedCategory, setSelectedCategory] = React.useState<string>(searchParams.get('category') || 'all');
+  const [selectedGroup, setSelectedGroup] = React.useState<string>(searchParams.get('group') || 'all');
+  const [selectedSubcategory, setSelectedSubcategory] = React.useState<string>(searchParams.get('subcategory') || 'all');
+  const [selectedBrand, setSelectedBrand] = React.useState<string>(searchParams.get('brand') || 'all');
+  const [priceRange, setPriceRange] = React.useState<[number, number]>(() => {
+    const min = searchParams.get('minPrice');
+    const max = searchParams.get('maxPrice');
+    return [min ? Number(min) : 0, max ? Number(max) : 120000];
+  });
+  const [sortOption, setSortOption] = React.useState<string>(searchParams.get('sort') || 'featured');
+
+  const updateURL = React.useCallback((newFilters: Record<string, string | number | number[]>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value && value !== 'all' && (Array.isArray(value) ? value.length > 0 : true)) {
+        if(key === 'priceRange' && Array.isArray(value)) {
+            params.set('minPrice', String(value[0]));
+            params.set('maxPrice', String(value[1]));
+        } else {
+            params.set(key, String(value));
+        }
+      } else {
+        params.delete(key);
+        if (key === 'priceRange') {
+            params.delete('minPrice');
+            params.delete('maxPrice');
+        }
+      }
+    });
+    router.push(`${pathname}?${params.toString()}`);
+  }, [searchParams, router, pathname]);
 
   const availableGroups = React.useMemo(() => {
     if (selectedCategory === 'all') return [];
@@ -162,25 +178,40 @@ export default function ShopPage() {
     return group ? group.subcategories : [];
   }, [selectedGroup, availableGroups]);
 
-  const applyFilters = React.useCallback(() => {
-    let items = [...allProducts];
-
+   const availableBrands = React.useMemo(() => {
+    let brands = allProducts;
     if (selectedCategory !== 'all') {
-      items = items.filter(item => item.category === selectedCategory);
+      brands = brands.filter(p => p.category === selectedCategory);
     }
     if (selectedGroup !== 'all') {
-      items = items.filter(item => item.group === selectedGroup);
+      brands = brands.filter(p => p.group === selectedGroup);
     }
     if (selectedSubcategory !== 'all') {
-        items = items.filter(item => item.subcategory === selectedSubcategory);
+      brands = brands.filter(p => p.subcategory === selectedSubcategory);
     }
-    if (selectedBrand !== 'all') {
-      items = items.filter(item => item.brand === selectedBrand);
-    }
+    return [...new Set(brands.map(item => item.brand))];
+  }, [selectedCategory, selectedGroup, selectedSubcategory]);
 
-    items = items.filter(item => item.price >= priceRange[0] && item.price <= priceRange[1]);
+  const applyFilters = React.useCallback(() => {
+    let items = [...allProducts];
+    const currentParams = new URLSearchParams(searchParams);
+
+    const category = currentParams.get('category') || 'all';
+    const group = currentParams.get('group') || 'all';
+    const subcategory = currentParams.get('subcategory') || 'all';
+    const brand = currentParams.get('brand') || 'all';
+    const minPrice = Number(currentParams.get('minPrice') || 0);
+    const maxPrice = Number(currentParams.get('maxPrice') || 120000);
+    const sort = currentParams.get('sort') || 'featured';
+
+    if (category !== 'all') items = items.filter(item => item.category === category);
+    if (group !== 'all') items = items.filter(item => item.group === group);
+    if (subcategory !== 'all') items = items.filter(item => item.subcategory === subcategory);
+    if (brand !== 'all') items = items.filter(item => item.brand === brand);
     
-    switch (sortOption) {
+    items = items.filter(item => item.price >= minPrice && item.price <= maxPrice);
+
+    switch (sort) {
       case 'price-asc':
         items.sort((a, b) => a.price - b.price);
         break;
@@ -188,64 +219,74 @@ export default function ShopPage() {
         items.sort((a, b) => b.price - a.price);
         break;
       case 'newest':
-        // Assuming higher ID is newer. Replace with actual date logic if available.
-        items.sort((a, b) => parseInt(b.id.split('-')[2]) - parseInt(a.id.split('-')[2]));
-        break;
-      case 'featured':
-      default:
+        items.reverse(); // Assuming higher ID is newer.
         break;
     }
-
     setDisplayedItems(items);
-    setIsFilterSheetOpen(false); // Close sheet on mobile after applying
-  }, [selectedCategory, selectedGroup, selectedSubcategory, selectedBrand, priceRange, sortOption]);
-  
+  }, [searchParams]);
+
   React.useEffect(() => {
     applyFilters();
   }, [applyFilters]);
-
-  const handleResetFilters = () => {
-    setSelectedCategory("all");
-    setSelectedGroup("all");
-    setSelectedSubcategory("all");
-    setSelectedBrand("all");
-    setPriceRange([0, 120000]);
-    setSortOption("featured");
-  };
-
-  const handleCategoryChange = (value: string) => {
-    setSelectedCategory(value);
-    setSelectedGroup("all");
-    setSelectedSubcategory("all");
-    setSelectedBrand("all"); // Reset brand when category changes
-  };
   
-  const handleGroupChange = (value: string) => {
-      setSelectedGroup(value);
-      setSelectedSubcategory("all");
+  const handleResetFilters = () => {
+    router.push(pathname);
+    setSelectedCategory('all');
+    setSelectedGroup('all');
+    setSelectedSubcategory('all');
+    setSelectedBrand('all');
+    setPriceRange([0, 120000]);
+    setSortOption('featured');
   };
+
+  const createFilterHandler = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, name: string) => {
+    return (value: T) => {
+      setter(value);
+      let updatedFilters: Record<string, any> = {[name]: value};
+
+      if (name === 'selectedCategory') {
+          updatedFilters = {...updatedFilters, selectedGroup: 'all', selectedSubcategory: 'all', selectedBrand: 'all' };
+          setSelectedGroup('all');
+          setSelectedSubcategory('all');
+          setSelectedBrand('all');
+      } else if (name === 'selectedGroup') {
+          updatedFilters = {...updatedFilters, selectedSubcategory: 'all' };
+          setSelectedSubcategory('all');
+      }
+      updateURL(updatedFilters);
+    };
+  };
+
+  const handlePriceChange = (value: number[]) => {
+      setPriceRange(value as [number, number]);
+      updateURL({ priceRange: value });
+  }
+
+  const handleSortChange = (value: string) => {
+      setSortOption(value);
+      updateURL({ sort: value });
+  }
 
   const filterControls = (
       <FilterControls 
-        onApply={applyFilters}
         onReset={handleResetFilters}
         priceRange={priceRange}
-        onPriceChange={setPriceRange}
+        onPriceChange={handlePriceChange}
         
         selectedCategory={selectedCategory}
-        onCategoryChange={handleCategoryChange}
+        onCategoryChange={createFilterHandler(setSelectedCategory, 'category')}
         
         availableGroups={availableGroups}
         selectedGroup={selectedGroup}
-        onGroupChange={handleGroupChange}
+        onGroupChange={createFilterHandler(setSelectedGroup, 'group')}
         
         availableSubcategories={availableSubcategories}
         selectedSubcategory={selectedSubcategory}
-        onSubcategoryChange={setSelectedSubcategory}
+        onSubcategoryChange={createFilterHandler(setSelectedSubcategory, 'subcategory')}
         
         availableBrands={availableBrands}
         selectedBrand={selectedBrand}
-        onBrandChange={setSelectedBrand}
+        onBrandChange={createFilterHandler(setSelectedBrand, 'brand')}
       />
   );
   
@@ -265,13 +306,14 @@ export default function ShopPage() {
                         <SheetHeader className="p-4 border-b">
                           <SheetTitle>Filters</SheetTitle>
                         </SheetHeader>
-                        <div className="p-4">
+                        <div className="p-4 overflow-y-auto">
                            {filterControls}
+                           <Button className="w-full mt-4" onClick={() => setIsFilterSheetOpen(false)}>View Results</Button>
                         </div>
                       </SheetContent>
                     </Sheet>
                  </div>
-                  <Select value={sortOption} onValueChange={setSortOption}>
+                  <Select value={sortOption} onValueChange={handleSortChange}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Sort by: Featured" />
                     </SelectTrigger>
@@ -300,7 +342,7 @@ export default function ShopPage() {
               {displayedItems.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
                     {displayedItems.map((item) => (
-                        <Link href={`/product/${item.id}`} key={item.id} className="group block">
+                       <Link href={`/product/${item.id}`} key={item.id} className="group block">
                             <div className="relative overflow-hidden rounded-lg">
                                 <Image
                                     src={item.src}
@@ -345,7 +387,6 @@ export default function ShopPage() {
 }
 
 interface FilterControlsProps {
-    onApply: () => void;
     onReset: () => void;
     priceRange: number[];
     onPriceChange: (value: number[]) => void;
@@ -367,7 +408,6 @@ interface FilterControlsProps {
 }
 
 function FilterControls({ 
-    onApply,
     onReset,
     priceRange,
     onPriceChange,
@@ -461,8 +501,9 @@ function FilterControls({
             </Accordion>
             <div className="flex justify-between gap-2 mt-6">
                 <Button variant="ghost" className="flex-1" onClick={onReset}>Reset</Button>
-                <Button className="flex-1" onClick={onApply}>Apply</Button>
             </div>
         </Card>
     )
 }
+
+    
