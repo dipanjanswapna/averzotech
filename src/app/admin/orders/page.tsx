@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
 
 // Mock data for orders
 const orders = [
@@ -119,7 +120,9 @@ export default function OrdersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                           <Link href={`/admin/orders/${order.orderId}`}>View Details</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Update Status</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
