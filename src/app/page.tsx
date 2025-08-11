@@ -21,25 +21,25 @@ export default function Home() {
   ];
 
   const brands = [
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 1', dataAiHint: 'fashion logo' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 2', dataAiHint: 'clothing brand' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 3', dataAiHint: 'luxury logo' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 4', dataAiHint: 'shoe brand' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 5', dataAiHint: 'watch brand' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 6', dataAiHint: 'cosmetics logo' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 7', dataAiHint: 'sports brand' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 8', dataAiHint: 'eyewear logo' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 9', dataAiHint: 'handbag brand' },
-    { src: 'https://placehold.co/800x450.png', alt: 'Brand 10', dataAiHint: 'jewelry logo' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 1', dataAiHint: 'fashion logo' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 2', dataAiHint: 'clothing brand' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 3', dataAiHint: 'luxury logo' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 4', dataAiHint: 'shoe brand' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 5', dataAiHint: 'watch brand' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 6', dataAiHint: 'cosmetics logo' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 7', dataAiHint: 'sports brand' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 8', dataAiHint: 'eyewear logo' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 9', dataAiHint: 'handbag brand' },
+    { src: 'https://placehold.co/200x200.png', alt: 'Brand 10', dataAiHint: 'jewelry logo' },
   ];
 
   const categories = [
-    { name: 'Shirts', src: 'https://placehold.co/800x450.png', dataAiHint: 'man wearing shirt' },
-    { name: 'Jeans', src: 'https://placehold.co/800x450.png', dataAiHint: 'woman wearing jeans' },
-    { name: 'Dresses', src: 'https://placehold.co/800x450.png', dataAiHint: 'woman in dress' },
-    { name: 'Shoes', src: 'https://placehold.co/800x450.png', dataAiHint: 'stylish shoes' },
-    { name: 'Watches', src: 'https://placehold.co/800x450.png', dataAiHint: 'luxury watch' },
-    { name: 'Handbags', src: 'https://placehold.co/800x450.png', dataAiHint: 'leather handbag' },
+    { name: 'Shirts', src: 'https://placehold.co/400x500.png', dataAiHint: 'man wearing shirt' },
+    { name: 'Jeans', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman wearing jeans' },
+    { name: 'Dresses', src: 'https://placehold.co/400x500.png', dataAiHint: 'woman in dress' },
+    { name: 'Shoes', src: 'https://placehold.co/400x500.png', dataAiHint: 'stylish shoes' },
+    { name: 'Watches', src: 'https://placehold.co/400x500.png', dataAiHint: 'luxury watch' },
+    { name: 'Handbags', src: 'https://placehold.co/400x500.png', dataAiHint: 'leather handbag' },
   ];
 
   const deals = [
@@ -50,7 +50,7 @@ export default function Home() {
       price: '639',
       originalPrice: '1599',
       discount: '60% OFF',
-      src: 'https://placehold.co/800x450.png',
+      src: 'https://placehold.co/400x500.png',
       dataAiHint: 'woman white shirt'
     },
     {
@@ -60,7 +60,7 @@ export default function Home() {
       price: '1499',
       originalPrice: '2999',
       discount: '50% OFF',
-      src: 'https://placehold.co/800x450.png',
+      src: 'https://placehold.co/400x500.png',
       dataAiHint: 'blue jeans'
     },
     {
@@ -70,7 +70,7 @@ export default function Home() {
       price: '2490',
       originalPrice: '4990',
       discount: '50% OFF',
-      src: 'https://placehold.co/800x450.png',
+      src: 'https://placehold.co/400x500.png',
       dataAiHint: 'summer dress'
     },
     {
@@ -80,7 +80,7 @@ export default function Home() {
       price: '8295',
       originalPrice: '10295',
       discount: '20% OFF',
-      src: 'https://placehold.co/800x450.png',
+      src: 'https://placehold.co/400x500.png',
       dataAiHint: 'running shoes'
     },
     {
@@ -90,7 +90,7 @@ export default function Home() {
       price: '1999',
       originalPrice: '3999',
       discount: '50% OFF',
-      src: 'https://placehold.co/800x450.png',
+      src: 'https://placehold.co/400x500.png',
       dataAiHint: 'dark jeans'
     },
     {
@@ -100,7 +100,7 @@ export default function Home() {
       price: '2499',
       originalPrice: '4999',
       discount: '50% OFF',
-      src: 'https://placehold.co/800x450.png',
+      src: 'https://placehold.co/400x500.png',
       dataAiHint: 'athletic shoes'
     },
   ];

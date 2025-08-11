@@ -27,7 +27,7 @@ export function SiteHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-primary text-primary-foreground">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         {/* Mobile Menu */}
         <div className="md:hidden">
@@ -38,7 +38,7 @@ export function SiteHeader() {
                 <span className="sr-only">Toggle Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-[300px] bg-primary text-primary-foreground">
+            <SheetContent side="left" className="w-[300px]">
               <nav className="flex h-full flex-col p-6">
                 <Link href="/" className="mb-8">
                   <Logo />
