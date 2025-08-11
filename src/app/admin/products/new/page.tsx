@@ -218,23 +218,30 @@ export default function NewProductPage() {
           <Card>
             <CardHeader>
               <CardTitle>Media</CardTitle>
-              <CardDescription>Upload images for your product. The first image will be the main one.</CardDescription>
+              <CardDescription>Upload images and video for your product. The first image will be the main one.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center">
-                <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-sm text-muted-foreground">
-                  Drag and drop your images here, or{' '}
-                  <span className="font-semibold text-primary">click to browse</span>
-                </p>
+              <div className="space-y-2 mb-4">
+                <Label>Product Images</Label>
+                <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-8 text-center">
+                  <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    Drag and drop your images here, or{' '}
+                    <span className="font-semibold text-primary">click to browse</span>
+                  </p>
+                </div>
+                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div className="relative group">
+                        <Image src="https://placehold.co/150x150.png" alt="Product Image" width={150} height={150} className="rounded-md aspect-square object-cover" data-ai-hint="fashion product" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                           <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full"><Trash2 className="w-4 h-4"/></Button>
+                        </div>
+                    </div>
+                </div>
               </div>
-               <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  <div className="relative group">
-                      <Image src="https://placehold.co/150x150.png" alt="Product Image" width={150} height={150} className="rounded-md aspect-square object-cover" data-ai-hint="fashion product" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                         <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full"><Trash2 className="w-4 h-4"/></Button>
-                      </div>
-                  </div>
+               <div className="space-y-2">
+                <Label htmlFor="product-video">YouTube Video URL</Label>
+                <Input id="product-video" placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ"/>
               </div>
             </CardContent>
           </Card>
@@ -501,5 +508,7 @@ export default function NewProductPage() {
     </div>
   );
 }
+
+    
 
     
