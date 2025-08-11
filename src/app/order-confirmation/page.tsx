@@ -52,8 +52,7 @@ interface Order {
     trackingId?: string;
 }
 
-
-export default function OrderConfirmationPage() {
+function ConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
@@ -232,3 +231,12 @@ export default function OrderConfirmationPage() {
         </div>
     )
 }
+
+export default function OrderConfirmationPage() {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <ConfirmationContent />
+        </React.Suspense>
+    )
+}
+
