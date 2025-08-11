@@ -275,7 +275,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
 
             <Separator className="my-6" />
             
-            <Accordion type="multiple" collapsible className="w-full">
+            <Accordion type="multiple" className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger className="font-semibold uppercase text-sm">Best Offers <Tag className="inline h-5 w-5" /></AccordionTrigger>
                 <AccordionContent>
