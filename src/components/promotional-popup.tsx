@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
@@ -71,6 +71,10 @@ export function PromotionalPopup() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="p-0 border-none bg-transparent shadow-none w-full max-w-xl">
+         <DialogHeader className="sr-only">
+          <DialogTitle>Promotional Offer</DialogTitle>
+          <DialogDescription>A special offer from AVERZO. Click to learn more.</DialogDescription>
+        </DialogHeader>
         <div className="relative aspect-[4/3] w-full">
             <Link href={config.link || '#'} onClick={() => setIsOpen(false)}>
                 <Image
