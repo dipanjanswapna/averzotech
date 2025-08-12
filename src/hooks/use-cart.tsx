@@ -60,8 +60,8 @@ interface Product {
 interface CartContextType {
   cart: Product[];
   addToCart: (product: Omit<Product, 'quantity'>, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (productId: string, size: string, color: string) => void;
+  updateQuantity: (productId: string, size: string, color: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
   appliedCoupon: AppliedCoupon | null;
@@ -74,6 +74,8 @@ interface CartContextType {
   total: number;
   shippingInfo: ShippingInfo | null;
   setShippingInfo: (info: ShippingInfo) => void;
+  shippingFee: number;
+  taxes: number;
 }
 
 // Create the context
@@ -152,17 +154,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+  const removeFromCart = (productId: string, size: string, color: string) => {
+    setCart(prevCart => prevCart.filter(item => !(item.id === productId && item.selectedSize === size && item.selectedColor === color)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string, size: string, color: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, size, color);
     } else {
       setCart(prevCart =>
         prevCart.map(item =>
-          item.id === productId ? { ...item, quantity } : item
+          (item.id === productId && item.selectedSize === size && item.selectedColor === color) ? { ...item, quantity } : item
         )
       );
     }
@@ -226,7 +228,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
   
   const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
-  const total = subTotalAfterCoupon - giftCardAmount + shippingFee;
+  const taxes = subTotal * 0.05;
+  const total = subTotalAfterCoupon - giftCardAmount + shippingFee + taxes;
 
   return (
     <CartContext.Provider value={{ 
@@ -244,6 +247,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeGiftCard,
         subTotal,
         total,
+        shippingFee,
+        taxes,
         shippingInfo,
         setShippingInfo
     }}>
