@@ -81,7 +81,8 @@ export default function PaymentPage() {
                 variant: `${item.selectedColor} / ${item.selectedSize}`,
                 price: item.pricing.price,
                 quantity: item.quantity,
-                sku: item.inventory.sku
+                sku: item.inventory.sku,
+                giftWithPurchase: item.giftWithPurchase?.isActive ? { description: item.giftWithPurchase.description } : null
             })),
             shippingAddress: shippingInfo,
             payment: {

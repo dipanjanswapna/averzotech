@@ -1,3 +1,4 @@
+
 "use client"
 
 import { SiteHeader } from '@/components/site-header';
@@ -6,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Sparkles, Users } from 'lucide-react';
+import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Sparkles, Users, Gift } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   Accordion,
@@ -85,6 +86,10 @@ interface Product {
         groupPrice: number;
         targetCount: number;
         expiresAt: any;
+    };
+    giftWithPurchase?: {
+        isActive: boolean;
+        description: string;
     }
   }
 
@@ -366,6 +371,14 @@ export default function ProductPage({ params }: { params: { productId: string } 
             <p className="text-sm text-green-600 font-semibold">inclusive of all taxes</p>
             <Badge variant="outline" className="mt-2">{displayProduct.inventory.availability}</Badge>
             <p className="text-sm text-muted-foreground mt-1">SKU: {displayProduct.inventory.sku}</p>
+
+            {product.giftWithPurchase?.isActive && (
+                 <div className="mt-4 p-2 rounded-lg bg-green-100 border border-green-200">
+                    <p className="font-semibold text-green-800 flex items-center gap-2 text-sm">
+                        <Gift className="w-4 h-4" /> + FREE GIFT: {product.giftWithPurchase.description}
+                    </p>
+                </div>
+            )}
 
             {product.groupBuy?.isActive && (
                  <div className="mt-4 p-4 rounded-lg bg-teal-50 border border-teal-200">

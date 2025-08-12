@@ -41,6 +41,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
+import { Switch } from '@/components/ui/switch';
 
 const initialFilterCategories = [
     { 
@@ -132,6 +133,10 @@ export default function EditProductPage() {
     const [offers, setOffers] = useState('');
     const [returnPolicy, setReturnPolicy] = useState('');
 
+    // Gift with Purchase
+    const [hasGift, setHasGift] = useState(false);
+    const [giftDescription, setGiftDescription] = useState('');
+
     // Organization
     const [status, setStatus] = useState('draft');
     const [selectedCategory, setSelectedCategory] = useState('');
@@ -180,6 +185,8 @@ export default function EditProductPage() {
                     setSpecifications(data.specifications || [{ label: '', value: '' }]);
                     setOffers(data.offers || '');
                     setReturnPolicy(data.returnPolicy || '');
+                    setHasGift(data.giftWithPurchase?.isActive || false);
+                    setGiftDescription(data.giftWithPurchase?.description || '');
                     setStatus(data.organization?.status || 'draft');
                     setSelectedCategory(data.organization?.category || '');
                     setSelectedGroup(data.organization?.group || '');
@@ -352,6 +359,10 @@ export default function EditProductPage() {
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
+                giftWithPurchase: {
+                    isActive: hasGift,
+                    description: giftDescription,
+                },
                 organization: {
                     status,
                     category: selectedCategory,
@@ -592,6 +603,25 @@ export default function EditProductPage() {
                     <Textarea id="product-return-policy" placeholder="e.g. Easy 7 days returns and exchanges." value={returnPolicy} onChange={e => setReturnPolicy(e.target.value)} disabled={isLoading}/>
                   </div>
               </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+                <CardTitle>Gift with Purchase</CardTitle>
+                <CardDescription>Attach a free gift to this product.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                    <Switch id="has-gift" checked={hasGift} onCheckedChange={setHasGift} disabled={isLoading} />
+                    <Label htmlFor="has-gift">Enable Gift with Purchase</Label>
+                </div>
+                {hasGift && (
+                    <div className="space-y-2">
+                        <Label htmlFor="gift-description">Gift Description</Label>
+                        <Input id="gift-description" placeholder="e.g. Free Key-ring" value={giftDescription} onChange={(e) => setGiftDescription(e.target.value)} disabled={isLoading} />
+                    </div>
+                )}
+            </CardContent>
           </Card>
         </div>
 
