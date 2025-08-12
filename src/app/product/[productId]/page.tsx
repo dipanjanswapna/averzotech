@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Sparkles } from 'lucide-react';
+import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Sparkles, Users } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   Accordion,
@@ -79,6 +79,12 @@ interface Product {
     reviews?: any[];
     qna?: any[];
     recommendedProducts?: any[];
+    groupBuy?: {
+        isActive: boolean;
+        groupPrice: number;
+        targetCount: number;
+        expiresAt: any;
+    }
   }
 
 
@@ -337,6 +343,19 @@ export default function ProductPage({ params }: { params: { productId: string } 
             <Badge variant="outline" className="mt-2">{displayProduct.inventory.availability}</Badge>
             <p className="text-sm text-muted-foreground mt-1">SKU: {displayProduct.inventory.sku}</p>
 
+            {product.groupBuy?.isActive && (
+                 <div className="mt-4 p-4 rounded-lg bg-teal-50 border border-teal-200">
+                    <h3 className="font-bold text-teal-800 flex items-center gap-2"><Users /> Group Buy Available!</h3>
+                    <p className="text-teal-700 text-sm mt-1">
+                        Buy with friends and get this for only <span className="font-bold text-lg">৳{product.groupBuy.groupPrice}</span>!
+                        Requires {product.groupBuy.targetCount} people.
+                    </p>
+                    <div className='flex gap-2 mt-2'>
+                        <Button size="sm" variant="secondary" className="bg-teal-600 text-white hover:bg-teal-700">Start a Group</Button>
+                        <Button size="sm" variant="outline" className="border-teal-600 text-teal-600 hover:bg-teal-50 hover:text-teal-700">Join a Group</Button>
+                    </div>
+                </div>
+            )}
             
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-foreground mb-2">COLOR</h3>
@@ -566,5 +585,3 @@ export default function ProductPage({ params }: { params: { productId: string } 
     </div>
   );
 }
-
-    

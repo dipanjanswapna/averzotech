@@ -1,8 +1,7 @@
-
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, LogOut, MoreVertical } from 'lucide-react';
+import { Menu, Search, ShoppingCart, User, Heart, LogOut, MoreVertical, Users } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
@@ -247,6 +246,12 @@ export function SiteHeader() {
         },
       ],
     },
+    {
+        name: 'Group Buying',
+        href: '/group-buying',
+        description: 'Get discounts by buying together.',
+        subCategories: []
+    }
   ];
 
   const dashboardLink = getDashboardLink();
