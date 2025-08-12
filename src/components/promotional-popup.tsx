@@ -98,12 +98,12 @@ export function PromotionalPopup() {
       <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-4xl w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 bg-background rounded-lg overflow-hidden">
           <div className="relative h-64 md:h-auto">
-            <Link href={config.link} onClick={() => setIsOpen(false)}>
+            <Link href={config.link || '#'} onClick={() => setIsOpen(false)}>
                 <Image
                 src={config.imageUrl}
                 alt="Promotional Offer"
                 fill
-                className="object-cover"
+                className="object-contain"
                 />
             </Link>
           </div>
