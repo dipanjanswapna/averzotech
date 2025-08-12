@@ -10,7 +10,7 @@ interface OrderSummaryProps {
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({ shippingMethod }) => {
-    const { cart, subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total } = useCart(shippingMethod);
+    const { subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total } = useCart(shippingMethod);
 
     return (
         <Card>

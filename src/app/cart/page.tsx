@@ -14,9 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useCart, AppliedCoupon } from '@/hooks/use-cart';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { OrderSummary } from '@/components/order-summary';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard, taxes } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard } = useCart();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = React.useState('');
   const [giftCardCode, setGiftCardCode] = React.useState('');
@@ -232,32 +233,9 @@ export default function CartPage() {
           </div>
           <div className="lg:col-span-1">
             <div className="border p-4 rounded-lg sticky top-24">
-              <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+              <OrderSummary />
               
-              <div className="space-y-2 mb-4">
-                  <div className="flex justify-between">
-                      <span>Subtotal</span>
-                      <span>৳{subTotal.toFixed(2)}</span>
-                  </div>
-                   <div className="flex justify-between">
-                        <span>Taxes</span>
-                        <span>৳{taxes.toFixed(2)}</span>
-                    </div>
-                  {appliedCoupon && (
-                     <div className="flex justify-between text-green-600 font-semibold">
-                      <span>Discount ({appliedCoupon.code})</span>
-                      <span>- ৳{appliedCoupon.discountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {appliedGiftCard && (
-                     <div className="flex justify-between text-green-600 font-semibold">
-                      <span>Gift Card ({appliedGiftCard.code.substring(0, 4)}...)</span>
-                      <span>- ৳{Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)).toFixed(2)}</span>
-                    </div>
-                  )}
-              </div>
-
-               <div className="mb-4 space-y-4">
+              <div className="my-4 space-y-4">
                     <div>
                         <label htmlFor="coupon" className="text-sm font-medium mb-1 block">Have a Coupon?</label>
                         {appliedCoupon ? (
@@ -296,12 +274,8 @@ export default function CartPage() {
                     </div>
               </div>
 
-
               <Separator className="my-4" />
-              <div className="flex justify-between font-bold text-lg mb-4">
-                <span>Total (excl. shipping)</span>
-                <span>৳{(subTotal + taxes - (appliedCoupon?.discountAmount || 0) - (appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) : 0)).toFixed(2)}</span>
-              </div>
+
               <Button className="w-full" size="lg" asChild>
                 <Link href="/shipping">Continue to Shipping</Link>
               </Button>
