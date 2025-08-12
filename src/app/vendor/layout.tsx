@@ -8,7 +8,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { VendorSidebar } from '@/components/vendor-sidebar';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-
+import { getAuth, signOut } from 'firebase/auth';
+import { app } from '@/lib/firebase';
 
 export default function VendorLayout({
   children,
@@ -18,27 +19,47 @@ export default function VendorLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const auth = getAuth(app);
   
   useEffect(() => {
     if (!loading) {
-      if (!user || user.role !== 'vendor') {
+      if (!user) {
+        // Not logged in, redirect to login
         router.push('/login');
-      } else if (user.status !== 'active') {
-          toast({
-              title: "Approval Pending",
-              description: "Your vendor account has not been approved yet.",
-              variant: "destructive",
+        return;
+      }
+      
+      if (user.role !== 'vendor') {
+        // Not a vendor, redirect to home
+        toast({
+            title: "Access Denied",
+            description: "You do not have permission to access the vendor dashboard.",
+            variant: "destructive",
+        });
+        router.push('/');
+        return;
+      }
+      
+      if (user.status !== 'active') {
+          // Vendor is not active, sign them out and show message
+          signOut(auth).then(() => {
+             toast({
+                title: "Approval Pending",
+                description: "Your vendor account has not been approved yet. You have been logged out.",
+                variant: "destructive",
+                duration: 5000,
+             });
+             router.push('/login');
           });
-          router.push('/');
       }
     }
-  }, [user, loading, router, toast]);
+  }, [user, loading, router, toast, auth]);
 
 
-  if (loading || !user || user.status !== 'active') {
+  if (loading || !user || user.role !== 'vendor' || user.status !== 'active') {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <p>Loading Vendor Dashboard...</p>
+        <p>Verifying vendor access...</p>
       </div>
     );
   }

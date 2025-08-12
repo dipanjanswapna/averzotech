@@ -23,7 +23,11 @@ export default function LoginPage() {
   const db = getFirestore(app);
   const router = useRouter();
 
-  const redirectUser = (role: string) => {
+  const handleLoginSuccess = (role: string, fullName: string) => {
+    toast({
+        title: "Login Successful",
+        description: `Welcome back, ${fullName}!`,
+    });
     if (role === 'admin') {
       router.push('/admin/dashboard');
     } else if (role === 'vendor') {
@@ -47,7 +51,7 @@ export default function LoginPage() {
         const userData = userDoc.data();
         
         if (userData.role === 'vendor' && userData.status !== 'active') {
-          await signOut(auth); // Sign out the user
+          await signOut(auth);
           toast({
             title: "Approval Pending",
             description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
@@ -58,11 +62,8 @@ export default function LoginPage() {
           return;
         }
 
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${userData.fullName}!`,
-        });
-        redirectUser(userData.role);
+        handleLoginSuccess(userData.role, userData.fullName);
+
       } else {
          // This case might happen if user is in Auth but not Firestore
          toast({
@@ -107,11 +108,8 @@ export default function LoginPage() {
           setIsLoading(false);
           return;
         }
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${userData.fullName}!`,
-        });
-        redirectUser(userData.role);
+        handleLoginSuccess(userData.role, userData.fullName);
+
       } else {
         // New user signing in with Google, create a document for them
         const newUser = {
@@ -136,7 +134,7 @@ export default function LoginPage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   }
 

@@ -11,6 +11,7 @@ export interface AppUser {
   email: string | null;
   fullName: string;
   role: 'customer' | 'vendor' | 'admin';
+  status: 'active' | 'pending' | 'suspended';
   photoURL?: string | null;
 }
 
@@ -42,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: firebaseUser.email,
                 fullName: userData.fullName || firebaseUser.displayName || 'User',
                 role: userData.role || 'customer',
+                status: userData.status || 'active',
                 photoURL: userData.photoURL || firebaseUser.photoURL,
               });
             } else {
@@ -51,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 email: firebaseUser.email,
                 fullName: firebaseUser.displayName || 'User',
                 role: 'customer', // default role
+                status: 'active', // default status
                 photoURL: firebaseUser.photoURL,
               });
             }
