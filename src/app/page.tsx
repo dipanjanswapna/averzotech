@@ -51,6 +51,15 @@ interface CategoryCard {
     dataAiHint: string;
 }
 
+interface ExploreItem {
+    url: string;
+    alt: string;
+    dataAiHint: string;
+    title: string;
+    subtitle: string;
+    link: string;
+}
+
 interface FlashSaleItem {
     id: string;
     brand: string;
@@ -85,6 +94,11 @@ interface HomepageContent {
   brands: Brand[];
   deals: Deal[];
   categories: CategoryCard[];
+  exploreSection?: {
+      top: ExploreItem;
+      bottomLeft: ExploreItem;
+      bottomRight: ExploreItem;
+  };
 }
 
 export default function Home() {
@@ -129,6 +143,7 @@ export default function Home() {
             brands: data.brands || [],
             deals: resolvedDeals,
             categories: data.categories || [],
+            exploreSection: data.exploreSection
         });
 
       } else {
@@ -440,6 +455,40 @@ export default function Home() {
             )}
           </div>
         </section>
+
+        {content.exploreSection && (
+          <section className="py-8 md:py-16">
+            <div className="container">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href={content.exploreSection.top.link || '#'} className="md:col-span-2 relative group overflow-hidden rounded-lg">
+                  <Image src={content.exploreSection.top.url} alt={content.exploreSection.top.alt} width={1200} height={600} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-ai-hint={content.exploreSection.top.dataAiHint} />
+                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white p-4 text-center">
+                    <h3 className="text-2xl md:text-4xl font-bold font-headline">{content.exploreSection.top.title}</h3>
+                    <p className="text-sm md:text-lg">{content.exploreSection.top.subtitle}</p>
+                    <Button variant="secondary" className="mt-4">Shop Now</Button>
+                  </div>
+                </Link>
+                 <Link href={content.exploreSection.bottomLeft.link || '#'} className="relative group overflow-hidden rounded-lg">
+                   <Image src={content.exploreSection.bottomLeft.url} alt={content.exploreSection.bottomLeft.alt} width={600} height={600} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-ai-hint={content.exploreSection.bottomLeft.dataAiHint} />
+                   <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white p-4 text-center">
+                    <h3 className="text-2xl md:text-4xl font-bold font-headline">{content.exploreSection.bottomLeft.title}</h3>
+                    <p className="text-sm md:text-lg">{content.exploreSection.bottomLeft.subtitle}</p>
+                    <Button variant="secondary" className="mt-4">Shop Now</Button>
+                  </div>
+                </Link>
+                 <Link href={content.exploreSection.bottomRight.link || '#'} className="relative group overflow-hidden rounded-lg">
+                   <Image src={content.exploreSection.bottomRight.url} alt={content.exploreSection.bottomRight.alt} width={600} height={600} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-ai-hint={content.exploreSection.bottomRight.dataAiHint} />
+                   <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white p-4 text-center">
+                    <h3 className="text-2xl md:text-4xl font-bold font-headline">{content.exploreSection.bottomRight.title}</h3>
+                    <p className="text-sm md:text-lg">{content.exploreSection.bottomRight.subtitle}</p>
+                    <Button variant="secondary" className="mt-4">Shop Now</Button>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
       </main>
       <SiteFooter />
     </div>
