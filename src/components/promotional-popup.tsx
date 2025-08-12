@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Image from 'next/image';
@@ -70,7 +70,7 @@ export function PromotionalPopup() {
               className="w-full h-auto object-contain rounded-lg"
             />
           </Link>
-          <Dialog.Close asChild>
+          <DialogClose asChild>
             <Button
               variant="ghost"
               size="icon"
@@ -79,7 +79,7 @@ export function PromotionalPopup() {
               <X className="h-5 w-5" />
               <span className="sr-only">Close</span>
             </Button>
-          </Dialog.Close>
+          </DialogClose>
         </div>
       </DialogContent>
     </Dialog>
