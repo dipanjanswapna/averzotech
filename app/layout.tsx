@@ -1,14 +1,11 @@
 
-
 import type { Metadata } from 'next';
-import '@/app/globals.css';
+import 'app/globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { CartProvider } from '@/hooks/use-cart';
 import { AuthProvider } from '@/hooks/use-auth';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
-import { CartProvider } from '@/hooks/use-cart';
 
 export const metadata: Metadata = {
   title: 'AVERZO',
@@ -32,9 +29,7 @@ export default function RootLayout({
           <CartProvider>
             <WishlistProvider>
               <div className="pb-16 md:pb-0">
-                <SiteHeader />
                 {children}
-                <SiteFooter />
               </div>
               <MobileBottomNav />
               <Toaster />
