@@ -18,7 +18,7 @@ import { app } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
 
-function ProfileLayoutContent({
+export default function ProfileLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -68,13 +68,6 @@ function ProfileLayoutContent({
   );
 }
 
-export default function ProfileLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <ProfileLayoutContent>{children}</ProfileLayoutContent>
-}
 
 const navItems = [
     { href: '/profile/orders', label: 'My Orders', icon: ShoppingCart },
