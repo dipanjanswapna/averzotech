@@ -23,9 +23,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
-import { addDoc, collection, doc, getDocs, serverTimestamp, updateDoc, writeBatch, query, where } from "firebase/firestore"
-import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
+import { nanoid } from "nanoid"
 
 
 export default function PaymentPage() {
@@ -51,38 +50,25 @@ export default function PaymentPage() {
     const taxes = subTotal * 0.05; // 5% tax
 
     const handlePlaceOrder = async () => {
-        if (!user || cart.length === 0) {
+        if (!user || cart.length === 0 || !shippingInfo) {
             toast({
                 title: "Error",
-                description: "You must be logged in and have items in your cart to place an order.",
+                description: "You must be logged in, have items in your cart, and have provided shipping information to place an order.",
                 variant: "destructive"
             })
             return;
         }
-        if (!shippingInfo) {
-            toast({
-                title: "Shipping Info Missing",
-                description: "Please go back and complete your shipping details.",
-                variant: "destructive"
-            })
-            return;
-        }
+
         setLoading(true);
 
         const orderData = {
             userId: user.uid,
             customerName: shippingInfo.name,
-            createdAt: serverTimestamp(),
-            status: 'Pending',
             items: cart.map(item => ({
                 id: item.id,
                 name: item.name,
-                image: item.images[0] || '',
-                variant: `${item.selectedColor} / ${item.selectedSize}`,
                 price: item.pricing.price,
                 quantity: item.quantity,
-                sku: item.inventory.sku,
-                giftDescription: item.giftWithPurchase?.enabled ? item.giftWithPurchase.description : null,
             })),
             shippingAddress: shippingInfo,
             payment: {
@@ -98,49 +84,24 @@ export default function PaymentPage() {
         };
 
         try {
-            const batch = writeBatch(db);
-
-            const orderRef = doc(collection(db, "orders"));
-            batch.set(orderRef, orderData);
-            
-            if (appliedCoupon) {
-                const couponQuery = query(collection(db, "coupons"), where("code", "==", appliedCoupon.code));
-                const couponSnap = await getDocs(couponQuery);
-                if (!couponSnap.empty) {
-                    const couponDocRef = couponSnap.docs[0].ref;
-                    const newUsedCount = (couponSnap.docs[0].data().used || 0) + 1;
-                    batch.update(couponDocRef, { used: newUsedCount });
-                }
-            }
-            
-            if (appliedGiftCard) {
-                const giftCardQuery = query(collection(db, 'giftCards'), where('code', '==', appliedGiftCard.code));
-                const giftCardSnap = await getDocs(giftCardQuery);
-                if (!giftCardSnap.empty) {
-                    const giftCardDocRef = giftCardSnap.docs[0].ref;
-                    const usedAmount = Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0));
-                    const newBalance = appliedGiftCard.balance - usedAmount;
-                    const newStatus = newBalance > 0 ? 'Active' : 'Used';
-                    batch.update(giftCardDocRef, { currentBalance: newBalance, status: newStatus });
-                }
-            }
-            
-            await batch.commit();
-
-            toast({
-                title: "Order Placed!",
-                description: "Your order has been placed successfully."
+            const tran_id = nanoid();
+            const response = await fetch('/api/payment/initiate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...orderData, tran_id })
             });
-            clearCart();
-            router.push(`/order-confirmation?orderId=${orderRef.id}`);
+
+            const data = await response.json();
+            
+            if (data.status === 'SUCCESS') {
+                window.location.href = data.GatewayPageURL;
+            } else {
+                toast({ title: "Payment Failed", description: "Could not initiate payment session.", variant: "destructive" });
+            }
 
         } catch (error) {
-            console.error("Error placing order: ", error);
-            toast({
-                title: "Order Failed",
-                description: "There was an error placing your order. Please try again.",
-                variant: "destructive"
-            });
+            console.error("Payment initiation error:", error);
+            toast({ title: "Error", description: "Could not connect to payment gateway.", variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -272,7 +233,7 @@ export default function PaymentPage() {
                                 onClick={handlePlaceOrder}
                                 disabled={loading || cart.length === 0}
                             >
-                               {loading ? 'Placing Order...' : `Pay ৳${total.toFixed(2)}`}
+                               {loading ? 'Processing...' : `Pay ৳${total.toFixed(2)}`}
                             </Button>
                         </div>
                     </div>
