@@ -52,7 +52,7 @@ export default function PopupManager() {
       if (docSnap.exists()) {
         const data = docSnap.data() as PopupContent;
         setEnabled(data.enabled);
-        setLink(data.link);
+        setLink(data.link || '');
         setDisplayFrequency(data.displayFrequency || 'session');
         if (data.imageUrl) {
           setImage({ preview: data.imageUrl });
@@ -175,7 +175,7 @@ export default function PopupManager() {
                     </div>
                 )}
                 <div className="flex-1 space-y-2">
-                    <Input id="image-url" placeholder="Or paste image URL" onChange={handleUrlChange} disabled={isLoading} />
+                    <Input id="image-url" placeholder="Or paste image URL" value={image?.preview && !image.file ? image.preview : ""} onChange={handleUrlChange} disabled={isLoading} />
                     <div className="text-center text-xs text-muted-foreground">OR</div>
                     <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-4 text-center">
                         <input type="file" id="image-upload" onChange={handleFileChange} className="hidden" disabled={isLoading} />
