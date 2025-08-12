@@ -110,13 +110,15 @@ export function VirtualTryOn({
   const reset = () => {
     setCapturedImage(null);
     setGeneratedImage(null);
-    setHasCameraPermission(null); // Re-trigger permission check
+    // Don't reset camera permission, let it stay for the session
   };
 
-  // Reset state when dialog is closed
+  // Reset state when dialog is closed, but keep camera permission
   useEffect(() => {
       if (!isOpen) {
-          reset();
+          setCapturedImage(null);
+          setGeneratedImage(null);
+          setIsGenerating(false);
       }
   }, [isOpen]);
 

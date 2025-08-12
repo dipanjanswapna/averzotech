@@ -36,7 +36,7 @@ export async function tryOnProduct(input: VirtualTryOnInput): Promise<string> {
             Ensure the clothing fits naturally on the person.` },
         ],
         config: {
-            responseModalities: ['IMAGE', 'TEXT'],
+            responseModalities: ['IMAGE'],
         },
     });
 
