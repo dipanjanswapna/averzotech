@@ -178,6 +178,43 @@ export default function ProductPage() {
           toast({ title: "Added to Wishlist" });
       }
   }
+  
+  const handleShare = async () => {
+    if (navigator.share && product) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Check out this product: ${product.name}`,
+          url: window.location.href,
+        });
+        toast({
+          title: "Shared successfully!",
+        });
+      } catch (error) {
+        console.error("Share failed:", error);
+        toast({
+          title: "Share failed",
+          description: "Could not share the product.",
+          variant: "destructive",
+        });
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link Copied!",
+          description: "Product link copied to clipboard.",
+        });
+      } catch (err) {
+        console.error("Failed to copy:", err);
+        toast({
+          title: "Failed to copy link",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
 
   if (loading) {
     return (
@@ -315,7 +352,7 @@ export default function ProductPage() {
                 <h1 className="text-2xl font-bold text-foreground">{displayProduct.brand}</h1>
                 <h2 className="text-xl text-muted-foreground">{displayProduct.name}</h2>
               </div>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={handleShare}>
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
