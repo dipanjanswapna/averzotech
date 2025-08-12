@@ -1,12 +1,7 @@
 
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { CartProvider } from '@/hooks/use-cart';
-import { AuthProvider } from '@/hooks/use-auth';
-import { WishlistProvider } from '@/hooks/use-wishlist';
-import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-import { PromotionalPopup } from '@/components/promotional-popup';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'AVERZO',
@@ -26,18 +21,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <PromotionalPopup />
-              <div className="pb-16 md:pb-0">
-                {children}
-              </div>
-              <MobileBottomNav />
-              <Toaster />
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
