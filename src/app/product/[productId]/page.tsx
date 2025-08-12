@@ -34,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import type { Metadata } from 'next';
 
 
 interface Product {
@@ -101,7 +102,7 @@ interface QnA {
 }
 
 
-export default function ProductPage() {
+function ProductPageContent() {
   const params = useParams();
   const productId = params.productId as string;
   const { user } = useAuth();
@@ -386,8 +387,8 @@ export default function ProductPage() {
   }).reverse();
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <SiteHeader />
+    <>
+    <SiteHeader />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-sm text-muted-foreground mb-4">
           <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{product.brand} {product.organization.subcategory}</span>
@@ -685,6 +686,34 @@ export default function ProductPage() {
 
       </main>
       <SiteFooter />
-    </div>
+      </>
   );
+}
+
+export default function ProductDetailsPage() {
+    return (
+        <React.Suspense fallback={<div>Loading...</div>}>
+            <ProductPageContent />
+        </React.Suspense>
+    )
+}
+
+export async function generateMetadata({ params }: { params: { productId: string } }): Promise<Metadata> {
+  try {
+    const productRef = doc(db, 'products', params.productId);
+    const productSnap = await getDoc(productRef);
+    if (productSnap.exists()) {
+      const product = productSnap.data();
+      return {
+        title: `${product.name} by ${product.brand} | AVERZO`,
+        description: product.description,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching metadata:", error);
+  }
+
+  return {
+    title: 'Product Not Found | AVERZO',
+  };
 }

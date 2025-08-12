@@ -32,6 +32,15 @@ export function SiteHeader() {
   const auth = getAuth(app);
   const { toast } = useToast();
   const router = useRouter();
+  
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const searchQuery = formData.get('q') as string;
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  }
 
   const handleLogout = async () => {
     try {
@@ -325,10 +334,10 @@ export function SiteHeader() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-md border border-input p-1 pl-3 flex-1 sm:flex-none">
+             <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-md border border-input p-1 pl-3 flex-1 sm:flex-none">
               <Search className="h-4 w-4 text-muted-foreground" />
-              <Input type="search" placeholder="Search..." className="h-auto w-full sm:w-48 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0" />
-            </div>
+              <Input name="q" type="search" placeholder="Search..." className="h-auto w-full sm:w-48 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0" />
+            </form>
 
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" asChild>
