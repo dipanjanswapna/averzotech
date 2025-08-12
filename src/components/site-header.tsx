@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, MoreVertical } from 'lucide-react';
+import { Menu, Search, ShoppingCart, User, Heart, MoreVertical, LogOut } from 'lucide-react';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,11 +18,38 @@ import { Logo } from '@/components/logo';
 import { Input } from './ui/input';
 import { MegaMenu } from './mega-menu';
 import { ScrollArea, ScrollBar } from './ui/scroll-area';
-import { Avatar, AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Separator } from './ui/separator';
+import { useAuth } from '@/hooks/use-auth';
+import { getAuth, signOut } from 'firebase/auth';
+import { app } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export function SiteHeader() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { user } = useAuth();
+  const auth = getAuth(app);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/');
+    } catch (error) {
+      console.error("Logout Error:", error);
+      toast({
+        title: "Logout Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const categories = [
     { 
@@ -229,16 +256,23 @@ export function SiteHeader() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] flex flex-col">
                     <SheetHeader>
-                        <SheetTitle>Welcome Guest</SheetTitle>
+                        <SheetTitle>{user ? `Welcome, ${user.fullName}` : 'Welcome Guest'}</SheetTitle>
                     </SheetHeader>
                     <Separator className="my-4" />
                     <ScrollArea className="flex-1 -mx-6">
                       <div className="px-6">
                         <nav className="flex flex-col space-y-2">
-                            <>
-                              <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
-                              <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
-                            </>
+                            {user ? (
+                                <>
+                                  <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/profile">My Profile</Link></Button>
+                                  <Button variant="outline" onClick={() => { handleLogout(); setIsSheetOpen(false); }}>Logout</Button>
+                                </>
+                            ) : (
+                                <>
+                                  <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
+                                  <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
+                                </>
+                            )}
                         </nav>
                         <Separator className="my-4" />
                         <div className="flex flex-col space-y-1">
@@ -284,11 +318,23 @@ export function SiteHeader() {
                   <DropdownMenuTrigger asChild>
                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
+                            <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
                             <AvatarFallback><User className='h-5 w-5' /></AvatarFallback>
                         </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {user ? (
+                         <>
+                            <DropdownMenuLabel>{user.fullName}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
+                            {user.role === 'admin' && <DropdownMenuItem asChild><Link href="/admin/dashboard">Admin Dashboard</Link></DropdownMenuItem>}
+                            {user.role === 'vendor' && <DropdownMenuItem asChild><Link href="/vendor/dashboard">Vendor Dashboard</Link></DropdownMenuItem>}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500"><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
+                         </>
+                    ) : (
                         <>
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
@@ -299,6 +345,7 @@ export function SiteHeader() {
                               <Link href="/register">Sign Up</Link>
                             </DropdownMenuItem>
                         </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
             </div>

@@ -32,6 +32,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Product {
   id: string;
@@ -52,15 +53,18 @@ interface Product {
 
 
 export default function VendorProductsPage() {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     const fetchProducts = async () => {
       setLoading(true);
       try {
         const productsCollection = collection(db, 'products');
-        const productSnapshot = await getDocs(productsCollection);
+        const q = query(productsCollection, where("vendor", "==", user.fullName));
+        const productSnapshot = await getDocs(q);
         const productList = productSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -73,7 +77,7 @@ export default function VendorProductsPage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [user]);
 
   return (
     <div className="space-y-8">

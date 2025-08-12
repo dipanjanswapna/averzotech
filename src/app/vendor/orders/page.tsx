@@ -29,6 +29,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Order {
     id: string;
@@ -41,18 +42,34 @@ interface Order {
 
 interface Product {
   id: string;
+  vendor: string;
 }
 
 export default function VendorOrdersPage() {
+    const { user } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchVendorOrders = async () => {
+            if (!user) {
+                setLoading(false);
+                return;
+            };
             setLoading(true);
-            // This component is now simplified as we don't have a logged-in vendor
-            // We'll just show all orders for demonstration.
             try {
+                // 1. Get all products for the current vendor
+                const productsQuery = query(collection(db, 'products'), where('vendor', '==', user.fullName));
+                const productsSnapshot = await getDocs(productsQuery);
+                const vendorProductIds = productsSnapshot.docs.map(doc => doc.id);
+
+                if (vendorProductIds.length === 0) {
+                    setOrders([]);
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. Get all orders
                 const ordersCollection = collection(db, 'orders');
                 const qOrders = query(ordersCollection, orderBy('createdAt', 'desc'));
                 const orderSnapshot = await getDocs(qOrders);
@@ -60,7 +77,13 @@ export default function VendorOrdersPage() {
                     id: doc.id,
                     ...doc.data()
                 } as Order));
-                setOrders(allOrders);
+
+                // 3. Filter orders that contain vendor's products
+                const vendorOrders = allOrders.filter(order => 
+                    order.items.some(item => vendorProductIds.includes(item.id))
+                );
+
+                setOrders(vendorOrders);
             } catch (error) {
                 console.error("Error fetching orders: ", error);
             } finally {
@@ -68,7 +91,7 @@ export default function VendorOrdersPage() {
             }
         };
         fetchVendorOrders();
-    }, []);
+    }, [user]);
 
     const getStatusBadgeVariant = (status: string) => {
         switch (status) {

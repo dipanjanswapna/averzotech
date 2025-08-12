@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -25,12 +24,6 @@ export default function ProfileLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-
-  React.useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
 
   if (loading || !user) {
     return (
