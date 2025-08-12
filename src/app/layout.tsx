@@ -6,6 +6,7 @@ import { CartProvider } from '@/hooks/use-cart';
 import { AuthProvider } from '@/hooks/use-auth';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
+import { PromotionalPopup } from '@/components/promotional-popup';
 
 export const metadata: Metadata = {
   title: 'AVERZO',
@@ -31,6 +32,7 @@ export default function RootLayout({
               <div className="pb-16 md:pb-0">
                 {children}
               </div>
+              <PromotionalPopup />
               <MobileBottomNav />
               <Toaster />
             </WishlistProvider>
