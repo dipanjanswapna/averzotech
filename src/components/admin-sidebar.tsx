@@ -80,14 +80,14 @@ export function AdminSidebar({ user }: { user: any }) {
   ]
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar>
       <SidebarHeader>
         <div className='flex items-center gap-2'>
             <Logo />
-            <div className="flex-1 group-data-[collapsible=icon]:hidden">
+            <div className="flex-1 group-data-[state=expanded]:block hidden">
                 <span className="text-lg font-bold">Admin</span>
             </div>
-            <SidebarTrigger className='group-data-[collapsible=icon]:hidden' />
+            <SidebarTrigger className='group-data-[state=expanded]:block hidden' />
         </div>
       </SidebarHeader>
 
@@ -106,7 +106,7 @@ export function AdminSidebar({ user }: { user: any }) {
                 </Link>
             </SidebarMenuItem>
           ))}
-           <Accordion type="single" collapsible defaultValue="site-management" className="w-full group-data-[collapsible=icon]:hidden">
+           <Accordion type="single" collapsible defaultValue="site-management" className="w-full group-data-[state=collapsed]:hidden">
             <AccordionItem value="site-management" className="border-none">
                 <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
                     <LayoutDashboard />
@@ -132,7 +132,7 @@ export function AdminSidebar({ user }: { user: any }) {
                 </AccordionContent>
             </AccordionItem>
           </Accordion>
-           <div className="hidden group-data-[collapsible=icon]:block">
+           <div className="hidden group-data-[state=collapsed]:block">
                  <SidebarMenuItem>
                     <Link href="/admin/site-management/home">
                         <SidebarMenuButton 
@@ -155,7 +155,7 @@ export function AdminSidebar({ user }: { user: any }) {
                         <AvatarImage src={user?.photoURL} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 group-data-[collapsible=icon]:hidden">
+                    <div className="flex-1 group-data-[state=expanded]:block hidden">
                         <p className="text-sm font-semibold">{user?.fullName}</p>
                         <p className="text-xs text-muted-foreground">{user?.email}</p>
                     </div>

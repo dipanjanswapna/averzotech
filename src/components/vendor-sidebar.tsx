@@ -61,14 +61,14 @@ export function VendorSidebar({ user }: { user: any }) {
   ];
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar>
       <SidebarHeader>
         <div className='flex items-center gap-2'>
             <Logo />
-            <div className="flex-1 group-data-[collapsible=icon]:hidden">
+            <div className="flex-1 group-data-[state=expanded]:block hidden">
                 <span className="text-lg font-bold">Vendor Panel</span>
             </div>
-            <SidebarTrigger className='group-data-[collapsible=icon]:hidden' />
+            <SidebarTrigger className='group-data-[state=expanded]:block hidden' />
         </div>
       </SidebarHeader>
 
@@ -98,7 +98,7 @@ export function VendorSidebar({ user }: { user: any }) {
                         <AvatarImage src={user?.photoURL} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 group-data-[collapsible=icon]:hidden">
+                    <div className="flex-1 group-data-[state=expanded]:block hidden">
                         <p className="text-sm font-semibold">{user?.fullName}</p>
                         <p className="text-xs text-muted-foreground">{user?.email}</p>
                     </div>
