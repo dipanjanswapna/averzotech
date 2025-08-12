@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     const data = {
-        total_amount: total,
+        total_amount: Math.round(total),
         currency: 'BDT',
         tran_id: tran_id,
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`,
@@ -33,16 +33,19 @@ export async function POST(req: NextRequest) {
         cus_name: name,
         cus_email: email,
         cus_add1: fullAddress,
+        cus_add2: 'N/A',
         cus_city: 'Dhaka',
         cus_state: 'Dhaka',
         cus_postcode: '1000',
         cus_country: 'Bangladesh',
         cus_phone: phone,
+        cus_fax: 'N/A',
         ship_name: name,
         ship_add1: fullAddress,
+        ship_add2: 'N/A',
         ship_city: 'Dhaka',
         ship_state: 'Dhaka',
-        ship_postcode: '1000',
+        ship_postcode: 1000,
         ship_country: 'Bangladesh',
     };
 
@@ -67,3 +70,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'An error occurred during payment initiation.' }, { status: 500 });
     }
 }
+
