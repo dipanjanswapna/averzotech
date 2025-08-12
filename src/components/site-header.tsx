@@ -2,8 +2,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, LogOut, MoreVertical, Users } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Menu, Search, ShoppingCart, User, Heart, MoreVertical } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,16 +18,11 @@ import { Logo } from '@/components/logo';
 import { Input } from './ui/input';
 import { MegaMenu } from './mega-menu';
 import { ScrollArea, ScrollBar } from './ui/scroll-area';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
-
 
 export function SiteHeader() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { toast } = useToast();
-  const router = useRouter();
 
   const categories = [
     { 
