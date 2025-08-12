@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -28,6 +27,13 @@ export interface ShippingInfo {
     method: string;
 }
 
+export interface ShippingMethod {
+    name: string;
+    estimatedDelivery: string;
+    fee: number;
+}
+
+
 // Define the structure of a product in the cart
 interface Product {
     id: string;
@@ -44,6 +50,8 @@ interface Product {
       discount?: number;
     };
     shipping: {
+        courier?: { enabled: boolean; fee: number };
+        express?: { enabled: boolean; fee: number };
         estimatedDelivery: string;
     }
     inventory: {
@@ -76,6 +84,7 @@ interface CartContextType {
   setShippingInfo: (info: ShippingInfo) => void;
   shippingFee: number;
   taxes: number;
+  availableShippingMethods: ShippingMethod[];
 }
 
 // Create the context
@@ -200,6 +209,34 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
    const setShippingInfo = (info: ShippingInfo) => {
     setShippingInfoState(info);
   };
+  
+  const availableShippingMethods: ShippingMethod[] = React.useMemo(() => {
+        const methods: ShippingMethod[] = [];
+        let totalCourierFee = 0;
+        let totalExpressFee = 0;
+        let courierEnabled = false;
+        let expressEnabled = false;
+
+        cart.forEach(item => {
+            if (item.shipping?.courier?.enabled) {
+                courierEnabled = true;
+                totalCourierFee += (item.shipping.courier.fee || 0);
+            }
+             if (item.shipping?.express?.enabled) {
+                expressEnabled = true;
+                totalExpressFee += (item.shipping.express.fee || 0);
+            }
+        });
+        
+        if (courierEnabled) {
+            methods.push({ name: 'Standard Courier', estimatedDelivery: '5-7 business days', fee: totalCourierFee });
+        }
+        if (expressEnabled) {
+             methods.push({ name: 'Express Delivery', estimatedDelivery: '2-3 business days', fee: totalExpressFee });
+        }
+
+        return methods;
+    }, [cart]);
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
@@ -227,7 +264,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const subTotalAfterCoupon = subTotal - discountAmount;
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
   
-  const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
+  const shippingFee = React.useMemo(() => {
+    if (!shippingInfo?.method) return 0;
+    const selectedMethod = availableShippingMethods.find(m => m.name === shippingInfo.method);
+    return selectedMethod?.fee || 0;
+  }, [shippingInfo, availableShippingMethods]);
+
   const taxes = subTotal * 0.05;
   const total = subTotalAfterCoupon - giftCardAmount + shippingFee + taxes;
 
@@ -250,7 +292,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         shippingFee,
         taxes,
         shippingInfo,
-        setShippingInfo
+        setShippingInfo,
+        availableShippingMethods
     }}>
       {children}
     </CartContext.Provider>
