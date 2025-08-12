@@ -26,13 +26,14 @@ import * as React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { useParams } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
 
 
 interface Product {
@@ -73,24 +74,54 @@ interface Product {
     images: string[];
     createdAt: any;
     updatedAt: any;
-    // The following properties are not in the DB yet, so we'll make them optional
-    rating?: number;
-    reviewsCount?: number;
-    reviews?: any[];
-    qna?: any[];
     recommendedProducts?: any[];
   }
+
+interface Review {
+    id: string;
+    rating: number;
+    title: string;
+    comment: string;
+    authorName: string;
+    authorId: string;
+    createdAt: any;
+}
+
+interface QnA {
+    id: string;
+    question: string;
+    answer?: string;
+    questionAuthorName: string;
+    questionAuthorId: string;
+    questionCreatedAt: any;
+}
 
 
 export default function ProductPage() {
   const params = useParams();
   const productId = params.productId as string;
+  const { user } = useAuth();
   const [product, setProduct] = React.useState<Product | null>(null);
+  const [reviews, setReviews] = React.useState<Review[]>([]);
+  const [qna, setQna] = React.useState<QnA[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  
+  // Product options state
   const [quantity, setQuantity] = React.useState(1);
   const [selectedSize, setSelectedSize] = React.useState<string>('');
   const [selectedColor, setSelectedColor] = React.useState<{name: string, hex: string} | null>(null);
+  
+  // Review form state
+  const [newReviewRating, setNewReviewRating] = React.useState(5);
+  const [newReviewTitle, setNewReviewTitle] = React.useState("");
+  const [newReviewComment, setNewReviewComment] = React.useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = React.useState(false);
+
+  // QnA form state
+  const [newQuestion, setNewQuestion] = React.useState("");
+  const [isSubmittingQuestion, setIsSubmittingQuestion] = React.useState(false);
+  
   const { addToCart } = useCart();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
@@ -99,51 +130,51 @@ export default function ProductPage() {
 
   React.useEffect(() => {
     if (productId) {
-      const fetchProduct = async () => {
+      const fetchProductData = async () => {
         setLoading(true);
         try {
-          const docRef = doc(db, 'products', productId);
-          const docSnap = await getDoc(docRef);
+          const productRef = doc(db, 'products', productId);
+          const reviewsRef = collection(db, 'products', productId, 'reviews');
+          const qnaRef = collection(db, 'products', productId, 'qna');
+          
+          const productSnap = await getDoc(productRef);
 
-          if (docSnap.exists()) {
-            const productData = { id: docSnap.id, ...docSnap.data() } as Product;
+          if (productSnap.exists()) {
+            const productData = { id: productSnap.id, ...productSnap.data() } as Product;
             setProduct(productData);
-            if (productData.variants.sizes.length > 0) {
-              setSelectedSize(productData.variants.sizes[0]);
-            }
-            if (productData.variants.colors.length > 0) {
-              setSelectedColor(productData.variants.colors[0]);
-            }
+            if (productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
+            if (productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
+
+            const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'));
+            const reviewsSnap = await getDocs(reviewsQuery);
+            setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
+            
+            const qnaQuery = query(qnaRef, orderBy('questionCreatedAt', 'desc'));
+            const qnaSnap = await getDocs(qnaQuery);
+            setQna(qnaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnA)));
+
           } else {
             setError('Product not found.');
           }
         } catch (err) {
-          setError('Failed to fetch product.');
+          setError('Failed to fetch product data.');
           console.error(err);
         } finally {
           setLoading(false);
         }
       };
-      fetchProduct();
+      fetchProductData();
     }
   }, [productId]);
   
   const handleAddToCart = () => {
     if (!product) return;
     if (!selectedSize && product.variants.sizes.length > 0) {
-        toast({
-            title: "Selection required",
-            description: "Please select a size.",
-            variant: "destructive"
-        });
+        toast({ title: "Selection required", description: "Please select a size.", variant: "destructive" });
         return;
     }
      if (!selectedColor && product.variants.colors.length > 0) {
-        toast({
-            title: "Selection required",
-            description: "Please select a color.",
-            variant: "destructive"
-        });
+        toast({ title: "Selection required", description: "Please select a color.", variant: "destructive" });
         return;
     }
     const productToAdd = {
@@ -152,24 +183,16 @@ export default function ProductPage() {
         selectedColor: selectedColor?.name || 'N/A',
     };
     addToCart(productToAdd, quantity);
-    toast({
-        title: "Added to Cart",
-        description: `${product.name} has been added to your cart.`
-    })
+    toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` })
   }
 
   const handleWishlistToggle = () => {
       if (!product) return;
-
        const productForWishlist: WishlistItem = {
-            id: product.id,
-            name: product.name,
-            brand: product.brand,
-            pricing: product.pricing,
-            images: product.images,
+            id: product.id, name: product.name, brand: product.brand,
+            pricing: product.pricing, images: product.images,
             inventory: { availability: product.inventory.availability }
        };
-
       if (isInWishlist) {
           removeFromWishlist(product.id);
           toast({ title: "Removed from Wishlist" });
@@ -179,39 +202,90 @@ export default function ProductPage() {
       }
   }
   
-  const handleShare = async () => {
-    const copyToClipboard = async () => {
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-            toast({
-                title: "Link Copied!",
-                description: "Product link copied to clipboard.",
-            });
-        } catch (err) {
-            toast({
-                title: "Failed to copy link",
-                variant: "destructive",
-            });
-        }
-    }
-
-    if (navigator.share && product) {
-      try {
-        await navigator.share({
-          title: product.name,
-          text: `Check out this product: ${product.name}`,
-          url: window.location.href,
-        });
-      } catch (error) {
-        // If share fails (e.g., permission denied), fall back to copying the link without logging an error
-        await copyToClipboard();
+  const handleShare = () => {
+      if (navigator.share && product) {
+          navigator.share({
+              title: product.name,
+              text: `Check out this product: ${product.name}`,
+              url: window.location.href,
+          }).catch(() => { // Fallback to clipboard
+              navigator.clipboard.writeText(window.location.href);
+              toast({ title: "Link Copied!", description: "Product link copied to clipboard." });
+          });
+      } else {
+          navigator.clipboard.writeText(window.location.href);
+          toast({ title: "Link Copied!", description: "Product link copied to clipboard." });
       }
-    } else {
-      await copyToClipboard();
-    }
   };
 
+  const handleReviewSubmit = async () => {
+      if (!user) {
+          toast({ title: "Login Required", description: "Please log in to submit a review.", variant: "destructive" });
+          return;
+      }
+      if (!newReviewTitle.trim() || !newReviewComment.trim()) {
+          toast({ title: "Incomplete Review", description: "Please provide a title and a comment.", variant: "destructive" });
+          return;
+      }
+      setIsSubmittingReview(true);
+      try {
+          const reviewsRef = collection(db, 'products', productId, 'reviews');
+          await addDoc(reviewsRef, {
+              rating: newReviewRating,
+              title: newReviewTitle,
+              comment: newReviewComment,
+              authorId: user.uid,
+              authorName: user.fullName,
+              createdAt: serverTimestamp()
+          });
+          // Refresh reviews
+          const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'));
+          const reviewsSnap = await getDocs(reviewsQuery);
+          setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
 
+          toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
+          setNewReviewTitle("");
+          setNewReviewComment("");
+          setNewReviewRating(5);
+      } catch (error) {
+           toast({ title: "Submission Failed", description: "Could not submit your review.", variant: "destructive" });
+      } finally {
+          setIsSubmittingReview(false);
+      }
+  }
+
+  const handleQuestionSubmit = async () => {
+    if (!user) {
+          toast({ title: "Login Required", description: "Please log in to ask a question.", variant: "destructive" });
+          return;
+      }
+      if (!newQuestion.trim()) {
+          toast({ title: "Question Required", description: "Please type your question.", variant: "destructive" });
+          return;
+      }
+      setIsSubmittingQuestion(true);
+      try {
+          const qnaRef = collection(db, 'products', productId, 'qna');
+          await addDoc(qnaRef, {
+              question: newQuestion,
+              questionAuthorId: user.uid,
+              questionAuthorName: user.fullName,
+              questionCreatedAt: serverTimestamp(),
+              answer: ""
+          });
+          const qnaQuery = query(qnaRef, orderBy('questionCreatedAt', 'desc'));
+          const qnaSnap = await getDocs(qnaQuery);
+          setQna(qnaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnA)));
+          setNewQuestion("");
+          toast({ title: "Question Submitted!", description: "Your question has been posted." });
+
+      } catch (error) {
+          toast({ title: "Submission Failed", description: "Could not post your question.", variant: "destructive" });
+      } finally {
+          setIsSubmittingQuestion(false);
+      }
+  }
+  
   if (loading) {
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -265,56 +339,30 @@ export default function ProductPage() {
       return null;
   }
 
-  // Use mock data for parts not in DB yet
-  const displayProduct = {
-      ...product,
-      images: product.images.map(img => ({ src: img, alt: product.name, dataAiHint: 'product image'})),
-      offers: product.offers ? product.offers.split('\n') : [],
-      rating: product.rating || 4.5,
-      reviewsCount: product.reviewsCount || 123,
-      reviews: product.reviews || [],
-      qna: product.qna || [],
-      recommendedProducts: product.recommendedProducts || [],
-  };
-
-  const ratingDistribution = [
-    { star: 5, percentage: 60, count: 1740 },
-    { star: 4, percentage: 25, count: 725 },
-    { star: 3, percentage: 8, count: 232 },
-    { star: 2, percentage: 3, count: 87 },
-    { star: 1, percentage: 4, count: 116 },
-  ];
+  const averageRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
+  const ratingDistribution = [1, 2, 3, 4, 5].map(star => {
+      const count = reviews.filter(r => r.rating === star).length;
+      return { star, count, percentage: reviews.length > 0 ? (count / reviews.length) * 100 : 0 };
+  }).reverse();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-sm text-muted-foreground mb-4">
-          <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{displayProduct.brand} {product.organization.subcategory}</span>
+          <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{product.brand} {product.organization.subcategory}</span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery and Video */}
           <div>
               <div className="grid gap-4">
                   <div className="group relative">
-                      <Carousel
-                          className="w-full"
-                          opts={{
-                              loop: true,
-                          }}
-                      >
+                      <Carousel className="w-full" opts={{ loop: true, }}>
                           <CarouselContent>
-                              {displayProduct.images.map((image, index) => (
+                              {product.images.map((image, index) => (
                                   <CarouselItem key={index}>
                                       <div className="aspect-[3/4] overflow-hidden rounded-lg">
-                                          <Image
-                                              src={image.src}
-                                              alt={image.alt}
-                                              width={600}
-                                              height={800}
-                                              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                                              data-ai-hint={image.dataAiHint}
-                                          />
+                                          <Image src={image} alt={product.name} width={600} height={800} className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110" data-ai-hint={'product image'} priority={index === 0}/>
                                       </div>
                                   </CarouselItem>
                               ))}
@@ -323,30 +371,20 @@ export default function ProductPage() {
                           <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
                       </Carousel>
                   </div>
-
-                  {/* Product Video */}
-                  {displayProduct.videoUrl && (
+                  {product.videoUrl && (
                     <div className="aspect-video overflow-hidden rounded-lg">
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            src={displayProduct.videoUrl.replace("watch?v=", "embed/")}
-                            title="Product Video"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                        ></iframe>
+                        <iframe width="100%" height="100%" src={product.videoUrl.replace("watch?v=", "embed/")} title="Product Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                     </div>
                   )}
               </div>
           </div>
 
-
           {/* Product Info */}
           <div>
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{displayProduct.brand}</h1>
-                <h2 className="text-xl text-muted-foreground">{displayProduct.name}</h2>
+                <h1 className="text-2xl font-bold text-foreground">{product.brand}</h1>
+                <h2 className="text-xl text-muted-foreground">{product.name}</h2>
               </div>
               <Button variant="ghost" size="icon" onClick={handleShare}>
                 <Share2 className="h-5 w-5" />
@@ -355,27 +393,26 @@ export default function ProductPage() {
             
             <div className="flex items-center mt-2">
               <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-              <span className="ml-1 font-bold">{displayProduct.rating}</span>
+              <span className="ml-1 font-bold">{averageRating.toFixed(1)}</span>
               <Separator orientation="vertical" className="h-4 mx-2" />
-              <span className="text-muted-foreground">{displayProduct.reviewsCount.toLocaleString()} Ratings</span>
+              <span className="text-muted-foreground">{reviews.length} Ratings</span>
             </div>
 
             <Separator className="my-4" />
 
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">৳{displayProduct.pricing.price}</span>
-                {displayProduct.pricing.comparePrice && <span className="text-muted-foreground line-through">MRP ৳{displayProduct.pricing.comparePrice}</span>}
-                {displayProduct.pricing.discount && <span className="text-orange-500 font-bold">({displayProduct.pricing.discount}% OFF)</span>}
+                <span className="text-2xl font-bold">৳{product.pricing.price}</span>
+                {product.pricing.comparePrice && <span className="text-muted-foreground line-through">MRP ৳{product.pricing.comparePrice}</span>}
+                {product.pricing.discount && <span className="text-orange-500 font-bold">({product.pricing.discount}% OFF)</span>}
             </div>
             <p className="text-sm text-green-600 font-semibold">inclusive of all taxes</p>
-            <Badge variant="outline" className="mt-2">{displayProduct.inventory.availability}</Badge>
-            <p className="text-sm text-muted-foreground mt-1">SKU: {displayProduct.inventory.sku}</p>
+            <Badge variant="outline" className="mt-2">{product.inventory.availability}</Badge>
+            <p className="text-sm text-muted-foreground mt-1">SKU: {product.inventory.sku}</p>
 
-            
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-foreground mb-2">COLOR</h3>
               <div className="flex flex-wrap gap-2">
-                {displayProduct.variants.colors.map((color) => (
+                {product.variants.colors.map((color) => (
                    <Button key={color.name} variant="outline" size="icon" className={`rounded-full border-2 ${selectedColor?.name === color.name ? 'border-primary' : 'border-border'}`} onClick={() => setSelectedColor(color)}>
                      <span className="block w-6 h-6 rounded-full" style={{ backgroundColor: color.hex }} />
                    </Button>
@@ -389,7 +426,7 @@ export default function ProductPage() {
                 <Link href="#" className="text-sm font-semibold text-primary">SIZE CHART &gt;</Link>
               </div>
               <div className="flex flex-wrap gap-2">
-                {displayProduct.variants.sizes.map((size) => (
+                {product.variants.sizes.map((size) => (
                   <Button key={size} variant={selectedSize === size ? "default" : "outline"} className="rounded-full w-14 h-14 border-2" onClick={() => setSelectedSize(size)}>
                     {size}
                   </Button>
@@ -430,8 +467,8 @@ export default function ProductPage() {
             </div>
             
             <div className="text-sm mt-4 space-y-1">
-                <p>Estimated Delivery: <span className="font-semibold">{displayProduct.shipping.estimatedDelivery}</span></p>
-                <p>Shipping: <span className="font-semibold">{displayProduct.shipping.deliveryFee === 0 ? 'Free Shipping' : `৳${displayProduct.shipping.deliveryFee}`}</span></p>
+                <p>Estimated Delivery: <span className="font-semibold">{product.shipping.estimatedDelivery}</span></p>
+                <p>Shipping: <span className="font-semibold">{product.shipping.deliveryFee === 0 ? 'Free Shipping' : `৳${product.shipping.deliveryFee}`}</span></p>
             </div>
 
              <div className="mt-4 flex gap-4">
@@ -456,18 +493,18 @@ export default function ProductPage() {
                 <AccordionTrigger className="font-semibold uppercase text-sm">Best Offers <Tag className="inline h-5 w-5" /></AccordionTrigger>
                 <AccordionContent>
                   <ul className="list-disc pl-5 text-sm space-y-2">
-                      {displayProduct.offers.map((offer, index) => <li key={index}>{offer}</li>)}
+                      {(product.offers || "").split('\n').map((offer, index) => offer.trim() && <li key={index}>{offer}</li>)}
                   </ul>
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
                 <AccordionTrigger className="font-semibold uppercase text-sm">Product Details</AccordionTrigger>
                 <AccordionContent className="space-y-2 text-sm">
-                    <p>{displayProduct.description}</p>
+                    <p>{product.description}</p>
                     <div>
                         <h4 className="font-semibold mb-1">Specifications:</h4>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                            {displayProduct.specifications.map(spec => (
+                            {product.specifications.map(spec => (
                                 <React.Fragment key={spec.label}>
                                     <div className="text-muted-foreground">{spec.label}</div>
                                     <div>{spec.value}</div>
@@ -504,10 +541,10 @@ export default function ProductPage() {
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="md:col-span-1">
                      <div className="flex items-center gap-2">
-                         <h3 className="text-4xl font-bold">{displayProduct.rating}</h3>
+                         <h3 className="text-4xl font-bold">{averageRating.toFixed(1)}</h3>
                          <Star className="w-8 h-8 text-yellow-400 fill-yellow-400"/>
                      </div>
-                     <p className="text-muted-foreground mt-1">{displayProduct.reviewsCount.toLocaleString()} Ratings</p>
+                     <p className="text-muted-foreground mt-1">{reviews.length} Ratings</p>
                      <div className="mt-4 space-y-1">
                          {ratingDistribution.map(item => (
                              <div key={item.star} className="flex items-center gap-2 text-sm">
@@ -517,20 +554,29 @@ export default function ProductPage() {
                              </div>
                          ))}
                      </div>
+                      <div className="mt-6">
+                        <h3 className="font-semibold mb-2">Write a Review</h3>
+                        <div className="flex mb-2">
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <Star key={star} className={`w-6 h-6 cursor-pointer ${star <= newReviewRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} onClick={() => setNewReviewRating(star)} />
+                            ))}
+                        </div>
+                        <Input placeholder="Review Title" value={newReviewTitle} onChange={e => setNewReviewTitle(e.target.value)} className="mb-2" />
+                        <Textarea placeholder="Your detailed review..." value={newReviewComment} onChange={e => setNewReviewComment(e.target.value)} />
+                        <Button className="mt-2" onClick={handleReviewSubmit} disabled={isSubmittingReview}>
+                            {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                        </Button>
+                    </div>
                  </div>
                  <div className="md:col-span-2">
-                    {displayProduct.reviews.map(review => (
+                    {reviews.map(review => (
                         <div key={review.id} className="border-b py-4">
                             <div className="flex items-center mb-1">
                                 {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}/>)}
                                 <h4 className="font-semibold ml-2">{review.title}</h4>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">By {review.author} on {review.date}</p>
-                            <p className="text-sm">{review.content}</p>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                <button className="flex items-center gap-1 hover:text-primary"><ThumbsUp className="w-3 h-3"/> Helpful ({review.helpful})</button>
-                                <button className="flex items-center gap-1 hover:text-primary"><ThumbsDown className="w-3 h-3"/> Unhelpful ({review.unhelpful})</button>
-                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">By {review.authorName} on {new Date(review.createdAt?.seconds * 1000).toLocaleDateString()}</p>
+                            <p className="text-sm">{review.comment}</p>
                         </div>
                     ))}
                  </div>
@@ -539,49 +585,50 @@ export default function ProductPage() {
         
         <div className="mt-12">
             <h2 className="text-2xl font-bold mb-4">Questions &amp; Answers</h2>
-            {displayProduct.qna.map(item => (
+            {qna.map(item => (
                 <div key={item.id} className="border-b py-4 text-sm">
                     <p className="font-semibold">Q: {item.question}</p>
-                    <p className="mt-1 text-muted-foreground">A: {item.answer}</p>
+                    {item.answer ? <p className="mt-1 text-muted-foreground">A: {item.answer}</p> : <p className="mt-1 text-muted-foreground text-xs">A: Answer pending.</p>}
                 </div>
             ))}
             <div className="mt-4">
                 <h3 className="font-semibold mb-2">Have a question?</h3>
-                <Textarea placeholder="Type your question here..."/>
-                <Button className="mt-2">Post Question</Button>
+                <Textarea placeholder="Type your question here..." value={newQuestion} onChange={e => setNewQuestion(e.target.value)} />
+                <Button className="mt-2" onClick={handleQuestionSubmit} disabled={isSubmittingQuestion}>
+                  {isSubmittingQuestion ? "Posting..." : "Post Question"}
+                </Button>
             </div>
         </div>
 
-        {/* Recommended Products */}
-        <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
-                {displayProduct.recommendedProducts.map(item => (
-                    <Link href={`/product/${item.id}`} key={item.id} className="group block">
-                        <div className="relative overflow-hidden rounded-lg">
-                            <Image
-                                src={item.src}
-                                alt={item.name}
-                                width={400}
-                                height={500}
-                                className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                                data-ai-hint={item.dataAiHint}
-                            />
-                        </div>
-                        <div className="pt-2">
-                            <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
-                            <p className="text-xs text-muted-foreground truncate">{item.name}</p>
-                            <p className="text-sm font-semibold mt-1 text-foreground">
-                                ৳ {item.price}
-                            </p>
-                        </div>
-                    </Link>
-                ))}
+        {product.recommendedProducts && product.recommendedProducts.length > 0 && (
+            <div className="mt-12">
+                <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
+                    {product.recommendedProducts.map((item: any) => (
+                        <Link href={`/product/${item.id}`} key={item.id} className="group block">
+                            <div className="relative overflow-hidden rounded-lg">
+                                <Image
+                                    src={item.src}
+                                    alt={item.name}
+                                    width={400}
+                                    height={500}
+                                    className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                    data-ai-hint={item.dataAiHint}
+                                />
+                            </div>
+                            <div className="pt-2">
+                                <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
+                                <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                <p className="text-sm font-semibold mt-1 text-foreground">
+                                    ৳ {item.price}
+                                </p>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
             </div>
-        </div>
+        )}
 
-
-        {/* Live Chat */}
         <div className="fixed bottom-6 right-6">
             <Button className="rounded-full h-14 w-14 shadow-lg">
                 <MessageCircle className="h-7 w-7" />
@@ -593,3 +640,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    
