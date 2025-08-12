@@ -33,6 +33,7 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
+import { cn } from '@/lib/utils';
 
 interface Product {
   id: string;
