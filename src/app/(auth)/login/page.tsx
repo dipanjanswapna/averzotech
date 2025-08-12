@@ -34,7 +34,7 @@ export default function LoginPage() {
             router.push('/vendor/dashboard');
             break;
         default:
-            router.push('/');
+            router.push('/profile');
             break;
     }
   };
@@ -99,6 +99,7 @@ export default function LoginPage() {
             fullName: user.displayName || 'Google User',
             email: user.email,
             role: 'customer', // Default role for Google sign-in
+            createdAt: new Date(),
         };
         await setDoc(userDocRef, newUser);
         toast({
