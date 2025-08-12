@@ -20,61 +20,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { useCart } from "@/hooks/use-cart"
-import { useAuth } from "@/hooks/use-auth"
-import { collection, getDocs } from "firebase/firestore"
-import { db } from "@/lib/firebase"
 
-
-interface SavedAddress {
-    id: string;
-    name: string;
-    streetAddress: string;
-    division: string;
-    district: string;
-    upazila: string;
-    phone: string;
-    isDefault: boolean;
-}
 
 export default function ShippingPage() {
     const { cart, subTotal, appliedCoupon, total, setShippingInfo } = useCart();
-    const { user, loading: authLoading } = useAuth();
-    const [savedAddresses, setSavedAddresses] = React.useState<SavedAddress[]>([]);
-    const [loadingAddresses, setLoadingAddresses] = React.useState(true);
-    const [selectedAddressId, setSelectedAddressId] = React.useState<string | undefined>();
     const [shippingMethod, setShippingMethod] = React.useState<string | undefined>('standard');
-    const [activeTab, setActiveTab] = React.useState("saved-address");
     const { toast } = useToast();
     const router = useRouter();
 
-    React.useEffect(() => {
-        if (!user) return;
-        
-        const fetchAddresses = async () => {
-            setLoadingAddresses(true);
-            const addressesCol = collection(db, 'users', user.uid, 'addresses');
-            const addressSnapshot = await getDocs(addressesCol);
-            const addressList = addressSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedAddress));
-            setSavedAddresses(addressList);
-
-            // Pre-select default address or the first one
-            const defaultAddress = addressList.find(addr => addr.isDefault) || addressList[0];
-            if (defaultAddress) {
-                setSelectedAddressId(defaultAddress.id);
-            }
-            setLoadingAddresses(false);
-        };
-        
-        fetchAddresses();
-
-    }, [user]);
-
-
-    const isSelectionComplete = selectedAddressId && shippingMethod;
+    const isSelectionComplete = shippingMethod;
 
     const shippingFee = subTotal === 0 ? 0 : (shippingMethod === 'express' ? 250 : 120);
     const taxes = subTotal * 0.05; // 5% tax
@@ -84,33 +41,24 @@ export default function ShippingPage() {
         if (!isSelectionComplete) {
             toast({
                 title: "Incomplete Information",
-                description: "Please select a shipping address and shipping method to continue.",
+                description: "Please select a shipping method to continue.",
                 variant: "destructive",
             });
             return;
         } 
         
-        const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
+        // This would normally come from a form
+        const shippingDetails = {
+            name: "Guest User",
+            email: 'guest@example.com',
+            phone: "0123456789",
+            fullAddress: `Please provide address at checkout`,
+            method: shippingMethod === 'express' ? 'Express Shipping (1-3 Days)' : 'Standard Shipping (7-10 Days)',
+        };
 
-        if (selectedAddress) {
-             setShippingInfo({
-                name: selectedAddress.name,
-                email: user?.email || 'customer@example.com',
-                phone: selectedAddress.phone,
-                fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.upazila}, ${selectedAddress.district}, ${selectedAddress.division}`,
-                method: shippingMethod === 'express' ? 'Express Shipping (1-3 Days)' : 'Standard Shipping (7-10 Days)',
-            });
-            router.push('/payment');
-        } else {
-             toast({
-                title: "Address not found",
-                description: "The selected address could not be found. Please try again.",
-                variant: "destructive",
-            });
-        }
+        setShippingInfo(shippingDetails);
+        router.push('/payment');
     }
-
-    const fullAddressString = (addr: SavedAddress) => `${addr.streetAddress}, ${addr.upazila}, ${addr.district}, ${addr.division}`;
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -130,33 +78,12 @@ export default function ShippingPage() {
 
                         <div className="space-y-8">
                             <Card>
-                                <CardContent className="p-6">
-                                    <h2 className="text-2xl font-headline mb-4">Shipping Address</h2>
-                                     {loadingAddresses ? (
-                                        <p>Loading addresses...</p>
-                                     ) : savedAddresses.length > 0 ? (
-                                        <RadioGroup value={selectedAddressId} onValueChange={setSelectedAddressId} className="space-y-4">
-                                            {savedAddresses.map((address) => (
-                                                <Label key={address.id} htmlFor={address.id} className={cn("flex items-start justify-between rounded-lg border p-4 cursor-pointer transition-colors", selectedAddressId === address.id && "bg-secondary border-primary")}>
-                                                    <div className="flex items-start space-x-4">
-                                                        <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
-                                                        <div>
-                                                            <p className="font-semibold">{address.name}</p>
-                                                            <p className="text-sm text-muted-foreground">{fullAddressString(address)}</p>
-                                                            <p className="text-sm text-muted-foreground">Phone: {address.phone}</p>
-                                                        </div>
-                                                    </div>
-                                                </Label>
-                                            ))}
-                                        </RadioGroup>
-                                     ) : (
-                                        <div className="text-center py-8">
-                                            <p className="text-muted-foreground mb-4">You have no saved addresses.</p>
-                                            <Button asChild>
-                                                <Link href="/profile/addresses"><PlusCircle className="mr-2 h-4 w-4"/> Add Address</Link>
-                                            </Button>
-                                        </div>
-                                     )}
+                                <CardContent className="p-6 text-center">
+                                     <h2 className="text-xl font-headline mb-4">Continue as Guest</h2>
+                                     <p className="text-muted-foreground mb-4">You can add your address on the payment page.</p>
+                                     <Button asChild>
+                                        <Link href="/login">Login for faster checkout</Link>
+                                     </Button>
                                 </CardContent>
                             </Card>
                             
@@ -271,5 +198,3 @@ export default function ShippingPage() {
         </div>
     )
 }
-
-    

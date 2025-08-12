@@ -32,7 +32,6 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/hooks/use-auth';
 
 interface Product {
   id: string;
@@ -55,18 +54,13 @@ interface Product {
 export default function VendorProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (!user) return;
       setLoading(true);
       try {
         const productsCollection = collection(db, 'products');
-        // Query products where the vendor field matches the logged-in user's name
-        // In a real-world app, you'd likely use the user's UID for more reliability
-        const q = query(productsCollection, where("vendor", "==", user.fullName));
-        const productSnapshot = await getDocs(q);
+        const productSnapshot = await getDocs(productsCollection);
         const productList = productSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -78,11 +72,8 @@ export default function VendorProductsPage() {
         setLoading(false);
       }
     };
-
-    if(user) {
-      fetchProducts();
-    }
-  }, [user]);
+    fetchProducts();
+  }, []);
 
   return (
     <div className="space-y-8">

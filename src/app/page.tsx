@@ -118,6 +118,7 @@ export default function Home() {
         const data = docSnap.data();
         // Fetch full product details for deals
         const dealPromises = (data.deals || []).map(async (deal: any) => {
+            if (!deal.id) return null;
             const productRef = doc(db, 'products', deal.id);
             const productSnap = await getDoc(productRef);
             if (productSnap.exists()) {

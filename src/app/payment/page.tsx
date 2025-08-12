@@ -22,7 +22,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
-import { useAuth } from "@/hooks/use-auth"
 import { addDoc, collection, doc, getDocs, serverTimestamp, updateDoc, writeBatch, query, where } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useToast } from "@/hooks/use-toast"
@@ -30,7 +29,6 @@ import { useToast } from "@/hooks/use-toast"
 
 export default function PaymentPage() {
     const router = useRouter();
-    const { user } = useAuth();
     const { cart, clearCart, subTotal, total, appliedCoupon, appliedGiftCard, shippingInfo } = useCart();
     const { toast } = useToast();
     const [paymentMethod, setPaymentMethod] = React.useState('card');
@@ -51,10 +49,10 @@ export default function PaymentPage() {
     const taxes = subTotal * 0.05; // 5% tax
 
     const handlePlaceOrder = async () => {
-        if (!user || cart.length === 0) {
+        if (cart.length === 0) {
             toast({
                 title: "Error",
-                description: "You must be logged in and have items in your cart to place an order.",
+                description: "Your cart is empty.",
                 variant: "destructive"
             })
             return;
@@ -70,7 +68,7 @@ export default function PaymentPage() {
         setLoading(true);
 
         const orderData = {
-            userId: user.uid,
+            userId: null, // No user logged in
             customerName: shippingInfo.name,
             createdAt: serverTimestamp(),
             status: 'Pending',

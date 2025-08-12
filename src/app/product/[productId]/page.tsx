@@ -33,7 +33,6 @@ import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { VirtualTryOn } from '@/components/virtual-try-on';
-import { useAuth } from '@/hooks/use-auth';
 import { manageGroupBuy } from '@/ai/flows/group-buy-flow';
 import { useParams } from 'next/navigation';
 import { SizeChartDialog } from '@/components/size-chart-dialog';
@@ -131,7 +130,6 @@ function ProductPageContent() {
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
-  const { user } = useAuth();
   const [isGroupCreating, setIsGroupCreating] = React.useState(false);
   
   // Review form state
@@ -139,8 +137,6 @@ function ProductPageContent() {
   const [reviewTitle, setReviewTitle] = React.useState('');
   const [reviewComment, setReviewComment] = React.useState('');
   const [isSubmittingReview, setIsSubmittingReview] = React.useState(false);
-  const [canUserReview, setCanUserReview] = React.useState(false);
-  const [checkingPurchase, setCheckingPurchase] = React.useState(true);
   
   // Q&A form state
   const [newQuestion, setNewQuestion] = React.useState('');
@@ -195,43 +191,6 @@ function ProductPageContent() {
     }
   }, [productId]);
   
-    React.useEffect(() => {
-        const checkPurchase = async () => {
-            if (!user || !product) {
-                setCheckingPurchase(false);
-                return;
-            }
-            setCheckingPurchase(true);
-            try {
-                const ordersRef = collection(db, 'orders');
-                const q = query(
-                    ordersRef, 
-                    where("userId", "==", user.uid), 
-                    where("status", "==", "Fulfilled")
-                );
-                const querySnapshot = await getDocs(q);
-                
-                let hasPurchased = false;
-                querySnapshot.forEach((doc) => {
-                    const order = doc.data();
-                    if (order.items.some((item: any) => item.id === product.id)) {
-                        hasPurchased = true;
-                    }
-                });
-                
-                setCanUserReview(hasPurchased);
-            } catch (err) {
-                console.error("Error checking purchase history:", err);
-            } finally {
-                setCheckingPurchase(false);
-            }
-        };
-
-        if(!loading) {
-            checkPurchase();
-        }
-    }, [user, product, loading]);
-
   const handleAddToCart = () => {
     if (!product) return;
     if (!selectedSize && product.variants.sizes.length > 0) {
@@ -304,106 +263,16 @@ function ProductPageContent() {
   };
 
   const handleStartGroupBuy = async () => {
-      if(!user) {
-          toast({ title: "Login Required", description: "Please log in to start a group buy.", variant: "destructive"});
-          return;
-      }
-      if(!product) return;
-      setIsGroupCreating(true);
-      try {
-          await manageGroupBuy({ action: 'create', productId: product.id, userId: user.uid });
-          toast({
-              title: "Group Started!",
-              description: "You've successfully started a new group buy. Share it with your friends!",
-          });
-      } catch (error: any) {
-          console.error("Failed to start group buy:", error);
-          toast({ title: "Error", description: error.message || "Could not start the group buy.", variant: "destructive"});
-      } finally {
-          setIsGroupCreating(false);
-      }
+      // This functionality requires a logged-in user.
+      toast({ title: "Login Required", description: "Please log in to start a group buy.", variant: "destructive"});
   }
 
   const handleReviewSubmit = async () => {
-      if (!user) { toast({ title: "Please log in to submit a review.", variant: "destructive"}); return; }
-      if (!product) return;
-      if (!canUserReview) { toast({ title: "Purchase Required", description: "You must purchase this item to leave a review.", variant: "destructive"}); return;}
-      if (reviewRating === 0 || !reviewComment) { toast({ title: "Please provide a rating and a comment.", variant: "destructive"}); return; }
-      
-      setIsSubmittingReview(true);
-      const productRef = doc(db, 'products', product.id);
-      const reviewsRef = collection(productRef, 'reviews');
-      
-      try {
-          await runTransaction(db, async (transaction) => {
-              const productDoc = await transaction.get(productRef);
-              if (!productDoc.exists()) { throw "Product does not exist!"; }
-              
-              const currentSummary = productDoc.data().ratingSummary || { average: 0, count: 0 };
-              const newCount = currentSummary.count + 1;
-              const newAverage = ((currentSummary.average * currentSummary.count) + reviewRating) / newCount;
-
-              transaction.update(productRef, {
-                  ratingSummary: {
-                      average: parseFloat(newAverage.toFixed(2)),
-                      count: newCount
-                  }
-              });
-
-              const newReviewRef = doc(reviewsRef);
-              transaction.set(newReviewRef, {
-                userId: user.uid,
-                userName: user.fullName,
-                rating: reviewRating,
-                title: reviewTitle,
-                comment: reviewComment,
-                createdAt: serverTimestamp(),
-                helpful: 0,
-                unhelpful: 0
-              });
-          });
-
-          toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
-          // Optimistically update UI
-          setReviews(prev => [{
-              id: 'new', rating: reviewRating, title: reviewTitle, comment: reviewComment,
-              userName: user.fullName, createdAt: new Date(), helpful: 0, unhelpful: 0
-          }, ...prev]);
-          setReviewRating(0); setReviewTitle(''); setReviewComment('');
-
-      } catch (e) {
-          console.error("Review submission failed: ", e);
-          toast({ title: "Submission Failed", description: "There was an error submitting your review.", variant: "destructive"});
-      } finally {
-          setIsSubmittingReview(false);
-      }
+      toast({ title: "Please log in to submit a review.", variant: "destructive"});
   }
 
   const handleQuestionSubmit = async () => {
-      if (!user) { toast({ title: "Please log in to ask a question.", variant: "destructive"}); return; }
-      if (!product || !newQuestion.trim()) { toast({ title: "Please type a question.", variant: "destructive"}); return; }
-
-      setIsSubmittingQuestion(true);
-      const qnaRef = collection(db, 'products', product.id, 'qna');
-      try {
-        await addDoc(qnaRef, {
-            question: newQuestion,
-            questionBy: user.fullName,
-            userId: user.uid,
-            createdAt: serverTimestamp(),
-            answer: null,
-        });
-        setQna(prev => [{
-            id: 'new-q', question: newQuestion, questionBy: user.fullName, createdAt: new Date()
-        }, ...prev]);
-        setNewQuestion('');
-        toast({ title: "Question Posted!", description: "Your question has been submitted."});
-      } catch (e) {
-        console.error("Question submission failed: ", e);
-        toast({ title: "Failed to post question.", variant: "destructive"});
-      } finally {
-        setIsSubmittingQuestion(false);
-      }
+      toast({ title: "Please log in to ask a question.", variant: "destructive"});
   }
 
   if (loading) {
@@ -694,7 +563,7 @@ function ProductPageContent() {
                      
                      <div className="border p-4 rounded-lg mt-6">
                         <h3 className="font-semibold mb-2">Write a review</h3>
-                        <fieldset disabled={!canUserReview || isSubmittingReview || checkingPurchase}>
+                        <fieldset disabled={isSubmittingReview}>
                             <div className="flex items-center gap-1 mb-4">
                                 {[1, 2, 3, 4, 5].map(star => (
                                     <Star key={star} className={`w-6 h-6 cursor-pointer ${reviewRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} onClick={() => setReviewRating(star)} />
@@ -702,16 +571,11 @@ function ProductPageContent() {
                             </div>
                             <Input placeholder="Review Title (optional)" className="mb-2" value={reviewTitle} onChange={e => setReviewTitle(e.target.value)} />
                             <Textarea placeholder="Share your thoughts..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} />
-                            <Button className="mt-2 w-full" onClick={handleReviewSubmit} disabled={isSubmittingReview || checkingPurchase}>
+                            <Button className="mt-2 w-full" onClick={handleReviewSubmit} disabled={isSubmittingReview}>
                                 {isSubmittingReview ? "Submitting..." : "Submit Review"}
                             </Button>
                         </fieldset>
-                        {!checkingPurchase && !canUserReview && (
-                            <p className="text-xs text-center text-muted-foreground mt-2">You must purchase this item to leave a review.</p>
-                        )}
-                        {checkingPurchase && (
-                             <p className="text-xs text-center text-muted-foreground mt-2">Checking your purchase history...</p>
-                        )}
+                        <p className="text-xs text-center text-muted-foreground mt-2">Login and purchase this item to leave a review.</p>
                      </div>
                  </div>
                  <div className="md:col-span-2">

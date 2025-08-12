@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -121,7 +122,7 @@ export default function GroupBuyingPage() {
                                             <Progress value={(group.currentCount / group.targetCount) * 100} className="w-full mt-1 h-2" />
                                         </div>
                                         <Button className="w-full" asChild>
-                                            <Link href={`/product/${group.productId}`}>Join Group <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                                            <Link href={`/login`}>Join Group <ArrowRight className="ml-2 h-4 w-4" /></Link>
                                         </Button>
                                     </CardFooter>
                                 </Card>
