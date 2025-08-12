@@ -32,6 +32,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
+import { useParams } from 'next/navigation';
 
 
 interface Product {
@@ -81,7 +82,9 @@ interface Product {
   }
 
 
-export default function ProductPage({ params }: { params: { productId: string } }) {
+export default function ProductPage() {
+  const params = useParams();
+  const productId = params.productId as string;
   const [product, setProduct] = React.useState<Product | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -95,11 +98,11 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
   React.useEffect(() => {
-    if (params.productId) {
+    if (productId) {
       const fetchProduct = async () => {
         setLoading(true);
         try {
-          const docRef = doc(db, 'products', params.productId);
+          const docRef = doc(db, 'products', productId);
           const docSnap = await getDoc(docRef);
 
           if (docSnap.exists()) {
@@ -123,7 +126,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
       };
       fetchProduct();
     }
-  }, [params.productId]);
+  }, [productId]);
   
   const handleAddToCart = () => {
     if (!product) return;
