@@ -256,7 +256,6 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-
         <div className="flex items-center gap-4">
            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
@@ -316,13 +315,6 @@ export function SiteHeader() {
               <Logo />
             </Link>
         </div>
-
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            {categories.map((category) => (
-            <MegaMenu key={category.name} category={category} />
-            ))}
-        </nav>
-
 
         <div className="flex flex-1 items-center justify-end gap-2">
              <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2 rounded-md border border-input p-1 pl-3 w-full max-w-xs">
@@ -400,6 +392,24 @@ export function SiteHeader() {
             </DropdownMenu>
         </div>
       </div>
+      <div className="h-10 items-center border-t flex">
+          <div className="container">
+            <ScrollArea className="md:hidden -mx-4">
+              <nav className="flex items-center gap-6 text-sm font-medium px-4">
+                 {categories.map((category) => (
+                    <Link key={category.name} href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
+                ))}
+              </nav>
+              <ScrollBar orientation="horizontal" className="invisible" />
+            </ScrollArea>
+
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+              {categories.map((category) => (
+                <MegaMenu key={category.name} category={category} />
+              ))}
+            </nav>
+          </div>
+       </div>
     </header>
   );
 }
