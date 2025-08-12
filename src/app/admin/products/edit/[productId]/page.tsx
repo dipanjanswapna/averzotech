@@ -42,6 +42,7 @@ import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const initialFilterCategories = [
     { 
@@ -137,6 +138,12 @@ export default function EditProductPage() {
     const [hasGift, setHasGift] = useState(false);
     const [giftDescription, setGiftDescription] = useState('');
 
+    // Group Buy
+    const [groupBuyActive, setGroupBuyActive] = useState(false);
+    const [groupBuyPrice, setGroupBuyPrice] = useState('');
+    const [groupBuyTarget, setGroupBuyTarget] = useState('');
+
+
     // Organization
     const [status, setStatus] = useState('draft');
     const [selectedCategory, setSelectedCategory] = useState('');
@@ -180,13 +187,16 @@ export default function EditProductPage() {
                     setVendor(data.vendor || '');
                     setImages((data.images || []).map((url: string) => ({ url })));
                     setVideoUrl(data.videoUrl || '');
-                    setColors(data.variants?.colors || [{ name: '', hex: '#000000' }]);
-                    setSizes(data.variants?.sizes || ['']);
-                    setSpecifications(data.specifications || [{ label: '', value: '' }]);
+                    setColors(data.variants?.colors?.length > 0 ? data.variants.colors : [{ name: '', hex: '#000000' }]);
+                    setSizes(data.variants?.sizes?.length > 0 ? data.variants.sizes : ['']);
+                    setSpecifications(data.specifications?.length > 0 ? data.specifications : [{ label: '', value: '' }]);
                     setOffers(data.offers || '');
                     setReturnPolicy(data.returnPolicy || '');
                     setHasGift(data.giftWithPurchase?.isActive || false);
                     setGiftDescription(data.giftWithPurchase?.description || '');
+                    setGroupBuyActive(data.groupBuy?.isActive || false);
+                    setGroupBuyPrice(String(data.groupBuy?.groupPrice || ''));
+                    setGroupBuyTarget(String(data.groupBuy?.targetCount || ''));
                     setStatus(data.organization?.status || 'draft');
                     setSelectedCategory(data.organization?.category || '');
                     setSelectedGroup(data.organization?.group || '');
@@ -362,6 +372,11 @@ export default function EditProductPage() {
                 giftWithPurchase: {
                     isActive: hasGift,
                     description: giftDescription,
+                },
+                groupBuy: {
+                    isActive: groupBuyActive,
+                    groupPrice: parseFloat(groupBuyPrice) || 0,
+                    targetCount: parseInt(groupBuyTarget, 10) || 0,
                 },
                 organization: {
                     status,
@@ -605,24 +620,45 @@ export default function EditProductPage() {
               </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-                <CardTitle>Gift with Purchase</CardTitle>
-                <CardDescription>Attach a free gift to this product.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                    <Switch id="has-gift" checked={hasGift} onCheckedChange={setHasGift} disabled={isLoading} />
-                    <Label htmlFor="has-gift">Enable Gift with Purchase</Label>
-                </div>
-                {hasGift && (
-                    <div className="space-y-2">
-                        <Label htmlFor="gift-description">Gift Description</Label>
-                        <Input id="gift-description" placeholder="e.g. Free Key-ring" value={giftDescription} onChange={(e) => setGiftDescription(e.target.value)} disabled={isLoading} />
+           <Card>
+                <CardHeader>
+                    <CardTitle>Special Features</CardTitle>
+                    <CardDescription>Enable features like gifts or group buying.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="p-4 border rounded-md space-y-4">
+                        <div className="flex items-center space-x-2">
+                            <Switch id="has-gift" checked={hasGift} onCheckedChange={setHasGift} disabled={isLoading} />
+                            <Label htmlFor="has-gift">Enable Gift with Purchase</Label>
+                        </div>
+                        {hasGift && (
+                            <div className="space-y-2 pl-6">
+                                <Label htmlFor="gift-description">Gift Description</Label>
+                                <Input id="gift-description" placeholder="e.g. Free Key-ring" value={giftDescription} onChange={(e) => setGiftDescription(e.target.value)} disabled={isLoading} />
+                            </div>
+                        )}
                     </div>
-                )}
-            </CardContent>
-          </Card>
+                     <div className="p-4 border rounded-md space-y-4">
+                        <div className="flex items-center space-x-2">
+                             <Switch id="group-buy" checked={groupBuyActive} onCheckedChange={setGroupBuyActive} disabled={isLoading} />
+                            <Label htmlFor="group-buy">Enable Group Buy</Label>
+                        </div>
+                        {groupBuyActive && (
+                            <div className="grid grid-cols-2 gap-4 pl-6">
+                                 <div className="space-y-2">
+                                    <Label htmlFor="group-price">Group Price (৳)</Label>
+                                    <Input id="group-price" type="number" placeholder="999" value={groupBuyPrice} onChange={e => setGroupBuyPrice(e.target.value)} disabled={isLoading} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="group-target">Target Count</Label>
+                                    <Input id="group-target" type="number" placeholder="10" value={groupBuyTarget} onChange={e => setGroupBuyTarget(e.target.value)} disabled={isLoading}/>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
         </div>
 
         <div className="lg:col-span-1 space-y-8 sticky top-8">
@@ -799,5 +835,3 @@ export default function EditProductPage() {
     </div>
   );
 }
-
-    
