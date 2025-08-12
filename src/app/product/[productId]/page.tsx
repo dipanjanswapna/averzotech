@@ -180,6 +180,22 @@ export default function ProductPage() {
   }
   
   const handleShare = async () => {
+    const copyToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            toast({
+                title: "Link Copied!",
+                description: "Product link copied to clipboard.",
+            });
+        } catch (err) {
+            console.error("Failed to copy:", err);
+            toast({
+                title: "Failed to copy link",
+                variant: "destructive",
+            });
+        }
+    }
+
     if (navigator.share && product) {
       try {
         await navigator.share({
@@ -191,27 +207,12 @@ export default function ProductPage() {
           title: "Shared successfully!",
         });
       } catch (error) {
+        // If share fails, fall back to copying the link
         console.error("Share failed:", error);
-        toast({
-          title: "Share failed",
-          description: "Could not share the product.",
-          variant: "destructive",
-        });
+        await copyToClipboard();
       }
     } else {
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "Link Copied!",
-          description: "Product link copied to clipboard.",
-        });
-      } catch (err) {
-        console.error("Failed to copy:", err);
-        toast({
-          title: "Failed to copy link",
-          variant: "destructive",
-        });
-      }
+      await copyToClipboard();
     }
   };
 
@@ -597,3 +598,5 @@ export default function ProductPage() {
     </div>
   );
 }
+
+    
