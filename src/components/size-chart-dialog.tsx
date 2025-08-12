@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -11,9 +12,10 @@ import Image from 'next/image';
 
 interface SizeChartDialogProps {
   children: React.ReactNode;
+  sizeChartUrl: string;
 }
 
-export function SizeChartDialog({ children }: SizeChartDialogProps) {
+export function SizeChartDialog({ children, sizeChartUrl }: SizeChartDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -23,7 +25,7 @@ export function SizeChartDialog({ children }: SizeChartDialogProps) {
         </DialogHeader>
         <div className="py-4">
           <Image
-            src="https://placehold.co/800x600.png"
+            src={sizeChartUrl || "https://placehold.co/800x600.png"}
             alt="Size Chart"
             width={800}
             height={600}

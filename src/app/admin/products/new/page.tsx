@@ -119,6 +119,7 @@ export default function NewProductPage() {
     const [images, setImages] = useState<ImageObject[]>([]);
     const [imageUrlInput, setImageUrlInput] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
+    const [sizeChartImage, setSizeChartImage] = useState<ImageObject | null>(null);
     
     // Variants
     const [colors, setColors] = useState([{ name: '', hex: '#000000' }]);
@@ -189,6 +190,16 @@ export default function NewProductPage() {
             })
         }
     }
+
+    const handleSizeChartFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          setSizeChartImage({
+              file: file,
+              url: URL.createObjectURL(file)
+          });
+        }
+      };
 
     const handleRemoveImage = (index: number) => {
       setImages(prev => prev.filter((_, i) => i !== index));
@@ -295,6 +306,13 @@ export default function NewProductPage() {
                 })
             );
 
+            let sizeChartUrl = '';
+            if (sizeChartImage?.file) {
+                const storageRef = ref(storage, `size_charts/${Date.now()}-${sizeChartImage.file.name}`);
+                await uploadBytes(storageRef, sizeChartImage.file);
+                sizeChartUrl = await getDownloadURL(storageRef);
+            }
+
             // 2. Prepare product data object
             const productData = {
                 name: productName,
@@ -325,6 +343,7 @@ export default function NewProductPage() {
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
                     tags,
+                    sizeChartUrl,
                 },
                 pricing: {
                     price: parseFloat(price) || 0,
@@ -710,6 +729,15 @@ export default function NewProductPage() {
                           ))}
                       </div>
                   </div>
+                  <div className="space-y-2">
+                        <Label htmlFor="size-chart-image">Size Chart Image (Optional)</Label>
+                        <Input id="size-chart-image" type="file" onChange={handleSizeChartFileChange} disabled={isLoading} />
+                        {sizeChartImage?.url && (
+                            <div className="mt-2">
+                                <Image src={sizeChartImage.url} alt="Size Chart Preview" width={80} height={80} className="rounded-md object-cover" />
+                            </div>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
             <Card>

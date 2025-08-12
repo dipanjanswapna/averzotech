@@ -122,6 +122,7 @@ export default function EditProductPage() {
     const [images, setImages] = useState<ImageObject[]>([]);
     const [imageUrlInput, setImageUrlInput] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
+    const [sizeChartImage, setSizeChartImage] = useState<ImageObject | null>(null);
     
     // Variants
     const [colors, setColors] = useState([{ name: '', hex: '#000000' }]);
@@ -187,6 +188,9 @@ export default function EditProductPage() {
                     setVendor(data.vendor || '');
                     setImages((data.images || []).map((url: string) => ({ url })));
                     setVideoUrl(data.videoUrl || '');
+                    if (data.organization?.sizeChartUrl) {
+                        setSizeChartImage({ url: data.organization.sizeChartUrl });
+                    }
                     setColors(data.variants?.colors?.length > 0 ? data.variants.colors : [{ name: '', hex: '#000000' }]);
                     setSizes(data.variants?.sizes?.length > 0 ? data.variants.sizes : ['']);
                     setSpecifications(data.specifications?.length > 0 ? data.specifications : [{ label: '', value: '' }]);
@@ -249,6 +253,16 @@ export default function EditProductPage() {
             })
         }
     }
+
+    const handleSizeChartFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          setSizeChartImage({
+              file: file,
+              url: URL.createObjectURL(file)
+          });
+        }
+      };
 
     const handleRemoveImage = (index: number) => {
       setImages(prev => prev.filter((_, i) => i !== index));
@@ -355,6 +369,13 @@ export default function EditProductPage() {
                 })
             );
 
+            let sizeChartUrl = sizeChartImage?.url || '';
+            if (sizeChartImage?.file) {
+                const storageRef = ref(storage, `size_charts/${Date.now()}-${sizeChartImage.file.name}`);
+                await uploadBytes(storageRef, sizeChartImage.file);
+                sizeChartUrl = await getDownloadURL(storageRef);
+            }
+
             const productData = {
                 name: productName,
                 description,
@@ -384,6 +405,7 @@ export default function EditProductPage() {
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
                     tags,
+                    sizeChartUrl,
                 },
                 pricing: {
                     price: parseFloat(price) || 0,
@@ -768,6 +790,15 @@ export default function EditProductPage() {
                           ))}
                       </div>
                   </div>
+                  <div className="space-y-2">
+                        <Label htmlFor="size-chart-image">Size Chart Image (Optional)</Label>
+                        <Input id="size-chart-image" type="file" onChange={handleSizeChartFileChange} disabled={isLoading} />
+                        {sizeChartImage?.url && (
+                            <div className="mt-2">
+                                <Image src={sizeChartImage.url} alt="Size Chart Preview" width={80} height={80} className="rounded-md object-cover" />
+                            </div>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
             <Card>

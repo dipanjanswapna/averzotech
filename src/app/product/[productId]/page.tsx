@@ -64,6 +64,7 @@ interface Product {
         group: string;
         subcategory: string;
         tags: string[];
+        sizeChartUrl?: string;
     };
     variants: {
         colors: { name: string; hex: string }[];
@@ -588,9 +589,11 @@ export default function ProductPage() {
             <div className="mt-6">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-semibold text-foreground">SELECT SIZE</h3>
-                 <SizeChartDialog>
-                  <span className="text-sm font-semibold text-primary cursor-pointer">SIZE CHART &gt;</span>
-                </SizeChartDialog>
+                 {product.organization.sizeChartUrl && (
+                    <SizeChartDialog sizeChartUrl={product.organization.sizeChartUrl}>
+                        <span className="text-sm font-semibold text-primary cursor-pointer">SIZE CHART &gt;</span>
+                    </SizeChartDialog>
+                 )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {product.variants.sizes.map((size) => (
@@ -771,4 +774,3 @@ export default function ProductPage() {
 }
 
     
-
