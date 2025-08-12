@@ -3,8 +3,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import {
   Carousel,
   CarouselContent,
@@ -182,7 +180,6 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <SiteHeader />
       <main className="flex-grow">
         <section className="relative w-full">
           {loading ? (
@@ -439,7 +436,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <SiteFooter />
     </div>
   );
 }
@@ -506,3 +502,5 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
+
+    

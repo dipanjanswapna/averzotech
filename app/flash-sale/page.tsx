@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Filter, Bell, X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Collapsible,
   CollapsibleContent,
