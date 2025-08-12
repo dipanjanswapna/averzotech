@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         hostname: 'fabrilife.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.yellowclothing.net',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
