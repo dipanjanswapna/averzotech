@@ -38,7 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -58,7 +58,7 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     try {
       const campaignsCollection = collection(db, 'campaigns');
@@ -75,12 +75,12 @@ export default function CampaignsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
 
   useEffect(() => {
     fetchCampaigns();
-  }, [toast]);
+  }, [fetchCampaigns]);
 
   const handleDeleteCampaign = async (campaignId: string) => {
     try {
@@ -134,7 +134,7 @@ export default function CampaignsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/admin/campaigns/create">
+          <Link href="/admin/campaigns/new">
             <PlusCircle className="mr-2 h-4 w-4" /> Create Campaign
           </Link>
         </Button>

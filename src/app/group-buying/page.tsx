@@ -13,6 +13,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { manageGroupBuy, GroupBuy } from '@/ai/flows/group-buy-flow';
+import { useAuth } from '@/hooks/use-auth';
 
 const LoadingSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -37,6 +38,7 @@ const LoadingSkeleton = () => (
 );
 
 export default function GroupBuyingPage() {
+    const { user } = useAuth();
     const [activeGroups, setActiveGroups] = useState<GroupBuy[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -122,7 +124,7 @@ export default function GroupBuyingPage() {
                                             <Progress value={(group.currentCount / group.targetCount) * 100} className="w-full mt-1 h-2" />
                                         </div>
                                         <Button className="w-full" asChild>
-                                            <Link href={`/login`}>Join Group <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                                            <Link href={user ? `/product/${group.productId}` : `/login?redirect=/group-buying`}>Join Group <ArrowRight className="ml-2 h-4 w-4" /></Link>
                                         </Button>
                                     </CardFooter>
                                 </Card>
