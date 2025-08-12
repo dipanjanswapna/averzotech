@@ -29,6 +29,7 @@ import { Separator } from './ui/separator';
 export function SiteHeader() {
   const { user } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const auth = getAuth(app);
   const { toast } = useToast();
   const router = useRouter();
@@ -39,6 +40,7 @@ export function SiteHeader() {
     const searchQuery = formData.get('q') as string;
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false); // Close search bar on mobile after search
     }
   }
 
@@ -314,13 +316,25 @@ export function SiteHeader() {
             <Link href="/">
               <Logo />
             </Link>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                 <ShoppingCart className="h-5 w-5" />
-              </Button>
+             <div className="flex items-center gap-2">
+                <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Search className="h-5 w-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="top" className="p-4">
+                        <form onSubmit={handleSearch} className="flex gap-2">
+                            <Input name="q" placeholder="Search for products, brands and more" className="flex-1" />
+                            <Button type="submit">Search</Button>
+                        </form>
+                    </SheetContent>
+                </Sheet>
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href="/cart">
+                        <ShoppingCart className="h-5 w-5" />
+                    </Link>
+                </Button>
             </div>
         </div>
 
