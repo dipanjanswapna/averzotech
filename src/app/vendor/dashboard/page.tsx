@@ -37,12 +37,12 @@ export default function VendorDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) return;
+    if (authLoading || !user) return;
 
     const fetchData = async () => {
       setLoading(true);
       try {
+        const db = getFirestore(app);
         // 1. Get all product IDs for the current vendor
         const productsRef = collection(db, 'products');
         const qProducts = query(productsRef, where("vendor", "==", user.fullName));

@@ -58,7 +58,6 @@ export function VendorSidebar({ user }: { user: any }) {
     { href: '/vendor/dashboard', label: 'Dashboard', icon: Home },
     { href: '/vendor/products', label: 'Products', icon: Package },
     { href: '/vendor/orders', label: 'Orders', icon: ShoppingCart },
-    { href: '/vendor/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -79,7 +78,7 @@ export function VendorSidebar({ user }: { user: any }) {
             <SidebarMenuItem key={item.label}>
                 <Link href={item.href}>
                     <SidebarMenuButton 
-                        isActive={pathname.startsWith(item.href)}
+                        isActive={pathname === item.href}
                         tooltip={{ children: item.label }}
                     >
                         <item.icon />

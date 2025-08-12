@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Pencil, Eye, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +30,21 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, getFirestore, doc, deleteDoc } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Product {
   id: string;
@@ -51,36 +63,56 @@ interface Product {
   images: string[];
 }
 
-
 export default function VendorProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { toast } = useToast();
+  const db = getFirestore(app);
+
+  const fetchProducts = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const productsCollection = collection(db, 'products');
+      const q = query(productsCollection, where("vendor", "==", user.fullName));
+      const productSnapshot = await getDocs(q);
+      const productList = productSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Product));
+      setProducts(productList);
+    } catch (error) {
+      console.error("Error fetching products: ", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (!user) return;
-      setLoading(true);
-      try {
-        const productsCollection = collection(db, 'products');
-        const q = query(productsCollection, where("vendor", "==", user.fullName));
-        const productSnapshot = await getDocs(q);
-        const productList = productSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Product));
-        setProducts(productList);
-      } catch (error) {
-        console.error("Error fetching products: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if(user) {
       fetchProducts();
     }
   }, [user]);
+  
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+        await deleteDoc(doc(db, "products", productId));
+        toast({
+            title: "Product Deleted",
+            description: "The product has been successfully deleted.",
+        });
+        fetchProducts(); // Re-fetch products to update the list
+    } catch (error) {
+        console.error("Error deleting product: ", error);
+        toast({
+            title: "Error Deleting Product",
+            description: "There was a problem deleting the product.",
+            variant: "destructive"
+        })
+    }
+  }
+
 
   return (
     <div className="space-y-8">
@@ -159,31 +191,50 @@ export default function VendorProductsPage() {
                     {product.inventory?.stock ?? 'N/A'}
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/products/edit/${product.id}`}>
-                                <Pencil className="mr-2 h-4 w-4"/> Edit
-                            </Link>
-                         </DropdownMenuItem>
-                         <DropdownMenuSeparator />
-                         <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                         </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                     <AlertDialog>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                           <DropdownMenuItem asChild>
+                             <Link href={`/admin/products/edit/${product.id}`}>
+                                  <Pencil className="mr-2 h-4 w-4"/> Edit
+                              </Link>
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                             <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                           </AlertDialogTrigger>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                       <AlertDialogContent>
+                          <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the product
+                                  <span className="font-bold"> {product.name}</span>.
+                              </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteProduct(product.id)} className="bg-destructive hover:bg-destructive/90">
+                                  Continue
+                              </AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                      </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
