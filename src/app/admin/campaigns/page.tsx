@@ -134,7 +134,7 @@ export default function CampaignsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/admin/campaigns/new">
+          <Link href="/admin/campaigns/create">
             <PlusCircle className="mr-2 h-4 w-4" /> Create Campaign
           </Link>
         </Button>
