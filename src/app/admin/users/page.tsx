@@ -38,7 +38,7 @@ interface User {
   fullName: string;
   email: string;
   role: 'customer' | 'vendor' | 'admin';
-  status: 'active' | 'pending-approval' | 'suspended';
+  status: 'active' | 'pending' | 'suspended';
   photoURL?: string;
   createdAt?: any; 
 }
@@ -101,7 +101,7 @@ export default function UsersPage() {
       switch (status) {
           case 'active':
               return 'bg-green-100 text-green-800';
-          case 'pending-approval':
+          case 'pending':
               return 'bg-yellow-100 text-yellow-800';
           case 'suspended':
               return 'bg-red-100 text-red-800';

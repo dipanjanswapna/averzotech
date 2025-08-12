@@ -190,7 +190,7 @@ export default function EditUserPage() {
                         <SelectTrigger id="user-status"><SelectValue placeholder="Select status" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="pending">Pending Approval</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="suspended">Suspended</SelectItem>
                         </SelectContent>
                     </Select>
