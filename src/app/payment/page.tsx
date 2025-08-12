@@ -2,29 +2,20 @@
 "use client"
 
 import * as React from "react"
-import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight, CreditCard, Landmark, Truck, Info, X } from "lucide-react"
+import { ChevronRight, CreditCard, Landmark, Truck } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { nanoid } from "nanoid"
+import { OrderSummary } from "@/components/order-summary"
 
 
 export default function PaymentPage() {
@@ -45,9 +36,6 @@ export default function PaymentPage() {
             router.push('/shipping');
         }
     }, [shippingInfo, router, toast]);
-
-    const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
-    const taxes = subTotal * 0.05; // 5% tax
 
     const handlePlaceOrder = async () => {
         if (!user || cart.length === 0 || !shippingInfo) {
@@ -72,22 +60,20 @@ export default function PaymentPage() {
             giftDescription: item.giftWithPurchase?.enabled ? item.giftWithPurchase.description : ''
         }));
 
-        const finalTotal = total;
-
         const orderData = {
             userId: user.uid,
             customerName: shippingInfo.name,
-            total: finalTotal,
+            total: total,
             items: itemsForOrder,
             shippingAddress: shippingInfo,
             payment: {
                 method: paymentMethod,
                 subtotal: subTotal,
-                shipping: shippingFee,
-                tax: taxes,
+                shipping: useCart().shippingFee,
+                tax: useCart().taxes,
                 coupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : null,
                 giftCard: appliedGiftCard ? { code: appliedGiftCard.code, usedAmount: Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) } : null,
-                total: finalTotal,
+                total: total,
             },
         };
 
@@ -219,75 +205,7 @@ export default function PaymentPage() {
                     </div>
 
                     <div className="lg:col-span-1 lg:order-2 order-1 lg:sticky lg:top-24 self-start">
-                      <div className="bg-secondary p-8 rounded-lg">
-                          <h2 className="text-2xl font-headline mb-6">Order Summary</h2>
-                          <div className="space-y-4">
-                              {cart.map((item) => (
-                              <div key={item.id} className="flex items-center gap-4">
-                                  <div className="relative">
-                                      <Image src={item.images[0] || 'https://placehold.co/64x64.png'} alt={item.name} width={64} height={64} className="rounded-md" data-ai-hint={item.name} />
-                                      <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">{item.quantity}</span>
-                                  </div>
-                                  <div className="flex-grow">
-                                      <p className="font-medium">{item.name}</p>
-                                      <p className="text-sm text-muted-foreground">{item.selectedSize} / {item.selectedColor}</p>
-                                      {item.giftWithPurchase?.enabled && (
-                                        <p className="text-xs text-pink-600 font-semibold">+ {item.giftWithPurchase.description}</p>
-                                      )}
-                                  </div>
-                                  <p className="font-semibold">৳{item.pricing.price.toFixed(2)}</p>
-                              </div>
-                              ))}
-                          </div>
-
-                          <Separator className="my-6" />
-
-                          <div className="space-y-2">
-                              <div className="flex justify-between">
-                                  <p className="text-muted-foreground">Subtotal</p>
-                                  <p className="font-semibold">৳{subTotal.toFixed(2)}</p>
-                              </div>
-                               {appliedCoupon && (
-                                 <div className="flex justify-between text-green-600">
-                                     <p>Discount ({appliedCoupon.code})</p>
-                                     <p className="font-semibold">- ৳{appliedCoupon.discountAmount.toFixed(2)}</p>
-                                 </div>
-                               )}
-                               {appliedGiftCard && (
-                                 <div className="flex justify-between text-green-600">
-                                     <p>Gift Card ({appliedGiftCard.code.substring(0,9)}...)</p>
-                                     <p className="font-semibold">- ৳{Math.min(appliedGiftCard.balance, subTotal).toFixed(2)}</p>
-                                 </div>
-                               )}
-                              <div className="flex justify-between">
-                                  <p className="text-muted-foreground">Shipping</p>
-                                  <p className="font-semibold">৳{shippingFee.toFixed(2)}</p>
-                              </div>
-                              <div className="flex justify-between">
-                                  <p className="flex items-center gap-1 text-muted-foreground">
-                                      Estimated taxes
-                                      <TooltipProvider>
-                                          <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                  <Info className="h-4 w-4" />
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                  <p>Taxes are calculated based on your shipping address.</p>
-                                              </TooltipContent>
-                                          </Tooltip>
-                                      </TooltipProvider>
-                                  </p>
-                                  <p className="font-semibold">৳{taxes.toFixed(2)}</p>
-                              </div>
-                          </div>
-
-                          <Separator className="my-6" />
-
-                          <div className="flex justify-between text-xl font-bold">
-                              <p>Total</p>
-                              <p>৳{total.toFixed(2)}</p>
-                          </div>
-                      </div>
+                      <OrderSummary shippingMethod={shippingInfo.method} />
                     </div>
                 </div>
             </main>

@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
         
         batch.set(orderRef, {
             ...orderData,
-            id: orderRef.id,
             status: 'Processing',
             paymentDetails: body,
             createdAt: serverTimestamp(),

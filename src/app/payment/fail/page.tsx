@@ -26,7 +26,7 @@ function FailContent() {
                 <CardContent>
                     <div className="space-y-2">
                         <Button className="w-full" asChild>
-                           <Link href="/payment">Try Again</Link>
+                           <Link href="/shipping">Try Again</Link>
                         </Button>
                         <Button variant="outline" className="w-full" asChild>
                             <Link href="/">Back to Home</Link>
