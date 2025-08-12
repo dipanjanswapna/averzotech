@@ -33,7 +33,11 @@ function ProfileLayoutContent({
   }, [user, loading, router]);
 
   if (loading || !user) {
-    return <div>Loading...</div>;
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <p>Loading profile...</p>
+        </div>
+    );
   }
   
   return (
@@ -74,7 +78,7 @@ export default function ProfileLayout({
 
 const navItems = [
     { href: '/profile/orders', label: 'My Orders', icon: ShoppingCart },
-    { href: '/profile', label: 'My Profile', icon: User },
+    { href: '/profile', label: 'My Profile', icon: User, exact: true },
     { href: '/profile/addresses', label: 'Addresses', icon: MapPin },
     { href: '/wishlist', label: 'Wishlist', icon: Heart },
 ]
@@ -102,18 +106,21 @@ function Sidebar({ user }: { user: any }) {
             </div>
             <div className="flex-1">
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                {navItems.map(item => (
-                     <Link
-                        key={item.label}
-                        href={item.href}
-                        className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
-                            "bg-muted text-primary": pathname === item.href
-                        })}
-                        >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                    </Link>
-                ))}
+                {navItems.map(item => {
+                    const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+                    return (
+                        <Link
+                            key={item.label}
+                            href={item.href}
+                            className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary", {
+                                "bg-muted text-primary": isActive
+                            })}
+                            >
+                            <item.icon className="h-4 w-4" />
+                            {item.label}
+                        </Link>
+                    )
+                })}
               </nav>
             </div>
             <div className="mt-auto p-4 border-t">
@@ -159,18 +166,21 @@ function MobileSidebar({ user }: { user: any }) {
                 <Home className="h-6 w-6" />
                 <span className="sr-only">AVERZO</span>
                 </Link>
-                 {navItems.map(item => (
+                 {navItems.map(item => {
+                    const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+                    return (
                      <Link
                         key={item.label}
                         href={item.href}
                         className={cn("mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground", {
-                            "bg-muted text-foreground": pathname === item.href
+                            "bg-muted text-foreground": isActive
                         })}
                         >
                         <item.icon className="h-5 w-5" />
                         {item.label}
                     </Link>
-                ))}
+                    )
+                })}
             </nav>
             </SheetContent>
         </Sheet>
