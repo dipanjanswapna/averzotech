@@ -34,6 +34,7 @@ interface User {
   fullName: string;
   email: string;
   role: 'customer' | 'vendor' | 'admin';
+  status: 'active' | 'pending-approval' | 'suspended';
   photoURL?: string;
 }
 
@@ -50,6 +51,7 @@ export default function EditUserPage() {
   // Editable fields
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'customer' | 'vendor' | 'admin'>('customer');
+  const [status, setStatus] = useState<'active' | 'pending-approval' | 'suspended'>('active');
 
   useEffect(() => {
     if (!userId) return;
@@ -65,6 +67,7 @@ export default function EditUserPage() {
           setUser(userData);
           setFullName(userData.fullName);
           setRole(userData.role);
+          setStatus(userData.status || 'active');
         } else {
           toast({ title: "Error", description: "User not found.", variant: "destructive" });
           router.push('/admin/users');
@@ -88,6 +91,7 @@ export default function EditUserPage() {
       await updateDoc(userRef, {
         fullName: fullName,
         role: role,
+        status: status
       });
       toast({
         title: 'User Updated',
@@ -177,6 +181,17 @@ export default function EditUserPage() {
                             <SelectItem value="customer">Customer</SelectItem>
                             <SelectItem value="vendor">Vendor</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                    </Select>
+                 </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="user-status">Status</Label>
+                    <Select value={status} onValueChange={(value) => setStatus(value as any)} disabled={isLoading}>
+                        <SelectTrigger id="user-status"><SelectValue placeholder="Select status" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="pending-approval">Pending Approval</SelectItem>
+                            <SelectItem value="suspended">Suspended</SelectItem>
                         </SelectContent>
                     </Select>
                  </div>

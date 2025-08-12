@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signOut, signInWithPopup } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -45,12 +45,26 @@ export default function LoginPage() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        
+        if (userData.role === 'vendor' && userData.status !== 'active') {
+          await signOut(auth); // Sign out the user
+          toast({
+            title: "Approval Pending",
+            description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          setIsLoading(false);
+          return;
+        }
+
         toast({
           title: "Login Successful",
           description: `Welcome back, ${userData.fullName}!`,
         });
         redirectUser(userData.role);
       } else {
+         // This case might happen if user is in Auth but not Firestore
          toast({
           title: "Login Successful",
           description: "Welcome back!",
@@ -82,6 +96,17 @@ export default function LoginPage() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
+         if (userData.role === 'vendor' && userData.status !== 'active') {
+          await signOut(auth);
+          toast({
+            title: "Approval Pending",
+            description: "Your vendor account is awaiting admin approval.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          setIsLoading(false);
+          return;
+        }
         toast({
           title: "Login Successful",
           description: `Welcome back, ${userData.fullName}!`,
@@ -92,7 +117,9 @@ export default function LoginPage() {
         const newUser = {
             fullName: user.displayName || 'Google User',
             email: user.email,
-            role: 'customer', // Default role for Google sign-in
+            role: 'customer',
+            status: 'active',
+            createdAt: new Date(),
         };
         await setDoc(userDocRef, newUser);
         toast({

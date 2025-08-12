@@ -7,6 +7,7 @@ import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { VendorSidebar } from '@/components/vendor-sidebar';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function VendorLayout({
@@ -16,17 +17,25 @@ export default function VendorLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   
   useEffect(() => {
     if (!loading) {
       if (!user || user.role !== 'vendor') {
         router.push('/login');
+      } else if (user.status !== 'active') {
+          toast({
+              title: "Approval Pending",
+              description: "Your vendor account has not been approved yet.",
+              variant: "destructive",
+          });
+          router.push('/');
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, toast]);
 
 
-  if (loading || !user) {
+  if (loading || !user || user.status !== 'active') {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <p>Loading Vendor Dashboard...</p>

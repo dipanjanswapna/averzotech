@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 
 interface User {
@@ -37,6 +38,7 @@ interface User {
   fullName: string;
   email: string;
   role: 'customer' | 'vendor' | 'admin';
+  status: 'active' | 'pending-approval' | 'suspended';
   photoURL?: string;
   createdAt?: any; 
 }
@@ -67,16 +69,13 @@ export default function UsersPage() {
   }, []);
 
   const handleDeleteUser = async (userId: string) => {
-    // Note: This only deletes the Firestore document.
-    // For a full user deletion, you would also need to call a Firebase Function
-    // to delete the user from Firebase Authentication.
     try {
         await deleteDoc(doc(db, "users", userId));
         toast({
             title: "User Deleted",
             description: "The user has been successfully removed from the database.",
         });
-        fetchUsers(); // Refresh the list
+        fetchUsers(); 
     } catch (error) {
         console.error("Error deleting user: ", error);
         toast({
@@ -96,6 +95,19 @@ export default function UsersPage() {
       default:
         return 'outline';
     }
+  };
+
+   const getStatusBadgeClass = (status: User['status']) => {
+      switch (status) {
+          case 'active':
+              return 'bg-green-100 text-green-800';
+          case 'pending-approval':
+              return 'bg-yellow-100 text-yellow-800';
+          case 'suspended':
+              return 'bg-red-100 text-red-800';
+          default:
+              return '';
+      }
   };
   
   const formatDate = (timestamp: any) => {
@@ -128,6 +140,7 @@ export default function UsersPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -147,6 +160,9 @@ export default function UsersPage() {
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Badge variant={getRoleBadgeVariant(user.role)} className="capitalize">{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("capitalize", getStatusBadgeClass(user.status))}>{user.status?.replace('-', ' ')}</Badge>
                   </TableCell>
                   <TableCell>{formatDate(user.createdAt)}</TableCell>
                    <TableCell>

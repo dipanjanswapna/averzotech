@@ -35,16 +35,22 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: fullName });
       
+      const userStatus = role === 'vendor' ? 'pending-approval' : 'active';
+
       await setDoc(doc(db, "users", user.uid), {
         fullName: fullName,
         email: user.email,
         role: role,
         uid: user.uid,
+        status: userStatus,
+        createdAt: new Date(),
       });
 
       toast({
         title: "Account Created",
-        description: "Welcome to AVERZO! Please login to continue.",
+        description: role === 'vendor' 
+          ? "Your vendor account is awaiting admin approval. We will notify you."
+          : "Welcome to AVERZO! Please login to continue.",
       });
       router.push('/login');
     } catch (error: any) {
@@ -66,14 +72,14 @@ export default function RegisterPage() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      // For Google Sign-Up, we'll default the role to 'customer'.
-      // You could add a step to ask for a role if needed.
       await setDoc(doc(db, "users", user.uid), {
         fullName: user.displayName,
         email: user.email,
         role: 'customer',
+        status: 'active',
         uid: user.uid,
-        photoURL: user.photoURL
+        photoURL: user.photoURL,
+        createdAt: new Date(),
       });
 
       toast({
