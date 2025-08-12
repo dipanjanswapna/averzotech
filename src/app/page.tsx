@@ -3,8 +3,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import {
   Carousel,
   CarouselContent,
@@ -19,6 +17,8 @@ import { Progress } from '@/components/ui/progress';
 import { doc, getDoc, collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
 
 interface HeroImage {
   url: string;
