@@ -1,40 +1,53 @@
 
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPrice } from "@/lib/utils";
+import { useCart } from "@/hooks/use-cart";
+import { Separator } from "./ui/separator";
 
 interface OrderSummaryProps {
-    items: any[]
+    shippingMethod?: string | null;
 }
 
-export const OrderSummary: React.FC<OrderSummaryProps> = ({items}) => {
-    const totalPrice = items.reduce((total, item) => {
-        return total + Number(item.pricing.price) * item.quantity;
-      }, 0);
+export const OrderSummary: React.FC<OrderSummaryProps> = ({ shippingMethod }) => {
+    const { cart, subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total } = useCart(shippingMethod);
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center justify-between">
-                    <span>Subtotal</span>
-                    <span className="font-medium">{formatPrice(totalPrice)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                    <span>Shipping</span>
-                    <span className="font-medium">Free</span>
-                </div>
-                <div className="flex items-center justify-between">
-                    <span>Discount</span>
-                    <span className="font-medium">৳0</span>
-                </div>
-                <div className="flex items-center justify-between">
-                    <span>Taxes</span>
-                    <span className="font-medium">৳0</span>
-                </div>
-                <div className="flex items-center justify-between font-semibold">
-                    <span>Total</span>
-                    <span>{formatPrice(totalPrice)}</span>
+                 <div className="space-y-2">
+                    <div className="flex justify-between">
+                        <p className="text-muted-foreground">Subtotal</p>
+                        <p className="font-semibold">৳{subTotal.toFixed(2)}</p>
+                    </div>
+                    {appliedCoupon && (
+                        <div className="flex justify-between text-green-600">
+                            <p>Discount ({appliedCoupon.code})</p>
+                            <p className="font-semibold">- ৳{appliedCoupon.discountAmount.toFixed(2)}</p>
+                        </div>
+                    )}
+                    {appliedGiftCard && (
+                        <div className="flex justify-between text-green-600">
+                            <p>Gift Card ({appliedGiftCard.code.substring(0,9)}...)</p>
+                            <p className="font-semibold">- ৳{Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)).toFixed(2)}</p>
+                        </div>
+                    )}
+                    <div className="flex justify-between">
+                        <p className="text-muted-foreground">Shipping</p>
+                        <p className="font-semibold">{shippingMethod ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
+                    </div>
+                    <div className="flex justify-between">
+                        <p className="text-muted-foreground">Taxes</p>
+                        <p className="font-semibold">৳{taxes.toFixed(2)}</p>
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="flex justify-between text-xl font-bold">
+                        <p>Total</p>
+                        <p>৳{total.toFixed(2)}</p>
+                    </div>
                 </div>
             </CardContent>
         </Card>
