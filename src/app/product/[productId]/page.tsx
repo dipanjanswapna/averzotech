@@ -116,7 +116,7 @@ interface Product {
   }
 
 
-export default function ProductPage() {
+function ProductPageContent() {
   const params = useParams();
   const productId = params.productId as string;
   const [product, setProduct] = React.useState<Product | null>(null);
@@ -773,4 +773,6 @@ export default function ProductPage() {
   );
 }
 
-    
+export default function ProductPage() {
+    return <ProductPageContent />;
+}
