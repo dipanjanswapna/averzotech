@@ -31,31 +31,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            fullName: userData.fullName || firebaseUser.displayName || 'User',
-            role: userData.role || 'customer',
-            photoURL: userData.photoURL || firebaseUser.photoURL,
-          });
-        } else {
-          // Handle case where user exists in Auth but not Firestore
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            fullName: firebaseUser.displayName || 'User',
-            role: 'customer', // default role
-            photoURL: firebaseUser.photoURL,
-          });
+        try {
+            const userDocRef = doc(db, "users", firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              setUser({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                fullName: userData.fullName || firebaseUser.displayName || 'User',
+                role: userData.role || 'customer',
+                photoURL: userData.photoURL || firebaseUser.photoURL,
+              });
+            } else {
+              // Handle case where user exists in Auth but not Firestore
+              setUser({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                fullName: firebaseUser.displayName || 'User',
+                role: 'customer', // default role
+                photoURL: firebaseUser.photoURL,
+              });
+            }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            setUser(null);
+        } finally {
+            setLoading(false);
         }
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
