@@ -46,4 +46,3 @@ export async function tryOnProduct(input: VirtualTryOnInput): Promise<string> {
     
     return media.url;
 }
-
