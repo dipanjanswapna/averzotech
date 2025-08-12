@@ -1,50 +1,55 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch, doc, increment } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const body = Object.fromEntries(formData);
-    const { value_a: userId, value_b, value_c, value_d } = body;
+    const { tran_id } = body;
     
-    const tran_id_obj = JSON.parse(value_d as string);
-    const tran_id = tran_id_obj.tran_id;
-
-    if (!tran_id || !userId || !value_b || !value_c) {
-        console.error("Transaction ID or critical order data missing in success response", {body});
-        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing&tran_id=${tran_id}`, req.url));
+    if (!tran_id) {
+        console.error("Transaction ID missing in success response", {body});
+        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, req.url));
     }
 
     try {
-        const itemsData = JSON.parse(value_b as string);
-        const otherData = JSON.parse(value_c as string);
-
-        const orderData = {
-            userId: userId as string,
-            items: itemsData.items,
-            ...otherData,
-        };
+        // 1. Get the pending order data from Firestore
+        const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
+        const pendingOrderSnap = await getDoc(pendingOrderRef);
         
+        if (!pendingOrderSnap.exists()) {
+             console.error("Pending order not found for tran_id:", tran_id);
+             return NextResponse.redirect(new URL(`/payment/fail?reason=order_not_found&tran_id=${tran_id}`, req.url));
+        }
+
+        const orderData = pendingOrderSnap.data();
+
+        // 2. Create the final order and update stock in a batch
         const batch = writeBatch(db);
         const orderRef = doc(db, "orders", tran_id as string);
         
         batch.set(orderRef, {
             ...orderData,
             status: 'Processing',
-            createdAt: serverTimestamp(),
-            paymentDetails: body
+            createdAt: orderData.createdAt, // Preserve original creation time
+            paymentDetails: body,
+            updatedAt: serverTimestamp()
         });
         
-        // Update stock
+        // Update stock for each item in the order
         for (const item of orderData.items) {
             const productRef = doc(db, 'products', item.id);
             batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
         }
+        
+        // 3. Delete the pending order
+        batch.delete(pendingOrderRef);
 
+        // 4. Commit the batch
         await batch.commit();
 
-        // Redirect user to the frontend confirmation page
+        // 5. Redirect user to the frontend confirmation page
         return NextResponse.redirect(new URL(`/order-confirmation?orderId=${tran_id}`, req.url));
 
     } catch (error) {

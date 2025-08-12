@@ -1,14 +1,24 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export async function POST(req: NextRequest) {
-    // You can add logic here to log the failed attempt
     const body = await req.formData();
-    console.log("Payment failed:", Object.fromEntries(body));
+    const { tran_id } = Object.fromEntries(body);
+
+    if (tran_id) {
+        try {
+            // Delete the corresponding pending order if it exists
+            const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
+            await deleteDoc(pendingOrderRef);
+            console.log("Payment failed, pending order deleted for tran_id:", tran_id);
+        } catch (error) {
+             console.error("Error deleting pending order for failed transaction:", error);
+        }
+    } else {
+        console.log("Payment failed, no tran_id provided.", Object.fromEntries(body));
+    }
     
-    // Redirect to a user-friendly failure page
     return NextResponse.redirect(new URL('/payment/fail', req.url));
 }

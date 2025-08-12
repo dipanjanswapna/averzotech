@@ -72,10 +72,12 @@ export default function PaymentPage() {
             giftDescription: item.giftWithPurchase?.enabled ? item.giftWithPurchase.description : ''
         }));
 
+        const finalTotal = total;
+
         const orderData = {
             userId: user.uid,
             customerName: shippingInfo.name,
-            total: total,
+            total: finalTotal,
             items: itemsForOrder,
             shippingAddress: shippingInfo,
             payment: {
@@ -85,7 +87,7 @@ export default function PaymentPage() {
                 tax: taxes,
                 coupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : null,
                 giftCard: appliedGiftCard ? { code: appliedGiftCard.code, usedAmount: Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) } : null,
-                total: total,
+                total: finalTotal,
             },
         };
 
@@ -99,10 +101,13 @@ export default function PaymentPage() {
 
             const data = await response.json();
             
-            if (data.status === 'SUCCESS') {
+            if (data.status === 'SUCCESS' && data.GatewayPageURL) {
+                // Clear cart only after successful session initiation
+                // A better approach might be to clear it on the success page after payment confirmation
+                // clearCart(); 
                 window.location.href = data.GatewayPageURL;
             } else {
-                toast({ title: "Payment Failed", description: "Could not initiate payment session.", variant: "destructive" });
+                toast({ title: "Payment Failed", description: data.failedreason || "Could not initiate payment session.", variant: "destructive" });
             }
 
         } catch (error) {
@@ -174,45 +179,16 @@ export default function PaymentPage() {
                                 <TabsContent value="card">
                                     <Card>
                                         <CardContent className="p-6 space-y-4">
-                                            <div>
-                                                <Label htmlFor="card-number">Card number</Label>
-                                                <Input id="card-number" placeholder="1234 5678 9012 3456" />
-                                            </div>
-                                            <div>
-                                                <Label htmlFor="card-name">Name on card</Label>
-                                                <Input id="card-name" placeholder="Kamal Hasan" />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <Label htmlFor="expiry-date">Expiration date (MM/YY)</Label>
-                                                    <Input id="expiry-date" placeholder="MM / YY" />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor="cvc">Security code (CVC)</Label>
-                                                    <Input id="cvc" placeholder="123" />
-                                                </div>
-                                            </div>
+                                           <div className="text-center p-4 bg-secondary rounded-lg">
+                                                <p>You will be redirected to SSLCommerz's secure gateway to complete your card payment.</p>
+                                           </div>
                                         </CardContent>
                                     </Card>
                                 </TabsContent>
                                 <TabsContent value="mobile-banking">
                                      <Card>
                                         <CardContent className="p-6 text-center">
-                                            <p className="text-muted-foreground mb-4">Select your mobile banking provider:</p>
-                                            <div className="flex justify-center gap-4">
-                                                <Button variant="outline" className="h-16 w-24 flex-col gap-2">
-                                                    <Image src="https://placehold.co/40x40.png" data-ai-hint="bKash logo" alt="bKash" width={32} height={32}/>
-                                                    <span>bKash</span>
-                                                </Button>
-                                                <Button variant="outline" className="h-16 w-24 flex-col gap-2">
-                                                    <Image src="https://placehold.co/40x40.png" data-ai-hint="Nagad logo" alt="Nagad" width={32} height={32}/>
-                                                    <span>Nagad</span>
-                                                </Button>
-                                                <Button variant="outline" className="h-16 w-24 flex-col gap-2">
-                                                    <Image src="https://placehold.co/40x40.png" data-ai-hint="Rocket logo" alt="Rocket" width={32} height={32}/>
-                                                    <span>Rocket</span>
-                                                </Button>
-                                            </div>
+                                            <p className="text-muted-foreground mb-4">You will be redirected to SSLCommerz's secure gateway to complete your payment with your selected provider.</p>
                                         </CardContent>
                                      </Card>
                                 </TabsContent>
@@ -222,6 +198,7 @@ export default function PaymentPage() {
                                             <Truck className="w-12 h-12 mx-auto text-muted-foreground mb-4"/>
                                             <h3 className="text-lg font-semibold">Cash on Delivery</h3>
                                             <p className="text-muted-foreground mt-2">You can pay in cash to our courier when you receive the goods at your doorstep.</p>
+                                             <p className="text-xs text-red-500 mt-2">Note: Cash on Delivery is currently not processed through SSLCommerz in this setup.</p>
                                         </CardContent>
                                      </Card>
                                 </TabsContent>
