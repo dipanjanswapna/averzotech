@@ -6,7 +6,7 @@ const SSLCommerz = require('sslcommerz-lts');
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
-    const { total, tran_id, shippingAddress, items, userId, customerName, payment } = orderData;
+    const { total, tran_id, shippingAddress, items } = orderData;
     
     if (!shippingAddress) {
          return NextResponse.json({ error: 'Shipping address is missing.' }, { status: 400 });
@@ -70,4 +70,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'An error occurred during payment initiation.' }, { status: 500 });
     }
 }
-
