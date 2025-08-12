@@ -206,19 +206,21 @@ export default function ProductPage() {
       }
   }
   
-  const handleShare = () => {
+  const handleShare = async () => {
       if (navigator.share && product) {
-          navigator.share({
-              title: product.name,
-              text: `Check out this product: ${product.name}`,
-              url: window.location.href,
-          }).catch((error) => {
-            if (error.name !== 'AbortError') {
-              console.error('Share failed:', error);
-              navigator.clipboard.writeText(window.location.href);
-              toast({ title: "Link Copied!", description: "Share failed, but the link is on your clipboard." });
-            }
+        try {
+          await navigator.share({
+            title: product.name,
+            text: `Check out this product: ${product.name}`,
+            url: window.location.href,
           });
+        } catch (error: any) {
+           if (error.name !== 'AbortError') {
+             console.error('Share failed:', error);
+             navigator.clipboard.writeText(window.location.href);
+             toast({ title: "Link Copied!", description: "Share failed, but the link is on your clipboard." });
+           }
+        }
       } else {
           navigator.clipboard.writeText(window.location.href);
           toast({ title: "Link Copied!", description: "Product link copied to clipboard." });
@@ -504,7 +506,7 @@ export default function ProductPage() {
             <Separator className="my-6" />
 
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3>
+              <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3 >
               <div className="flex items-center border rounded-md p-1 max-w-sm">
                   <input type="text" placeholder="Enter pincode" className="flex-grow p-1 outline-none text-sm bg-transparent" />
                   <Button variant="link" className="text-primary">Check</Button>
