@@ -17,7 +17,7 @@ import { getAuth, signOut } from "firebase/auth";
 import { app } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
-export default function ProfileLayout({
+function ProfileLayoutContent({
   children,
 }: {
   children: React.ReactNode;
@@ -60,6 +60,14 @@ export default function ProfileLayout({
         </div>
       </div>
   );
+}
+
+export default function ProfileLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <ProfileLayoutContent>{children}</ProfileLayoutContent>
 }
 
 const navItems = [
@@ -166,4 +174,3 @@ function MobileSidebar({ user }: { user: any }) {
         </Sheet>
     )
 }
-
