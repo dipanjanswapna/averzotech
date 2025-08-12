@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useRef, useState, useCallback, useEffect } from 'react';
@@ -41,35 +40,36 @@ export function VirtualTryOn({
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
     async function getCameraPermission() {
-      if (!isOpen || hasCameraPermission === true) return;
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+      if (isOpen) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+          setHasCameraPermission(true);
+        } catch (error) {
+          console.error('Error accessing camera:', error);
+          setHasCameraPermission(false);
+          toast({
+            variant: 'destructive',
+            title: 'Camera Access Denied',
+            description:
+              'Please enable camera permissions in your browser settings to use this feature.',
+          });
         }
-        setHasCameraPermission(true);
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description:
-            'Please enable camera permissions in your browser settings to use this feature.',
-        });
       }
     }
     getCameraPermission();
 
     // Cleanup function to stop video stream when component unmounts or dialog closes
     return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
+        if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
     }
-  }, [isOpen, hasCameraPermission, toast]);
+  }, [isOpen, toast]);
 
   const handleCapture = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
@@ -200,5 +200,3 @@ export function VirtualTryOn({
     </Dialog>
   );
 }
-
-    
