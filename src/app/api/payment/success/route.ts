@@ -6,17 +6,27 @@ import { collection, addDoc, serverTimestamp, writeBatch, doc, increment } from 
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const body = Object.fromEntries(formData);
-    const { tran_id, value_b } = body;
+    const { value_a: userId, value_b, value_c, value_d } = body;
     
-    if (!tran_id || !value_b) {
-        console.error("Transaction ID or order data missing in success response");
-        return NextResponse.redirect(new URL('/payment/fail?reason=data_missing', req.url));
+    const tran_id_obj = JSON.parse(value_d as string);
+    const tran_id = tran_id_obj.tran_id;
+
+    if (!tran_id || !userId || !value_b || !value_c) {
+        console.error("Transaction ID or critical order data missing in success response", {body});
+        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing&tran_id=${tran_id}`, req.url));
     }
 
     try {
-        const orderData = JSON.parse(value_b as string);
-        const batch = writeBatch(db);
+        const itemsData = JSON.parse(value_b as string);
+        const otherData = JSON.parse(value_c as string);
+
+        const orderData = {
+            userId: userId as string,
+            items: itemsData.items,
+            ...otherData,
+        };
         
+        const batch = writeBatch(db);
         const orderRef = doc(db, "orders", tran_id as string);
         
         batch.set(orderRef, {
@@ -34,18 +44,11 @@ export async function POST(req: NextRequest) {
 
         await batch.commit();
 
-        // Redirecting is handled by SSLCommerz `success_url` directly
-        // This POST handler is for server-to-server confirmation
-        // For simplicity in this setup, we'll let the success_url handle the user redirect.
-        // A robust app would validate the transaction here before trusting the front-end redirect.
-        
-        // This return is for the server-to-server call, not the user.
-        return new NextResponse('OK', { status: 200 });
+        // Redirect user to the frontend confirmation page
+        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${tran_id}`, req.url));
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
-        // This redirect won't affect the user, who is already at the success_url.
-        // This is for logging/debugging.
-        return NextResponse.redirect(new URL('/payment/fail?reason=processing_error', req.url));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, req.url));
     }
 }

@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
         total_amount: total,
         currency: 'BDT',
         tran_id: tran_id,
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/order-confirmation?orderId=${tran_id}`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`,
         fail_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/fail`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
-        ipn_url: '/api/payment/ipn', // You may need to implement this
+        ipn_url: '/api/payment/ipn',
         shipping_method: 'Courier',
         product_name: items.map((item: any) => item.name).join(', '),
         product_category: 'eCommerce',
@@ -43,18 +43,20 @@ export async function POST(req: NextRequest) {
         ship_postcode: '1000',
         ship_country: 'Bangladesh',
         value_a: userId,
-        value_b: JSON.stringify(orderData), // Pass the full order data
+        value_b: JSON.stringify({ items: orderData.items }), // Only essential data for reconstruction
+        value_c: JSON.stringify({ shippingAddress: orderData.shippingAddress, payment: orderData.payment, customerName: orderData.customerName }), // Other non-essential info
+        value_d: JSON.stringify({ tran_id: tran_id }),
     };
 
     const sslcz = new SSLCommerz(process.env.STORE_ID, process.env.STORE_PASSWORD, process.env.IS_LIVE === 'true');
     
     try {
         const apiResponse = await sslcz.init(data);
-        if (apiResponse.status === 'SUCCESS') {
+        if (apiResponse.status === 'SUCCESS' && apiResponse.GatewayPageURL) {
             return NextResponse.json(apiResponse);
         } else {
             console.error("SSLCommerz init failed:", apiResponse);
-            return NextResponse.json({ error: 'Failed to create payment session.' }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to create payment session.', details: apiResponse }, { status: 500 });
         }
     } catch (error) {
         console.error("SSLCommerz init error:", error);
