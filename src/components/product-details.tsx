@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import Image from 'next/image';
@@ -71,7 +72,8 @@ interface Product {
     };
     specifications: { label: string; value: string }[];
     shipping: {
-        deliveryFee: number;
+        courier?: { enabled: boolean; fee: number };
+        express?: { enabled: boolean; fee: number };
         estimatedDelivery: string;
     };
     images: string[];
@@ -498,22 +500,17 @@ export function ProductDetails() {
             </div>
 
             <Separator className="my-6" />
-
+            
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3 >
-              <div className="flex items-center border rounded-md p-1 max-w-sm">
-                  <input type="text" placeholder="Enter pincode" className="flex-grow p-1 outline-none text-sm bg-transparent" />
-                  <Button variant="link" className="text-primary">Check</Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Please enter PIN code to check delivery time &amp; Pay on Delivery Availability</p>
+               <p className="text-xs text-muted-foreground mt-1">Estimated Delivery: {product.shipping.estimatedDelivery}</p>
+                <div className="mt-2 text-sm space-y-1">
+                    {product.shipping.courier?.enabled && <p>• Standard Courier: <span className="font-semibold">৳{product.shipping.courier.fee}</span></p>}
+                    {product.shipping.express?.enabled && <p>• Express Delivery: <span className="font-semibold">৳{product.shipping.express.fee}</span></p>}
+                </div>
             </div>
             
-            <div className="text-sm mt-4 space-y-1">
-                <p>Estimated Delivery: <span className="font-semibold">{product.shipping.estimatedDelivery}</span></p>
-                <p>Shipping: <span className="font-semibold">{product.shipping.deliveryFee === 0 ? 'Free Shipping' : `৳${product.shipping.deliveryFee}`}</span></p>
-            </div>
-
-             <div className="mt-4 flex gap-4">
+            <div className="mt-4 flex gap-4">
                 <div className="text-center text-sm">
                     <img src="https://placehold.co/50x50.png" alt="100% Original" className="mx-auto" data-ai-hint="original guarantee" />
                     <p>100% Original</p>
@@ -680,3 +677,4 @@ export function ProductDetails() {
       </main>
       );
 }
+
