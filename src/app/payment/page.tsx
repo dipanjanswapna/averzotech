@@ -61,15 +61,17 @@ export default function PaymentPage() {
 
         setLoading(true);
 
+         const items = cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.pricing.price,
+            quantity: item.quantity,
+        }));
+
         const orderData = {
             userId: user.uid,
-            customerName: shippingInfo.name,
-            items: cart.map(item => ({
-                id: item.id,
-                name: item.name,
-                price: item.pricing.price,
-                quantity: item.quantity,
-            })),
+            total: total,
+            items: items,
             shippingAddress: shippingInfo,
             payment: {
                 method: paymentMethod,
@@ -80,7 +82,6 @@ export default function PaymentPage() {
                 giftCard: appliedGiftCard ? { code: appliedGiftCard.code, usedAmount: Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) } : null,
                 total: total,
             },
-            total: total
         };
 
         try {
