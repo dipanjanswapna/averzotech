@@ -1,4 +1,3 @@
-
 "use client"
 
 import { SiteHeader } from '@/components/site-header';
@@ -97,8 +96,8 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const [selectedColor, setSelectedColor] = React.useState<{name: string, hex: string} | null>(null);
   const [isTryOnOpen, setIsTryOnOpen] = React.useState(false);
   const { addToCart } = useCart();
-  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
+  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
