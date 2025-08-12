@@ -23,31 +23,30 @@ export async function POST(req: NextRequest) {
         currency: 'BDT',
         tran_id: tran_id,
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`,
-        fail_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail?tran_id=${tran_id}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
-        ipn_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`, // Optional: for server-to-server notifications
+        fail_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`,
+        ipn_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`,
         shipping_method: 'Courier',
-        product_name: items.map((item: any) => item.name).join(', ').substring(0, 99), // Product name max 100 chars
+        product_name: items.map((item: any) => item.name).join(', ').substring(0, 99),
         product_category: 'eCommerce',
         product_profile: 'general',
         cus_name: name,
         cus_email: email,
         cus_add1: fullAddress,
-        cus_city: 'Dhaka', // Can be dynamic later
-        cus_state: 'Dhaka', // Can be dynamic later
-        cus_postcode: '1000', // Can be dynamic later
+        cus_city: 'Dhaka',
+        cus_state: 'Dhaka',
+        cus_postcode: '1000',
         cus_country: 'Bangladesh',
         cus_phone: phone,
         ship_name: name,
         ship_add1: fullAddress,
-        ship_city: 'Dhaka', // Can be dynamic later
-        ship_state: 'Dhaka', // Can be dynamic later
-        ship_postcode: '1000', // Can be dynamic later
+        ship_city: 'Dhaka',
+        ship_state: 'Dhaka',
+        ship_postcode: '1000',
         ship_country: 'Bangladesh',
     };
 
     try {
-        // Before initiating payment, save the order data to a temporary collection
         const pendingOrderRef = doc(db, 'pending_orders', tran_id);
         await setDoc(pendingOrderRef, {
              ...orderData,
@@ -58,10 +57,10 @@ export async function POST(req: NextRequest) {
         const apiResponse = await sslcz.init(data);
 
         if (apiResponse.status === 'SUCCESS' && apiResponse.GatewayPageURL) {
-            return NextResponse.json(apiResponse);
+            return NextResponse.json({ GatewayPageURL: apiResponse.GatewayPageURL });
         } else {
             console.error("SSLCommerz init failed:", apiResponse);
-            return NextResponse.json({ error: 'Failed to create payment session.', details: apiResponse }, { status: 500 });
+            return NextResponse.json({ error: 'Failed to create payment session.', details: apiResponse.failedreason || 'Unknown reason' }, { status: 500 });
         }
     } catch (error) {
         console.error("SSLCommerz init error:", error);

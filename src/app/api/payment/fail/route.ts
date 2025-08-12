@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, deleteDoc } from 'firebase/firestore';
+import { doc, deleteDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export async function POST(req: NextRequest) {
@@ -9,10 +9,12 @@ export async function POST(req: NextRequest) {
 
     if (tran_id) {
         try {
-            // Delete the corresponding pending order if it exists
             const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
-            await deleteDoc(pendingOrderRef);
-            console.log("Payment failed, pending order deleted for tran_id:", tran_id);
+            const docSnap = await getDoc(pendingOrderRef);
+            if (docSnap.exists()) {
+                await deleteDoc(pendingOrderRef);
+                console.log("Payment failed, pending order deleted for tran_id:", tran_id);
+            }
         } catch (error) {
              console.error("Error deleting pending order for failed transaction:", error);
         }

@@ -101,13 +101,10 @@ export default function PaymentPage() {
 
             const data = await response.json();
             
-            if (data.status === 'SUCCESS' && data.GatewayPageURL) {
-                // Clear cart only after successful session initiation
-                // A better approach might be to clear it on the success page after payment confirmation
-                // clearCart(); 
+            if (response.ok && data.GatewayPageURL) {
                 window.location.href = data.GatewayPageURL;
             } else {
-                toast({ title: "Payment Failed", description: data.failedreason || "Could not initiate payment session.", variant: "destructive" });
+                toast({ title: "Payment Failed", description: data.details || "Could not initiate payment session.", variant: "destructive" });
             }
 
         } catch (error) {

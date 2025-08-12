@@ -14,7 +14,6 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        // 1. Get the pending order data from Firestore
         const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
         const pendingOrderSnap = await getDoc(pendingOrderRef);
         
@@ -25,31 +24,27 @@ export async function POST(req: NextRequest) {
 
         const orderData = pendingOrderSnap.data();
 
-        // 2. Create the final order and update stock in a batch
         const batch = writeBatch(db);
+        
+        // Use tran_id as the document ID for the final order
         const orderRef = doc(db, "orders", tran_id as string);
         
         batch.set(orderRef, {
             ...orderData,
             status: 'Processing',
-            createdAt: orderData.createdAt, // Preserve original creation time
             paymentDetails: body,
             updatedAt: serverTimestamp()
         });
         
-        // Update stock for each item in the order
         for (const item of orderData.items) {
             const productRef = doc(db, 'products', item.id);
             batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
         }
         
-        // 3. Delete the pending order
         batch.delete(pendingOrderRef);
 
-        // 4. Commit the batch
         await batch.commit();
 
-        // 5. Redirect user to the frontend confirmation page
         return NextResponse.redirect(new URL(`/order-confirmation?orderId=${tran_id}`, req.url));
 
     } catch (error) {
