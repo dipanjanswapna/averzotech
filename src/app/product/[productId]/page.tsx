@@ -26,7 +26,7 @@ import * as React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
@@ -208,14 +208,35 @@ export default function ProductPage() {
               title: product.name,
               text: `Check out this product: ${product.name}`,
               url: window.location.href,
-          }).catch(() => { // Fallback to clipboard
+          }).catch((error) => {
+            if (error.name !== 'AbortError') {
+              console.error('Share failed:', error);
               navigator.clipboard.writeText(window.location.href);
-              toast({ title: "Link Copied!", description: "Product link copied to clipboard." });
+              toast({ title: "Link Copied!", description: "Share failed, but the link is on your clipboard." });
+            }
           });
       } else {
           navigator.clipboard.writeText(window.location.href);
           toast({ title: "Link Copied!", description: "Product link copied to clipboard." });
       }
+  };
+
+  const hasPurchasedProduct = async (userId: string, productId: string): Promise<boolean> => {
+    const ordersRef = collection(db, "orders");
+    const q = query(
+      ordersRef,
+      where("userId", "==", userId),
+      where("status", "==", "Fulfilled")
+    );
+
+    const querySnapshot = await getDocs(q);
+    for (const doc of querySnapshot.docs) {
+      const orderItems = doc.data().items as { id: string }[];
+      if (orderItems.some(item => item.id === productId)) {
+        return true;
+      }
+    }
+    return false;
   };
 
   const handleReviewSubmit = async () => {
@@ -227,8 +248,20 @@ export default function ProductPage() {
           toast({ title: "Incomplete Review", description: "Please provide a title and a comment.", variant: "destructive" });
           return;
       }
+      
       setIsSubmittingReview(true);
       try {
+          const hasPurchased = await hasPurchasedProduct(user.uid, productId);
+          if (!hasPurchased) {
+              toast({
+                  title: "Purchase Required",
+                  description: "You can only review products you have purchased and received.",
+                  variant: "destructive"
+              });
+              setIsSubmittingReview(false);
+              return;
+          }
+
           const reviewsRef = collection(db, 'products', productId, 'reviews');
           await addDoc(reviewsRef, {
               rating: newReviewRating,
@@ -238,6 +271,7 @@ export default function ProductPage() {
               authorName: user.fullName,
               createdAt: serverTimestamp()
           });
+
           // Refresh reviews
           const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'));
           const reviewsSnap = await getDocs(reviewsQuery);
@@ -640,5 +674,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    
