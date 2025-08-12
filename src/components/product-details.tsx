@@ -30,8 +30,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
 
 
 interface Product {
@@ -101,6 +102,7 @@ interface QnA {
 
 export function ProductDetails() {
   const params = useParams();
+  const router = useRouter();
   const productId = params.productId as string;
   const { user } = useAuth();
   const [product, setProduct] = React.useState<Product | null>(null);
@@ -169,7 +171,7 @@ export function ProductDetails() {
     }
   }, [productId]);
   
-  const handleAddToCart = () => {
+  const handleAddToCart = (buyNow: boolean = false) => {
     if (!product) return;
     if (!selectedSize && product.variants.sizes.length > 0) {
         toast({ title: "Selection required", description: "Please select a size.", variant: "destructive" });
@@ -186,6 +188,10 @@ export function ProductDetails() {
     };
     addToCart(productToAdd, quantity);
     toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` })
+
+    if (buyNow) {
+        router.push('/shipping');
+    }
   }
 
   const handleWishlistToggle = () => {
@@ -449,7 +455,7 @@ export function ProductDetails() {
               <h3 className="text-sm font-semibold text-foreground mb-2">COLOR</h3>
               <div className="flex flex-wrap gap-2">
                 {product.variants.colors.map((color) => (
-                   <Button key={color.name} variant="outline" size="icon" className={`rounded-full border-2 ${selectedColor?.name === color.name ? 'border-primary' : 'border-border'}`} onClick={() => setSelectedColor(color)}>
+                   <Button key={color.name} variant="outline" size="icon" className={cn("rounded-full border-2", selectedColor?.name === color.name ? 'border-primary' : 'border-border')} onClick={() => setSelectedColor(color)}>
                      <span className="block w-6 h-6 rounded-full" style={{ backgroundColor: color.hex }} />
                    </Button>
                 ))}
@@ -480,10 +486,10 @@ export function ProductDetails() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
-              <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleAddToCart}>
+              <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleAddToCart(false)}>
                 <ShoppingBag className="mr-2 h-5 w-5" /> ADD TO CART
               </Button>
-              <Button size="lg" variant="secondary" className="flex-1">
+              <Button size="lg" variant="secondary" className="flex-1" onClick={() => handleAddToCart(true)}>
                  BUY NOW
               </Button>
               <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>

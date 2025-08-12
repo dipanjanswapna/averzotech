@@ -16,15 +16,15 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard, shippingFee, taxes } = useCart();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = React.useState('');
   const [giftCardCode, setGiftCardCode] = React.useState('');
   const [isCheckingCoupon, setIsCheckingCoupon] = React.useState(false);
   const [isCheckingGiftCard, setIsCheckingGiftCard] = React.useState(false);
 
-  const handleRemoveItem = (productId: string) => {
-    removeFromCart(productId);
+  const handleRemoveItem = (productId: string, size: string, color: string) => {
+    removeFromCart(productId, size, color);
      toast({
       title: "Item Removed",
       description: "The item has been removed from your cart.",
@@ -163,8 +163,6 @@ export default function CartPage() {
     toast({ title: "Gift Card Removed" });
   }
 
-  const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
-  
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
@@ -179,7 +177,7 @@ export default function CartPage() {
           <div className="lg:col-span-2">
             <div className="space-y-4">
               {cart.map(item => (
-                <div key={item.id} className="flex flex-col md:flex-row gap-4 border p-4 rounded-lg">
+                <div key={`${item.id}-${item.selectedSize}-${item.selectedColor}`} className="flex flex-col md:flex-row gap-4 border p-4 rounded-lg">
                   <Image
                     src={item.images[0] || 'https://placehold.co/150x200.png'}
                     alt={item.name}
@@ -207,11 +205,11 @@ export default function CartPage() {
                       </div>
                     <div className="flex items-center gap-2 mt-2">
                       <div className="flex items-center border rounded-md">
-                          <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, item.quantity - 1)}><span className='text-xl'>-</span></Button>
+                          <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, item.selectedSize, item.selectedColor, item.quantity - 1)}><span className='text-xl'>-</span></Button>
                           <Input type="number" value={item.quantity} readOnly className="w-12 h-8 text-center border-none focus-visible:ring-0" />
-                          <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, item.quantity + 1)}><span className='text-xl'>+</span></Button>
+                          <Button variant="ghost" size="icon" onClick={() => updateQuantity(item.id, item.selectedSize, item.selectedColor, item.quantity + 1)}><span className='text-xl'>+</span></Button>
                       </div>
-                       <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
+                       <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id, item.selectedSize, item.selectedColor)}>
                         <Trash2 className="h-5 w-5 text-destructive" />
                       </Button>
                       <Button variant="ghost" size="icon">
@@ -246,6 +244,10 @@ export default function CartPage() {
                       <span>Shipping Fee</span>
                       <span>{shippingFee === 0 ? 'Free' : `৳${shippingFee.toFixed(2)}`}</span>
                   </div>
+                   <div className="flex justify-between">
+                        <span>Taxes</span>
+                        <span>৳{taxes.toFixed(2)}</span>
+                    </div>
                   {appliedCoupon && (
                      <div className="flex justify-between text-green-600 font-semibold">
                       <span>Discount ({appliedCoupon.code})</span>
@@ -255,7 +257,7 @@ export default function CartPage() {
                   {appliedGiftCard && (
                      <div className="flex justify-between text-green-600 font-semibold">
                       <span>Gift Card ({appliedGiftCard.code.substring(0, 4)}...)</span>
-                      <span>- ৳{appliedGiftCard.balance.toFixed(2)}</span>
+                      <span>- ৳{Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)).toFixed(2)}</span>
                     </div>
                   )}
               </div>

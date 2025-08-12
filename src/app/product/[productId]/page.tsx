@@ -1,4 +1,5 @@
 
+
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { doc, getDoc } from 'firebase/firestore';
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: { params: { productId: string
 
 export default function ProductDetailsPage() {
     return (
-        <React.Suspense fallback={<div>Loading...</div>}>
+        <React.Suspense fallback={<div className="flex h-screen items-center justify-center">Loading product details...</div>}>
             <div className="flex min-h-screen flex-col bg-background">
                 <SiteHeader />
                 <ProductDetails />
