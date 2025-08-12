@@ -42,7 +42,7 @@ export function VirtualTryOn({
 
   useEffect(() => {
     async function getCameraPermission() {
-      if (!isOpen || hasCameraPermission) return;
+      if (!isOpen || hasCameraPermission === true) return;
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) {
@@ -110,7 +110,15 @@ export function VirtualTryOn({
   const reset = () => {
     setCapturedImage(null);
     setGeneratedImage(null);
+    setHasCameraPermission(null); // Re-trigger permission check
   };
+
+  // Reset state when dialog is closed
+  useEffect(() => {
+      if (!isOpen) {
+          reset();
+      }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
