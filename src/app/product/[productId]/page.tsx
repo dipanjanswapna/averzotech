@@ -188,7 +188,6 @@ export default function ProductPage() {
                 description: "Product link copied to clipboard.",
             });
         } catch (err) {
-            console.error("Failed to copy:", err);
             toast({
                 title: "Failed to copy link",
                 variant: "destructive",
@@ -203,12 +202,8 @@ export default function ProductPage() {
           text: `Check out this product: ${product.name}`,
           url: window.location.href,
         });
-        toast({
-          title: "Shared successfully!",
-        });
       } catch (error) {
-        // If share fails, fall back to copying the link
-        console.error("Share failed:", error);
+        // If share fails (e.g., permission denied), fall back to copying the link without logging an error
         await copyToClipboard();
       }
     } else {
@@ -598,5 +593,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    
