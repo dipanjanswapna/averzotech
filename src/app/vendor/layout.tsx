@@ -1,11 +1,8 @@
 
 'use client';
 
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { app } from '@/lib/firebase';
+import { useEffect } from 'react';
 import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { VendorSidebar } from '@/components/vendor-sidebar';

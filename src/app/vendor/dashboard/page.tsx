@@ -1,13 +1,10 @@
 
 'use client';
 
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, getFirestore, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { app } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Package, ShoppingCart } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,7 +34,7 @@ export default function VendorDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading || !user) return;
+    if (authLoading || !user?.fullName) return;
 
     const fetchData = async () => {
       setLoading(true);
@@ -123,7 +120,7 @@ export default function VendorDashboard() {
   return (
     <div className="space-y-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-lg mt-2">Welcome, {user.fullName}!</p>
+        <p className="text-lg mt-2 text-muted-foreground">Welcome, {user.fullName}!</p>
         
         <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
             {dashboardData.stats.map((stat, index) => (

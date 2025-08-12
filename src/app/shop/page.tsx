@@ -28,9 +28,11 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 
 interface Product {
   id: string;
@@ -46,6 +48,9 @@ interface Product {
     group: string;
     subcategory: string;
   };
+  inventory: {
+    availability: string;
+  },
   images: string[];
   dataAiHint?: string;
 }
@@ -108,10 +113,14 @@ function ShopPageContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { toast } = useToast();
+
   const [allProducts, setAllProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = React.useState(false);
   const [displayedItems, setDisplayedItems] = React.useState<Product[]>([]);
+  const [activeCampaign, setActiveCampaign] = React.useState<{id: string, name: string} | null>(null);
 
   // State initialization from URL search params
   const [selectedCategory, setSelectedCategory] = React.useState<string>(searchParams.get('category') || 'all');
@@ -129,12 +138,32 @@ function ShopPageContent() {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const productsCollection = collection(db, 'products');
-        const productSnapshot = await getDocs(productsCollection);
-        const productList = productSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Product));
+        const campaignId = searchParams.get('campaign');
+        let productList: Product[] = [];
+
+        if (campaignId) {
+            const campaignRef = doc(db, 'campaigns', campaignId);
+            const campaignSnap = await getDoc(campaignRef);
+            if (campaignSnap.exists()) {
+                setActiveCampaign({ id: campaignId, name: campaignSnap.data().name });
+                const productIds = campaignSnap.data().products;
+                if (productIds && productIds.length > 0) {
+                    const productPromises = productIds.map((id: string) => getDoc(doc(db, "products", id)));
+                    const productDocs = await Promise.all(productPromises);
+                    productList = productDocs
+                      .filter(doc => doc.exists())
+                      .map(doc => ({ id: doc.id, ...doc.data() } as Product));
+                }
+            }
+        } else {
+            setActiveCampaign(null);
+            const productsCollection = collection(db, 'products');
+            const productSnapshot = await getDocs(productsCollection);
+            productList = productSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            } as Product));
+        }
         setAllProducts(productList);
       } catch (error) {
         console.error("Error fetching products: ", error);
@@ -143,7 +172,7 @@ function ShopPageContent() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [searchParams]);
 
   const updateURL = React.useCallback((newFilters: Record<string, string | number | number[]>) => {
     const params = new URLSearchParams(searchParams);
@@ -262,6 +291,9 @@ function ShopPageContent() {
 
   const handlePriceChange = (value: number[]) => {
       setPriceRange(value as [number, number]);
+  }
+
+  const handlePriceCommit = (value: number[]) => {
       updateURL({ priceRange: value });
   }
 
@@ -270,11 +302,23 @@ function ShopPageContent() {
       updateURL({ sort: value });
   }
 
+  const handleWishlistToggle = (item: Product) => {
+      const isInWishlist = wishlist.some(w => w.id === item.id);
+      if (isInWishlist) {
+          removeFromWishlist(item.id);
+          toast({ title: "Removed from Wishlist" });
+      } else {
+          addToWishlist(item as WishlistItem);
+          toast({ title: "Added to Wishlist" });
+      }
+  }
+
   const filterControls = (
       <FilterControls 
         onReset={handleResetFilters}
         priceRange={priceRange}
         onPriceChange={handlePriceChange}
+        onPriceCommit={handlePriceCommit}
         
         selectedCategory={selectedCategory}
         onCategoryChange={createFilterHandler(setSelectedCategory, 'category')}
@@ -298,7 +342,10 @@ function ShopPageContent() {
       <SiteHeader />
       <main className="flex-grow container py-8">
         <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-headline font-bold">Shop</h1>
+            <div>
+              <h1 className="text-3xl font-headline font-bold">Shop</h1>
+              {activeCampaign && <p className="text-muted-foreground">{activeCampaign.name}</p>}
+            </div>
              <div className="flex items-center gap-4">
                  <div className="md:hidden">
                     <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
@@ -343,27 +390,41 @@ function ShopPageContent() {
                 <p className="text-sm text-muted-foreground">Showing {displayedItems.length} of {allProducts.length} products</p>
               </div>
               {loading ? (
-                <div className="text-center py-16 col-span-full">
-                  <p>Loading products...</p>
+                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                    {Array(8).fill(0).map((_, i) => (
+                        <div key={i} className="space-y-2">
+                             <Skeleton className="w-full aspect-[4/5]" />
+                             <Skeleton className="h-4 w-3/4" />
+                             <Skeleton className="h-4 w-1/2" />
+                             <Skeleton className="h-4 w-full" />
+                        </div>
+                    ))}
                 </div>
               ) : displayedItems.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
-                    {displayedItems.map((item) => (
-                       <Link href={`/product/${item.id}`} key={item.id} className="group block">
+                    {displayedItems.map((item) => {
+                      const isInWishlist = wishlist.some(w => w.id === item.id);
+                      return (
+                       <div key={item.id} className="group block">
                             <div className="relative overflow-hidden rounded-lg">
-                                <Image
-                                    src={item.images[0] || 'https://placehold.co/400x500.png'}
-                                    alt={item.name}
-                                    width={400}
-                                    height={500}
-                                    className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={item.dataAiHint || 'product image'}
-                                />
-                                <div className="absolute bottom-0 left-0 right-0 p-1 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                   <Button variant="outline" size="sm" className="w-full bg-white hover:bg-gray-200 border-gray-300 text-xs text-black">
-                                      <Heart className="mr-1 h-3 w-3" /> Wishlist
-                                   </Button>
-                                </div>
+                                <Link href={`/product/${item.id}`}>
+                                  <Image
+                                      src={item.images[0] || 'https://placehold.co/400x500.png'}
+                                      alt={item.name}
+                                      width={400}
+                                      height={500}
+                                      className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                      data-ai-hint={item.dataAiHint || 'product image'}
+                                  />
+                                </Link>
+                                <Button 
+                                  variant="secondary" 
+                                  size="icon" 
+                                  className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white"
+                                  onClick={() => handleWishlistToggle(item)}
+                                >
+                                    <Heart className={cn("h-4 w-4", isInWishlist ? "text-red-500 fill-red-500" : "text-foreground")} />
+                                </Button>
                             </div>
                             <div className="pt-2">
                                 <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
@@ -375,8 +436,9 @@ function ShopPageContent() {
                                     {item.pricing.discount && <span className="text-xs text-orange-400 font-bold">({item.pricing.discount}% OFF)</span>}
                                 </p>
                             </div>
-                        </Link>
-                    ))}
+                        </div>
+                      )
+                    })}
                 </div>
               ) : (
                 <div className="text-center py-16 col-span-full">
@@ -405,6 +467,7 @@ interface FilterControlsProps {
     onReset: () => void;
     priceRange: number[];
     onPriceChange: (value: number[]) => void;
+    onPriceCommit: (value: number[]) => void;
     
     selectedCategory: string;
     onCategoryChange: (value: string) => void;
@@ -426,6 +489,7 @@ function FilterControls({
     onReset,
     priceRange,
     onPriceChange,
+    onPriceCommit,
     selectedCategory,
     onCategoryChange,
     availableGroups,
@@ -506,6 +570,7 @@ function FilterControls({
                             step={1000}
                             value={priceRange}
                             onValueChange={onPriceChange}
+                            onValueCommit={onPriceCommit}
                         />
                         <div className="flex justify-between text-sm text-muted-foreground mt-2">
                             <span>৳{priceRange[0]}</span>

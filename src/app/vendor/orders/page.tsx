@@ -40,10 +40,6 @@ interface Order {
     items: { id: string }[];
 }
 
-interface Product {
-  id: string;
-}
-
 export default function VendorOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,7 +48,7 @@ export default function VendorOrdersPage() {
 
     useEffect(() => {
         const fetchVendorOrders = async () => {
-            if (!user) return;
+            if (!user?.fullName) return;
             setLoading(true);
             try {
                 // 1. Get all product IDs for the current vendor

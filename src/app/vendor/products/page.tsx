@@ -71,7 +71,7 @@ export default function VendorProductsPage() {
   const db = getFirestore(app);
 
   const fetchProducts = async () => {
-    if (!user) return;
+    if (!user?.fullName) return;
     setLoading(true);
     try {
       const productsCollection = collection(db, 'products');

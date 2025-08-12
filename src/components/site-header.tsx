@@ -2,10 +2,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, LogOut, MoreVertical } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { Menu, Search, ShoppingCart, User, Heart, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { getAuth, signOut } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,17 +26,8 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { Separator } from './ui/separator';
 
-
-interface AppUser {
-    uid: string;
-    email: string | null;
-    fullName: string;
-    role: 'customer' | 'vendor' | 'admin';
-    photoURL?: string | null;
-}
-
 export function SiteHeader() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const auth = getAuth(app);
   const { toast } = useToast();
@@ -74,7 +64,7 @@ export function SiteHeader() {
   }
 
   const categories = [
-     { 
+    { 
       name: 'Shop',
       href: '/shop', 
       description: 'Explore all our products.', 
@@ -258,19 +248,10 @@ export function SiteHeader() {
 
         {/* Mobile Header */}
         <div className="md:hidden flex flex-1 items-center justify-between gap-4">
-            <Link href="/">
-              <Logo />
-            </Link>
-             <div className="flex-1 flex justify-center">
-                <div className="relative w-full max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input type="search" placeholder="Search..." className="h-9 pl-9" />
-                </div>
-            </div>
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-6 w-6" />
+                        <Menu className="h-6 w-6" />
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] flex flex-col">
@@ -321,6 +302,17 @@ export function SiteHeader() {
                     </ScrollArea>
                 </SheetContent>
             </Sheet>
+            <Link href="/">
+              <Logo />
+            </Link>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon">
+                 <ShoppingCart className="h-5 w-5" />
+              </Button>
+            </div>
         </div>
 
 
