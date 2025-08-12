@@ -36,6 +36,7 @@ import { VirtualTryOn } from '@/components/virtual-try-on';
 import { useAuth } from '@/hooks/use-auth';
 import { manageGroupBuy } from '@/ai/flows/group-buy-flow';
 import { useParams } from 'next/navigation';
+import { SizeChartDialog } from '@/components/size-chart-dialog';
 
 
 interface Product {
@@ -199,6 +200,7 @@ export default function ProductPage() {
                 setCheckingPurchase(false);
                 return;
             }
+            setCheckingPurchase(true);
             try {
                 const ordersRef = collection(db, 'orders');
                 const q = query(
@@ -586,7 +588,9 @@ export default function ProductPage() {
             <div className="mt-6">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-semibold text-foreground">SELECT SIZE</h3>
-                <Link href="#" className="text-sm font-semibold text-primary">SIZE CHART &gt;</Link>
+                 <SizeChartDialog>
+                  <span className="text-sm font-semibold text-primary cursor-pointer">SIZE CHART &gt;</span>
+                </SizeChartDialog>
               </div>
               <div className="flex flex-wrap gap-2">
                 {product.variants.sizes.map((size) => (
@@ -767,3 +771,4 @@ export default function ProductPage() {
 }
 
     
+
