@@ -6,18 +6,21 @@ const SSLCommerz = require('sslcommerz-lts');
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
-    const { total, tran_id, shippingAddress, items } = orderData;
+    const { total, tran_id, shippingAddress, items, userId } = orderData;
+    
+    const store_id = process.env.STORE_ID;
+    const store_passwd = process.env.STORE_PASSWORD;
+    const is_live = process.env.IS_LIVE === 'true';
     
     if (!shippingAddress) {
          return NextResponse.json({ error: 'Shipping address is missing.' }, { status: 400 });
     }
+    if (!store_id || !store_passwd) {
+        return NextResponse.json({ error: 'SSLCommerz store ID or password is not set.' }, { status: 500 });
+    }
     
     const { name, email, phone, fullAddress } = shippingAddress;
     
-    if (!process.env.STORE_ID || !process.env.STORE_PASSWORD) {
-        return NextResponse.json({ error: 'SSLCommerz store ID or password is not set.' }, { status: 500 });
-    }
-
     const data = {
         total_amount: Math.round(total),
         currency: 'BDT',
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
              createdAt: serverTimestamp()
         });
         
-        const sslcz = new SSLCommerz(process.env.STORE_ID, process.env.STORE_PASSWORD, process.env.IS_LIVE === 'true');
+        const sslcz = new SSLCommerz(store_id, store_passwd, is_live);
         const apiResponse = await sslcz.init(data);
 
         if (apiResponse.status === 'SUCCESS' && apiResponse.GatewayPageURL) {
