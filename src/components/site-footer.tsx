@@ -20,9 +20,9 @@ export function SiteFooter() {
                     <li><Link href="/kids" className="text-sm text-muted-foreground hover:text-primary">Kids</Link></li>
                     <li><Link href="/home-living" className="text-sm text-muted-foreground hover:text-primary">Home & Living</Link></li>
                     <li><Link href="/beauty" className="text-sm text-muted-foreground hover:text-primary">Beauty</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Genz</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Gift Cards</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Myntra Insider</Link></li>
+                    <li><Link href="/shop" className="text-sm text-muted-foreground hover:text-primary">Genz</Link></li>
+                    <li><Link href="/admin/gift-cards" className="text-sm text-muted-foreground hover:text-primary">Gift Cards</Link></li>
+                    <li><Link href="/profile" className="text-sm text-muted-foreground hover:text-primary">Myntra Insider</Link></li>
                 </ul>
                  <h3 className="mt-6 mb-4 font-bold text-xs tracking-widest uppercase">USEFUL LINKS</h3>
                 <ul className="space-y-2">
@@ -41,7 +41,7 @@ export function SiteFooter() {
                     <li><Link href="/faq" className="text-sm text-muted-foreground hover:text-primary">FAQ</Link></li>
                     <li><Link href="/terms-and-conditions" className="text-sm text-muted-foreground hover:text-primary">T&amp;C</Link></li>
                     <li><Link href="/terms-and-conditions" className="text-sm text-muted-foreground hover:text-primary">Terms Of Use</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Track Orders</Link></li>
+                    <li><Link href="/profile/orders" className="text-sm text-muted-foreground hover:text-primary">Track Orders</Link></li>
                     <li><Link href="/shipping-policy" className="text-sm text-muted-foreground hover:text-primary">Shipping</Link></li>
                     <li><Link href="/cancellation-policy" className="text-sm text-muted-foreground hover:text-primary">Cancellation</Link></li>
                     <li><Link href="/returns-policy" className="text-sm text-muted-foreground hover:text-primary">Returns</Link></li>

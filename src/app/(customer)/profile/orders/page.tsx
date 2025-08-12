@@ -80,7 +80,9 @@ export default function MyOrdersPage() {
     };
 
     useEffect(() => {
-        fetchOrders();
+        if (user) {
+            fetchOrders();
+        }
     }, [user]);
 
     const handleCancelOrder = async (order: Order) => {
@@ -216,4 +218,3 @@ export default function MyOrdersPage() {
       </Card>
   );
 }
-

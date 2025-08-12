@@ -52,7 +52,7 @@ export default function GrievanceRedressalPage() {
                      <div className="flex items-start gap-4">
                         <Phone className="h-6 w-6 text-primary mt-1" />
                          <div>
-                            <h3 className="font-semibold text-foreground">Phone</h3>
+                            <h3 className="font-semibold text-foreground">Call Us</h3>
                             <p>+880 96XX XXXXXX (10 AM to 6 PM, Sunday - Thursday)</p>
                         </div>
                     </div>

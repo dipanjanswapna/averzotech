@@ -92,9 +92,13 @@ export default function MyProfilePage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">My Profile</h1>
+        <p className="text-muted-foreground">Manage your personal information and password.</p>
+      </div>
         <Card>
             <CardHeader>
-            <CardTitle>My Profile</CardTitle>
+            <CardTitle>Personal Information</CardTitle>
             <CardDescription>
                 Manage your personal information.
             </CardDescription>
