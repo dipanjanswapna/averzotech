@@ -3,8 +3,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquare } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen } from 'lucide-react';
 import { Logo } from './logo';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   DropdownMenu,
@@ -29,9 +30,8 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { AppUser } from '@/hooks/use-auth';
 
-export function AdminSidebar({ user }: { user: AppUser }) {
+export function AdminSidebar({ user }: { user: any }) {
   const pathname = usePathname();
   const auth = getAuth(app);
   const { toast } = useToast();
@@ -68,7 +68,6 @@ export function AdminSidebar({ user }: { user: AppUser }) {
 
   const siteManagementItems = [
       { href: '/admin/site-management/home', label: 'Home Page', icon: Home },
-      { href: '/admin/site-management/popup', label: 'Promotional Popup', icon: MessageSquare },
       { href: '/admin/site-management/men', label: 'Men Page', icon: Shirt },
       { href: '/admin/site-management/women', label: 'Women Page', icon: PersonStanding },
       { href: '/admin/site-management/kids', label: 'Kids Page', icon: ToyBrick },
@@ -152,7 +151,7 @@ export function AdminSidebar({ user }: { user: AppUser }) {
             <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-secondary">
                     <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL || ''} alt={user?.fullName} />
+                        <AvatarImage src={user?.photoURL} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 group-data-[collapsible=icon]:hidden">

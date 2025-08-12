@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Sparkles, Users, Gift, Send } from 'lucide-react';
+import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   Accordion,
@@ -26,16 +26,12 @@ import * as React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { doc, getDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, runTransaction, DocumentData, where } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
-import { VirtualTryOn } from '@/components/virtual-try-on';
-import { manageGroupBuy } from '@/ai/flows/group-buy-flow';
-import { useParams } from 'next/navigation';
-import { SizeChartDialog } from '@/components/size-chart-dialog';
 
 
 interface Product {
@@ -63,7 +59,6 @@ interface Product {
         group: string;
         subcategory: string;
         tags: string[];
-        sizeChartUrl?: string;
     };
     variants: {
         colors: { name: string; hex: string }[];
@@ -77,119 +72,58 @@ interface Product {
     images: string[];
     createdAt: any;
     updatedAt: any;
-    ratingSummary: {
-        average: number;
-        count: number;
-    };
-    groupBuy?: {
-        isActive: boolean;
-        groupPrice: number;
-        targetCount: number;
-        expiresAt: any;
-    };
-    giftWithPurchase?: {
-        isActive: boolean;
-        description: string;
-    }
-  }
-
-  interface Review {
-      id: string;
-      rating: number;
-      title: string;
-      comment: string;
-      userName: string;
-      createdAt: any;
-      helpful: number;
-      unhelpful: number;
-  }
-
-   interface QnaItem {
-    id: string;
-    question: string;
-    questionBy: string;
-    createdAt: any;
-    answer?: string;
-    answeredBy?: string;
-    answeredAt?: any;
+    // The following properties are not in the DB yet, so we'll make them optional
+    rating?: number;
+    reviewsCount?: number;
+    reviews?: any[];
+    qna?: any[];
+    recommendedProducts?: any[];
   }
 
 
-function ProductPageContent() {
-  const params = useParams();
-  const productId = params.productId as string;
+export default function ProductPage({ params }: { params: { productId: string } }) {
   const [product, setProduct] = React.useState<Product | null>(null);
-  const [reviews, setReviews] = React.useState<Review[]>([]);
-  const [qna, setQna] = React.useState<QnaItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [quantity, setQuantity] = React.useState(1);
   const [selectedSize, setSelectedSize] = React.useState<string>('');
   const [selectedColor, setSelectedColor] = React.useState<{name: string, hex: string} | null>(null);
-  const [isTryOnOpen, setIsTryOnOpen] = React.useState(false);
   const { addToCart } = useCart();
-  const { toast } = useToast();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
-  const [isGroupCreating, setIsGroupCreating] = React.useState(false);
-  
-  // Review form state
-  const [reviewRating, setReviewRating] = React.useState(0);
-  const [reviewTitle, setReviewTitle] = React.useState('');
-  const [reviewComment, setReviewComment] = React.useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = React.useState(false);
-  
-  // Q&A form state
-  const [newQuestion, setNewQuestion] = React.useState('');
-  const [isSubmittingQuestion, setIsSubmittingQuestion] = React.useState(false);
-
+  const { toast } = useToast();
 
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
   React.useEffect(() => {
-    if (productId) {
-      const fetchProductData = async () => {
+    if (params.productId) {
+      const fetchProduct = async () => {
         setLoading(true);
         try {
-          const productRef = doc(db, 'products', productId);
-          const reviewsRef = collection(productRef, 'reviews');
-          const qnaRef = collection(productRef, 'qna');
+          const docRef = doc(db, 'products', params.productId);
+          const docSnap = await getDoc(docRef);
 
-          const productSnap = await getDoc(productRef);
-          
-          if (!productSnap.exists()) {
-             setError('Product not found.');
-             return;
+          if (docSnap.exists()) {
+            const productData = { id: docSnap.id, ...docSnap.data() } as Product;
+            setProduct(productData);
+            if (productData.variants.sizes.length > 0) {
+              setSelectedSize(productData.variants.sizes[0]);
+            }
+            if (productData.variants.colors.length > 0) {
+              setSelectedColor(productData.variants.colors[0]);
+            }
+          } else {
+            setError('Product not found.');
           }
-          
-          const data = productSnap.data();
-          const productData = { 
-              id: productSnap.id, 
-              ...data,
-              ratingSummary: data.ratingSummary || { average: 0, count: 0 }
-          } as Product;
-
-          setProduct(productData);
-          if (productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
-          if (productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
-
-          const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'));
-          const reviewsSnap = await getDocs(reviewsQuery);
-          setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
-          
-          const qnaQuery = query(qnaRef, orderBy('createdAt', 'desc'));
-          const qnaSnap = await getDocs(qnaQuery);
-          setQna(qnaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnaItem)));
-
         } catch (err) {
-          setError('Failed to fetch product data.');
+          setError('Failed to fetch product.');
           console.error(err);
         } finally {
           setLoading(false);
         }
       };
-      fetchProductData();
+      fetchProduct();
     }
-  }, [productId]);
+  }, [params.productId]);
   
   const handleAddToCart = () => {
     if (!product) return;
@@ -240,39 +174,6 @@ function ProductPageContent() {
           addToWishlist(productForWishlist);
           toast({ title: "Added to Wishlist" });
       }
-  }
-
-  const handleShare = async () => {
-    if (!product) return;
-    const shareData = {
-      title: product.name,
-      text: `Check out this product: ${product.name}`,
-      url: window.location.href,
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({ title: "Link Copied", description: "Product link copied to clipboard!" });
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      toast({ title: "Error", description: "Could not share the product.", variant: 'destructive' });
-    }
-  };
-
-  const handleStartGroupBuy = async () => {
-      // This functionality requires a logged-in user.
-      toast({ title: "Login Required", description: "Please log in to start a group buy.", variant: "destructive"});
-  }
-
-  const handleReviewSubmit = async () => {
-      toast({ title: "Please log in to submit a review.", variant: "destructive"});
-  }
-
-  const handleQuestionSubmit = async () => {
-      toast({ title: "Please log in to ask a question.", variant: "destructive"});
   }
 
   if (loading) {
@@ -327,7 +228,19 @@ function ProductPageContent() {
   if (!product) {
       return null;
   }
-  
+
+  // Use mock data for parts not in DB yet
+  const displayProduct = {
+      ...product,
+      images: product.images.map(img => ({ src: img, alt: product.name, dataAiHint: 'product image'})),
+      offers: product.offers ? product.offers.split('\n') : [],
+      rating: product.rating || 4.5,
+      reviewsCount: product.reviewsCount || 123,
+      reviews: product.reviews || [],
+      qna: product.qna || [],
+      recommendedProducts: product.recommendedProducts || [],
+  };
+
   const ratingDistribution = [
     { star: 5, percentage: 60, count: 1740 },
     { star: 4, percentage: 25, count: 725 },
@@ -341,7 +254,7 @@ function ProductPageContent() {
       <SiteHeader />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-sm text-muted-foreground mb-4">
-          <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{product.brand} {product.organization.subcategory}</span>
+          <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{displayProduct.brand} {product.organization.subcategory}</span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery and Video */}
@@ -355,16 +268,16 @@ function ProductPageContent() {
                           }}
                       >
                           <CarouselContent>
-                              {product.images.map((image, index) => (
+                              {displayProduct.images.map((image, index) => (
                                   <CarouselItem key={index}>
                                       <div className="aspect-[3/4] overflow-hidden rounded-lg">
                                           <Image
-                                              src={image}
-                                              alt={product.name}
+                                              src={image.src}
+                                              alt={image.alt}
                                               width={600}
                                               height={800}
                                               className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                                              data-ai-hint={'product image'}
+                                              data-ai-hint={image.dataAiHint}
                                           />
                                       </div>
                                   </CarouselItem>
@@ -375,12 +288,13 @@ function ProductPageContent() {
                       </Carousel>
                   </div>
 
-                  {product.videoUrl && (
+                  {/* Product Video */}
+                  {displayProduct.videoUrl && (
                     <div className="aspect-video overflow-hidden rounded-lg">
                         <iframe
                             width="100%"
                             height="100%"
-                            src={product.videoUrl.replace("watch?v=", "embed/")}
+                            src={displayProduct.videoUrl.replace("watch?v=", "embed/")}
                             title="Product Video"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
@@ -395,59 +309,37 @@ function ProductPageContent() {
           <div>
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{product.brand}</h1>
-                <h2 className="text-xl text-muted-foreground">{product.name}</h2>
+                <h1 className="text-2xl font-bold text-foreground">{displayProduct.brand}</h1>
+                <h2 className="text-xl text-muted-foreground">{displayProduct.name}</h2>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleShare}>
+              <Button variant="ghost" size="icon">
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
             
             <div className="flex items-center mt-2">
               <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-              <span className="ml-1 font-bold">{product.ratingSummary?.average || 0}</span>
+              <span className="ml-1 font-bold">{displayProduct.rating}</span>
               <Separator orientation="vertical" className="h-4 mx-2" />
-              <span className="text-muted-foreground">{(product.ratingSummary?.count || 0).toLocaleString()} Ratings</span>
+              <span className="text-muted-foreground">{displayProduct.reviewsCount.toLocaleString()} Ratings</span>
             </div>
 
             <Separator className="my-4" />
 
             <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold">৳{product.pricing.price}</span>
-                {product.pricing.comparePrice && <span className="text-muted-foreground line-through">MRP ৳{product.pricing.comparePrice}</span>}
-                {product.pricing.discount && <span className="text-orange-500 font-bold">({product.pricing.discount}% OFF)</span>}
+                <span className="text-2xl font-bold">৳{displayProduct.pricing.price}</span>
+                {displayProduct.pricing.comparePrice && <span className="text-muted-foreground line-through">MRP ৳{displayProduct.pricing.comparePrice}</span>}
+                {displayProduct.pricing.discount && <span className="text-orange-500 font-bold">({displayProduct.pricing.discount}% OFF)</span>}
             </div>
             <p className="text-sm text-green-600 font-semibold">inclusive of all taxes</p>
-            <Badge variant="outline" className="mt-2">{product.inventory.availability}</Badge>
-            <p className="text-sm text-muted-foreground mt-1">SKU: {product.inventory.sku}</p>
+            <Badge variant="outline" className="mt-2">{displayProduct.inventory.availability}</Badge>
+            <p className="text-sm text-muted-foreground mt-1">SKU: {displayProduct.inventory.sku}</p>
 
-            {product.giftWithPurchase?.isActive && (
-                 <div className="mt-4 p-2 rounded-lg bg-green-100 border border-green-200">
-                    <p className="font-semibold text-green-800 flex items-center gap-2 text-sm">
-                        <Gift className="w-4 h-4" /> + FREE GIFT: {product.giftWithPurchase.description}
-                    </p>
-                </div>
-            )}
-
-            {product.groupBuy?.isActive && (
-                 <div className="mt-4 p-4 rounded-lg bg-teal-50 border border-teal-200">
-                    <h3 className="font-bold text-teal-800 flex items-center gap-2"><Users /> Group Buy Available!</h3>
-                    <p className="text-teal-700 text-sm mt-1">
-                        Buy with friends and get this for only <span className="font-bold text-lg">৳{product.groupBuy.groupPrice}</span>!
-                        Requires {product.groupBuy.targetCount} people.
-                    </p>
-                    <div className='flex gap-2 mt-2'>
-                        <Button size="sm" variant="secondary" className="bg-teal-600 text-white hover:bg-teal-700" onClick={handleStartGroupBuy} disabled={isGroupCreating}>
-                           {isGroupCreating ? 'Starting...' : 'Start a Group'}
-                        </Button>
-                    </div>
-                </div>
-            )}
             
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-foreground mb-2">COLOR</h3>
               <div className="flex flex-wrap gap-2">
-                {product.variants.colors.map((color) => (
+                {displayProduct.variants.colors.map((color) => (
                    <Button key={color.name} variant="outline" size="icon" className={`rounded-full border-2 ${selectedColor?.name === color.name ? 'border-primary' : 'border-border'}`} onClick={() => setSelectedColor(color)}>
                      <span className="block w-6 h-6 rounded-full" style={{ backgroundColor: color.hex }} />
                    </Button>
@@ -458,14 +350,10 @@ function ProductPageContent() {
             <div className="mt-6">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-sm font-semibold text-foreground">SELECT SIZE</h3>
-                 {product.organization.sizeChartUrl && (
-                    <SizeChartDialog sizeChartUrl={product.organization.sizeChartUrl}>
-                        <span className="text-sm font-semibold text-primary cursor-pointer">SIZE CHART &gt;</span>
-                    </SizeChartDialog>
-                 )}
+                <Link href="#" className="text-sm font-semibold text-primary">SIZE CHART &gt;</Link>
               </div>
               <div className="flex flex-wrap gap-2">
-                {product.variants.sizes.map((size) => (
+                {displayProduct.variants.sizes.map((size) => (
                   <Button key={size} variant={selectedSize === size ? "default" : "outline"} className="rounded-full w-14 h-14 border-2" onClick={() => setSelectedSize(size)}>
                     {size}
                   </Button>
@@ -486,40 +374,64 @@ function ProductPageContent() {
               <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={handleAddToCart}>
                 <ShoppingBag className="mr-2 h-5 w-5" /> ADD TO CART
               </Button>
-              <Button size="lg" variant="secondary" className="flex-1" onClick={() => setIsTryOnOpen(true)}>
-                 <Sparkles className="mr-2 h-5 w-5" /> Virtual Try-On
+              <Button size="lg" variant="secondary" className="flex-1">
+                 BUY NOW
               </Button>
               <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>
                 <Heart className={`mr-2 h-5 w-5 ${isInWishlist ? "fill-current" : ""}`} /> WISHLIST
               </Button>
             </div>
+
+            <Separator className="my-6" />
+
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3>
+              <div className="flex items-center border rounded-md p-1 max-w-sm">
+                  <input type="text" placeholder="Enter pincode" className="flex-grow p-1 outline-none text-sm bg-transparent" />
+                  <Button variant="link" className="text-primary">Check</Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Please enter PIN code to check delivery time &amp; Pay on Delivery Availability</p>
+            </div>
             
-            <VirtualTryOn 
-                isOpen={isTryOnOpen}
-                onOpenChange={setIsTryOnOpen}
-                productImage={product.images[0]}
-                productName={product.name}
-             />
+            <div className="text-sm mt-4 space-y-1">
+                <p>Estimated Delivery: <span className="font-semibold">{displayProduct.shipping.estimatedDelivery}</span></p>
+                <p>Shipping: <span className="font-semibold">{displayProduct.shipping.deliveryFee === 0 ? 'Free Shipping' : `৳${displayProduct.shipping.deliveryFee}`}</span></p>
+            </div>
+
+             <div className="mt-4 flex gap-4">
+                <div className="text-center text-sm">
+                    <img src="https://placehold.co/50x50.png" alt="100% Original" className="mx-auto" data-ai-hint="original guarantee" />
+                    <p>100% Original</p>
+                </div>
+                 <div className="text-center text-sm">
+                    <img src="https://placehold.co/50x50.png" alt="Secure Payments" className="mx-auto" data-ai-hint="secure payment" />
+                    <p>Secure Payments</p>
+                </div>
+                 <div className="text-center text-sm">
+                    <img src="https://placehold.co/50x50.png" alt="Easy Returns" className="mx-auto" data-ai-hint="return policy" />
+                    <p>Easy Returns</p>
+                </div>
+            </div>
 
             <Separator className="my-6" />
             
-            <Accordion type="multiple" className="w-full" defaultValue={['item-1']}>
-              {product.offers && <AccordionItem value="item-1">
+            <Accordion type="multiple" className="w-full">
+              <AccordionItem value="item-1">
                 <AccordionTrigger className="font-semibold uppercase text-sm">Best Offers <Tag className="inline h-5 w-5" /></AccordionTrigger>
                 <AccordionContent>
                   <ul className="list-disc pl-5 text-sm space-y-2">
-                      {(product.offers || '').split('\n').map((offer, index) => <li key={index}>{offer}</li>)}
+                      {displayProduct.offers.map((offer, index) => <li key={index}>{offer}</li>)}
                   </ul>
                 </AccordionContent>
-              </AccordionItem>}
+              </AccordionItem>
               <AccordionItem value="item-2">
                 <AccordionTrigger className="font-semibold uppercase text-sm">Product Details</AccordionTrigger>
-                <AccordionContent className="space-y-2 text-sm pt-4">
-                    <p>{product.description}</p>
+                <AccordionContent className="space-y-2 text-sm">
+                    <p>{displayProduct.description}</p>
                     <div>
                         <h4 className="font-semibold mb-1">Specifications:</h4>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                            {product.specifications.map(spec => (
+                            {displayProduct.specifications.map(spec => (
                                 <React.Fragment key={spec.label}>
                                     <div className="text-muted-foreground">{spec.label}</div>
                                     <div>{spec.value}</div>
@@ -556,73 +468,82 @@ function ProductPageContent() {
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="md:col-span-1">
                      <div className="flex items-center gap-2">
-                         <h3 className="text-4xl font-bold">{product.ratingSummary?.average || 0}</h3>
+                         <h3 className="text-4xl font-bold">{displayProduct.rating}</h3>
                          <Star className="w-8 h-8 text-yellow-400 fill-yellow-400"/>
                      </div>
-                     <p className="text-muted-foreground mt-1">{(product.ratingSummary?.count || 0).toLocaleString()} Ratings</p>
-                     
-                     <div className="border p-4 rounded-lg mt-6">
-                        <h3 className="font-semibold mb-2">Write a review</h3>
-                        <fieldset disabled={isSubmittingReview}>
-                            <div className="flex items-center gap-1 mb-4">
-                                {[1, 2, 3, 4, 5].map(star => (
-                                    <Star key={star} className={`w-6 h-6 cursor-pointer ${reviewRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} onClick={() => setReviewRating(star)} />
-                                ))}
-                            </div>
-                            <Input placeholder="Review Title (optional)" className="mb-2" value={reviewTitle} onChange={e => setReviewTitle(e.target.value)} />
-                            <Textarea placeholder="Share your thoughts..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} />
-                            <Button className="mt-2 w-full" onClick={handleReviewSubmit} disabled={isSubmittingReview}>
-                                {isSubmittingReview ? "Submitting..." : "Submit Review"}
-                            </Button>
-                        </fieldset>
-                        <p className="text-xs text-center text-muted-foreground mt-2">Login and purchase this item to leave a review.</p>
+                     <p className="text-muted-foreground mt-1">{displayProduct.reviewsCount.toLocaleString()} Ratings</p>
+                     <div className="mt-4 space-y-1">
+                         {ratingDistribution.map(item => (
+                             <div key={item.star} className="flex items-center gap-2 text-sm">
+                                 <span>{item.star} <Star className="w-3 h-3 inline-block align-baseline text-muted-foreground" /></span>
+                                 <Progress value={item.percentage} className="w-full h-2"/>
+                                 <span className="text-muted-foreground w-12 text-right">{item.count}</span>
+                             </div>
+                         ))}
                      </div>
                  </div>
                  <div className="md:col-span-2">
-                    {reviews.map(review => (
+                    {displayProduct.reviews.map(review => (
                         <div key={review.id} className="border-b py-4">
                             <div className="flex items-center mb-1">
                                 {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}/>)}
                                 <h4 className="font-semibold ml-2">{review.title}</h4>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-2">By {review.userName} on {new Date(review.createdAt?.seconds * 1000).toLocaleDateString()}</p>
-                            <p className="text-sm">{review.comment}</p>
+                            <p className="text-sm text-muted-foreground mb-2">By {review.author} on {review.date}</p>
+                            <p className="text-sm">{review.content}</p>
                             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                 <button className="flex items-center gap-1 hover:text-primary"><ThumbsUp className="w-3 h-3"/> Helpful ({review.helpful})</button>
                                 <button className="flex items-center gap-1 hover:text-primary"><ThumbsDown className="w-3 h-3"/> Unhelpful ({review.unhelpful})</button>
                             </div>
                         </div>
                     ))}
-                    {reviews.length === 0 && <p className="text-muted-foreground">No reviews yet. Be the first one!</p>}
                  </div>
              </div>
         </div>
         
         <div className="mt-12">
             <h2 className="text-2xl font-bold mb-4">Questions &amp; Answers</h2>
-            <div className="border p-4 rounded-lg">
-                 <h3 className="font-semibold mb-2">Ask a question</h3>
-                 <div className="flex gap-2">
-                    <Input placeholder="Type your question here..." value={newQuestion} onChange={e => setNewQuestion(e.target.value)} />
-                    <Button onClick={handleQuestionSubmit} disabled={isSubmittingQuestion}>
-                        <Send className="w-4 h-4" />
-                    </Button>
-                 </div>
-            </div>
-            <div className="mt-4 space-y-4">
-                {qna.map(item => (
-                    <div key={item.id} className="border-b pb-4 text-sm">
-                        <p><span className="font-semibold">Q:</span> {item.question} <span className="text-xs text-muted-foreground">- {item.questionBy}</span></p>
-                        {item.answer ? (
-                             <p className="mt-1 text-muted-foreground pl-5"><span className="font-semibold text-foreground">A:</span> {item.answer}</p>
-                        ) : (
-                             <p className="mt-1 text-muted-foreground text-xs pl-5">Awaiting answer...</p>
-                        )}
-                    </div>
-                ))}
-                 {qna.length === 0 && <p className="text-muted-foreground mt-4">No questions have been asked yet.</p>}
+            {displayProduct.qna.map(item => (
+                <div key={item.id} className="border-b py-4 text-sm">
+                    <p className="font-semibold">Q: {item.question}</p>
+                    <p className="mt-1 text-muted-foreground">A: {item.answer}</p>
+                </div>
+            ))}
+            <div className="mt-4">
+                <h3 className="font-semibold mb-2">Have a question?</h3>
+                <Textarea placeholder="Type your question here..."/>
+                <Button className="mt-2">Post Question</Button>
             </div>
         </div>
+
+        {/* Recommended Products */}
+        <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-6">
+                {displayProduct.recommendedProducts.map(item => (
+                    <Link href={`/product/${item.id}`} key={item.id} className="group block">
+                        <div className="relative overflow-hidden rounded-lg">
+                            <Image
+                                src={item.src}
+                                alt={item.name}
+                                width={400}
+                                height={500}
+                                className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                data-ai-hint={item.dataAiHint}
+                            />
+                        </div>
+                        <div className="pt-2">
+                            <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
+                            <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                            <p className="text-sm font-semibold mt-1 text-foreground">
+                                ৳ {item.price}
+                            </p>
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        </div>
+
 
         {/* Live Chat */}
         <div className="fixed bottom-6 right-6">
@@ -635,8 +556,4 @@ function ProductPageContent() {
       <SiteFooter />
     </div>
   );
-}
-
-export default function ProductPage() {
-    return <ProductPageContent />;
 }

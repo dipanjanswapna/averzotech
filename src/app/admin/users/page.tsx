@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, getFirestore, doc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, getFirestore, doc, deleteDoc } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -51,8 +51,7 @@ export default function UsersPage() {
     setLoading(true);
     try {
         const usersCollection = collection(db, 'users');
-        const q = query(usersCollection, orderBy('createdAt', 'desc'));
-        const userSnapshot = await getDocs(q);
+        const userSnapshot = await getDocs(usersCollection);
         const userList = userSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
         setUsers(userList);
     } catch (error) {

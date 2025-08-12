@@ -53,16 +53,18 @@ interface Product {
 
 
 export default function VendorProductsPage() {
-  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return;
     const fetchProducts = async () => {
+      if (!user) return;
       setLoading(true);
       try {
         const productsCollection = collection(db, 'products');
+        // Query products where the vendor field matches the logged-in user's name
+        // In a real-world app, you'd likely use the user's UID for more reliability
         const q = query(productsCollection, where("vendor", "==", user.fullName));
         const productSnapshot = await getDocs(q);
         const productList = productSnapshot.docs.map(doc => ({
@@ -76,7 +78,10 @@ export default function VendorProductsPage() {
         setLoading(false);
       }
     };
-    fetchProducts();
+
+    if(user) {
+      fetchProducts();
+    }
   }, [user]);
 
   return (

@@ -41,14 +41,10 @@ interface Product {
     };
     shipping: {
         estimatedDelivery: string;
-    };
+    }
     inventory: {
         sku: string;
-    };
-    giftWithPurchase?: {
-        isActive: boolean;
-        description: string;
-    };
+    }
     // Variant info
     selectedColor: string;
     selectedSize: string;

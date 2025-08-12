@@ -42,26 +42,23 @@ interface Order {
 
 interface Product {
   id: string;
-  vendor: string;
 }
 
 export default function VendorOrdersPage() {
-    const { user } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchVendorOrders = async () => {
-            if (!user) {
-                setLoading(false);
-                return;
-            };
+            if (!user) return;
             setLoading(true);
             try {
-                // 1. Get all products for the current vendor
-                const productsQuery = query(collection(db, 'products'), where('vendor', '==', user.fullName));
-                const productsSnapshot = await getDocs(productsQuery);
-                const vendorProductIds = productsSnapshot.docs.map(doc => doc.id);
+                // 1. Get all product IDs for the current vendor
+                const productsRef = collection(db, 'products');
+                const qProducts = query(productsRef, where("vendor", "==", user.fullName));
+                const productSnapshot = await getDocs(qProducts);
+                const vendorProductIds = productSnapshot.docs.map(doc => doc.id);
 
                 if (vendorProductIds.length === 0) {
                     setOrders([]);
@@ -78,19 +75,23 @@ export default function VendorOrdersPage() {
                     ...doc.data()
                 } as Order));
 
-                // 3. Filter orders that contain vendor's products
+                // 3. Filter orders that contain any of the vendor's products
                 const vendorOrders = allOrders.filter(order => 
                     order.items.some(item => vendorProductIds.includes(item.id))
                 );
-
+                
                 setOrders(vendorOrders);
+
             } catch (error) {
-                console.error("Error fetching orders: ", error);
+                console.error("Error fetching vendor orders: ", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchVendorOrders();
+
+        if(user) {
+            fetchVendorOrders();
+        }
     }, [user]);
 
     const getStatusBadgeVariant = (status: string) => {
@@ -106,7 +107,7 @@ export default function VendorOrdersPage() {
         }
     };
 
-     const getStatusBadgeClass = (status: string) => {
+    const getStatusBadgeClass = (status: string) => {
         switch (status) {
             case 'Fulfilled':
                 return 'bg-green-100 text-green-800';

@@ -193,12 +193,6 @@ export default function CartPage() {
                     <p className="text-sm text-muted-foreground">{item.brand}</p>
                     <p className="text-sm text-muted-foreground">Size: {item.selectedSize} | Color: {item.selectedColor}</p>
                      <p className="text-sm text-muted-foreground mt-1">Delivery by: {item.shipping.estimatedDelivery}</p>
-                     {item.giftWithPurchase?.isActive && (
-                        <div className="mt-2 flex items-center gap-2 bg-green-100 text-green-800 p-2 rounded-md text-xs">
-                           <Gift className="w-4 h-4"/> 
-                           <span className="font-semibold">+ FREE GIFT:</span> {item.giftWithPurchase.description}
-                        </div>
-                     )}
                   </div>
                   <div className="flex flex-col items-start md:items-end justify-between">
                      <div className="flex items-center gap-2">

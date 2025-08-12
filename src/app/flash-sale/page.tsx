@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Filter, Bell, X } from 'lucide-react';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -49,7 +49,6 @@ interface Product {
     dataAiHint: string;
     inventory: {
         stock: number;
-        sold?: number;
     };
     organization: {
         category: string;
@@ -116,15 +115,12 @@ export default function FlashSalePage() {
         setLoading(true);
         try {
             const campaignsRef = collection(db, 'campaigns');
-            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"));
+            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
             const campaignSnap = await getDocs(q);
             
-            const activeCampaigns = campaignSnap.docs
-                .map(doc => ({ id: doc.id, ...doc.data() } as Campaign))
-                .filter(campaign => campaign.endDate.toDate() > new Date());
-
-            if (activeCampaigns.length > 0) {
-                const campaignData = activeCampaigns[0]; // Take the first active flash sale
+            if (!campaignSnap.empty) {
+                const campaignDoc = campaignSnap.docs[0];
+                const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
                 setFlashSale(campaignData);
 
                 if(campaignData.products && campaignData.products.length > 0) {
@@ -301,10 +297,6 @@ export default function FlashSalePage() {
                                     {deal.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{deal.pricing.comparePrice}</span> }
                                     {deal.pricing.discount && <span className="text-xs text-orange-400 font-bold">({deal.pricing.discount}% OFF)</span> }
                                 </p>
-                                 <div className='mt-2'>
-                                    <Progress value={((deal.inventory.stock - (deal.inventory.sold || 0)) / deal.inventory.stock) * 100} className="h-2" />
-                                    <p className="text-xs text-muted-foreground mt-1">Only a few left!</p>
-                                </div>
                             </div>
                         </Link>
                     ))}
@@ -474,5 +466,3 @@ function FilterControls({
         </div>
     )
 }
-
-    

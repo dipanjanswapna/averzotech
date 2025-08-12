@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Package, ShoppingCart, Settings, LogOut } from 'lucide-react';
 import { Logo } from './logo';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   DropdownMenu,
@@ -28,14 +29,13 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { AppUser } from '@/hooks/use-auth';
 
-export function VendorSidebar({ user }: { user: AppUser }) {
+export function VendorSidebar({ user }: { user: any }) {
   const pathname = usePathname();
   const auth = getAuth(app);
   const { toast } = useToast();
   const router = useRouter();
-  
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -96,7 +96,7 @@ export function VendorSidebar({ user }: { user: AppUser }) {
             <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-secondary">
                     <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL || ''} alt={user?.fullName} />
+                        <AvatarImage src={user?.photoURL} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 group-data-[collapsible=icon]:hidden">
@@ -108,6 +108,9 @@ export function VendorSidebar({ user }: { user: AppUser }) {
             <DropdownMenuContent side="right" align="start" className="w-56 mb-2">
                 <DropdownMenuLabel>{user?.fullName}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/profile">Profile</Link>
+                </DropdownMenuItem>
                  <DropdownMenuItem asChild>
                     <Link href="/">Back to Site</Link>
                 </DropdownMenuItem>

@@ -26,7 +26,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 
 interface ContentItem {
   id?: string;
@@ -36,10 +35,8 @@ interface ContentItem {
   dataAiHint: string;
   url?: string;
   link?: string;
-  name?: string; // For Category cards
-  title?: string; // For Explore Section
-  subtitle?: string; // For Explore Section
-  discount?: string; // For Category cards
+  name?: string;
+  discount?: string;
 }
 
 interface DealProduct {
@@ -69,11 +66,6 @@ export default function HomePageManager() {
   const [brands, setBrands] = useState<ContentItem[]>([]);
   const [deals, setDeals] = useState<DealProduct[]>([]);
   const [categories, setCategories] = useState<ContentItem[]>([]);
-  const [exploreSection, setExploreSection] = useState({
-      top: { preview: 'https://placehold.co/1200x600.png', alt: '', dataAiHint: '', title: '', subtitle: '', link: '' } as ContentItem,
-      bottomLeft: { preview: 'https://placehold.co/600x600.png', alt: '', dataAiHint: '', title: '', subtitle: '', link: '' } as ContentItem,
-      bottomRight: { preview: 'https://placehold.co/600x600.png', alt: '', dataAiHint: '', title: '', subtitle: '', link: '' } as ContentItem,
-  })
   
   // Fetch all content from Firestore
   useEffect(() => {
@@ -87,13 +79,6 @@ export default function HomePageManager() {
         setBrands(data.brands?.map((brand: any) => ({ ...brand, preview: brand.url, id: Math.random().toString() })) || []);
         setDeals(data.deals || []);
         setCategories(data.categories?.map((cat: any) => ({ ...cat, preview: cat.url, id: Math.random().toString() })) || []);
-        if (data.exploreSection) {
-            setExploreSection({
-                top: { ...data.exploreSection.top, preview: data.exploreSection.top.url },
-                bottomLeft: { ...data.exploreSection.bottomLeft, preview: data.exploreSection.bottomLeft.url },
-                bottomRight: { ...data.exploreSection.bottomRight, preview: data.exploreSection.bottomRight.url },
-            });
-        }
       }
       setIsFetching(false);
     };
@@ -127,18 +112,6 @@ export default function HomePageManager() {
           stateSetter(newArray);
       }
   };
-  
-  const handleSingleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<any>>) => {
-      if(e.target.files && e.target.files[0]) {
-          const file = e.target.files[0];
-          setter((prev: any) => ({
-              ...prev,
-              file,
-              preview: URL.createObjectURL(file),
-              url: ''
-          }));
-      }
-  };
 
   const handleUrlChange = (index: number, value: string, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
       const newArray = [...stateArray];
@@ -148,26 +121,10 @@ export default function HomePageManager() {
       stateSetter(newArray);
   }
 
-  const handleSingleUrlChange = (value: string, setter: React.Dispatch<React.SetStateAction<any>>) => {
-    setter((prev: any) => ({
-        ...prev,
-        url: value,
-        preview: value,
-        file: undefined
-    }))
-  }
-
   const handleTextChange = (index: number, field: string, value: string, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
       const newArray = [...stateArray];
       newArray[index][field] = value;
       stateSetter(newArray);
-  };
-
-  const handleSingleTextChange = (field: string, value: string, setter: React.Dispatch<React.SetStateAction<any>>) => {
-    setter((prev: any) => ({
-        ...prev,
-        [field]: value
-    }))
   };
 
   const handleAddItem = (stateSetter: React.Dispatch<React.SetStateAction<any[]>>, newItem: any) => {
@@ -204,29 +161,18 @@ export default function HomePageManager() {
       const processItems = async (items: ContentItem[], path: string) => {
         return Promise.all(
           items.map(async (item) => {
-            const url = await uploadImage(item, `site_content/homepage/${path}`);
+            const url = await uploadImage(item, path);
             const { file, preview, id, ...rest } = item;
             return { ...rest, url };
           })
         );
       }
-      
-      const processSingleItem = async (item: ContentItem, path: string) => {
-          const url = await uploadImage(item, `site_content/homepage/${path}`);
-          const { file, preview, id, ...rest } = item;
-          return { ...rest, url };
-      }
 
       const homepageContent = {
-        heroImages: await processItems(heroImages, 'hero'),
-        brands: await processItems(brands, 'brands'),
+        heroImages: await processItems(heroImages, 'site_content/homepage/hero'),
+        brands: await processItems(brands, 'site_content/homepage/brands'),
         deals,
-        categories: await processItems(categories, 'categories'),
-        exploreSection: {
-            top: await processSingleItem(exploreSection.top, 'explore'),
-            bottomLeft: await processSingleItem(exploreSection.bottomLeft, 'explore'),
-            bottomRight: await processSingleItem(exploreSection.bottomRight, 'explore'),
-        }
+        categories: await processItems(categories, 'site_content/homepage/categories'),
       };
 
       await setDoc(doc(db, 'site_content', 'homepage'), homepageContent, { merge: true });
@@ -361,58 +307,6 @@ export default function HomePageManager() {
                   </DialogContent>
               </Dialog>
           </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-            <CardTitle>Explore More Section</CardTitle>
-            <CardDescription>Manage the three-image section on the homepage.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-            {/* Top Image */}
-            <div className="p-4 border rounded-lg bg-secondary/50 space-y-2">
-                <h3 className="font-semibold">Top Banner</h3>
-                <div className="flex items-start gap-4">
-                    <Image src={exploreSection.top.preview} alt="Top banner preview" width={200} height={100} className="object-cover rounded-md aspect-video" />
-                    <div className="flex-1 space-y-2">
-                        <Input placeholder="Image URL" value={exploreSection.top.url || ''} onChange={(e) => handleSingleUrlChange(e.target.value, (setter) => setExploreSection(prev => ({...prev, top: setter(prev.top)})))} />
-                        <Input placeholder="Title (e.g. Snug & Fun)" value={exploreSection.top.title || ''} onChange={(e) => handleSingleTextChange('title', e.target.value, (setter) => setExploreSection(prev => ({...prev, top: setter(prev.top)})))} />
-                        <Input placeholder="Subtitle (e.g. Kids Home /25)" value={exploreSection.top.subtitle || ''} onChange={(e) => handleSingleTextChange('subtitle', e.target.value, (setter) => setExploreSection(prev => ({...prev, top: setter(prev.top)})))} />
-                        <Input placeholder="Link URL" value={exploreSection.top.link || ''} onChange={(e) => handleSingleTextChange('link', e.target.value, (setter) => setExploreSection(prev => ({...prev, top: setter(prev.top)})))} />
-                        <Input type="file" className="text-xs" onChange={(e) => handleSingleFileChange(e, (setter) => setExploreSection(prev => ({...prev, top: setter(prev.top)})))} />
-                    </div>
-                </div>
-            </div>
-             {/* Bottom Images */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg bg-secondary/50 space-y-2">
-                    <h3 className="font-semibold">Bottom Left Banner</h3>
-                    <div className="flex flex-col items-start gap-4">
-                        <Image src={exploreSection.bottomLeft.preview} alt="Bottom left preview" width={200} height={200} className="object-cover rounded-md aspect-square" />
-                        <div className="w-full space-y-2">
-                            <Input placeholder="Image URL" value={exploreSection.bottomLeft.url || ''} onChange={(e) => handleSingleUrlChange(e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomLeft: setter(prev.bottomLeft)})))} />
-                            <Input placeholder="Title (e.g. Turquoise Novelty)" value={exploreSection.bottomLeft.title || ''} onChange={(e) => handleSingleTextChange('title', e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomLeft: setter(prev.bottomLeft)})))} />
-                            <Input placeholder="Subtitle (e.g. Explore Jewellery)" value={exploreSection.bottomLeft.subtitle || ''} onChange={(e) => handleSingleTextChange('subtitle', e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomLeft: setter(prev.bottomLeft)})))} />
-                            <Input placeholder="Link URL" value={exploreSection.bottomLeft.link || ''} onChange={(e) => handleSingleTextChange('link', e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomLeft: setter(prev.bottomLeft)})))} />
-                            <Input type="file" className="text-xs" onChange={(e) => handleSingleFileChange(e, (setter) => setExploreSection(prev => ({...prev, bottomLeft: setter(prev.bottomLeft)})))} />
-                        </div>
-                    </div>
-                </div>
-                <div className="p-4 border rounded-lg bg-secondary/50 space-y-2">
-                    <h3 className="font-semibold">Bottom Right Banner</h3>
-                    <div className="flex flex-col items-start gap-4">
-                        <Image src={exploreSection.bottomRight.preview} alt="Bottom right preview" width={200} height={200} className="object-cover rounded-md aspect-square" />
-                        <div className="w-full space-y-2">
-                             <Input placeholder="Image URL" value={exploreSection.bottomRight.url || ''} onChange={(e) => handleSingleUrlChange(e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomRight: setter(prev.bottomRight)})))} />
-                            <Input placeholder="Title (e.g. A Vivid Teal)" value={exploreSection.bottomRight.title || ''} onChange={(e) => handleSingleTextChange('title', e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomRight: setter(prev.bottomRight)})))} />
-                            <Input placeholder="Subtitle (e.g. Explore Accessories)" value={exploreSection.bottomRight.subtitle || ''} onChange={(e) => handleSingleTextChange('subtitle', e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomRight: setter(prev.bottomRight)})))} />
-                            <Input placeholder="Link URL" value={exploreSection.bottomRight.link || ''} onChange={(e) => handleSingleTextChange('link', e.target.value, (setter) => setExploreSection(prev => ({...prev, bottomRight: setter(prev.bottomRight)})))} />
-                            <Input type="file" className="text-xs" onChange={(e) => handleSingleFileChange(e, (setter) => setExploreSection(prev => ({...prev, bottomRight: setter(prev.bottomRight)})))} />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </CardContent>
       </Card>
 
       <Card>

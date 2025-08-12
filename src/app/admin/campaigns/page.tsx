@@ -38,7 +38,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Link from 'next/link';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -58,7 +58,7 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchCampaigns = useCallback(async () => {
+  const fetchCampaigns = async () => {
     setLoading(true);
     try {
       const campaignsCollection = collection(db, 'campaigns');
@@ -75,12 +75,12 @@ export default function CampaignsPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  };
 
 
   useEffect(() => {
     fetchCampaigns();
-  }, [fetchCampaigns]);
+  }, [toast]);
 
   const handleDeleteCampaign = async (campaignId: string) => {
     try {

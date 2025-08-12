@@ -41,8 +41,6 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Switch } from '@/components/ui/switch';
-import { Checkbox } from '@/components/ui/checkbox';
 
 const initialFilterCategories = [
     { 
@@ -119,7 +117,6 @@ export default function NewProductPage() {
     const [images, setImages] = useState<ImageObject[]>([]);
     const [imageUrlInput, setImageUrlInput] = useState('');
     const [videoUrl, setVideoUrl] = useState('');
-    const [sizeChartImage, setSizeChartImage] = useState<ImageObject | null>(null);
     
     // Variants
     const [colors, setColors] = useState([{ name: '', hex: '#000000' }]);
@@ -131,15 +128,6 @@ export default function NewProductPage() {
     // Offers & Policies
     const [offers, setOffers] = useState('');
     const [returnPolicy, setReturnPolicy] = useState('');
-
-    // Gift with Purchase
-    const [hasGift, setHasGift] = useState(false);
-    const [giftDescription, setGiftDescription] = useState('');
-
-    // Group Buy
-    const [groupBuyActive, setGroupBuyActive] = useState(false);
-    const [groupBuyPrice, setGroupBuyPrice] = useState('');
-    const [groupBuyTarget, setGroupBuyTarget] = useState('');
 
     // Organization
     const [status, setStatus] = useState('draft');
@@ -190,16 +178,6 @@ export default function NewProductPage() {
             })
         }
     }
-
-    const handleSizeChartFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-          const file = e.target.files[0];
-          setSizeChartImage({
-              file: file,
-              url: URL.createObjectURL(file)
-          });
-        }
-      };
 
     const handleRemoveImage = (index: number) => {
       setImages(prev => prev.filter((_, i) => i !== index));
@@ -306,13 +284,6 @@ export default function NewProductPage() {
                 })
             );
 
-            let sizeChartUrl = '';
-            if (sizeChartImage?.file) {
-                const storageRef = ref(storage, `size_charts/${Date.now()}-${sizeChartImage.file.name}`);
-                await uploadBytes(storageRef, sizeChartImage.file);
-                sizeChartUrl = await getDownloadURL(storageRef);
-            }
-
             // 2. Prepare product data object
             const productData = {
                 name: productName,
@@ -328,22 +299,12 @@ export default function NewProductPage() {
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
-                giftWithPurchase: {
-                    isActive: hasGift,
-                    description: giftDescription,
-                },
-                groupBuy: {
-                    isActive: groupBuyActive,
-                    groupPrice: parseFloat(groupBuyPrice) || 0,
-                    targetCount: parseInt(groupBuyTarget, 10) || 0,
-                },
                 organization: {
                     status,
                     category: selectedCategory,
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
                     tags,
-                    sizeChartUrl,
                 },
                 pricing: {
                     price: parseFloat(price) || 0,
@@ -580,46 +541,6 @@ export default function NewProductPage() {
                   </div>
               </CardContent>
           </Card>
-
-           <Card>
-                <CardHeader>
-                    <CardTitle>Special Features</CardTitle>
-                    <CardDescription>Enable features like gifts or group buying.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="p-4 border rounded-md space-y-4">
-                        <div className="flex items-center space-x-2">
-                            <Switch id="has-gift" checked={hasGift} onCheckedChange={setHasGift} disabled={isLoading} />
-                            <Label htmlFor="has-gift">Enable Gift with Purchase</Label>
-                        </div>
-                        {hasGift && (
-                            <div className="space-y-2 pl-6">
-                                <Label htmlFor="gift-description">Gift Description</Label>
-                                <Input id="gift-description" placeholder="e.g. Free Key-ring" value={giftDescription} onChange={(e) => setGiftDescription(e.target.value)} disabled={isLoading} />
-                            </div>
-                        )}
-                    </div>
-                     <div className="p-4 border rounded-md space-y-4">
-                        <div className="flex items-center space-x-2">
-                             <Switch id="group-buy" checked={groupBuyActive} onCheckedChange={setGroupBuyActive} disabled={isLoading} />
-                            <Label htmlFor="group-buy">Enable Group Buy</Label>
-                        </div>
-                        {groupBuyActive && (
-                            <div className="grid grid-cols-2 gap-4 pl-6">
-                                 <div className="space-y-2">
-                                    <Label htmlFor="group-price">Group Price (৳)</Label>
-                                    <Input id="group-price" type="number" placeholder="999" value={groupBuyPrice} onChange={e => setGroupBuyPrice(e.target.value)} disabled={isLoading} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="group-target">Target Count</Label>
-                                    <Input id="group-target" type="number" placeholder="10" value={groupBuyTarget} onChange={e => setGroupBuyTarget(e.target.value)} disabled={isLoading}/>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-
         </div>
 
         <div className="lg:col-span-1 space-y-8 sticky top-8">
@@ -729,15 +650,6 @@ export default function NewProductPage() {
                           ))}
                       </div>
                   </div>
-                  <div className="space-y-2">
-                        <Label htmlFor="size-chart-image">Size Chart Image (Optional)</Label>
-                        <Input id="size-chart-image" type="file" onChange={handleSizeChartFileChange} disabled={isLoading} />
-                        {sizeChartImage?.url && (
-                            <div className="mt-2">
-                                <Image src={sizeChartImage.url} alt="Size Chart Preview" width={80} height={80} className="rounded-md object-cover" />
-                            </div>
-                        )}
-                    </div>
                 </CardContent>
             </Card>
             <Card>
@@ -805,3 +717,5 @@ export default function NewProductPage() {
     </div>
   );
 }
+
+    

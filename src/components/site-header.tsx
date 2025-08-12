@@ -2,8 +2,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, MoreVertical, LogOut } from 'lucide-react';
-import React, { useState } from 'react';
+import { Menu, Search, ShoppingCart, User, Heart, LogOut, MoreVertical } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { getAuth, onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,17 +21,24 @@ import { Logo } from '@/components/logo';
 import { Input } from './ui/input';
 import { MegaMenu } from './mega-menu';
 import { ScrollArea, ScrollBar } from './ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Separator } from './ui/separator';
-import { useAuth } from '@/hooks/use-auth';
-import { getAuth, signOut } from 'firebase/auth';
-import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useAuth } from '@/hooks/use-auth';
+import { Separator } from './ui/separator';
+
+
+interface AppUser {
+    uid: string;
+    email: string | null;
+    fullName: string;
+    role: 'customer' | 'vendor' | 'admin';
+    photoURL?: string | null;
+}
 
 export function SiteHeader() {
+  const { user, loading } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { user } = useAuth();
   const auth = getAuth(app);
   const { toast } = useToast();
   const router = useRouter();
@@ -51,12 +61,19 @@ export function SiteHeader() {
     }
   };
 
+  const getDashboardLink = () => {
+    if (!user) return null;
+    switch (user.role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'vendor':
+        return '/vendor/dashboard';
+      default:
+        return '/profile';
+    }
+  }
+
   const categories = [
-    { 
-      name: 'Shop',
-      href: '/shop', 
-      subCategories: []
-    },
     { 
       name: 'Men',
       href: '/men',
@@ -225,13 +242,9 @@ export function SiteHeader() {
         },
       ],
     },
-    {
-        name: 'Group Buying',
-        href: '/group-buying',
-        description: 'Get discounts by buying together.',
-        subCategories: []
-    }
   ];
+
+  const dashboardLink = getDashboardLink();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -256,23 +269,41 @@ export function SiteHeader() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] flex flex-col">
                     <SheetHeader>
-                        <SheetTitle>{user ? `Welcome, ${user.fullName}` : 'Welcome Guest'}</SheetTitle>
+                         {user ? (
+                            <div className="flex items-center gap-3">
+                                 <Avatar className="h-12 w-12">
+                                    <AvatarImage src={user.photoURL || ''} alt={user.fullName} />
+                                    <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-bold">{user.fullName}</p>
+                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                                </div>
+                            </div>
+                         ) : (
+                            <SheetTitle>Welcome Guest</SheetTitle>
+                         )}
                     </SheetHeader>
                     <Separator className="my-4" />
                     <ScrollArea className="flex-1 -mx-6">
                       <div className="px-6">
                         <nav className="flex flex-col space-y-2">
-                            {user ? (
-                                <>
-                                  <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/profile">My Profile</Link></Button>
-                                  <Button variant="outline" onClick={() => { handleLogout(); setIsSheetOpen(false); }}>Logout</Button>
-                                </>
-                            ) : (
-                                <>
-                                  <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
-                                  <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
-                                </>
-                            )}
+                          {user ? (
+                            <>
+                                <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
+                                <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                                <Link href="/cart" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><ShoppingCart className="mr-2 h-5 w-5" />Cart</Link>
+                                <Separator className="my-2" />
+                                <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
+                                    <LogOut className="mr-2 h-5 w-5" /> Logout
+                                </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
+                              <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
+                            </>
+                          )}
                         </nav>
                         <Separator className="my-4" />
                         <div className="flex flex-col space-y-1">
@@ -319,21 +350,34 @@ export function SiteHeader() {
                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
-                            <AvatarFallback><User className='h-5 w-5' /></AvatarFallback>
+                            <AvatarFallback>{user ? user.fullName.charAt(0).toUpperCase() : <User className='h-5 w-5' />}</AvatarFallback>
                         </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {user ? (
-                         <>
-                            <DropdownMenuLabel>{user.fullName}</DropdownMenuLabel>
+                        <>
+                            <DropdownMenuLabel>
+                                <p className='font-bold'>{user.fullName}</p>
+                                <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
+                            </DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
-                            {user.role === 'admin' && <DropdownMenuItem asChild><Link href="/admin/dashboard">Admin Dashboard</Link></DropdownMenuItem>}
-                            {user.role === 'vendor' && <DropdownMenuItem asChild><Link href="/vendor/dashboard">Vendor Dashboard</Link></DropdownMenuItem>}
+                            <DropdownMenuItem asChild><Link href="/profile/orders">Orders</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href="/wishlist">Wishlist</Link>
+                            </DropdownMenuItem>
+                            {dashboardLink && (user.role !== 'customer') && (
+                              <DropdownMenuItem asChild>
+                                <Link href={dashboardLink}>Dashboard</Link>
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500"><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
-                         </>
+                            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+                                <LogOut className='mr-2 h-4 w-4' />
+                                Logout
+                            </DropdownMenuItem>
+                        </>
                     ) : (
                         <>
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
