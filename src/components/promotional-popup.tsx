@@ -30,7 +30,7 @@ export function PromotionalPopup() {
 
       if (docSnap.exists()) {
         const data = docSnap.data() as PopupContent;
-        if (data.isEnabled) {
+        if (data.isEnabled && data.imageUrl) { // Check for imageUrl
           setContent(data);
           
           let shouldShow = true;
@@ -74,7 +74,7 @@ export function PromotionalPopup() {
     }
   }
   
-  if (!isOpen || !content) {
+  if (!isOpen || !content || !content.imageUrl) {
     return null;
   }
 
