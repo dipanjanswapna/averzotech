@@ -160,8 +160,14 @@ export default function ProductPage() {
              setError('Product not found.');
              return;
           }
+          
+          const data = productSnap.data();
+          const productData = { 
+              id: productSnap.id, 
+              ...data,
+              ratingSummary: data.ratingSummary || { average: 0, count: 0 } // Default value
+          } as Product;
 
-          const productData = { id: productSnap.id, ...productSnap.data() } as Product;
           setProduct(productData);
           if (productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
           if (productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
@@ -468,9 +474,9 @@ export default function ProductPage() {
             
             <div className="flex items-center mt-2">
               <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-              <span className="ml-1 font-bold">{product.ratingSummary.average}</span>
+              <span className="ml-1 font-bold">{product.ratingSummary?.average || 0}</span>
               <Separator orientation="vertical" className="h-4 mx-2" />
-              <span className="text-muted-foreground">{product.ratingSummary.count.toLocaleString()} Ratings</span>
+              <span className="text-muted-foreground">{(product.ratingSummary?.count || 0).toLocaleString()} Ratings</span>
             </div>
 
             <Separator className="my-4" />
@@ -615,10 +621,10 @@ export default function ProductPage() {
              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                  <div className="md:col-span-1">
                      <div className="flex items-center gap-2">
-                         <h3 className="text-4xl font-bold">{product.ratingSummary.average}</h3>
+                         <h3 className="text-4xl font-bold">{product.ratingSummary?.average || 0}</h3>
                          <Star className="w-8 h-8 text-yellow-400 fill-yellow-400"/>
                      </div>
-                     <p className="text-muted-foreground mt-1">{product.ratingSummary.count.toLocaleString()} Ratings</p>
+                     <p className="text-muted-foreground mt-1">{(product.ratingSummary?.count || 0).toLocaleString()} Ratings</p>
                      
                      <div className="border p-4 rounded-lg mt-6">
                         <h3 className="font-semibold mb-2">Write a review</h3>
