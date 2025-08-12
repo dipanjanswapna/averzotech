@@ -27,10 +27,6 @@ interface PopupContent {
   imageUrl: string;
   link: string;
   displayFrequency: 'session' | 'daily' | 'always';
-  showEmailField: boolean;
-  heading: string;
-  subheading: string;
-  buttonText: string;
 }
 
 interface ImageFile {
@@ -47,10 +43,6 @@ export default function PopupManager() {
   const [enabled, setEnabled] = useState(false);
   const [link, setLink] = useState('');
   const [displayFrequency, setDisplayFrequency] = useState<'session' | 'daily' | 'always'>('session');
-  const [showEmailField, setShowEmailField] = useState(true);
-  const [heading, setHeading] = useState('');
-  const [subheading, setSubheading] = useState('');
-  const [buttonText, setButtonText] = useState('Subscribe');
   const [image, setImage] = useState<ImageFile | null>(null);
 
   useEffect(() => {
@@ -63,10 +55,6 @@ export default function PopupManager() {
         setEnabled(data.enabled || false);
         setLink(data.link || '');
         setDisplayFrequency(data.displayFrequency || 'session');
-        setShowEmailField(data.showEmailField === undefined ? true : data.showEmailField);
-        setHeading(data.heading || '');
-        setSubheading(data.subheading || '');
-        setButtonText(data.buttonText || 'Subscribe');
         if (data.imageUrl) {
           setImage({ preview: data.imageUrl });
         }
@@ -104,15 +92,11 @@ export default function PopupManager() {
         imageUrl = await getDownloadURL(storageRef);
       }
 
-      const popupContent: PopupContent = {
+      const popupContent: Partial<PopupContent> = {
         enabled,
         imageUrl,
         link,
         displayFrequency,
-        showEmailField,
-        heading,
-        subheading,
-        buttonText
       };
 
       await setDoc(doc(db, 'site_content', 'promotional_popup'), popupContent, { merge: true });
@@ -207,82 +191,26 @@ export default function PopupManager() {
                 </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-          <CardHeader>
-              <CardTitle>Pop-up Content</CardTitle>
-              <CardDescription>Customize the text and form fields shown on the pop-up.</CardDescription>
-          </CardHeader>
-           <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="popup-heading">Heading</Label>
-                <Input
-                id="popup-heading"
-                placeholder="e.g., Get TK. 300 Gift Voucher"
-                value={heading}
-                onChange={(e) => setHeading(e.target.value)}
-                disabled={isLoading}
-                />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="popup-subheading">Sub-heading</Label>
-                <Input
-                id="popup-subheading"
-                placeholder="e.g., Promo Code: LRAPP300"
-                value={subheading}
-                onChange={(e) => setSubheading(e.target.value)}
-                disabled={isLoading}
-                />
-            </div>
-             <div className="flex items-center justify-between rounded-lg border p-4">
-                <div>
-                <Label htmlFor="show-email" className="font-semibold">Show Email Field</Label>
-                <p className="text-xs text-muted-foreground">
-                    Ask users for their email address.
-                </p>
-                </div>
-                <Switch
-                id="show-email"
-                checked={showEmailField}
-                onCheckedChange={setShowEmailField}
-                disabled={isLoading}
-                />
-            </div>
-            {showEmailField && (
-                 <div className="space-y-2">
-                    <Label htmlFor="popup-button-text">Subscribe Button Text</Label>
-                    <Input
-                    id="popup-button-text"
-                    placeholder="e.g., Subscribe"
-                    value={buttonText}
-                    onChange={(e) => setButtonText(e.target.value)}
-                    disabled={isLoading}
-                    />
-                </div>
-            )}
-             <div className="space-y-2">
+            <div className="space-y-2">
                 <Label htmlFor="popup-link">Image Target Link</Label>
                 <Input
                 id="popup-link"
                 placeholder="e.g., /shop/new-arrivals"
-                value={link}
+                value={link || ''}
                 onChange={(e) => setLink(e.target.value)}
                 disabled={isLoading}
                 />
                 <p className="text-xs text-muted-foreground">
-                The URL users will go to when they click the image (not the button).
+                The URL users will go to when they click the image.
                 </p>
             </div>
-           </CardContent>
-            <CardFooter>
+        </CardContent>
+         <CardFooter>
             <Button onClick={handleSaveChanges} disabled={isLoading}>
                 {isLoading ? 'Saving...' : 'Save Changes'}
             </Button>
-            </CardFooter>
+        </CardFooter>
       </Card>
-
     </div>
   );
 }
