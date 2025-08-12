@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { CheckCircle, Printer, ShoppingBag, Truck, ShieldCheck } from "lucide-react"
+import { CheckCircle, Printer, ShoppingBag, Truck, ShieldCheck, Gift } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -37,6 +37,7 @@ interface Order {
         quantity: number;
         dataAiHint: string;
         variant: string;
+        giftDescription?: string;
     }[];
     payment: {
         method: string;
@@ -172,6 +173,11 @@ function ConfirmationContent() {
                                             <TableCell>
                                                 <p className="font-medium">{item.name}</p>
                                                 <p className="text-sm text-muted-foreground">{item.variant}</p>
+                                                {item.giftDescription && (
+                                                    <p className="text-xs text-pink-600 font-semibold flex items-center gap-1">
+                                                        <Gift className="w-3 h-3" /> + FREE: {item.giftDescription}
+                                                    </p>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-center">{item.quantity}</TableCell>
                                             <TableCell className="text-right font-medium">৳{(item.price * item.quantity).toFixed(2)}</TableCell>
@@ -239,4 +245,3 @@ export default function OrderConfirmationPage() {
         </React.Suspense>
     )
 }
-

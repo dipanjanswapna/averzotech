@@ -34,6 +34,10 @@ interface Product {
     name: string;
     brand: string;
     images: string[];
+    giftWithPurchase?: {
+        enabled: boolean;
+        description: string;
+    };
     pricing: {
       price: number;
       comparePrice?: number;

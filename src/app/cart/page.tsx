@@ -192,6 +192,11 @@ export default function CartPage() {
                     <Link href={`/product/${item.id}`} className="font-semibold hover:text-primary">{item.name}</Link>
                     <p className="text-sm text-muted-foreground">{item.brand}</p>
                     <p className="text-sm text-muted-foreground">Size: {item.selectedSize} | Color: {item.selectedColor}</p>
+                    {item.giftWithPurchase?.enabled && (
+                        <p className="text-xs text-pink-600 font-semibold mt-1 flex items-center gap-1">
+                            <Gift className="w-3 h-3" /> + FREE: {item.giftWithPurchase.description}
+                        </p>
+                    )}
                      <p className="text-sm text-muted-foreground mt-1">Delivery by: {item.shipping.estimatedDelivery}</p>
                   </div>
                   <div className="flex flex-col items-start md:items-end justify-between">

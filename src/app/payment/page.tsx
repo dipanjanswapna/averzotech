@@ -81,7 +81,8 @@ export default function PaymentPage() {
                 variant: `${item.selectedColor} / ${item.selectedSize}`,
                 price: item.pricing.price,
                 quantity: item.quantity,
-                sku: item.inventory.sku
+                sku: item.inventory.sku,
+                giftDescription: item.giftWithPurchase?.enabled ? item.giftWithPurchase.description : null,
             })),
             shippingAddress: shippingInfo,
             payment: {
@@ -289,6 +290,9 @@ export default function PaymentPage() {
                                   <div className="flex-grow">
                                       <p className="font-medium">{item.name}</p>
                                       <p className="text-sm text-muted-foreground">{item.selectedSize} / {item.selectedColor}</p>
+                                      {item.giftWithPurchase?.enabled && (
+                                        <p className="text-xs text-pink-600 font-semibold">+ {item.giftWithPurchase.description}</p>
+                                      )}
                                   </div>
                                   <p className="font-semibold">৳{item.pricing.price.toFixed(2)}</p>
                               </div>

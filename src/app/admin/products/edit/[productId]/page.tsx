@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
+import { Switch } from '@/components/ui/switch';
 
 const initialFilterCategories = [
     { 
@@ -131,6 +132,8 @@ export default function EditProductPage() {
     // Offers & Policies
     const [offers, setOffers] = useState('');
     const [returnPolicy, setReturnPolicy] = useState('');
+    const [isGiftEnabled, setIsGiftEnabled] = useState(false);
+    const [giftDescription, setGiftDescription] = useState('');
 
     // Organization
     const [status, setStatus] = useState('draft');
@@ -180,6 +183,8 @@ export default function EditProductPage() {
                     setSpecifications(data.specifications || [{ label: '', value: '' }]);
                     setOffers(data.offers || '');
                     setReturnPolicy(data.returnPolicy || '');
+                    setIsGiftEnabled(data.giftWithPurchase?.enabled || false);
+                    setGiftDescription(data.giftWithPurchase?.description || '');
                     setStatus(data.organization?.status || 'draft');
                     setSelectedCategory(data.organization?.category || '');
                     setSelectedGroup(data.organization?.group || '');
@@ -352,6 +357,10 @@ export default function EditProductPage() {
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
+                giftWithPurchase: {
+                    enabled: isGiftEnabled,
+                    description: giftDescription
+                },
                 organization: {
                     status,
                     category: selectedCategory,
@@ -590,6 +599,21 @@ export default function EditProductPage() {
                    <div className="space-y-2">
                     <Label htmlFor="product-return-policy">Return Policy</Label>
                     <Textarea id="product-return-policy" placeholder="e.g. Easy 7 days returns and exchanges." value={returnPolicy} onChange={e => setReturnPolicy(e.target.value)} disabled={isLoading}/>
+                  </div>
+                  <div className="space-y-2 border-t pt-4">
+                     <div className="flex items-center justify-between">
+                        <Label htmlFor="gift-with-purchase" className="flex items-center gap-2 font-semibold">
+                            <Gift className="w-5 h-5 text-primary" /> Gift with Purchase
+                        </Label>
+                        <Switch id="gift-with-purchase" checked={isGiftEnabled} onCheckedChange={setIsGiftEnabled} disabled={isLoading} />
+                     </div>
+                     <p className="text-xs text-muted-foreground">Enable this to offer a free gift with this product.</p>
+                     {isGiftEnabled && (
+                        <div className="pt-2">
+                             <Label htmlFor="gift-description">Gift Description</Label>
+                             <Input id="gift-description" placeholder="e.g. Free Key-ring" value={giftDescription} onChange={e => setGiftDescription(e.target.value)} disabled={isLoading} />
+                        </div>
+                     )}
                   </div>
               </CardContent>
           </Card>

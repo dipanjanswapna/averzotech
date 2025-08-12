@@ -20,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, Package, Truck, User, FileText } from 'lucide-react';
+import { ChevronLeft, Package, Truck, User, FileText, Gift } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Stepper, Step } from '@/components/ui/stepper';
@@ -59,6 +59,7 @@ interface Order {
         price: number;
         quantity: number;
         dataAiHint: string;
+        giftDescription?: string;
     }[];
     payment: {
         method: string;
@@ -248,6 +249,11 @@ export default function OrderDetailsPage() {
                       <TableCell>
                         <p className="font-medium">{item.name}</p>
                         <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
+                         {item.giftDescription && (
+                            <p className="text-xs text-pink-600 font-semibold flex items-center gap-1 mt-1">
+                                <Gift className="w-3 h-3" /> + FREE: {item.giftDescription}
+                            </p>
+                        )}
                       </TableCell>
                       <TableCell>x {item.quantity}</TableCell>
                       <TableCell className="text-right">৳{item.price.toFixed(2)}</TableCell>

@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
+import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Gift } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   Accordion,
@@ -45,6 +45,10 @@ interface Product {
     offers?: string;
     returnPolicy?: string;
     vendor?: string;
+    giftWithPurchase?: {
+        enabled: boolean;
+        description: string;
+    };
     pricing: {
       price: number;
       comparePrice?: number;
@@ -404,6 +408,11 @@ export default function ProductPage() {
                           <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
                           <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
                       </Carousel>
+                       {product.giftWithPurchase?.enabled && (
+                          <Badge className="absolute top-4 left-4 bg-pink-500 text-white border-pink-500 text-sm py-1 px-3">
+                              <Gift className="w-4 h-4 mr-2"/> FREE GIFT
+                          </Badge>
+                      )}
                   </div>
                   {product.videoUrl && (
                     <div className="aspect-video overflow-hidden rounded-lg">
@@ -440,6 +449,9 @@ export default function ProductPage() {
                 {product.pricing.discount && <span className="text-orange-500 font-bold">({product.pricing.discount}% OFF)</span>}
             </div>
             <p className="text-sm text-green-600 font-semibold">inclusive of all taxes</p>
+             {product.giftWithPurchase?.enabled && (
+                <p className="text-sm text-pink-600 font-semibold mt-1">+ FREE GIFT: {product.giftWithPurchase.description}</p>
+             )}
             <Badge variant="outline" className="mt-2">{product.inventory.availability}</Badge>
             <p className="text-sm text-muted-foreground mt-1">SKU: {product.inventory.sku}</p>
 
