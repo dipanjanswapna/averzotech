@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
+import { Badge } from "@/components/ui/badge"
 
 interface Address {
     id: string;
