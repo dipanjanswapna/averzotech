@@ -5,7 +5,7 @@ import { CartProvider } from '@/hooks/use-cart';
 import { AuthProvider } from '@/hooks/use-auth';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-import './globals.css';
+import '@/app/globals.css';
 
 export const metadata: Metadata = {
   title: 'AVERZO',
