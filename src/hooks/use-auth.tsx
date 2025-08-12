@@ -36,8 +36,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
       if (fbUser) {
-        // User is signed in, see docs for a list of available properties
-        // https://firebase.google.com/docs/reference/js/firebase.User
         const userDocRef = doc(db, "users", fbUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
@@ -50,24 +48,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 photoURL: fbUser.photoURL,
             });
         } else {
-             // Handle case where user exists in Auth but not in Firestore
-            setUser({
+            // This might happen for a new user who signed up but the doc wasn't created yet, or a login where doc is missing.
+            // Create a default user object.
+             const newUser: AppUser = {
                 uid: fbUser.uid,
                 email: fbUser.email,
                 fullName: fbUser.displayName || 'New User',
                 role: 'customer',
                 photoURL: fbUser.photoURL,
-            });
+            };
+            setUser(newUser);
         }
 
       } else {
-        // User is signed out
         setUser(null);
       }
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
@@ -75,10 +73,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{ user, firebaseUser, loading, setUser }}>
       {loading ? (
         <div className="flex h-screen items-center justify-center">
-            <div className="space-y-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+            <div className="space-y-4 text-center">
+                <p className="text-lg font-semibold">Loading Averzo...</p>
+                <Skeleton className="h-4 w-[250px] mx-auto" />
+                <Skeleton className="h-4 w-[200px] mx-auto" />
             </div>
         </div>
       ) : children}

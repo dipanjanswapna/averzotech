@@ -26,12 +26,16 @@ export default function LoginPage() {
   const router = useRouter();
 
   const redirectUser = (role: string) => {
-    if (role === 'admin') {
-      router.push('/admin/dashboard');
-    } else if (role === 'vendor') {
-      router.push('/vendor/dashboard');
-    } else {
-      router.push('/');
+    switch (role) {
+        case 'admin':
+            router.push('/admin/dashboard');
+            break;
+        case 'vendor':
+            router.push('/vendor/dashboard');
+            break;
+        default:
+            router.push('/');
+            break;
     }
   };
 
@@ -184,9 +188,8 @@ export default function LoginPage() {
         <Image
           src="https://placehold.co/1080x1920.png"
           alt="Image"
-          layout="fill"
-          objectFit="cover"
-          className="dark:brightness-[0.2] dark:grayscale"
+          fill
+          className="object-cover dark:brightness-[0.2] dark:grayscale"
           data-ai-hint="fashion advertisement"
         />
       </div>

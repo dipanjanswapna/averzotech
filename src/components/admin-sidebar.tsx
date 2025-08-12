@@ -30,8 +30,9 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { AppUser } from '@/hooks/use-auth';
 
-export function AdminSidebar({ user }: { user: any }) {
+export function AdminSidebar({ user }: { user: AppUser }) {
   const pathname = usePathname();
   const auth = getAuth(app);
   const { toast } = useToast();
@@ -152,7 +153,7 @@ export function AdminSidebar({ user }: { user: any }) {
             <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-secondary">
                     <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL} alt={user?.fullName} />
+                        <AvatarImage src={user?.photoURL || ''} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 group-data-[collapsible=icon]:hidden">

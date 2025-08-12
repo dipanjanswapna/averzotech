@@ -28,8 +28,9 @@ import {
   SidebarFooter,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { AppUser } from '@/hooks/use-auth';
 
-export function VendorSidebar({ user }: { user: any }) {
+export function VendorSidebar({ user }: { user: AppUser }) {
   const pathname = usePathname();
   const auth = getAuth(app);
   const { toast } = useToast();
@@ -95,7 +96,7 @@ export function VendorSidebar({ user }: { user: any }) {
             <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-secondary">
                     <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL} alt={user?.fullName} />
+                        <AvatarImage src={user?.photoURL || ''} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 group-data-[collapsible=icon]:hidden">

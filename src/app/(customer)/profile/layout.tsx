@@ -1,5 +1,7 @@
+
 'use client';
 
+import React from 'react';
 import {
   Sheet,
   SheetContent,
@@ -15,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuth, signOut } from "firebase/auth";
 import { app } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import React from "react";
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfileLayout({
   children,
@@ -25,10 +27,36 @@ export default function ProfileLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
 
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+
   if (loading || !user) {
     return (
-        <div className="flex h-screen items-center justify-center">
-            <p>Loading profile...</p>
+        <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+             <div className="hidden border-r bg-muted/40 md:block">
+                <div className="flex h-full max-h-screen flex-col gap-2 p-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-8 w-full mt-4" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                     <Skeleton className="h-16 w-full mt-auto" />
+                </div>
+             </div>
+             <div className="flex flex-col">
+                <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+                    <Skeleton className="h-8 w-8 md:hidden" />
+                    <div className="flex-1" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                </header>
+                 <main className="flex-1 p-4 sm:p-6">
+                    <Skeleton className="h-full w-full" />
+                 </main>
+             </div>
         </div>
     );
   }
