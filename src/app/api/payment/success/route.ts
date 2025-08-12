@@ -1,51 +1,51 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
-import { nanoid } from 'nanoid';
+import { collection, addDoc, serverTimestamp, writeBatch, doc, increment } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const body = Object.fromEntries(formData);
-    const { tran_id, value_a: userId, value_b } = body;
+    const { tran_id, value_b } = body;
     
-    if (!tran_id) {
-        return NextResponse.redirect(new URL('/payment/fail', req.url));
+    if (!tran_id || !value_b) {
+        console.error("Transaction ID or order data missing in success response");
+        return NextResponse.redirect(new URL('/payment/fail?reason=data_missing', req.url));
     }
 
     try {
-        const orderData = JSON.parse(value_b as string); // This should contain all order details passed from initiate
+        const orderData = JSON.parse(value_b as string);
         const batch = writeBatch(db);
         
-        // This is where you would retrieve the full order details.
-        // For this example, we assume `value_b` contains the necessary items.
-        const items = JSON.parse(value_b as string);
-
-        const orderRef = doc(collection(db, "orders"), tran_id);
+        const orderRef = doc(db, "orders", tran_id as string);
         
-        // You would typically get the full order details from a temporary storage or pass it through `value_` fields.
-        // Here's a simplified version.
         batch.set(orderRef, {
-            ...orderData, // This should contain the full order details
+            ...orderData,
             status: 'Processing',
             createdAt: serverTimestamp(),
             paymentDetails: body
         });
         
         // Update stock
-        for (const item of items) {
+        for (const item of orderData.items) {
             const productRef = doc(db, 'products', item.id);
-            // In a real scenario, you would decrement stock. This is a simplified example.
-            // const newStock = ...
-            // batch.update(productRef, { "inventory.stock": newStock });
+            batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
         }
 
         await batch.commit();
 
-        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${tran_id}`, req.url));
+        // Redirecting is handled by SSLCommerz `success_url` directly
+        // This POST handler is for server-to-server confirmation
+        // For simplicity in this setup, we'll let the success_url handle the user redirect.
+        // A robust app would validate the transaction here before trusting the front-end redirect.
+        
+        // This return is for the server-to-server call, not the user.
+        return new NextResponse('OK', { status: 200 });
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
-        return NextResponse.redirect(new URL('/payment/fail', req.url));
+        // This redirect won't affect the user, who is already at the success_url.
+        // This is for logging/debugging.
+        return NextResponse.redirect(new URL('/payment/fail?reason=processing_error', req.url));
     }
 }

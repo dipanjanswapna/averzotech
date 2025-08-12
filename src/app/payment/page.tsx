@@ -46,7 +46,7 @@ export default function PaymentPage() {
         }
     }, [shippingInfo, router, toast]);
 
-    const shippingFee = subTotal > 2000 ? 0 : 60;
+    const shippingFee = subTotal > 2000 || subTotal === 0 ? 0 : 60;
     const taxes = subTotal * 0.05; // 5% tax
 
     const handlePlaceOrder = async () => {
@@ -61,17 +61,22 @@ export default function PaymentPage() {
 
         setLoading(true);
 
-         const items = cart.map(item => ({
+         const itemsForOrder = cart.map(item => ({
             id: item.id,
             name: item.name,
             price: item.pricing.price,
             quantity: item.quantity,
+            image: item.images[0] || '',
+            sku: item.inventory.sku,
+            dataAiHint: item.name,
+            giftDescription: item.giftWithPurchase?.enabled ? item.giftWithPurchase.description : ''
         }));
 
         const orderData = {
             userId: user.uid,
+            customerName: shippingInfo.name,
             total: total,
-            items: items,
+            items: itemsForOrder,
             shippingAddress: shippingInfo,
             payment: {
                 method: paymentMethod,

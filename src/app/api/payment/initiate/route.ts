@@ -3,8 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 const SSLCommerz = require('sslcommerz-lts');
 
 export async function POST(req: NextRequest) {
-    const body = await req.json();
-    const { total, tran_id, shippingAddress, items, userId } = body;
+    const orderData = await req.json();
+    const { total, tran_id, shippingAddress, items, userId } = orderData;
+    
+    if (!shippingAddress) {
+         return NextResponse.json({ error: 'Shipping address is missing.' }, { status: 400 });
+    }
+    
     const { name, email, phone, fullAddress } = shippingAddress;
     
     if (!process.env.STORE_ID || !process.env.STORE_PASSWORD) {
@@ -15,10 +20,10 @@ export async function POST(req: NextRequest) {
         total_amount: total,
         currency: 'BDT',
         tran_id: tran_id,
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success?tran_id=${tran_id}`,
-        fail_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail?tran_id=${tran_id}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel?tran_id=${tran_id}`,
-        ipn_url: '/ipn', // Optional IPN URL
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/order-confirmation?orderId=${tran_id}`,
+        fail_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/fail`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
+        ipn_url: '/api/payment/ipn', // You may need to implement this
         shipping_method: 'Courier',
         product_name: items.map((item: any) => item.name).join(', '),
         product_category: 'eCommerce',
@@ -38,7 +43,7 @@ export async function POST(req: NextRequest) {
         ship_postcode: '1000',
         ship_country: 'Bangladesh',
         value_a: userId,
-        value_b: JSON.stringify(items), // Pass cart items for order creation on success
+        value_b: JSON.stringify(orderData), // Pass the full order data
     };
 
     const sslcz = new SSLCommerz(process.env.STORE_ID, process.env.STORE_PASSWORD, process.env.IS_LIVE === 'true');
@@ -48,10 +53,11 @@ export async function POST(req: NextRequest) {
         if (apiResponse.status === 'SUCCESS') {
             return NextResponse.json(apiResponse);
         } else {
+            console.error("SSLCommerz init failed:", apiResponse);
             return NextResponse.json({ error: 'Failed to create payment session.' }, { status: 500 });
         }
     } catch (error) {
-        console.error(error);
+        console.error("SSLCommerz init error:", error);
         return NextResponse.json({ error: 'An error occurred during payment initiation.' }, { status: 500 });
     }
 }
