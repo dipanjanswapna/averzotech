@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquare } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -68,6 +68,7 @@ export function AdminSidebar({ user }: { user: any }) {
 
   const siteManagementItems = [
       { href: '/admin/site-management/home', label: 'Home Page', icon: Home },
+      { href: '/admin/site-management/popup', label: 'Promotional Popup', icon: MessageSquare },
       { href: '/admin/site-management/men', label: 'Men Page', icon: Shirt },
       { href: '/admin/site-management/women', label: 'Women Page', icon: PersonStanding },
       { href: '/admin/site-management/kids', label: 'Kids Page', icon: ToyBrick },
