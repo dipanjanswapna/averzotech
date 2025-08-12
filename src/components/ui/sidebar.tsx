@@ -143,6 +143,7 @@ const AdminSidebarProvider = React.forwardRef<
               "group/sidebar-wrapper flex min-h-screen w-full",
               className
             )}
+            data-state={state}
             ref={ref}
             {...props}
           >
@@ -159,15 +160,11 @@ const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     side?: "left" | "right"
-    variant?: "sidebar" | "floating" | "inset"
-    collapsible?: "offcanvas" | "icon" | "none"
   }
 >(
   (
     {
       side = "left",
-      variant = "sidebar",
-      collapsible = "offcanvas",
       className,
       children,
       ...props
@@ -175,21 +172,6 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
-
-    if (collapsible === "none") {
-      return (
-        <div
-          className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-secondary text-secondary-foreground",
-            className
-          )}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </div>
-      )
-    }
 
     if (isMobile) {
       return (
@@ -215,9 +197,6 @@ const Sidebar = React.forwardRef<
       <div
         ref={ref}
         className="group peer hidden md:flex flex-col text-foreground border-r bg-background"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
-        data-variant={variant}
         data-side={side}
         style={{
              width: state === 'collapsed' ? 'var(--sidebar-width-icon)' : 'var(--sidebar-width)',
@@ -299,7 +278,7 @@ const SidebarContent = React.forwardRef<
       ref={ref}
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden p-2",
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[state=collapsed]:overflow-hidden p-2",
         className
       )}
       {...props}
@@ -335,7 +314,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-secondary hover:text-primary focus-visible:ring-2 active:bg-secondary active:text-primary disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-secondary data-[active=true]:font-semibold data-[active=true]:text-primary data-[state=open]:hover:bg-secondary data-[state=open]:hover:text-primary group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:!p-2 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+  "peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-secondary hover:text-primary focus-visible:ring-2 active:bg-secondary active:text-primary disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-secondary data-[active=true]:font-semibold data-[active=true]:text-primary data-[state=open]:hover:bg-secondary data-[state=open]:hover:text-primary group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:!p-2 [&>span]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -346,7 +325,7 @@ const sidebarMenuButtonVariants = cva(
       size: {
         default: "h-9 text-sm",
         sm: "h-8 text-xs",
-        lg: "h-11 text-base group-data-[collapsible=icon]:!p-0",
+        lg: "h-11 text-base group-data-[state=collapsed]:!p-0",
       },
     },
     defaultVariants: {
