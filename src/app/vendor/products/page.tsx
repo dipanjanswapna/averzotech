@@ -63,8 +63,6 @@ export default function VendorProductsPage() {
       setLoading(true);
       try {
         const productsCollection = collection(db, 'products');
-        // Query products where the vendor field matches the logged-in user's name
-        // In a real-world app, you'd likely use the user's UID for more reliability
         const q = query(productsCollection, where("vendor", "==", user.fullName));
         const productSnapshot = await getDocs(q);
         const productList = productSnapshot.docs.map(doc => ({
