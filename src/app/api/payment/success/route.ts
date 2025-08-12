@@ -26,10 +26,11 @@ export async function POST(req: NextRequest) {
 
         const batch = writeBatch(db);
         
-        const orderRef = doc(db, "orders", tran_id as string);
+        const orderRef = doc(collection(db, "orders"));
         
         batch.set(orderRef, {
             ...orderData,
+            id: orderRef.id,
             status: 'Processing',
             paymentDetails: body,
             createdAt: serverTimestamp(),
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
 
         await batch.commit();
 
-        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${tran_id}`, req.url));
+        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${orderRef.id}`, req.url));
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
