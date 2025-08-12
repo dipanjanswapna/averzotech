@@ -35,7 +35,7 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: fullName });
       
-      const userStatus = role === 'vendor' ? 'pending-approval' : 'active';
+      const userStatus = role === 'vendor' ? 'pending' : 'active';
 
       await setDoc(doc(db, "users", user.uid), {
         fullName: fullName,

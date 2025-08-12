@@ -34,7 +34,7 @@ interface User {
   fullName: string;
   email: string;
   role: 'customer' | 'vendor' | 'admin';
-  status: 'active' | 'pending-approval' | 'suspended';
+  status: 'active' | 'pending' | 'suspended';
   photoURL?: string;
 }
 
@@ -51,7 +51,7 @@ export default function EditUserPage() {
   // Editable fields
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'customer' | 'vendor' | 'admin'>('customer');
-  const [status, setStatus] = useState<'active' | 'pending-approval' | 'suspended'>('active');
+  const [status, setStatus] = useState<'active' | 'pending' | 'suspended'>('active');
 
   useEffect(() => {
     if (!userId) return;
@@ -190,7 +190,7 @@ export default function EditUserPage() {
                         <SelectTrigger id="user-status"><SelectValue placeholder="Select status" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="pending-approval">Pending Approval</SelectItem>
+                            <SelectItem value="pending">Pending Approval</SelectItem>
                             <SelectItem value="suspended">Suspended</SelectItem>
                         </SelectContent>
                     </Select>
