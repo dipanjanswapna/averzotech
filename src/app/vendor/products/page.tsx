@@ -124,7 +124,7 @@ export default function VendorProductsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/admin/products/new">
+          <Link href="/vendor/products/new">
             <PlusCircle className="mr-2 h-4 w-4" /> Add Product
           </Link>
         </Button>
@@ -207,7 +207,7 @@ export default function VendorProductsPage() {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                            <DropdownMenuItem asChild>
-                             <Link href={`/admin/products/edit/${product.id}`}>
+                             <Link href={`/vendor/products/edit/${product.id}`}>
                                   <Pencil className="mr-2 h-4 w-4"/> Edit
                               </Link>
                            </DropdownMenuItem>
