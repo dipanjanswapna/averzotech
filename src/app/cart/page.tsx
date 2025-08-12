@@ -184,7 +184,6 @@ export default function CartPage() {
                     width={100}
                     height={125}
                     className="rounded-md object-cover"
-                    data-ai-hint={item.name}
                   />
                   <div className="flex-grow">
                     <Link href={`/product/${item.id}`} className="font-semibold hover:text-primary">{item.name}</Link>

@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Logo } from "@/components/logo"
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "@/lib/firebase"
+import { useCart } from "@/hooks/use-cart"
 
 
 interface Order {
@@ -48,6 +49,10 @@ interface Order {
             code: string;
             discountAmount: number;
         } | null;
+        giftCard?: {
+            code: string;
+            usedAmount: number;
+        } | null;
         total: number;
     };
     trackingId?: string;
@@ -57,6 +62,7 @@ function ConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
+    const { clearCart } = useCart();
 
     const [orderDetails, setOrderDetails] = React.useState<Order | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -67,6 +73,9 @@ function ConfirmationContent() {
             router.push('/');
             return;
         }
+
+        // Clear the cart on successful order confirmation
+        clearCart();
 
         const fetchOrder = async () => {
             setLoading(true);
@@ -82,7 +91,7 @@ function ConfirmationContent() {
         };
 
         fetchOrder();
-    }, [orderId, router]);
+    }, [orderId, router, clearCart]);
 
 
     const handlePrint = () => {
@@ -199,6 +208,12 @@ function ConfirmationContent() {
                                         <p className="font-semibold">- ৳{orderDetails.payment.coupon.discountAmount.toFixed(2)}</p>
                                     </div>
                                 )}
+                                 {orderDetails.payment.giftCard && (
+                                    <div className="flex justify-between text-green-600">
+                                        <p>Gift Card ({orderDetails.payment.giftCard.code.substring(0,9)}...)</p>
+                                        <p className="font-semibold">- ৳{orderDetails.payment.giftCard.usedAmount.toFixed(2)}</p>
+                                    </div>
+                                )}
                                 <div className="flex justify-between">
                                     <p className="text-muted-foreground">Shipping Fee</p>
                                     <p className="font-semibold">৳{orderDetails.payment.shipping.toFixed(2)}</p>
@@ -210,7 +225,7 @@ function ConfirmationContent() {
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-bold text-lg">
                                     <p>Grand Total</p>
-                                    <p>৳{orderDetails.payment.total}</p>
+                                    <p>৳{orderDetails.payment.total.toFixed(2)}</p>
                                 </div>
                             </div>
                         </div>
