@@ -280,6 +280,26 @@ export default function ProductPage() {
       }
   }
 
+  const handleShare = async () => {
+    if (!product) return;
+    const shareData = {
+      title: product.name,
+      text: `Check out this product: ${product.name}`,
+      url: window.location.href,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({ title: "Link Copied", description: "Product link copied to clipboard!" });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({ title: "Error", description: "Could not share the product.", variant: 'destructive' });
+    }
+  };
+
   const handleStartGroupBuy = async () => {
       if(!user) {
           toast({ title: "Login Required", description: "Please log in to start a group buy.", variant: "destructive"});
@@ -506,7 +526,7 @@ export default function ProductPage() {
                 <h1 className="text-2xl font-bold text-foreground">{product.brand}</h1>
                 <h2 className="text-xl text-muted-foreground">{product.name}</h2>
               </div>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={handleShare}>
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
