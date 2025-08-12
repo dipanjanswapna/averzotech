@@ -74,6 +74,12 @@ export function SiteHeader() {
   }
 
   const categories = [
+     { 
+      name: 'Shop',
+      href: '/shop', 
+      description: 'Explore all our products.', 
+      subCategories: []
+    },
     { 
       name: 'Men',
       href: '/men',
