@@ -32,6 +32,8 @@ import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { VirtualTryOn } from '@/components/virtual-try-on';
+import { useAuth } from '@/hooks/use-auth';
+import { manageGroupBuy } from '@/ai/flows/group-buy-flow';
 
 
 interface Product {
@@ -98,6 +100,8 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const { addToCart } = useCart();
   const { toast } = useToast();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { user } = useAuth();
+  const [isGroupCreating, setIsGroupCreating] = React.useState(false);
 
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
@@ -180,6 +184,27 @@ export default function ProductPage({ params }: { params: { productId: string } 
       } else {
           addToWishlist(productForWishlist);
           toast({ title: "Added to Wishlist" });
+      }
+  }
+
+  const handleStartGroupBuy = async () => {
+      if(!user) {
+          toast({ title: "Login Required", description: "Please log in to start a group buy.", variant: "destructive"});
+          return;
+      }
+      if(!product) return;
+      setIsGroupCreating(true);
+      try {
+          const newGroup = await manageGroupBuy({ action: 'create', productId: product.id, userId: user.uid });
+          toast({
+              title: "Group Started!",
+              description: "You've successfully started a new group buy. Share it with your friends!",
+          });
+      } catch (error: any) {
+          console.error("Failed to start group buy:", error);
+          toast({ title: "Error", description: error.message || "Could not start the group buy.", variant: "destructive"});
+      } finally {
+          setIsGroupCreating(false);
       }
   }
 
@@ -350,8 +375,9 @@ export default function ProductPage({ params }: { params: { productId: string } 
                         Requires {product.groupBuy.targetCount} people.
                     </p>
                     <div className='flex gap-2 mt-2'>
-                        <Button size="sm" variant="secondary" className="bg-teal-600 text-white hover:bg-teal-700">Start a Group</Button>
-                        <Button size="sm" variant="outline" className="border-teal-600 text-teal-600 hover:bg-teal-50 hover:text-teal-700">Join a Group</Button>
+                        <Button size="sm" variant="secondary" className="bg-teal-600 text-white hover:bg-teal-700" onClick={handleStartGroupBuy} disabled={isGroupCreating}>
+                           {isGroupCreating ? 'Starting...' : 'Start a Group'}
+                        </Button>
                     </div>
                 </div>
             )}
