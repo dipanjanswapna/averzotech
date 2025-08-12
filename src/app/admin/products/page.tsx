@@ -42,7 +42,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -51,7 +51,7 @@ interface Product {
   name: string;
   organization: {
     category: string;
-    status: string;
+    status: 'active' | 'draft' | 'archived' | 'pending-approval' | 'rejected';
   };
   pricing: {
     price: number;
@@ -72,7 +72,8 @@ export default function ProductsPage() {
       setLoading(true);
       try {
         const productsCollection = collection(db, 'products');
-        const productSnapshot = await getDocs(productsCollection);
+        const q = query(productsCollection, orderBy('createdAt', 'desc'));
+        const productSnapshot = await getDocs(q);
         const productList = productSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
@@ -106,6 +107,30 @@ export default function ProductsPage() {
         })
     }
   }
+
+  const getStatusBadgeVariant = (status: Product['organization']['status']) => {
+    switch(status) {
+        case 'active': return 'default';
+        case 'pending-approval': return 'secondary';
+        case 'rejected': return 'destructive';
+        case 'draft': return 'outline';
+        default: return 'outline';
+    }
+  }
+
+   const getStatusBadgeClass = (status: Product['organization']['status']) => {
+      switch (status) {
+          case 'active':
+              return 'bg-green-100 text-green-800';
+          case 'pending-approval':
+              return 'bg-yellow-100 text-yellow-800';
+          case 'rejected':
+              return 'bg-red-100 text-red-800';
+          default:
+              return '';
+      }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -169,14 +194,10 @@ export default function ProductsPage() {
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={
-                        product.organization?.status === 'active'
-                          ? 'default'
-                          : 'secondary'
-                      }
-                      className={product.organization?.status === 'active' ? 'bg-green-100 text-green-800 capitalize' : 'capitalize'}
+                      variant={getStatusBadgeVariant(product.organization?.status)}
+                      className={`${getStatusBadgeClass(product.organization?.status)} capitalize`}
                     >
-                      {product.organization?.status || 'N/A'}
+                      {product.organization?.status?.replace('-', ' ') || 'N/A'}
                     </Badge>
                   </TableCell>
                   <TableCell>৳{product.pricing?.price.toLocaleString() || 'N/A'}</TableCell>

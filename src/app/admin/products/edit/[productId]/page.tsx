@@ -630,7 +630,9 @@ export default function EditProductPage() {
                     <Select onValueChange={setStatus} value={status} disabled={isLoading}>
                       <SelectTrigger id="product-status"><SelectValue placeholder="Select status" /></SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="pending-approval">Pending Approval</SelectItem>
                         <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
                         <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="archived">Archived</SelectItem>
                       </SelectContent>

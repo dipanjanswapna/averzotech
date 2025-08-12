@@ -48,6 +48,7 @@ interface Product {
     category: string;
     group: string;
     subcategory: string;
+    status: string;
   };
   inventory: {
     availability: string;
@@ -152,14 +153,15 @@ function ShopPageContent() {
                     const productPromises = productIds.map((id: string) => getDoc(doc(db, "products", id)));
                     const productDocs = await Promise.all(productPromises);
                     productList = productDocs
-                      .filter(doc => doc.exists())
+                      .filter(doc => doc.exists() && doc.data()?.organization.status === 'active')
                       .map(doc => ({ id: doc.id, ...doc.data() } as Product));
                 }
             }
         } else {
             setActiveCampaign(null);
             const productsCollection = collection(db, 'products');
-            const productSnapshot = await getDocs(productsCollection);
+            const q = query(productsCollection, where("organization.status", "==", "active"));
+            const productSnapshot = await getDocs(q);
             productList = productSnapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()

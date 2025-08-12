@@ -135,7 +135,6 @@ export default function NewVendorProductPage() {
     const [giftDescription, setGiftDescription] = useState('');
 
     // Organization
-    const [status, setStatus] = useState('draft');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedGroup, setSelectedGroup] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
@@ -283,7 +282,6 @@ export default function NewVendorProductPage() {
     const handleSaveProduct = async () => {
         setIsLoading(true);
         try {
-            // 1. Upload images to Firebase Storage if they are files
             const imageUrls = await Promise.all(
                 images.map(async (imageObj) => {
                     if (imageObj.file) {
@@ -295,7 +293,6 @@ export default function NewVendorProductPage() {
                 })
             );
 
-            // 2. Prepare product data object
             const productData = {
                 name: productName,
                 description,
@@ -315,7 +312,7 @@ export default function NewVendorProductPage() {
                     description: giftDescription
                 },
                 organization: {
-                    status,
+                    status: 'pending-approval', // Default status for new products
                     category: selectedCategory,
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
@@ -340,12 +337,11 @@ export default function NewVendorProductPage() {
                 updatedAt: serverTimestamp(),
             };
 
-            // 3. Save product data to Firestore
             await addDoc(collection(db, 'products'), productData);
 
             toast({
-                title: 'Product Saved!',
-                description: 'Your new product has been successfully added to the store.',
+                title: 'Product Submitted!',
+                description: 'Your product has been submitted for approval.',
             });
             router.push('/vendor/products');
 
@@ -579,17 +575,6 @@ export default function NewVendorProductPage() {
                   <CardTitle>Organization</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="product-status">Status</Label>
-                    <Select defaultValue="draft" onValueChange={setStatus} value={status} disabled={isLoading}>
-                      <SelectTrigger id="product-status"><SelectValue placeholder="Select status" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="archived">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                    <div className="space-y-2">
                     <Label>Category</Label>
                     <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); setSelectedSubcategory(''); }} value={selectedCategory} disabled={isLoading}>
@@ -739,7 +724,7 @@ export default function NewVendorProductPage() {
            <div className="flex justify-end gap-2">
                 <Button variant="outline" disabled={isLoading}>Discard</Button>
                 <Button onClick={handleSaveProduct} disabled={isLoading}>
-                    {isLoading ? 'Saving...' : 'Save Product'}
+                    {isLoading ? 'Saving...' : 'Submit for Approval'}
                 </Button>
             </div>
         </div>
