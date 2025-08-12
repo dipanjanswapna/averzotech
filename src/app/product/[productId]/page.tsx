@@ -26,7 +26,7 @@ import * as React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { doc, getDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, runTransaction, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, getDocs, query, orderBy, serverTimestamp, runTransaction, DocumentData, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
@@ -137,6 +137,8 @@ export default function ProductPage() {
   const [reviewTitle, setReviewTitle] = React.useState('');
   const [reviewComment, setReviewComment] = React.useState('');
   const [isSubmittingReview, setIsSubmittingReview] = React.useState(false);
+  const [canUserReview, setCanUserReview] = React.useState(false);
+  const [checkingPurchase, setCheckingPurchase] = React.useState(true);
   
   // Q&A form state
   const [newQuestion, setNewQuestion] = React.useState('');
@@ -165,7 +167,7 @@ export default function ProductPage() {
           const productData = { 
               id: productSnap.id, 
               ...data,
-              ratingSummary: data.ratingSummary || { average: 0, count: 0 } // Default value
+              ratingSummary: data.ratingSummary || { average: 0, count: 0 }
           } as Product;
 
           setProduct(productData);
@@ -191,6 +193,42 @@ export default function ProductPage() {
     }
   }, [productId]);
   
+    React.useEffect(() => {
+        const checkPurchase = async () => {
+            if (!user || !product) {
+                setCheckingPurchase(false);
+                return;
+            }
+            try {
+                const ordersRef = collection(db, 'orders');
+                const q = query(
+                    ordersRef, 
+                    where("userId", "==", user.uid), 
+                    where("status", "==", "Fulfilled")
+                );
+                const querySnapshot = await getDocs(q);
+                
+                let hasPurchased = false;
+                querySnapshot.forEach((doc) => {
+                    const order = doc.data();
+                    if (order.items.some((item: any) => item.id === product.id)) {
+                        hasPurchased = true;
+                    }
+                });
+                
+                setCanUserReview(hasPurchased);
+            } catch (err) {
+                console.error("Error checking purchase history:", err);
+            } finally {
+                setCheckingPurchase(false);
+            }
+        };
+
+        if(!loading) {
+            checkPurchase();
+        }
+    }, [user, product, loading]);
+
   const handleAddToCart = () => {
     if (!product) return;
     if (!selectedSize && product.variants.sizes.length > 0) {
@@ -266,6 +304,7 @@ export default function ProductPage() {
   const handleReviewSubmit = async () => {
       if (!user) { toast({ title: "Please log in to submit a review.", variant: "destructive"}); return; }
       if (!product) return;
+      if (!canUserReview) { toast({ title: "Purchase Required", description: "You must purchase this item to leave a review.", variant: "destructive"}); return;}
       if (reviewRating === 0 || !reviewComment) { toast({ title: "Please provide a rating and a comment.", variant: "destructive"}); return; }
       
       setIsSubmittingReview(true);
@@ -628,16 +667,24 @@ export default function ProductPage() {
                      
                      <div className="border p-4 rounded-lg mt-6">
                         <h3 className="font-semibold mb-2">Write a review</h3>
-                        <div className="flex items-center gap-1 mb-4">
-                            {[1, 2, 3, 4, 5].map(star => (
-                                <Star key={star} className={`w-6 h-6 cursor-pointer ${reviewRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} onClick={() => setReviewRating(star)} />
-                            ))}
-                        </div>
-                        <Input placeholder="Review Title (optional)" className="mb-2" value={reviewTitle} onChange={e => setReviewTitle(e.target.value)} />
-                        <Textarea placeholder="Share your thoughts..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} />
-                        <Button className="mt-2 w-full" onClick={handleReviewSubmit} disabled={isSubmittingReview}>
-                            {isSubmittingReview ? "Submitting..." : "Submit Review"}
-                        </Button>
+                        <fieldset disabled={!canUserReview || isSubmittingReview || checkingPurchase}>
+                            <div className="flex items-center gap-1 mb-4">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <Star key={star} className={`w-6 h-6 cursor-pointer ${reviewRating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} onClick={() => setReviewRating(star)} />
+                                ))}
+                            </div>
+                            <Input placeholder="Review Title (optional)" className="mb-2" value={reviewTitle} onChange={e => setReviewTitle(e.target.value)} />
+                            <Textarea placeholder="Share your thoughts..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} />
+                            <Button className="mt-2 w-full" onClick={handleReviewSubmit} disabled={isSubmittingReview || checkingPurchase}>
+                                {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                            </Button>
+                        </fieldset>
+                        {!checkingPurchase && !canUserReview && (
+                            <p className="text-xs text-center text-muted-foreground mt-2">You must purchase this item to leave a review.</p>
+                        )}
+                        {checkingPurchase && (
+                             <p className="text-xs text-center text-muted-foreground mt-2">Checking your purchase history...</p>
+                        )}
                      </div>
                  </div>
                  <div className="md:col-span-2">
