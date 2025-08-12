@@ -26,13 +26,13 @@ export async function POST(req: NextRequest) {
 
         const batch = writeBatch(db);
         
-        // Use tran_id as the document ID for the final order
         const orderRef = doc(db, "orders", tran_id as string);
         
         batch.set(orderRef, {
             ...orderData,
             status: 'Processing',
             paymentDetails: body,
+            createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         });
         

@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 
 export async function POST(req: NextRequest) {
     const body = await req.formData();
-    const { tran_id } = Object.fromEntries(body);
+    const { tran_id, failedreason } = Object.fromEntries(body);
 
     if (tran_id) {
         try {
@@ -22,5 +22,6 @@ export async function POST(req: NextRequest) {
         console.log("Payment failed, no tran_id provided.", Object.fromEntries(body));
     }
     
-    return NextResponse.redirect(new URL('/payment/fail', req.url));
+    const reason = failedreason ? encodeURIComponent(failedreason as string) : 'Unknown reason';
+    return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, req.url));
 }
