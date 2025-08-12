@@ -35,6 +35,7 @@ import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { VirtualTryOn } from '@/components/virtual-try-on';
 import { useAuth } from '@/hooks/use-auth';
 import { manageGroupBuy } from '@/ai/flows/group-buy-flow';
+import { useParams } from 'next/navigation';
 
 
 interface Product {
@@ -113,7 +114,9 @@ interface Product {
   }
 
 
-export default function ProductPage({ params }: { params: { productId: string } }) {
+export default function ProductPage() {
+  const params = useParams();
+  const productId = params.productId as string;
   const [product, setProduct] = React.useState<Product | null>(null);
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [qna, setQna] = React.useState<QnaItem[]>([]);
@@ -143,11 +146,11 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
   React.useEffect(() => {
-    if (params.productId) {
+    if (productId) {
       const fetchProductData = async () => {
         setLoading(true);
         try {
-          const productRef = doc(db, 'products', params.productId);
+          const productRef = doc(db, 'products', productId);
           const reviewsRef = collection(productRef, 'reviews');
           const qnaRef = collection(productRef, 'qna');
 
@@ -180,7 +183,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
       };
       fetchProductData();
     }
-  }, [params.productId]);
+  }, [productId]);
   
   const handleAddToCart = () => {
     if (!product) return;
@@ -689,3 +692,5 @@ export default function ProductPage({ params }: { params: { productId: string } 
     </div>
   );
 }
+
+    
