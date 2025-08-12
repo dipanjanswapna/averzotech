@@ -73,8 +73,19 @@ export default function PopupManager() {
         file: file,
         preview: URL.createObjectURL(file),
       });
+      // Clear the URL field if a file is uploaded
+      setContent(prev => ({...prev, imageUrl: ''}));
     }
   };
+  
+  const handleUrlChange = (url: string) => {
+    setContent(prev => ({...prev, imageUrl: url}));
+    if(url) {
+        setImageFile({ preview: url });
+    } else if (!imageFile?.file) {
+        setImageFile(null);
+    }
+  }
 
   const handleSaveChanges = async () => {
     setIsLoading(true);
@@ -172,7 +183,7 @@ export default function PopupManager() {
             <Label htmlFor="enable-popup">Enable Pop-up</Label>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-4">
             <Label>Pop-up Image</Label>
             <div className="w-full sm:w-1/2 md:w-1/3 p-2 border rounded-md">
                  {imageFile?.preview ? (
@@ -183,7 +194,16 @@ export default function PopupManager() {
                      </div>
                  )}
             </div>
-            <Input type="file" className="text-xs" onChange={handleFileChange} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                <div>
+                    <Label htmlFor="image-file" className="text-xs text-muted-foreground">Upload File</Label>
+                    <Input id="image-file" type="file" className="text-xs" onChange={handleFileChange} />
+                </div>
+                 <div>
+                    <Label htmlFor="image-url" className="text-xs text-muted-foreground">Or Paste Image URL</Label>
+                    <Input id="image-url" type="text" placeholder="https://..." value={content.imageUrl || ''} onChange={e => handleUrlChange(e.target.value)} />
+                </div>
+            </div>
           </div>
 
            <div className="space-y-2">
