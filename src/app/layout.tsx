@@ -22,7 +22,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <Providers>
-          {children}
+            {children}
         </Providers>
       </body>
     </html>
