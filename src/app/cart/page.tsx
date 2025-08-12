@@ -16,7 +16,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard, shippingFee, taxes } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, total, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard, taxes } = useCart();
   const { toast } = useToast();
   const [couponCode, setCouponCode] = React.useState('');
   const [giftCardCode, setGiftCardCode] = React.useState('');
@@ -240,10 +240,6 @@ export default function CartPage() {
                       <span>৳{subTotal.toFixed(2)}</span>
                   </div>
                    <div className="flex justify-between">
-                      <span>Shipping Fee</span>
-                      <span>{shippingFee === 0 ? 'Free' : `৳${shippingFee.toFixed(2)}`}</span>
-                  </div>
-                   <div className="flex justify-between">
                         <span>Taxes</span>
                         <span>৳{taxes.toFixed(2)}</span>
                     </div>
@@ -303,8 +299,8 @@ export default function CartPage() {
 
               <Separator className="my-4" />
               <div className="flex justify-between font-bold text-lg mb-4">
-                <span>Grand Total</span>
-                <span>৳{total.toFixed(2)}</span>
+                <span>Total (excl. shipping)</span>
+                <span>৳{(subTotal + taxes - (appliedCoupon?.discountAmount || 0) - (appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) : 0)).toFixed(2)}</span>
               </div>
               <Button className="w-full" size="lg" asChild>
                 <Link href="/shipping">Continue to Shipping</Link>
