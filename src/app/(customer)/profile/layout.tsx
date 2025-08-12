@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuth, signOut } from "firebase/auth";
 import { app } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 function ProfileLayoutContent({
   children,
@@ -25,13 +26,14 @@ function ProfileLayoutContent({
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
-  if (!user) {
-    router.push('/login');
-    return null;
+  if (loading || !user) {
+    return <div>Loading...</div>;
   }
   
   return (
