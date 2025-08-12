@@ -20,12 +20,17 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db, app } from '@/lib/firebase';
 import Image from 'next/image';
 import { UploadCloud } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PopupContent {
   enabled: boolean;
   imageUrl: string;
   link: string;
   displayFrequency: 'session' | 'daily' | 'always';
+  showEmailField: boolean;
+  heading: string;
+  subheading: string;
+  buttonText: string;
 }
 
 interface ImageFile {
@@ -41,7 +46,11 @@ export default function PopupManager() {
 
   const [enabled, setEnabled] = useState(false);
   const [link, setLink] = useState('');
-  const [displayFrequency, setDisplayFrequency] = useState('session');
+  const [displayFrequency, setDisplayFrequency] = useState<'session' | 'daily' | 'always'>('session');
+  const [showEmailField, setShowEmailField] = useState(true);
+  const [heading, setHeading] = useState('');
+  const [subheading, setSubheading] = useState('');
+  const [buttonText, setButtonText] = useState('Subscribe');
   const [image, setImage] = useState<ImageFile | null>(null);
 
   useEffect(() => {
@@ -51,9 +60,13 @@ export default function PopupManager() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data() as PopupContent;
-        setEnabled(data.enabled);
+        setEnabled(data.enabled || false);
         setLink(data.link || '');
         setDisplayFrequency(data.displayFrequency || 'session');
+        setShowEmailField(data.showEmailField === undefined ? true : data.showEmailField);
+        setHeading(data.heading || '');
+        setSubheading(data.subheading || '');
+        setButtonText(data.buttonText || 'Subscribe');
         if (data.imageUrl) {
           setImage({ preview: data.imageUrl });
         }
@@ -96,6 +109,10 @@ export default function PopupManager() {
         imageUrl,
         link,
         displayFrequency,
+        showEmailField,
+        heading,
+        subheading,
+        buttonText
       };
 
       await setDoc(doc(db, 'site_content', 'promotional_popup'), popupContent, { merge: true });
@@ -152,17 +169,18 @@ export default function PopupManager() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="popup-link">Target Link</Label>
-            <Input
-              id="popup-link"
-              placeholder="e.g., /shop/new-arrivals"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              disabled={isLoading}
-            />
-            <p className="text-xs text-muted-foreground">
-              The URL users will be taken to when they click the pop-up image.
+           <div className="space-y-2">
+            <Label htmlFor="display-frequency">Display Frequency</Label>
+            <Select value={displayFrequency} onValueChange={(value) => setDisplayFrequency(value as any)} disabled={isLoading}>
+                <SelectTrigger id="display-frequency"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="session">Show once per session</SelectItem>
+                    <SelectItem value="daily">Show once per day</SelectItem>
+                    <SelectItem value="always">Show on every page load</SelectItem>
+                </SelectContent>
+            </Select>
+             <p className="text-xs text-muted-foreground">
+              How often the pop-up should appear to a user.
             </p>
           </div>
 
@@ -171,11 +189,11 @@ export default function PopupManager() {
             <div className='flex items-center gap-4'>
                 {image && (
                     <div className="w-48 h-48 border rounded-md overflow-hidden bg-secondary flex-shrink-0">
-                        <Image src={image.preview} alt="Pop-up Preview" width={192} height={192} className="object-contain w-full h-full" />
+                        <Image src={image.preview || ''} alt="Pop-up Preview" width={192} height={192} className="object-contain w-full h-full" />
                     </div>
                 )}
                 <div className="flex-1 space-y-2">
-                    <Input id="image-url" placeholder="Or paste image URL" value={image?.preview && !image.file ? image.preview : ""} onChange={handleUrlChange} disabled={isLoading} />
+                    <Input id="image-url" placeholder="Or paste image URL" value={image?.file ? '' : image?.preview || ''} onChange={handleUrlChange} disabled={isLoading} />
                     <div className="text-center text-xs text-muted-foreground">OR</div>
                     <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-4 text-center">
                         <input type="file" id="image-upload" onChange={handleFileChange} className="hidden" disabled={isLoading} />
@@ -190,12 +208,81 @@ export default function PopupManager() {
             </div>
           </div>
         </CardContent>
-        <CardFooter>
-          <Button onClick={handleSaveChanges} disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </CardFooter>
       </Card>
+      
+      <Card>
+          <CardHeader>
+              <CardTitle>Pop-up Content</CardTitle>
+              <CardDescription>Customize the text and form fields shown on the pop-up.</CardDescription>
+          </CardHeader>
+           <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="popup-heading">Heading</Label>
+                <Input
+                id="popup-heading"
+                placeholder="e.g., Get TK. 300 Gift Voucher"
+                value={heading}
+                onChange={(e) => setHeading(e.target.value)}
+                disabled={isLoading}
+                />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="popup-subheading">Sub-heading</Label>
+                <Input
+                id="popup-subheading"
+                placeholder="e.g., Promo Code: LRAPP300"
+                value={subheading}
+                onChange={(e) => setSubheading(e.target.value)}
+                disabled={isLoading}
+                />
+            </div>
+             <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                <Label htmlFor="show-email" className="font-semibold">Show Email Field</Label>
+                <p className="text-xs text-muted-foreground">
+                    Ask users for their email address.
+                </p>
+                </div>
+                <Switch
+                id="show-email"
+                checked={showEmailField}
+                onCheckedChange={setShowEmailField}
+                disabled={isLoading}
+                />
+            </div>
+            {showEmailField && (
+                 <div className="space-y-2">
+                    <Label htmlFor="popup-button-text">Subscribe Button Text</Label>
+                    <Input
+                    id="popup-button-text"
+                    placeholder="e.g., Subscribe"
+                    value={buttonText}
+                    onChange={(e) => setButtonText(e.target.value)}
+                    disabled={isLoading}
+                    />
+                </div>
+            )}
+             <div className="space-y-2">
+                <Label htmlFor="popup-link">Image Target Link</Label>
+                <Input
+                id="popup-link"
+                placeholder="e.g., /shop/new-arrivals"
+                value={link}
+                onChange={(e) => setLink(e.target.value)}
+                disabled={isLoading}
+                />
+                <p className="text-xs text-muted-foreground">
+                The URL users will go to when they click the image (not the button).
+                </p>
+            </div>
+           </CardContent>
+            <CardFooter>
+            <Button onClick={handleSaveChanges} disabled={isLoading}>
+                {isLoading ? 'Saving...' : 'Save Changes'}
+            </Button>
+            </CardFooter>
+      </Card>
+
     </div>
   );
 }
