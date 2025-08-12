@@ -20,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, Copy, Package, Truck, User, FileText } from 'lucide-react';
+import { ChevronLeft, Package, Truck, User, FileText } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Stepper, Step } from '@/components/ui/stepper';
