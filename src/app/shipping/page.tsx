@@ -65,7 +65,7 @@ export default function ShippingPage() {
             setLoadingAddresses(false);
         };
         fetchAddresses();
-    }, [user, router]);
+    }, [user, router, shippingInfo]);
     
     React.useEffect(() => {
         if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {
@@ -90,9 +90,9 @@ export default function ShippingPage() {
              if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
                 setShippingInfo(newShippingInfo);
             }
-        } else if (shippingInfo) {
-            // Clear shipping info if no method or address is selected
-            setShippingInfo(null);
+        } else if (shippingInfo && !selectedShippingMethod) {
+            // Clear shipping info if no method or address is selected, but keep address if available
+             setShippingInfo(null);
         }
     }, [selectedAddress, selectedShippingMethod, user, setShippingInfo, shippingInfo]);
 

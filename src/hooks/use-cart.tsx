@@ -216,29 +216,31 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     
     const methods: { [key: string]: ShippingMethod } = {};
 
-    let standardEnabled = false;
-    let expressEnabled = false;
+    let courierFee = 0;
+    let expressFee = 0;
+    let isCourierAvailable = false;
+    let isExpressAvailable = false;
 
     cart.forEach(item => {
         if (item.shipping?.courier?.enabled) {
-            standardEnabled = true;
+            isCourierAvailable = true;
+            courierFee += (item.shipping.courier.fee || 0) * item.quantity;
         }
         if (item.shipping?.express?.enabled) {
-            expressEnabled = true;
+            isExpressAvailable = true;
+            expressFee += (item.shipping.express.fee || 0) * item.quantity;
         }
     });
-
-    if (standardEnabled) {
-        const totalFee = cart.reduce((acc, item) => acc + ((item.shipping?.courier?.fee || 0) * item.quantity), 0);
-        methods['Standard Courier'] = { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: totalFee };
+    
+    const finalMethods = [];
+    if (isCourierAvailable) {
+        finalMethods.push({ name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: courierFee });
+    }
+    if (isExpressAvailable) {
+        finalMethods.push({ name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: expressFee });
     }
 
-    if (expressEnabled) {
-        const totalFee = cart.reduce((acc, item) => acc + ((item.shipping?.express?.fee || 0) * item.quantity), 0);
-        methods['Express Delivery'] = { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: totalFee };
-    }
-
-    return Object.values(methods);
+    return finalMethods;
 
   }, [cart]);
 
