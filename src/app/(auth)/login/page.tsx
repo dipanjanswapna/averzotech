@@ -37,7 +37,7 @@ export default function LoginPage() {
       if (userDoc.exists()) {
         const userData = { uid: user.uid, ...userDoc.data() } as AppUser;
         if (userData.role === 'vendor' && userData.status !== 'active') {
-            signOut(auth);
+            await signOut(auth);
             toast({
               title: "Approval Pending",
               description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
@@ -60,9 +60,19 @@ export default function LoginPage() {
           router.push('/');
         }
       } else {
+         // This case handles users who exist in Firebase Auth but not in Firestore,
+         // e.g., after a database clear. We treat them as new customers.
+         const newUser = {
+            fullName: user.displayName || 'New User',
+            email: user.email,
+            role: 'customer',
+            status: 'active',
+            createdAt: new Date(),
+        };
+        await setDoc(userDocRef, newUser);
          toast({
-          title: "Login Successful",
-          description: "Welcome back!",
+          title: "Welcome!",
+          description: "Glad to have you with us.",
         });
         router.push('/');
       }
@@ -92,7 +102,7 @@ export default function LoginPage() {
       if (userDoc.exists()) {
         const userData = { uid: user.uid, ...userDoc.data() } as AppUser;
          if (userData.role === 'vendor' && userData.status !== 'active') {
-            signOut(auth);
+            await signOut(auth);
             toast({
               title: "Approval Pending",
               description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
@@ -159,6 +169,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
+              autoComplete="email"
             />
           </div>
           <div className="grid gap-2">
@@ -170,6 +181,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>

@@ -382,6 +382,7 @@ export function ProductDetails() {
       const count = reviews.filter(r => r.rating === star).length;
       return { star, count, percentage: reviews.length > 0 ? (count / reviews.length) * 100 : 0 };
   }).reverse();
+  const safeVideoUrl = product.videoUrl ? product.videoUrl.replace("watch?v=", "embed/") : "";
 
   return (
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -412,9 +413,9 @@ export function ProductDetails() {
                           </Badge>
                       )}
                   </div>
-                  {product.videoUrl && (
+                  {safeVideoUrl && (
                     <div className="aspect-video overflow-hidden rounded-lg">
-                        <iframe width="100%" height="100%" src={product.videoUrl.replace("watch?v=", "embed/")} title="Product Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                        <iframe width="100%" height="100%" src={safeVideoUrl} title="Product Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
                     </div>
                   )}
               </div>

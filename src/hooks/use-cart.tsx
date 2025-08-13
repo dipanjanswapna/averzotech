@@ -136,7 +136,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       fetchShippingSettings();
 
     } catch (error) {
-        console.error("Failed to parse data from localStorage", error);
+        console.error("Failed to parse data from localStorage, clearing corrupted data.", error);
         // Clear corrupted data
         localStorage.removeItem('shoppingCart');
         localStorage.removeItem('appliedCoupon');
