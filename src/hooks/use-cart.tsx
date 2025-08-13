@@ -2,6 +2,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
 
 // Define the structure of an applied coupon
 export interface AppliedCoupon {
@@ -51,8 +53,6 @@ interface Product {
       discount?: number;
     };
     shipping: {
-        courier?: { enabled: boolean; fee: number };
-        express?: { enabled: boolean; fee: number };
         estimatedDelivery: string;
     }
     inventory: {
@@ -97,27 +97,38 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   const [shippingInfo, setShippingInfoState] = useState<ShippingInfo | null>(null);
+  const [shippingSettings, setShippingSettings] = useState({ standardFee: 60, expressFee: 120 });
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load cart from localStorage on initial render
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('shoppingCart');
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
+      if (savedCart) setCart(JSON.parse(savedCart));
+      
       const savedCoupon = localStorage.getItem('appliedCoupon');
-      if (savedCoupon) {
-        setAppliedCoupon(JSON.parse(savedCoupon));
-      }
+      if (savedCoupon) setAppliedCoupon(JSON.parse(savedCoupon));
+
       const savedGiftCard = localStorage.getItem('appliedGiftCard');
-       if (savedGiftCard) {
-        setAppliedGiftCard(JSON.parse(savedGiftCard));
-      }
+      if (savedGiftCard) setAppliedGiftCard(JSON.parse(savedGiftCard));
+
       const savedShippingInfo = localStorage.getItem('shippingInfo');
-      if (savedShippingInfo) {
-          setShippingInfoState(JSON.parse(savedShippingInfo));
-      }
+      if (savedShippingInfo) setShippingInfoState(JSON.parse(savedShippingInfo));
+
+      const fetchShippingSettings = async () => {
+          const db = getFirestore(app);
+          const docRef = doc(db, 'site_settings', 'shipping');
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+              const data = docSnap.data();
+              setShippingSettings({
+                  standardFee: data.standardFee || 60,
+                  expressFee: data.expressFee || 120
+              });
+          }
+      };
+      fetchShippingSettings();
+
     } catch (error) {
         console.error("Failed to parse data from localStorage", error);
     }
@@ -214,35 +225,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const availableShippingMethods: ShippingMethod[] = React.useMemo(() => {
     if (cart.length === 0) return [];
     
-    const methods: { [key: string]: ShippingMethod } = {};
+    return [
+      { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: shippingSettings.standardFee },
+      { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: shippingSettings.expressFee }
+    ];
 
-    let courierFee = 0;
-    let expressFee = 0;
-    let isCourierAvailable = false;
-    let isExpressAvailable = false;
-
-    cart.forEach(item => {
-        if (item.shipping?.courier?.enabled) {
-            isCourierAvailable = true;
-            courierFee += (item.shipping.courier.fee || 0) * item.quantity;
-        }
-        if (item.shipping?.express?.enabled) {
-            isExpressAvailable = true;
-            expressFee += (item.shipping.express.fee || 0) * item.quantity;
-        }
-    });
-    
-    const finalMethods = [];
-    if (isCourierAvailable) {
-        finalMethods.push({ name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: courierFee });
-    }
-    if (isExpressAvailable) {
-        finalMethods.push({ name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: expressFee });
-    }
-
-    return finalMethods;
-
-  }, [cart]);
+  }, [cart.length, shippingSettings]);
 
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
