@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     
     if (!tran_id) {
         console.error("Transaction ID missing in success response", {body});
-        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, req.url));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, process.env.NEXT_PUBLIC_APP_URL));
     }
 
     try {
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         
         if (!pendingOrderSnap.exists()) {
              console.error("Pending order not found for tran_id:", tran_id);
-             return NextResponse.redirect(new URL(`/payment/fail?reason=order_not_found&tran_id=${tran_id}`, req.url));
+             return NextResponse.redirect(new URL(`/payment/fail?reason=order_not_found&tran_id=${tran_id}`, process.env.NEXT_PUBLIC_APP_URL));
         }
 
         const orderData = pendingOrderSnap.data();
@@ -45,10 +45,10 @@ export async function POST(req: NextRequest) {
 
         await batch.commit();
 
-        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${orderRef.id}`, req.url));
+        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${orderRef.id}`, process.env.NEXT_PUBLIC_APP_URL));
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
-        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, req.url));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, process.env.NEXT_PUBLIC_APP_URL));
     }
 }

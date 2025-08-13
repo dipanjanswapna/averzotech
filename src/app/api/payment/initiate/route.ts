@@ -10,48 +10,50 @@ export async function POST(req: NextRequest) {
     const store_id = process.env.STORE_ID;
     const store_passwd = process.env.STORE_PASSWORD;
     const is_live = process.env.IS_LIVE === 'true';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     if (!shippingAddress) {
          return NextResponse.json({ error: 'Shipping address is missing.' }, { status: 400 });
     }
     if (!store_id || !store_passwd) {
-        return NextResponse.json({ error: 'SSLCommerz store ID or password is not set.' }, { status: 500 });
+        console.error("SSLCommerz store ID or password is not set in .env file.");
+        return NextResponse.json({ error: 'Payment gateway is not configured properly.' }, { status: 500 });
     }
     
     const { name, email, phone, fullAddress } = shippingAddress;
     const tran_id = nanoid();
 
-    const post_body: any = {};
-    post_body.store_id = store_id;
-    post_body.store_passwd = store_passwd;
-    post_body.total_amount = total;
-    post_body.currency = 'BDT';
-    post_body.tran_id = tran_id;
-    post_body.success_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`;
-    post_body.fail_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail`;
-    post_body.cancel_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`;
-    post_body.ipn_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`;
-    post_body.shipping_method = shippingAddress.method || 'Courier';
-    post_body.product_name = items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items';
-    post_body.product_category = 'eCommerce';
-    post_body.product_profile = 'general';
-    post_body.cus_name = name;
-    post_body.cus_email = email;
-    post_body.cus_add1 = fullAddress;
-    post_body.cus_add2 = 'N/A';
-    post_body.cus_city = shippingAddress.district || 'Dhaka';
-    post_body.cus_state = shippingAddress.division || 'Dhaka';
-    post_body.cus_postcode = '1000';
-    post_body.cus_country = 'Bangladesh';
-    post_body.cus_phone = phone;
-    post_body.ship_name = name;
-    post_body.ship_add1 = fullAddress;
-    post_body.ship_add2 = 'N/A';
-    post_body.ship_city = shippingAddress.district || 'Dhaka';
-    post_body.ship_state = shippingAddress.division || 'Dhaka';
-    post_body.ship_postcode = '1000';
-    post_body.ship_country = 'Bangladesh';
-
+    const post_body: any = {
+        store_id,
+        store_passwd,
+        total_amount: total,
+        currency: 'BDT',
+        tran_id,
+        success_url: `${appUrl}/api/payment/success`,
+        fail_url: `${appUrl}/api/payment/fail`,
+        cancel_url: `${appUrl}/api/payment/cancel`,
+        ipn_url: `${appUrl}/api/payment/ipn`,
+        shipping_method: shippingAddress.method || 'Courier',
+        product_name: items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items',
+        product_category: 'eCommerce',
+        product_profile: 'general',
+        cus_name: name,
+        cus_email: email,
+        cus_add1: fullAddress,
+        cus_add2: 'N/A',
+        cus_city: shippingAddress.district || 'Dhaka',
+        cus_state: shippingAddress.division || 'Dhaka',
+        cus_postcode: '1000',
+        cus_country: 'Bangladesh',
+        cus_phone: phone,
+        ship_name: name,
+        ship_add1: fullAddress,
+        ship_add2: 'N/A',
+        ship_city: shippingAddress.district || 'Dhaka',
+        ship_state: shippingAddress.division || 'Dhaka',
+        ship_postcode: '1000',
+        ship_country: 'Bangladesh',
+    };
 
     try {
         const pendingOrderRef = doc(db, 'pending_orders', tran_id);
