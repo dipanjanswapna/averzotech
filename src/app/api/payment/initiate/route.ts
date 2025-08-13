@@ -2,7 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-const SSLCommerz = require('sslcommerz-lts');
+import fetch from 'node-fetch';
+import { URLSearchParams } from 'url';
+
 require('dotenv').config();
 
 export async function POST(req: NextRequest) {
@@ -12,7 +14,7 @@ export async function POST(req: NextRequest) {
     const store_id = process.env.STORE_ID;
     const store_passwd = process.env.STORE_PASSWORD;
     const is_live = process.env.IS_LIVE === 'true';
-    
+
     if (!shippingAddress) {
          return NextResponse.json({ error: 'Shipping address is missing.' }, { status: 400 });
     }
@@ -21,37 +23,35 @@ export async function POST(req: NextRequest) {
     }
     
     const { name, email, phone, fullAddress } = shippingAddress;
-    
-    const data = {
-        total_amount: Math.round(total),
-        currency: 'BDT',
-        tran_id: tran_id,
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`,
-        fail_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`,
-        ipn_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`,
-        shipping_method: 'Courier',
-        product_name: items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items',
-        product_category: 'eCommerce',
-        product_profile: 'general',
-        cus_name: name,
-        cus_email: email,
-        cus_add1: fullAddress,
-        cus_add2: 'N/A',
-        cus_city: 'Dhaka',
-        cus_state: 'Dhaka',
-        cus_postcode: '1000',
-        cus_country: 'Bangladesh',
-        cus_phone: phone,
-        cus_fax: 'N/A',
-        ship_name: name,
-        ship_add1: fullAddress,
-        ship_add2: 'N/A',
-        ship_city: 'Dhaka',
-        ship_state: 'Dhaka',
-        ship_postcode: 1000,
-        ship_country: 'Bangladesh',
-    };
+
+    const params = new URLSearchParams();
+    params.append('store_id', store_id);
+    params.append('store_passwd', store_passwd);
+    params.append('total_amount', String(Math.round(total)));
+    params.append('currency', 'BDT');
+    params.append('tran_id', tran_id);
+    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`);
+    params.append('fail_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail`);
+    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`);
+    params.append('ipn_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`);
+    params.append('shipping_method', 'Courier');
+    params.append('product_name', items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items');
+    params.append('product_category', 'eCommerce');
+    params.append('product_profile', 'general');
+    params.append('cus_name', name);
+    params.append('cus_email', email);
+    params.append('cus_add1', fullAddress);
+    params.append('cus_city', 'Dhaka');
+    params.append('cus_state', 'Dhaka');
+    params.append('cus_postcode', '1000');
+    params.append('cus_country', 'Bangladesh');
+    params.append('cus_phone', phone);
+    params.append('ship_name', name);
+    params.append('ship_add1', fullAddress);
+    params.append('ship_city', 'Dhaka');
+    params.append('ship_state', 'Dhaka');
+    params.append('ship_postcode', '1000');
+    params.append('ship_country', 'Bangladesh');
 
     try {
         const pendingOrderRef = doc(db, 'pending_orders', tran_id);
@@ -60,14 +60,22 @@ export async function POST(req: NextRequest) {
              createdAt: serverTimestamp()
         });
         
-        const sslcz = new SSLCommerz(store_id, store_passwd, is_live);
-        const apiResponse = await sslcz.init(data);
+        const sslcz_url = is_live 
+            ? 'https://securepay.sslcommerz.com/gwprocess/v4/api.php' 
+            : 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php';
 
-        if (apiResponse.status === 'SUCCESS' && apiResponse.GatewayPageURL) {
-            return NextResponse.json({ GatewayPageURL: apiResponse.GatewayPageURL });
+        const apiResponse = await fetch(sslcz_url, {
+            method: 'POST',
+            body: params
+        });
+
+        const responseData = await apiResponse.json();
+
+        if (responseData.status === 'SUCCESS' && responseData.GatewayPageURL) {
+            return NextResponse.json({ GatewayPageURL: responseData.GatewayPageURL });
         } else {
-            console.error("SSLCommerz init failed:", apiResponse);
-            return NextResponse.json({ error: 'Failed to create payment session.', details: apiResponse.failedreason || 'Unknown reason' }, { status: 500 });
+            console.error("SSLCommerz init failed:", responseData);
+            return NextResponse.json({ error: 'Failed to create payment session.', details: responseData.failedreason || 'Unknown reason' }, { status: 500 });
         }
     } catch (error) {
         console.error("SSLCommerz init error:", error);

@@ -22,5 +22,5 @@ export async function POST(req: NextRequest) {
         console.log("Payment cancelled, no tran_id provided.", Object.fromEntries(body));
     }
     
-    return NextResponse.redirect(new URL('/cart?status=cancelled', req.url));
+    return NextResponse.redirect(new URL('/cart?status=cancelled', req.url), 302);
 }

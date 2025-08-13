@@ -24,5 +24,5 @@ export async function POST(req: NextRequest) {
     }
     
     const reason = failedreason ? encodeURIComponent(failedreason as string) : 'Unknown reason';
-    return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, req.url));
+    return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, req.url), 302);
 }
