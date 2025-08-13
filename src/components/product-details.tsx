@@ -72,8 +72,6 @@ interface Product {
     };
     specifications: { label: string; value: string }[];
     shipping: {
-        courier?: { enabled: boolean; fee: number };
-        express?: { enabled: boolean; fee: number };
         estimatedDelivery: string;
     };
     images: string[];
@@ -128,7 +126,7 @@ export function ProductDetails() {
   const [newQuestion, setNewQuestion] = React.useState("");
   const [isSubmittingQuestion, setIsSubmittingQuestion] = React.useState(false);
   
-  const { addToCart } = useCart();
+  const { addToCart, availableShippingMethods } = useCart();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
 
@@ -505,8 +503,9 @@ export function ProductDetails() {
               <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3 >
                <p className="text-xs text-muted-foreground mt-1">Estimated Delivery: {product.shipping.estimatedDelivery}</p>
                 <div className="mt-2 text-sm space-y-1">
-                    {product.shipping.courier?.enabled && <p>• Standard Courier: <span className="font-semibold">৳{product.shipping.courier.fee}</span></p>}
-                    {product.shipping.express?.enabled && <p>• Express Delivery: <span className="font-semibold">৳{product.shipping.express.fee}</span></p>}
+                    {availableShippingMethods.map(method => (
+                       <p key={method.name}>• {method.name}: <span className="font-semibold">৳{method.fee}</span></p>
+                    ))}
                 </div>
             </div>
             
@@ -677,4 +676,5 @@ export function ProductDetails() {
       </main>
       );
 }
+
 
