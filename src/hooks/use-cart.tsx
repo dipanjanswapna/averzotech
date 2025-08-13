@@ -213,27 +213,44 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   const availableShippingMethods: ShippingMethod[] = React.useMemo(() => {
     if (cart.length === 0) return [];
+    
+    const methodsMap: { [key: string]: { name: string; fee: number; estimatedDelivery: string } } = {};
 
-    const methods: { [key: string]: Omit<ShippingMethod, 'fee'> & { totalFee: number } } = {};
+    const standardCourierMethod = { 
+        name: 'Standard Courier', 
+        fee: 0, 
+        estimatedDelivery: '3-5 business days' 
+    };
+    const expressDeliveryMethod = { 
+        name: 'Express Delivery', 
+        fee: 0, 
+        estimatedDelivery: '1-2 business days' 
+    };
+
+    let isStandardAvailable = false;
+    let isExpressAvailable = false;
 
     cart.forEach(item => {
         if (item.shipping?.courier?.enabled) {
-            const name = "Standard Courier";
-            if (!methods[name]) {
-                methods[name] = { name, estimatedDelivery: item.shipping.estimatedDelivery, totalFee: 0 };
-            }
-            methods[name].totalFee += (item.shipping.courier.fee || 0) * item.quantity;
+            isStandardAvailable = true;
+            standardCourierMethod.fee += (item.shipping.courier.fee || 0) * item.quantity;
         }
         if (item.shipping?.express?.enabled) {
-            const name = "Express Delivery";
-            if (!methods[name]) {
-                methods[name] = { name, estimatedDelivery: item.shipping.estimatedDelivery, totalFee: 0 };
-            }
-            methods[name].totalFee += (item.shipping.express.fee || 0) * item.quantity;
+            isExpressAvailable = true;
+            expressDeliveryMethod.fee += (item.shipping.express.fee || 0) * item.quantity;
         }
     });
 
-    return Object.values(methods).map(({ totalFee, ...rest }) => ({ ...rest, fee: totalFee }));
+    const availableMethods = [];
+    if (isStandardAvailable) {
+        availableMethods.push(standardCourierMethod);
+    }
+    if (isExpressAvailable) {
+        availableMethods.push(expressDeliveryMethod);
+    }
+    
+    return availableMethods;
+
   }, [cart]);
 
 
