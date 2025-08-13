@@ -26,17 +26,19 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+        // First, check if the order has already been created by the IPN
         let existingOrderId = await findOrder(tran_id as string);
-
         if (existingOrderId) {
             console.log(`Order with tran_id ${tran_id} already exists with ID: ${existingOrderId}. Redirecting to confirmation.`);
             return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl), { status: 302 });
         }
 
+        // If not, try to process the pending order
         const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
         const pendingOrderSnap = await getDoc(pendingOrderRef);
         
         if (!pendingOrderSnap.exists()) {
+             // This can happen if IPN is faster. Wait a moment and check again.
              console.log("Pending order not found for tran_id (already processed by IPN?):", tran_id);
              await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for IPN to process
              existingOrderId = await findOrder(tran_id as string);
@@ -44,9 +46,9 @@ export async function POST(req: NextRequest) {
                  return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl), { status: 302 });
              }
 
-             console.error("Could not find order even after waiting. Redirecting with transaction ID for final lookup.");
+             console.error("Could not find pending order or existing order for tran_id:", tran_id);
              const orderConfirmationUrl = new URL(`/order-confirmation`, appUrl);
-             orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); 
+             orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); // Pass tran_id for final lookup on client
              return NextResponse.redirect(orderConfirmationUrl, { status: 302 });
         }
 

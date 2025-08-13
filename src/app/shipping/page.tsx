@@ -49,6 +49,11 @@ export default function ShippingPage() {
             router.push('/login');
             return;
         }
+        if (cart.length === 0) {
+            toast({ title: "Your cart is empty!", description: "Add items to your cart to proceed to shipping." });
+            router.push('/');
+            return;
+        }
 
         const fetchAddresses = async () => {
             setLoadingAddresses(true);
@@ -65,7 +70,7 @@ export default function ShippingPage() {
             setLoadingAddresses(false);
         };
         fetchAddresses();
-    }, [user, router, shippingInfo]);
+    }, [user, router, shippingInfo, cart.length, toast]);
     
     React.useEffect(() => {
         if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {
