@@ -761,6 +761,7 @@ export default function EditProductPage() {
                             <SelectContent>
                                 <SelectItem value="in-stock">In Stock</SelectItem>
                                 <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                                <SelectItem value="pre-order">Pre-order</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -788,3 +789,5 @@ export default function EditProductPage() {
     </div>
   );
 }
+
+    

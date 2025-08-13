@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
@@ -58,7 +59,7 @@ export interface Product {
     };
     inventory: {
         sku: string;
-        availability: 'in-stock' | 'out-of-stock';
+        availability: 'in-stock' | 'out-of-stock' | 'pre-order';
     };
     variants: {
         sizes: string[];
@@ -314,3 +315,5 @@ export const useCart = () => {
   }
   return context;
 };
+
+    

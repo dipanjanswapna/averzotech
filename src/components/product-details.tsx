@@ -58,7 +58,7 @@ interface Product {
     inventory: {
         sku: string;
         stock: number;
-        availability: string;
+        availability: 'in-stock' | 'out-of-stock' | 'pre-order';
     };
     organization: {
         category: string;
@@ -191,7 +191,7 @@ export function ProductDetails() {
     if (buyNow) {
         router.push('/shipping');
     } else {
-        toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` })
+        toast({ title: product.inventory.availability === 'pre-order' ? "Pre-ordered!" : "Added to Cart", description: `${product.name} has been added to your cart.` })
     }
   }
 
@@ -385,6 +385,7 @@ export function ProductDetails() {
       return { star, count, percentage: reviews.length > 0 ? (count / reviews.length) * 100 : 0 };
   }).reverse();
   const safeVideoUrl = product.videoUrl ? product.videoUrl.replace("watch?v=", "embed/") : "";
+  const isPreOrder = product.inventory.availability === 'pre-order';
 
   return (
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -453,7 +454,9 @@ export function ProductDetails() {
              {product.giftWithPurchase?.enabled && (
                 <p className="text-sm text-pink-600 font-semibold mt-1">+ FREE GIFT: {product.giftWithPurchase.description}</p>
              )}
-            <Badge variant="outline" className="mt-2">{product.inventory.availability}</Badge>
+            <Badge variant={isPreOrder ? "secondary" : "outline"} className={cn("mt-2", isPreOrder && "bg-blue-100 text-blue-800")}>
+              {product.inventory.availability.replace('-', ' ').toUpperCase()}
+            </Badge>
             <p className="text-sm text-muted-foreground mt-1">SKU: {product.inventory.sku}</p>
 
             <div className="mt-6">
@@ -492,10 +495,10 @@ export function ProductDetails() {
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
               <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleAddToCart(false)}>
-                <ShoppingBag className="mr-2 h-5 w-5" /> ADD TO CART
+                <ShoppingBag className="mr-2 h-5 w-5" /> {isPreOrder ? 'PRE-ORDER NOW' : 'ADD TO CART'}
               </Button>
               <Button size="lg" variant="secondary" className="flex-1" onClick={() => handleAddToCart(true)}>
-                 BUY NOW
+                 {isPreOrder ? 'PRE-ORDER & CHECKOUT' : 'BUY NOW'}
               </Button>
               <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>
                 <Heart className={`mr-2 h-5 w-5 ${isInWishlist ? "fill-current" : ""}`} /> WISHLIST
@@ -679,3 +682,5 @@ export function ProductDetails() {
       </main>
       );
 }
+
+    
