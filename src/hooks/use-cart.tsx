@@ -201,10 +201,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setAppliedCoupon(null);
     setAppliedGiftCard(null);
     setShippingInfoState(null);
-    localStorage.removeItem('shoppingCart');
-    localStorage.removeItem('appliedCoupon');
-    localStorage.removeItem('appliedGiftCard');
-    localStorage.removeItem('shippingInfo');
   };
   
   const applyCoupon = (coupon: AppliedCoupon) => {
@@ -241,9 +237,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
   
-  const calculateDiscount = () => {
-    if (!appliedCoupon) return 0;
-    if (cart.length === 0) return 0;
+  const discountAmount = React.useMemo(() => {
+    if (!appliedCoupon || cart.length === 0) return 0;
 
     let applicableSubtotal = subTotal;
     if (appliedCoupon.applicability?.type === 'products') {
@@ -260,9 +255,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return applicableSubtotal * (appliedCoupon.value / 100);
     }
     return 0;
-  }
+  }, [appliedCoupon, cart, subTotal]);
   
-  const discountAmount = calculateDiscount();
   const subTotalAfterCoupon = subTotal - discountAmount;
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
   
@@ -272,7 +266,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return selectedMethod?.fee || 0;
   }, [shippingInfo, availableShippingMethods]);
 
-  const taxes = subTotal * 0.05;
+  const taxes = subTotal * 0.05; // 5% tax on subtotal
   const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + shippingFee + taxes);
 
   return (

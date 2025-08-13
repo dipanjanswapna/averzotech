@@ -263,8 +263,8 @@ export function SiteHeader() {
                         <Menu className="h-6 w-6" />
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] flex flex-col">
-                    <SheetHeader>
+                <SheetContent side="left" className="w-[300px] flex flex-col p-0">
+                    <SheetHeader className="p-4 border-b">
                          {user ? (
                             <div className="flex items-center gap-3">
                                  <Avatar className="h-12 w-12">
@@ -280,9 +280,8 @@ export function SiteHeader() {
                             <SheetTitle>Welcome Guest</SheetTitle>
                          )}
                     </SheetHeader>
-                    <Separator className="my-4" />
-                    <ScrollArea className="flex-1 -mx-6">
-                      <div className="px-6">
+                    <ScrollArea className="flex-1">
+                      <div className="p-4">
                         <nav className="flex flex-col space-y-2">
                           {user ? (
                             <>

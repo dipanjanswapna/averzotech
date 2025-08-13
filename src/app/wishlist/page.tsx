@@ -82,7 +82,7 @@ export default function WishlistPage() {
                             />
                         </Link>
                          <Badge variant={item.inventory?.availability === 'in-stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.inventory?.availability === 'in-stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-                            {item.inventory?.availability}
+                            {item.inventory?.availability === 'in-stock' ? 'In Stock' : 'Out of Stock'}
                         </Badge>
                         <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2">
                            <Button 
@@ -133,4 +133,3 @@ export default function WishlistPage() {
     </div>
   );
 }
-

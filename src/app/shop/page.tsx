@@ -178,7 +178,7 @@ function ShopPageContent() {
   }, [searchParams]);
 
   const updateURL = React.useCallback((newFilters: Record<string, string | number | number[]>) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams.toString());
     Object.entries(newFilters).forEach(([key, value]) => {
       if (value && value !== 'all' && (Array.isArray(value) ? value.length > 0 : true)) {
         if(key === 'priceRange' && Array.isArray(value)) {
@@ -195,7 +195,7 @@ function ShopPageContent() {
         }
       }
     });
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, router, pathname]);
 
   const availableGroups = React.useMemo(() => {
@@ -227,24 +227,16 @@ function ShopPageContent() {
   const applyFilters = React.useCallback(() => {
     if (loading) return;
     let items = [...allProducts];
-    const currentParams = new URLSearchParams(searchParams);
-
-    const category = currentParams.get('category') || 'all';
-    const group = currentParams.get('group') || 'all';
-    const subcategory = currentParams.get('subcategory') || 'all';
-    const brand = currentParams.get('brand') || 'all';
-    const minPrice = Number(currentParams.get('minPrice') || 0);
-    const maxPrice = Number(currentParams.get('maxPrice') || 120000);
-    const sort = currentParams.get('sort') || 'featured';
-
-    if (category !== 'all') items = items.filter(item => item.organization.category === category);
-    if (group !== 'all') items = items.filter(item => item.organization.group === group);
-    if (subcategory !== 'all') items = items.filter(item => item.organization.subcategory === subcategory);
-    if (brand !== 'all') items = items.filter(item => item.brand === brand);
     
-    items = items.filter(item => item.pricing.price >= minPrice && item.pricing.price <= maxPrice);
+    // Read filters directly from component state, which is synced with URL
+    if (selectedCategory !== 'all') items = items.filter(item => item.organization.category === selectedCategory);
+    if (selectedGroup !== 'all') items = items.filter(item => item.organization.group === selectedGroup);
+    if (selectedSubcategory !== 'all') items = items.filter(item => item.organization.subcategory === selectedSubcategory);
+    if (selectedBrand !== 'all') items = items.filter(item => item.brand === selectedBrand);
+    
+    items = items.filter(item => item.pricing.price >= priceRange[0] && item.pricing.price <= priceRange[1]);
 
-    switch (sort) {
+    switch (sortOption) {
       case 'price-asc':
         items.sort((a, b) => a.pricing.price - b.pricing.price);
         break;
@@ -258,14 +250,20 @@ function ShopPageContent() {
         break;
     }
     setDisplayedItems(items);
-  }, [searchParams, allProducts, loading]);
+  }, [allProducts, loading, selectedCategory, selectedGroup, selectedSubcategory, selectedBrand, priceRange, sortOption]);
 
   React.useEffect(() => {
     applyFilters();
   }, [applyFilters]);
   
   const handleResetFilters = () => {
-    router.push(pathname);
+    const params = new URLSearchParams(searchParams.toString());
+    const campaign = params.get('campaign');
+    const newParams = new URLSearchParams();
+    if(campaign) {
+        newParams.set('campaign', campaign);
+    }
+    router.push(`${pathname}?${newParams.toString()}`);
     setSelectedCategory('all');
     setSelectedGroup('all');
     setSelectedSubcategory('all');
@@ -279,13 +277,13 @@ function ShopPageContent() {
       setter(value);
       let updatedFilters: Record<string, any> = {[name]: value};
 
-      if (name === 'selectedCategory') {
-          updatedFilters = {...updatedFilters, selectedGroup: 'all', selectedSubcategory: 'all', selectedBrand: 'all' };
+      if (name === 'category') {
+          updatedFilters = {...updatedFilters, group: 'all', subcategory: 'all', brand: 'all' };
           setSelectedGroup('all');
           setSelectedSubcategory('all');
           setSelectedBrand('all');
-      } else if (name === 'selectedGroup') {
-          updatedFilters = {...updatedFilters, selectedSubcategory: 'all' };
+      } else if (name === 'group') {
+          updatedFilters = {...updatedFilters, subcategory: 'all' };
           setSelectedSubcategory('all');
       }
       updateURL(updatedFilters);

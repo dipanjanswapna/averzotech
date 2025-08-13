@@ -17,10 +17,9 @@ export async function POST(req: NextRequest) {
         const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
         const pendingOrderSnap = await getDoc(pendingOrderRef);
         
+        // This can happen if the IPN has already processed the order.
+        // We can assume the process was successful and redirect the user.
         if (!pendingOrderSnap.exists()) {
-             // This can happen if the IPN has already processed the order.
-             // We can assume the process was successful and redirect the user.
-             // For a more robust solution, we could query the `orders` collection for the `tran_id`.
              console.log("Pending order not found for tran_id (already processed by IPN?):", tran_id);
              const orderConfirmationUrl = new URL(`/order-confirmation`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
              orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); // Pass tran_id to find the order
@@ -46,6 +45,7 @@ export async function POST(req: NextRequest) {
             batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
         }
         
+        // Delete the pending order only after processing successfully
         batch.delete(pendingOrderRef);
 
         await batch.commit();

@@ -671,15 +671,6 @@ export function ProductDetails() {
             </div>
         )}
 
-        <div className="fixed bottom-6 right-6">
-            <Button className="rounded-full h-14 w-14 shadow-lg">
-                <MessageCircle className="h-7 w-7" />
-            </Button>
-        </div>
-
       </main>
       );
 }
-
-
-

@@ -31,7 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
       if (firebaseUser) {
         try {
             const userDocRef = doc(db, "users", firebaseUser.uid);
@@ -59,14 +58,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         } catch (error) {
             console.error("Error fetching user data:", error);
+            // If fetching user data fails, sign out to avoid inconsistent state
+            await auth.signOut();
             setUser(null);
-        } finally {
-            setLoading(false);
         }
       } else {
         setUser(null);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     return () => unsubscribe();
