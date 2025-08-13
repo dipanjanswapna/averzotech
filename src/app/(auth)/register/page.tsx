@@ -49,7 +49,7 @@ export default function RegisterPage() {
       toast({
         title: "Account Created Successfully!",
         description: role === 'vendor' 
-          ? "Your vendor account requires admin approval. We'll notify you upon activation."
+          ? "Your vendor account is pending admin approval. You will be notified upon activation."
           : "Welcome to AVERZO! Please log in to continue.",
       });
       router.push('/login');
