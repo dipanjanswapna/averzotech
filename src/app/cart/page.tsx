@@ -75,17 +75,17 @@ export default function CartPage() {
             return;
         }
         
-        let applicableSubtotal = subTotal;
-        if (couponData.applicability?.type === 'products') {
-            const applicableProductIds = couponData.applicability.ids;
-            const applicableItems = cart.filter(item => applicableProductIds.includes(item.id));
-            if (applicableItems.length === 0) {
-                 toast({ title: "Coupon Not Applicable", description: "This coupon is not valid for any items in your cart.", variant: "destructive"});
-                 setIsCheckingCoupon(false);
-                 return;
-            }
-            applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
+        const applicableItems = couponData.applicability?.type === 'products'
+            ? cart.filter(item => couponData.applicability.ids.includes(item.id))
+            : cart;
+
+        if (applicableItems.length === 0) {
+            toast({ title: "Coupon Not Applicable", description: "This coupon is not valid for any items in your cart.", variant: "destructive"});
+            setIsCheckingCoupon(false);
+            return;
         }
+
+        const applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
 
         if (couponData.minPurchase > applicableSubtotal) {
             toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase - applicableSubtotal} more on applicable items to use this coupon.`, variant: "destructive"});

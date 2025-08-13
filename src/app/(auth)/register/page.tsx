@@ -49,8 +49,8 @@ export default function RegisterPage() {
       toast({
         title: "Account Created Successfully!",
         description: role === 'vendor' 
-          ? "Your vendor account is now pending for admin approval. We will notify you via email once it's active."
-          : "Welcome to AVERZO! Please log in to continue your shopping journey.",
+          ? "Your vendor account requires admin approval. We'll notify you upon activation."
+          : "Welcome to AVERZO! Please log in to continue.",
       });
       router.push('/login');
     } catch (error: any) {

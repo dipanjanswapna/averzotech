@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
@@ -228,7 +228,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setShippingInfoState(info);
   };
   
-  const availableShippingMethods: ShippingMethod[] = React.useMemo(() => {
+  const availableShippingMethods: ShippingMethod[] = useMemo(() => {
     if (cart.length === 0) return [];
     
     return [
@@ -242,16 +242,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
   
-  const discountAmount = React.useMemo(() => {
+  const discountAmount = useMemo(() => {
     if (!appliedCoupon || cart.length === 0) return 0;
 
-    let applicableSubtotal = subTotal;
-    if (appliedCoupon.applicability?.type === 'products') {
-        const applicableProductIds = appliedCoupon.applicability.ids;
-        const applicableItems = cart.filter(item => applicableProductIds.includes(item.id));
-        if (applicableItems.length === 0) return 0; // No applicable items
-        applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
-    }
+    const applicableItems = appliedCoupon.applicability?.type === 'products'
+        ? cart.filter(item => appliedCoupon.applicability.ids.includes(item.id))
+        : cart;
+    
+    if (applicableItems.length === 0) return 0; // No applicable items
+
+    const applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
     
     // Ensure minPurchase is met on the applicable subtotal
     if (appliedCoupon.minPurchase && applicableSubtotal < appliedCoupon.minPurchase) {
@@ -265,12 +265,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return applicableSubtotal * (appliedCoupon.value / 100);
     }
     return 0;
-  }, [appliedCoupon, cart, subTotal]);
+  }, [appliedCoupon, cart]);
   
   const subTotalAfterCoupon = subTotal - discountAmount;
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
   
-  const shippingFee = React.useMemo(() => {
+  const shippingFee = useMemo(() => {
     if (!shippingInfo?.method) return 0;
     const selectedMethod = availableShippingMethods.find(m => m.name === shippingInfo.method);
     return selectedMethod?.fee || 0;
