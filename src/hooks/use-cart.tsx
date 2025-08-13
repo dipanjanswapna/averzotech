@@ -82,7 +82,7 @@ interface CartContextType {
   subTotal: number;
   total: number;
   shippingInfo: ShippingInfo | null;
-  setShippingInfo: (info: ShippingInfo) => void;
+  setShippingInfo: (info: ShippingInfo | null) => void;
   shippingFee: number;
   taxes: number;
   availableShippingMethods: ShippingMethod[];
@@ -207,37 +207,33 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       setAppliedGiftCard(null);
   }
 
-   const setShippingInfo = (info: ShippingInfo) => {
+   const setShippingInfo = (info: ShippingInfo | null) => {
     setShippingInfoState(info);
   };
   
   const availableShippingMethods: ShippingMethod[] = React.useMemo(() => {
     if (cart.length === 0) return [];
-    
-    const methodsMap: Record<string, Omit<ShippingMethod, 'fee'> & { totalFee: number; productCount: number }> = {};
+
+    const methods: { [key: string]: Omit<ShippingMethod, 'fee'> & { totalFee: number } } = {};
 
     cart.forEach(item => {
-      if (item.shipping?.courier?.enabled) {
-        if (!methodsMap['Standard Courier']) {
-          methodsMap['Standard Courier'] = { name: 'Standard Courier', estimatedDelivery: item.shipping.estimatedDelivery, totalFee: 0, productCount: 0 };
+        if (item.shipping?.courier?.enabled) {
+            const name = "Standard Courier";
+            if (!methods[name]) {
+                methods[name] = { name, estimatedDelivery: item.shipping.estimatedDelivery, totalFee: 0 };
+            }
+            methods[name].totalFee += (item.shipping.courier.fee || 0) * item.quantity;
         }
-        methodsMap['Standard Courier'].totalFee += item.shipping.courier.fee || 0;
-        methodsMap['Standard Courier'].productCount++;
-      }
-      if (item.shipping?.express?.enabled) {
-        if (!methodsMap['Express Delivery']) {
-          methodsMap['Express Delivery'] = { name: 'Express Delivery', estimatedDelivery: item.shipping.estimatedDelivery, totalFee: 0, productCount: 0 };
+        if (item.shipping?.express?.enabled) {
+            const name = "Express Delivery";
+            if (!methods[name]) {
+                methods[name] = { name, estimatedDelivery: item.shipping.estimatedDelivery, totalFee: 0 };
+            }
+            methods[name].totalFee += (item.shipping.express.fee || 0) * item.quantity;
         }
-        methodsMap['Express Delivery'].totalFee += item.shipping.express.fee || 0;
-        methodsMap['Express Delivery'].productCount++;
-      }
     });
 
-    // A method is only available if all products in the cart support it.
-    return Object.values(methodsMap)
-      .filter(method => method.productCount === cart.length)
-      .map(({ totalFee, ...rest }) => ({ ...rest, fee: totalFee }));
-
+    return Object.values(methods).map(({ totalFee, ...rest }) => ({ ...rest, fee: totalFee }));
   }, [cart]);
 
 
@@ -311,4 +307,3 @@ export const useCart = () => {
   }
   return context;
 };
-

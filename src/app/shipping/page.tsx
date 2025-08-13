@@ -42,7 +42,7 @@ export default function ShippingPage() {
     const [addresses, setAddresses] = React.useState<Address[]>([]);
     const [loadingAddresses, setLoadingAddresses] = React.useState(true);
     const [selectedAddress, setSelectedAddress] = React.useState<Address | null>(null);
-    const [selectedShippingMethod, setSelectedShippingMethod] = React.useState<string | null>(shippingInfo?.method || null);
+    const [selectedShippingMethod, setSelectedShippingMethod] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         if (!user) {
@@ -56,20 +56,47 @@ export default function ShippingPage() {
             const addressSnapshot = await getDocs(addressesCol);
             const addressList = addressSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Address));
             setAddresses(addressList);
-            const defaultAddress = addressList.find(a => a.isDefault) || addressList[0] || null;
-            setSelectedAddress(defaultAddress);
+            
+            // Set default address based on shippingInfo or isDefault flag or first address
+            const currentShippingAddress = shippingInfo ? addresses.find(a => a.name === shippingInfo.name && a.phone === shippingInfo.phone) : null;
+            const defaultAddress = addressList.find(a => a.isDefault);
+            setSelectedAddress(currentShippingAddress || defaultAddress || addressList[0] || null);
+
             setLoadingAddresses(false);
         };
         fetchAddresses();
-    }, [user, router]);
+    }, [user, router, shippingInfo]);
     
     React.useEffect(() => {
-        if (shippingInfo?.method) {
+        if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {
             setSelectedShippingMethod(shippingInfo.method);
         } else if (availableShippingMethods.length > 0) {
              setSelectedShippingMethod(availableShippingMethods[0].name);
+        } else {
+             setSelectedShippingMethod(null);
         }
     }, [availableShippingMethods, shippingInfo]);
+
+    // Effect to update shipping info in the cart hook whenever selection changes
+    React.useEffect(() => {
+        if (selectedAddress && selectedShippingMethod) {
+            const newShippingInfo: ShippingInfo = {
+                name: selectedAddress.name,
+                email: user?.email || '',
+                phone: selectedAddress.phone,
+                fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.upazila}, ${selectedAddress.district}, ${selectedAddress.division}`,
+                method: selectedShippingMethod,
+            };
+             if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
+                setShippingInfo(newShippingInfo);
+            }
+        } else {
+            // Clear shipping info if no method is selected
+            if (shippingInfo) {
+                setShippingInfo(null);
+            }
+        }
+    }, [selectedAddress, selectedShippingMethod, user, setShippingInfo, shippingInfo]);
 
 
     const handleContinue = () => {
@@ -81,15 +108,6 @@ export default function ShippingPage() {
             });
             return;
         }
-
-        const shippingData: ShippingInfo = {
-            name: selectedAddress.name,
-            email: user?.email || '',
-            phone: selectedAddress.phone,
-            fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.upazila}, ${selectedAddress.district}, ${selectedAddress.division}`,
-            method: selectedShippingMethod,
-        };
-        setShippingInfo(shippingData);
         router.push('/payment');
     };
     
@@ -179,7 +197,7 @@ export default function ShippingPage() {
                     </div>
                     <div className="lg:col-span-1">
                         <div className="sticky top-24">
-                           <OrderSummary shippingMethod={selectedShippingMethod} />
+                           <OrderSummary />
                              <Button size="lg" className="w-full mt-6" onClick={handleContinue} disabled={!selectedAddress || !selectedShippingMethod}>
                                 Continue to Payment
                             </Button>

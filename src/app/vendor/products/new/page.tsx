@@ -723,7 +723,7 @@ export default function NewVendorProductPage() {
                 <CardContent className="space-y-4">
                      <div className="flex items-center space-x-2">
                         <Checkbox id="courier" checked={courierEnabled} onCheckedChange={(checked) => setCourierEnabled(checked as boolean)} />
-                        <label htmlFor="courier" className="text-sm font-medium leading-none">Enable Courier</label>
+                        <label htmlFor="courier" className="text-sm font-medium leading-none">Enable Standard Courier</label>
                     </div>
                     {courierEnabled && (
                         <div className="space-y-2 pl-6">

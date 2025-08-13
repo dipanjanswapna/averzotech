@@ -5,12 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/hooks/use-cart";
 import { Separator } from "./ui/separator";
 
-interface OrderSummaryProps {
-    shippingMethod?: string | null;
-}
-
-export const OrderSummary: React.FC<OrderSummaryProps> = ({ shippingMethod }) => {
-    const { subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total } = useCart(shippingMethod);
+export const OrderSummary: React.FC = () => {
+    const { subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total, shippingInfo } = useCart();
 
     return (
         <Card>
@@ -37,7 +33,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({ shippingMethod }) =>
                     )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
-                        <p className="font-semibold">{shippingMethod ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
+                        <p className="font-semibold">{shippingInfo?.method ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
                     </div>
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Taxes</p>
