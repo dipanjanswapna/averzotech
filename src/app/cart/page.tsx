@@ -175,11 +175,11 @@ export default function CartPage() {
   }
 
   const handleContinueToShipping = () => {
-    if (!shippingInfo) {
-      router.push('/shipping');
-    } else {
-      router.push('/shipping');
+    if (cart.length === 0) {
+        toast({title: "Your cart is empty!", variant: "destructive"});
+        return;
     }
+    router.push('/shipping');
   };
 
   return (
@@ -314,4 +314,3 @@ export default function CartPage() {
     </div>
   );
 }
-

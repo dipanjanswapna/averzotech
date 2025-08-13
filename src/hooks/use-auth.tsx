@@ -32,23 +32,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Optimistically set a basic user object from Firebase Auth
-        const basicUser: AppUser = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            fullName: firebaseUser.displayName || 'User',
-            role: 'customer', // default role
-            status: 'active', // default status
-            photoURL: firebaseUser.photoURL,
-        };
-        setUser(basicUser);
-
         try {
             const userDocRef = doc(db, "users", firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
               const userData = userDoc.data();
-              // Set the full user object with Firestore data
               setUser({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
@@ -57,6 +45,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 status: userData.status || 'active',
                 photoURL: userData.photoURL || firebaseUser.photoURL,
               });
+            } else {
+                 console.warn(`No user document found in Firestore for UID: ${firebaseUser.uid}. Logging out.`);
+                 await auth.signOut();
+                 setUser(null);
             }
         } catch (error) {
             console.error("Error fetching user data from Firestore, signing out:", error);

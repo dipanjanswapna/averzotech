@@ -35,7 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch, increment, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -81,10 +81,10 @@ interface Order {
 }
 
 const orderSteps = [
-    { label: 'Pending', date: null },
-    { label: 'Processing', date: null },
-    { label: 'Shipped', date: null },
-    { label: 'Fulfilled', date: null }
+    { label: 'Pending' },
+    { label: 'Processing' },
+    { label: 'Shipped' },
+    { label: 'Fulfilled' }
 ];
 
 export default function OrderDetailsPage() {
@@ -100,23 +100,34 @@ export default function OrderDetailsPage() {
 
   useEffect(() => {
     if (orderId) {
-        const fetchOrder = async () => {
-            setLoading(true);
-            const orderRef = doc(db, 'orders', orderId);
-            const orderSnap = await getDoc(orderRef);
-            if (orderSnap.exists()) {
-                const orderData = { id: orderSnap.id, ...orderSnap.data() } as Order;
-                setOrder(orderData);
+        const orderRef = doc(db, 'orders', orderId);
+        const notesRef = collection(db, 'orders', orderId, 'notes');
+        const qNotes = query(notesRef, orderBy('date', 'asc'));
+
+        const unsubscribeOrder = onSnapshot(orderRef, (docSnap) => {
+            if (docSnap.exists()) {
+                 const orderData = { id: docSnap.id, ...docSnap.data() } as Order;
+                setOrder(prevOrder => ({...prevOrder, ...orderData}));
                 setNewStatus(orderData.status);
                 setTrackingId(orderData.trackingId || '');
             } else {
                 console.error("No such order!");
+                toast({title: "Error", description: "Order not found.", variant: "destructive"});
             }
             setLoading(false);
-        };
-        fetchOrder();
+        });
+        
+         const unsubscribeNotes = onSnapshot(qNotes, (snapshot) => {
+            const notesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as {id: string, author: string, date: any, note: string}));
+            setOrder(prevOrder => prevOrder ? { ...prevOrder, notes: notesData } : null);
+        });
+
+        return () => {
+            unsubscribeOrder();
+            unsubscribeNotes();
+        }
     }
-  }, [orderId]);
+  }, [orderId, toast]);
 
   const handleUpdateStatus = async () => {
       if (!order || !newStatus || newStatus === order.status) return;
@@ -142,7 +153,6 @@ export default function OrderDetailsPage() {
 
           await batch.commit();
           
-          setOrder(prev => prev ? { ...prev, status: newStatus as any } : null);
           toast({
               title: "Order Updated",
               description: `Order status has been changed to ${newStatus}.`
@@ -160,7 +170,6 @@ export default function OrderDetailsPage() {
           await updateDoc(orderRef, { trackingId: trackingId });
           const noteContent = `Tracking ID updated to ${trackingId}.`;
           await handleAddNote(noteContent, 'System');
-          setOrder(prev => prev ? { ...prev, trackingId: trackingId } : null);
           toast({
               title: "Tracking Updated",
               description: `The tracking ID has been saved.`
@@ -182,8 +191,6 @@ export default function OrderDetailsPage() {
         };
         await addDoc(notesCollection, newNoteDoc);
         setNewNote('');
-        // Optimistically update UI
-        setOrder(prev => prev ? { ...prev, notes: [...prev.notes, { ...newNoteDoc, id: 'temp', date: new Date() }] } : null);
          toast({
               title: "Note Added",
               description: "The note has been successfully added to the order."
@@ -197,7 +204,11 @@ export default function OrderDetailsPage() {
   if (loading) return <p>Loading order details...</p>;
   if (!order) return <p>Order not found.</p>;
   
-  const currentStatusIndex = orderSteps.findIndex(step => step.label === order.status);
+  const validStatuses = ['Pending', 'Processing', 'Shipped', 'Fulfilled'];
+  let currentStatusIndex = validStatuses.indexOf(order.status);
+  if(order.status === 'Cancelled') {
+      currentStatusIndex = -1; // Or some other value to indicate it's off the normal path
+  }
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.seconds) return new Date().toLocaleString();
     return new Date(timestamp.seconds * 1000).toLocaleString();
@@ -218,7 +229,11 @@ export default function OrderDetailsPage() {
         </div>
       </div>
         <div className="mx-auto w-full max-w-5xl">
-            <Stepper initialStep={0} activeStep={currentStatusIndex + 1} steps={orderSteps.map(s => ({label: s.label, description: s.date ? formatDate(s.date) : ''}))} />
+            {order.status !== 'Cancelled' ? (
+                <Stepper initialStep={0} activeStep={currentStatusIndex + 1} steps={orderSteps.map(s => ({label: s.label}))} />
+            ) : (
+                 <div className="text-center p-4 bg-destructive/10 rounded-lg text-destructive font-semibold">Order Cancelled</div>
+            )}
         </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -393,3 +408,4 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
+

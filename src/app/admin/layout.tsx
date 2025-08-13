@@ -19,7 +19,7 @@ export default function AdminLayout({
   const auth = getAuth(app);
   const db = getFirestore(app);
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,13 +28,11 @@ export default function AdminLayout({
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists() && userDoc.data().role === 'admin') {
-          setUser({ ...firebaseUser, ...userDoc.data() });
+          setUserRole('admin');
         } else {
-          // If not an admin, redirect to login page.
           router.push('/login');
         }
       } else {
-        // If not logged in, redirect to login page.
         router.push('/login');
       }
       setLoading(false);
@@ -51,14 +49,13 @@ export default function AdminLayout({
     );
   }
 
-  if (!user) {
-    // This state is briefly hit during redirect, returning null prevents flicker.
+  if (userRole !== 'admin') {
     return null; 
   }
 
   return (
     <AdminSidebarProvider>
-      <AdminSidebar user={user}/>
+      <AdminSidebar user={auth.currentUser}/>
         <main className="flex-1 p-4 sm:p-6 md:p-8 lg:ml-[var(--sidebar-width-icon)] group-data-[state=expanded]:lg:ml-[var(--sidebar-width)] transition-[margin-left] ease-in-out duration-300">
             {children}
             <Toaster />

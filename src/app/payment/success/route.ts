@@ -26,7 +26,6 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        // Check if an order with this tran_id already exists in the main orders collection
         let existingOrderId = await findOrder(tran_id as string);
 
         if (existingOrderId) {
@@ -37,26 +36,22 @@ export async function POST(req: NextRequest) {
         const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
         const pendingOrderSnap = await getDoc(pendingOrderRef);
         
-        // This can happen if the IPN has already processed the order.
         if (!pendingOrderSnap.exists()) {
              console.log("Pending order not found for tran_id (already processed by IPN?):", tran_id);
-             // Wait for a couple of seconds and check again, in case the IPN is just a bit slow.
-             await new Promise(resolve => setTimeout(resolve, 2000));
+             await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for IPN to process
              existingOrderId = await findOrder(tran_id as string);
              if (existingOrderId) {
                  return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl));
              }
 
-             console.error("Could not find order even after waiting. Redirecting with transaction ID.");
+             console.error("Could not find order even after waiting. Redirecting with transaction ID for final lookup.");
              const orderConfirmationUrl = new URL(`/order-confirmation`, appUrl);
              orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); 
              return NextResponse.redirect(orderConfirmationUrl);
         }
 
         const orderData = pendingOrderSnap.data();
-
         const batch = writeBatch(db);
-        
         const newOrderRef = doc(collection(db, "orders"));
         
         batch.set(newOrderRef, {
@@ -72,7 +67,6 @@ export async function POST(req: NextRequest) {
             batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
         }
         
-        // Delete the pending order only after processing successfully
         batch.delete(pendingOrderRef);
 
         await batch.commit();
