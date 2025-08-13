@@ -1,28 +1,41 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc, query, where, getDocs, limit } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const body = Object.fromEntries(formData);
     const { tran_id } = body;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     
     if (!tran_id) {
         console.error("Transaction ID missing in success response", {body});
-        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, appUrl));
     }
 
     try {
+        // Check if an order with this tran_id already exists in the main orders collection
+        const ordersRef = collection(db, 'orders');
+        const q = query(ordersRef, where('paymentDetails.tran_id', '==', tran_id), limit(1));
+        const existingOrderSnap = await getDocs(q);
+
+        if (!existingOrderSnap.empty) {
+            const existingOrderId = existingOrderSnap.docs[0].id;
+            console.log(`Order with tran_id ${tran_id} already exists with ID: ${existingOrderId}. Redirecting to confirmation.`);
+            return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl));
+        }
+
+
         const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
         const pendingOrderSnap = await getDoc(pendingOrderRef);
         
         // This can happen if the IPN has already processed the order.
-        // We can assume the process was successful and redirect the user.
         if (!pendingOrderSnap.exists()) {
              console.log("Pending order not found for tran_id (already processed by IPN?):", tran_id);
-             const orderConfirmationUrl = new URL(`/order-confirmation`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
-             orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); // Pass tran_id to find the order
+             // We can't be sure of the order ID here, so we redirect with tran_id
+             const orderConfirmationUrl = new URL(`/order-confirmation`, appUrl);
+             orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); 
              return NextResponse.redirect(orderConfirmationUrl);
         }
 
@@ -30,9 +43,9 @@ export async function POST(req: NextRequest) {
 
         const batch = writeBatch(db);
         
-        const orderRef = doc(collection(db, "orders"));
+        const newOrderRef = doc(collection(db, "orders"));
         
-        batch.set(orderRef, {
+        batch.set(newOrderRef, {
             ...orderData,
             status: 'Processing',
             paymentDetails: body,
@@ -50,10 +63,10 @@ export async function POST(req: NextRequest) {
 
         await batch.commit();
 
-        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${orderRef.id}`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
+        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${newOrderRef.id}`, appUrl));
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
-        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, appUrl));
     }
 }

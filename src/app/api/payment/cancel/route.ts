@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 
 export async function POST(req: NextRequest) {
     const body = await req.formData();
-    const { tran_id } = Object.fromEntries(body);
+    const tran_id = body.get('tran_id');
     
     if (tran_id) {
         try {

@@ -362,13 +362,9 @@ export function SiteHeader() {
                             <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link href={dashboardLink}>Dashboard</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
                         <DropdownMenuItem asChild><Link href="/profile/orders">Orders</Link></DropdownMenuItem>
-                        {dashboardLink && (user.role !== 'customer') && (
-                            <DropdownMenuItem asChild>
-                            <Link href={dashboardLink}>Dashboard</Link>
-                            </DropdownMenuItem>
-                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
                             <LogOut className='mr-2 h-4 w-4' />
@@ -391,18 +387,9 @@ export function SiteHeader() {
             </DropdownMenu>
         </div>
       </div>
-      <div className="h-10 items-center border-t flex">
+      <div className="h-10 items-center border-t hidden md:flex">
           <div className="container">
-            <ScrollArea className="md:hidden -mx-4">
-              <nav className="flex items-center gap-6 text-sm font-medium px-4">
-                 {categories.map((category) => (
-                    <Link key={category.name} href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
-                ))}
-              </nav>
-              <ScrollBar orientation="horizontal" className="invisible" />
-            </ScrollArea>
-
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <nav className="flex items-center gap-6 text-sm font-medium">
               {categories.map((category) => (
                 <MegaMenu key={category.name} category={category} />
               ))}
