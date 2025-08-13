@@ -244,7 +244,7 @@ export default function OrderDetailsPage() {
                 <AlertTriangle className="h-4 w-4"/>
                 <AlertTitle>Cash on Delivery Order</AlertTitle>
                 <AlertDescription>
-                    This is a COD order. Payment will be collected upon delivery.
+                    This is a COD order. Payment will be collected upon delivery. Please verify the order before processing.
                 </AlertDescription>
             </Alert>
           )}
