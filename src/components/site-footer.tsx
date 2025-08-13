@@ -75,14 +75,14 @@ export function SiteFooter() {
                         <p className="text-sm text-muted-foreground">of receiving your order</p>
                     </div>
                 </div>
-                 <div className="mt-6 flex justify-end">
-                   <Image src="https://i.postimg.cc/28T0N850/photo-2025-08-14-01-23-50-removebg-preview.png" width={100} height={21} alt="Payment methods" />
-                </div>
             </div>
         </div>
       </div>
        <div className="border-t border-border">
         <div className="container py-4 text-center text-xs text-muted-foreground">
+           <div className="flex justify-center mb-4">
+                <Image src="https://i.postimg.cc/28T0N850/photo-2025-08-14-01-23-50-removebg-preview.png" width={100} height={21} alt="Payment methods" />
+            </div>
           © {new Date().getFullYear()} www.averzo.com. All rights reserved.
         </div>
       </div>
