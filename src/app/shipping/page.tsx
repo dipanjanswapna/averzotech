@@ -58,14 +58,14 @@ export default function ShippingPage() {
             setAddresses(addressList);
             
             // Set default address based on shippingInfo or isDefault flag or first address
-            const currentShippingAddress = shippingInfo ? addresses.find(a => a.name === shippingInfo.name && a.phone === shippingInfo.phone) : null;
+            const currentShippingAddress = shippingInfo ? addressList.find(a => a.name === shippingInfo.name && a.phone === shippingInfo.phone) : null;
             const defaultAddress = addressList.find(a => a.isDefault);
-            setSelectedAddress(currentShippingAddress || defaultAddress || addressList[0] || null);
+            setSelectedAddress(currentShippingAddress || defaultAddress || (addressList.length > 0 ? addressList[0] : null));
 
             setLoadingAddresses(false);
         };
         fetchAddresses();
-    }, [user, router, shippingInfo]);
+    }, [user, router]);
     
     React.useEffect(() => {
         if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {
@@ -90,11 +90,9 @@ export default function ShippingPage() {
              if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
                 setShippingInfo(newShippingInfo);
             }
-        } else {
-            // Clear shipping info if no method is selected
-            if (shippingInfo) {
-                setShippingInfo(null);
-            }
+        } else if (shippingInfo) {
+            // Clear shipping info if no method or address is selected
+            setShippingInfo(null);
         }
     }, [selectedAddress, selectedShippingMethod, user, setShippingInfo, shippingInfo]);
 

@@ -214,42 +214,31 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const availableShippingMethods: ShippingMethod[] = React.useMemo(() => {
     if (cart.length === 0) return [];
     
-    const methodsMap: { [key: string]: { name: string; fee: number; estimatedDelivery: string } } = {};
+    const methods: { [key: string]: ShippingMethod } = {};
 
-    const standardCourierMethod = { 
-        name: 'Standard Courier', 
-        fee: 0, 
-        estimatedDelivery: '3-5 business days' 
-    };
-    const expressDeliveryMethod = { 
-        name: 'Express Delivery', 
-        fee: 0, 
-        estimatedDelivery: '1-2 business days' 
-    };
-
-    let isStandardAvailable = false;
-    let isExpressAvailable = false;
+    let standardEnabled = false;
+    let expressEnabled = false;
 
     cart.forEach(item => {
         if (item.shipping?.courier?.enabled) {
-            isStandardAvailable = true;
-            standardCourierMethod.fee += (item.shipping.courier.fee || 0) * item.quantity;
+            standardEnabled = true;
         }
         if (item.shipping?.express?.enabled) {
-            isExpressAvailable = true;
-            expressDeliveryMethod.fee += (item.shipping.express.fee || 0) * item.quantity;
+            expressEnabled = true;
         }
     });
 
-    const availableMethods = [];
-    if (isStandardAvailable) {
-        availableMethods.push(standardCourierMethod);
+    if (standardEnabled) {
+        const totalFee = cart.reduce((acc, item) => acc + ((item.shipping?.courier?.fee || 0) * item.quantity), 0);
+        methods['Standard Courier'] = { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: totalFee };
     }
-    if (isExpressAvailable) {
-        availableMethods.push(expressDeliveryMethod);
+
+    if (expressEnabled) {
+        const totalFee = cart.reduce((acc, item) => acc + ((item.shipping?.express?.fee || 0) * item.quantity), 0);
+        methods['Express Delivery'] = { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: totalFee };
     }
-    
-    return availableMethods;
+
+    return Object.values(methods);
 
   }, [cart]);
 
