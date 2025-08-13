@@ -15,10 +15,12 @@ import { useCart, AppliedCoupon } from '@/hooks/use-cart';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { OrderSummary } from '@/components/order-summary';
+import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard, shippingInfo } = useCart();
   const { toast } = useToast();
+  const router = useRouter();
   const [couponCode, setCouponCode] = React.useState('');
   const [giftCardCode, setGiftCardCode] = React.useState('');
   const [isCheckingCoupon, setIsCheckingCoupon] = React.useState(false);
@@ -172,6 +174,14 @@ export default function CartPage() {
     toast({ title: "Gift Card Removed" });
   }
 
+  const handleContinueToShipping = () => {
+    if (!shippingInfo) {
+      router.push('/shipping');
+    } else {
+      router.push('/shipping');
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
@@ -284,8 +294,8 @@ export default function CartPage() {
 
               <Separator className="my-4" />
 
-              <Button className="w-full" size="lg" asChild>
-                <Link href="/shipping">Continue to Shipping</Link>
+              <Button className="w-full" size="lg" onClick={handleContinueToShipping}>
+                Continue to Shipping
               </Button>
             </div>
           </div>
@@ -304,3 +314,4 @@ export default function CartPage() {
     </div>
   );
 }
+

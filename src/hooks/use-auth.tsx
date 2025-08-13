@@ -32,11 +32,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Optimistically set a basic user object from Firebase Auth
+        const basicUser: AppUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            fullName: firebaseUser.displayName || 'User',
+            role: 'customer', // default role
+            status: 'active', // default status
+            photoURL: firebaseUser.photoURL,
+        };
+        setUser(basicUser);
+
         try {
             const userDocRef = doc(db, "users", firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
               const userData = userDoc.data();
+              // Set the full user object with Firestore data
               setUser({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
@@ -45,19 +57,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 status: userData.status || 'active',
                 photoURL: userData.photoURL || firebaseUser.photoURL,
               });
-            } else {
-              // Handle case where user exists in Auth but not Firestore
-              setUser({
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                fullName: firebaseUser.displayName || 'User',
-                role: 'customer', // default role
-                status: 'active', // default status
-                photoURL: firebaseUser.photoURL,
-              });
             }
         } catch (error) {
-            console.error("Error fetching user data, signing out:", error);
+            console.error("Error fetching user data from Firestore, signing out:", error);
             await auth.signOut().catch(e => console.error("Sign out failed after fetch error:", e));
             setUser(null);
         }

@@ -3,6 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc, query, where, getDocs, limit } from 'firebase/firestore';
 
+async function findOrder(tran_id: string): Promise<string | null> {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('paymentDetails.tran_id', '==', tran_id), limit(1));
+    const existingOrderSnap = await getDocs(q);
+
+    if (!existingOrderSnap.empty) {
+        return existingOrderSnap.docs[0].id;
+    }
+    return null;
+}
+
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const body = Object.fromEntries(formData);
@@ -16,16 +27,12 @@ export async function POST(req: NextRequest) {
 
     try {
         // Check if an order with this tran_id already exists in the main orders collection
-        const ordersRef = collection(db, 'orders');
-        const q = query(ordersRef, where('paymentDetails.tran_id', '==', tran_id), limit(1));
-        const existingOrderSnap = await getDocs(q);
+        let existingOrderId = await findOrder(tran_id as string);
 
-        if (!existingOrderSnap.empty) {
-            const existingOrderId = existingOrderSnap.docs[0].id;
+        if (existingOrderId) {
             console.log(`Order with tran_id ${tran_id} already exists with ID: ${existingOrderId}. Redirecting to confirmation.`);
             return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl));
         }
-
 
         const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
         const pendingOrderSnap = await getDoc(pendingOrderRef);
@@ -33,14 +40,14 @@ export async function POST(req: NextRequest) {
         // This can happen if the IPN has already processed the order.
         if (!pendingOrderSnap.exists()) {
              console.log("Pending order not found for tran_id (already processed by IPN?):", tran_id);
-             // We can't be sure of the order ID here, but we can try to find it again.
-            const existingOrderQuery = query(ordersRef, where("paymentDetails.tran_id", "==", tran_id), limit(1));
-            const orderSnap = await getDocs(existingOrderQuery);
-            if (!orderSnap.empty) {
-                const orderId = orderSnap.docs[0].id;
-                return NextResponse.redirect(new URL(`/order-confirmation?orderId=${orderId}`, appUrl));
-            }
+             // Wait for a couple of seconds and check again, in case the IPN is just a bit slow.
+             await new Promise(resolve => setTimeout(resolve, 2000));
+             existingOrderId = await findOrder(tran_id as string);
+             if (existingOrderId) {
+                 return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl));
+             }
 
+             console.error("Could not find order even after waiting. Redirecting with transaction ID.");
              const orderConfirmationUrl = new URL(`/order-confirmation`, appUrl);
              orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); 
              return NextResponse.redirect(orderConfirmationUrl);

@@ -46,7 +46,7 @@ export default function AdminLayout({
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <p>Loading Admin Dashboard...</p>
+        <p>Verifying Admin Access...</p>
       </div>
     );
   }
