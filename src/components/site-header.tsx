@@ -63,7 +63,7 @@ export function SiteHeader() {
   };
 
   const getDashboardLink = () => {
-    if (!user) return null;
+    if (!user) return '/profile';
     switch (user.role) {
       case 'admin':
         return '/admin/dashboard';
