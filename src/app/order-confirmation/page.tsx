@@ -56,6 +56,10 @@ interface Order {
         } | null;
         total: number;
     };
+    paymentDetails?: {
+        method?: string;
+        status?: string;
+    },
     trackingId?: string;
 }
 
@@ -141,6 +145,7 @@ function ConfirmationContent() {
     }
     
     const orderDate = orderDetails.createdAt ? new Date(orderDetails.createdAt.seconds * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
+    const paymentMethodDisplay = orderDetails.payment.method === 'cod' ? 'Cash on Delivery' : orderDetails.payment.method;
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
@@ -179,7 +184,7 @@ function ConfirmationContent() {
                             </div>
                              <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Payment Method</h3>
-                                <p className="text-muted-foreground text-sm">{orderDetails.payment.method}</p>
+                                <p className="text-muted-foreground text-sm">{paymentMethodDisplay}</p>
                             </div>
                              <div className="md:col-span-2 lg:col-span-2">
                                 <h3 className="font-semibold mb-2 flex items-center"><Truck className="mr-2 h-5 w-5 text-primary"/>Order Tracking</h3>

@@ -72,6 +72,10 @@ interface Order {
         } | null;
         total: number;
     };
+    paymentDetails?: {
+        method?: string;
+        status?: string;
+    },
     notes: { id: string; author: string; date: any; note: string; }[];
     trackingId?: string;
 }
@@ -198,6 +202,7 @@ export default function OrderDetailsPage() {
     if (!timestamp || !timestamp.seconds) return new Date().toLocaleString();
     return new Date(timestamp.seconds * 1000).toLocaleString();
   };
+  const paymentMethodDisplay = order.payment.method === 'cod' ? 'Cash on Delivery' : order.payment.method;
 
   return (
     <div className="space-y-8">
@@ -295,8 +300,14 @@ export default function OrderDetailsPage() {
                     </div>
                      <div className="flex justify-between">
                         <span className="text-muted-foreground">Payment Method</span>
-                        <span className='font-semibold'>{order.payment.method}</span>
+                        <span className='font-semibold'>{paymentMethodDisplay}</span>
                     </div>
+                    {order.payment.method !== 'cod' && (
+                         <div className="flex justify-between">
+                            <span className="text-muted-foreground">Payment Status</span>
+                            <span className='font-semibold capitalize'>{order.paymentDetails?.status || 'Unknown'}</span>
+                        </div>
+                    )}
                  </div>
              </CardContent>
           </Card>

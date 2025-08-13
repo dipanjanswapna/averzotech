@@ -76,26 +76,48 @@ export default function PaymentPage() {
             },
         };
 
-        try {
-            const response = await fetch('/api/payment/initiate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            });
-
-            const data = await response.json();
-            
-            if (response.ok && data.GatewayPageURL) {
-                window.location.href = data.GatewayPageURL;
-            } else {
-                toast({ title: "Payment Failed", description: data.details || "Could not initiate payment session.", variant: "destructive" });
+        if (paymentMethod === 'cod') {
+            try {
+                const response = await fetch('/api/orders/create-cod', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData),
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    router.push(`/order-confirmation?orderId=${result.orderId}`);
+                } else {
+                    toast({ title: "Order Failed", description: result.error || "Could not place your order.", variant: "destructive" });
+                }
+            } catch (error) {
+                 console.error("COD order creation error:", error);
+                 toast({ title: "Error", description: "Could not place your order due to a network error.", variant: "destructive" });
+            } finally {
+                setLoading(false);
             }
+        } else {
+            // Handle online payment
+            try {
+                const response = await fetch('/api/payment/initiate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
 
-        } catch (error) {
-            console.error("Payment initiation error:", error);
-            toast({ title: "Error", description: "Could not connect to payment gateway.", variant: "destructive" });
-        } finally {
-            setLoading(false);
+                const data = await response.json();
+                
+                if (response.ok && data.GatewayPageURL) {
+                    window.location.href = data.GatewayPageURL;
+                } else {
+                    toast({ title: "Payment Failed", description: data.details || "Could not initiate payment session.", variant: "destructive" });
+                }
+
+            } catch (error) {
+                console.error("Payment initiation error:", error);
+                toast({ title: "Error", description: "Could not connect to payment gateway.", variant: "destructive" });
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -179,7 +201,6 @@ export default function PaymentPage() {
                                             <Truck className="w-12 h-12 mx-auto text-muted-foreground mb-4"/>
                                             <h3 className="text-lg font-semibold">Cash on Delivery</h3>
                                             <p className="text-muted-foreground mt-2">You can pay in cash to our courier when you receive the goods at your doorstep.</p>
-                                             <p className="text-xs text-red-500 mt-2">Note: Cash on Delivery is currently not processed through SSLCommerz in this setup.</p>
                                         </CardContent>
                                      </Card>
                                 </TabsContent>
@@ -197,7 +218,7 @@ export default function PaymentPage() {
                                 onClick={handlePlaceOrder}
                                 disabled={loading || cart.length === 0}
                             >
-                               {loading ? 'Processing...' : `Pay ৳${total.toFixed(2)}`}
+                               {loading ? 'Processing...' : paymentMethod === 'cod' ? `Place Order (৳${total.toFixed(2)})` : `Pay ৳${total.toFixed(2)}`}
                             </Button>
                         </div>
                     </div>
