@@ -43,7 +43,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
-import { Checkbox } from '@/components/ui/checkbox';
 
 const initialFilterCategories = [
     { 
@@ -156,10 +155,6 @@ export default function EditVendorProductPage() {
     const [availability, setAvailability] = useState('in-stock');
 
     // Shipping
-    const [courierEnabled, setCourierEnabled] = useState(false);
-    const [courierFee, setCourierFee] = useState('');
-    const [expressEnabled, setExpressEnabled] = useState(false);
-    const [expressFee, setExpressFee] = useState('');
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
     
     // Dynamic Categories
@@ -211,10 +206,6 @@ export default function EditVendorProductPage() {
                     setSku(data.inventory?.sku || '');
                     setStock(String(data.inventory?.stock || ''));
                     setAvailability(data.inventory?.availability || 'in-stock');
-                    setCourierEnabled(data.shipping?.courier?.enabled || false);
-                    setCourierFee(String(data.shipping?.courier?.fee || ''));
-                    setExpressEnabled(data.shipping?.express?.enabled || false);
-                    setExpressFee(String(data.shipping?.express?.fee || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
                     toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -397,14 +388,6 @@ export default function EditVendorProductPage() {
                     availability,
                 },
                 shipping: {
-                    courier: {
-                        enabled: courierEnabled,
-                        fee: parseFloat(courierFee) || 0,
-                    },
-                    express: {
-                        enabled: expressEnabled,
-                        fee: parseFloat(expressFee) || 0,
-                    },
                     estimatedDelivery,
                 },
                 updatedAt: new Date(),
@@ -784,26 +767,6 @@ export default function EditVendorProductPage() {
             <Card>
                 <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="flex items-center space-x-2">
-                        <Checkbox id="courier" checked={courierEnabled} onCheckedChange={(checked) => setCourierEnabled(checked as boolean)} />
-                        <label htmlFor="courier" className="text-sm font-medium leading-none">Enable Standard Courier</label>
-                    </div>
-                    {courierEnabled && (
-                        <div className="space-y-2 pl-6">
-                            <Label htmlFor="courier-fee">Courier Fee (৳)</Label>
-                            <Input id="courier-fee" type="number" placeholder="60" value={courierFee} onChange={e => setCourierFee(e.target.value)} disabled={isLoading}/>
-                        </div>
-                    )}
-                     <div className="flex items-center space-x-2">
-                        <Checkbox id="express" checked={expressEnabled} onCheckedChange={(checked) => setExpressEnabled(checked as boolean)} />
-                        <label htmlFor="express" className="text-sm font-medium leading-none">Enable Express Delivery</label>
-                    </div>
-                    {expressEnabled && (
-                        <div className="space-y-2 pl-6">
-                            <Label htmlFor="express-fee">Express Fee (৳)</Label>
-                            <Input id="express-fee" type="number" placeholder="120" value={expressFee} onChange={e => setExpressFee(e.target.value)} disabled={isLoading}/>
-                        </div>
-                    )}
                     <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
                         <Input id="estimated-delivery" placeholder="e.g. 2-3 days" value={estimatedDelivery} onChange={e => setEstimatedDelivery(e.target.value)} disabled={isLoading}/>
