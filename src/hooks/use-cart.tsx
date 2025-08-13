@@ -274,7 +274,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if (!shippingInfo?.method) return 0;
     const selectedMethod = availableShippingMethods.find(m => m.name === shippingInfo.method);
     return selectedMethod?.fee || 0;
-  }, [shippingInfo, availableShippingMethods]);
+  }, [shippingInfo?.method, availableShippingMethods]);
 
   const taxes = subTotal * 0.05; // 5% tax on subtotal
   const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + shippingFee + taxes);

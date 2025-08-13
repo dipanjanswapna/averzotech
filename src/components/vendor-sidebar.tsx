@@ -78,7 +78,7 @@ export function VendorSidebar({ user }: { user: any }) {
             <SidebarMenuItem key={item.label}>
                 <Link href={item.href}>
                     <SidebarMenuButton 
-                        isActive={pathname.startsWith(item.href)}
+                        isActive={pathname === item.href}
                         tooltip={{ children: item.label }}
                     >
                         <item.icon />
