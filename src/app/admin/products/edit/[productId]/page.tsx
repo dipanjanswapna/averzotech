@@ -154,7 +154,7 @@ export default function EditProductPage() {
 
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
-    
+
     // Dynamic Categories
     const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
     const [newGroupName, setNewGroupName] = React.useState('');
