@@ -66,12 +66,20 @@ export default function MyOrdersPage() {
         setLoading(true);
         try {
             const ordersCollection = collection(db, 'orders');
-            const q = query(ordersCollection, where("userId", "==", user.uid), orderBy('createdAt', 'desc'));
+            const q = query(ordersCollection, where("userId", "==", user.uid));
             const orderSnapshot = await getDocs(q);
             const orderList = orderSnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             } as Order));
+            
+            // Sort orders by creation date on the client side
+            orderList.sort((a, b) => {
+                const dateA = a.createdAt?.seconds || 0;
+                const dateB = b.createdAt?.seconds || 0;
+                return dateB - dateA;
+            });
+
             setOrders(orderList);
         } catch (error) {
             console.error("Error fetching orders: ", error);
