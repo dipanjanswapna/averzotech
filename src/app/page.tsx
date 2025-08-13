@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Clock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { doc, getDoc, collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -101,32 +101,39 @@ export default function Home() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // Fetch full product details for deals
-        const dealPromises = (data.deals || []).map(async (deal: any) => {
-            const productRef = doc(db, 'products', deal.id);
-            const productSnap = await getDoc(productRef);
-            if (productSnap.exists()) {
-                const productData = productSnap.data();
-                return {
-                    id: productSnap.id,
-                    name: productData.name,
-                    brand: productData.brand,
-                    price: productData.pricing.price,
-                    originalPrice: productData.pricing.comparePrice,
-                    discount: `${productData.pricing.discount}% OFF`,
-                    image: productData.images[0],
-                    dataAiHint: productData.name.toLowerCase(),
-                };
-            }
-            return null;
-        });
+        
+        // Batch fetch product details for deals
+        const dealProductIds = (data.deals || []).map((d: any) => d.id).filter(Boolean);
+        let dealsWithDetails: Deal[] = [];
 
-        const resolvedDeals = (await Promise.all(dealPromises)).filter(Boolean) as Deal[];
+        if (dealProductIds.length > 0) {
+            const productsRef = collection(db, 'products');
+            const q = query(productsRef, where(documentId(), 'in', dealProductIds));
+            const productSnap = await getDocs(q);
+            const productsData = productSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+
+            dealsWithDetails = dealProductIds.map((id: string) => {
+                const productData = productsData.find(p => p.id === id);
+                if (productData) {
+                    return {
+                        id: productData.id,
+                        name: productData.name,
+                        brand: productData.brand,
+                        price: productData.pricing.price,
+                        originalPrice: productData.pricing.comparePrice,
+                        discount: `${productData.pricing.discount}% OFF`,
+                        image: productData.images[0],
+                        dataAiHint: productData.name.toLowerCase(),
+                    };
+                }
+                return null;
+            }).filter(Boolean) as Deal[];
+        }
         
         setContent({
             heroImages: data.heroImages || [],
             brands: data.brands || [],
-            deals: resolvedDeals,
+            deals: dealsWithDetails,
             categories: data.categories || [],
         });
 

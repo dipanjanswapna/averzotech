@@ -69,7 +69,7 @@ export default function CartPage() {
             setIsCheckingCoupon(false);
             return;
         }
-        if (couponData.limit !== null && couponData.used >= couponData.limit) {
+        if (couponData.limit !== null && (couponData.used || 0) >= couponData.limit) {
             toast({ title: "Coupon Limit Reached", description: "This coupon has reached its usage limit.", variant: "destructive"});
             setIsCheckingCoupon(false);
             return;
