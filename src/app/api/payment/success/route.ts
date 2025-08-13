@@ -3,6 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc, query, where, getDocs, limit } from 'firebase/firestore';
 
+async function findOrder(tran_id: string): Promise<string | null> {
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('paymentDetails.tran_id', '==', tran_id), limit(1));
+    const existingOrderSnap = await getDocs(q);
+
+    if (!existingOrderSnap.empty) {
+        return existingOrderSnap.docs[0].id;
+    }
+    return null;
+}
+
 export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const body = Object.fromEntries(formData);
@@ -11,38 +22,36 @@ export async function POST(req: NextRequest) {
     
     if (!tran_id) {
         console.error("Transaction ID missing in success response", {body});
-        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, appUrl));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, appUrl), { status: 302 });
     }
 
     try {
-        // Check if an order with this tran_id already exists in the main orders collection
-        const ordersRef = collection(db, 'orders');
-        const q = query(ordersRef, where('paymentDetails.tran_id', '==', tran_id), limit(1));
-        const existingOrderSnap = await getDocs(q);
+        let existingOrderId = await findOrder(tran_id as string);
 
-        if (!existingOrderSnap.empty) {
-            const existingOrderId = existingOrderSnap.docs[0].id;
+        if (existingOrderId) {
             console.log(`Order with tran_id ${tran_id} already exists with ID: ${existingOrderId}. Redirecting to confirmation.`);
-            return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl));
+            return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl), { status: 302 });
         }
-
 
         const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
         const pendingOrderSnap = await getDoc(pendingOrderRef);
         
-        // This can happen if the IPN has already processed the order.
         if (!pendingOrderSnap.exists()) {
              console.log("Pending order not found for tran_id (already processed by IPN?):", tran_id);
-             // We can't be sure of the order ID here, so we redirect with tran_id
+             await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for IPN to process
+             existingOrderId = await findOrder(tran_id as string);
+             if (existingOrderId) {
+                 return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl), { status: 302 });
+             }
+
+             console.error("Could not find order even after waiting. Redirecting with transaction ID for final lookup.");
              const orderConfirmationUrl = new URL(`/order-confirmation`, appUrl);
              orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); 
-             return NextResponse.redirect(orderConfirmationUrl);
+             return NextResponse.redirect(orderConfirmationUrl, { status: 302 });
         }
 
         const orderData = pendingOrderSnap.data();
-
         const batch = writeBatch(db);
-        
         const newOrderRef = doc(collection(db, "orders"));
         
         batch.set(newOrderRef, {
@@ -58,15 +67,14 @@ export async function POST(req: NextRequest) {
             batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
         }
         
-        // Delete the pending order only after processing successfully
         batch.delete(pendingOrderRef);
 
         await batch.commit();
 
-        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${newOrderRef.id}`, appUrl));
+        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${newOrderRef.id}`, appUrl), { status: 302 });
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
-        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, appUrl));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, appUrl), { status: 302 });
     }
 }

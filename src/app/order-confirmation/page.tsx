@@ -131,7 +131,7 @@ function ConfirmationContent() {
         } else {
             router.push('/');
         }
-    }, [orderId, transactionId, router, toast]);
+    }, [orderId, transactionId, router, toast, clearCart, cart.length]);
 
 
     const handlePrint = () => {
