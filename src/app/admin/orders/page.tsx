@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Search } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,9 +26,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Input } from '@/components/ui/input';
 
 interface Order {
     id: string;
@@ -41,6 +42,7 @@ interface Order {
 export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -62,6 +64,15 @@ export default function OrdersPage() {
 
         fetchOrders();
     }, []);
+
+    const filteredOrders = useMemo(() => {
+        if (!searchTerm) {
+            return orders;
+        }
+        return orders.filter(order =>
+            order.id.toLowerCase().startsWith(searchTerm.toLowerCase())
+        );
+    }, [searchTerm, orders]);
 
     const getStatusBadgeVariant = (status: string) => {
         switch (status) {
@@ -111,6 +122,15 @@ export default function OrdersPage() {
           <CardDescription>
             A list of all orders in your store.
           </CardDescription>
+           <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search by Order ID..." 
+              className="pl-9"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -127,7 +147,7 @@ export default function OrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id.substring(0,7)}...</TableCell>
                   <TableCell>{order.customerName}</TableCell>
