@@ -76,7 +76,7 @@ export function SiteFooter() {
                     </div>
                 </div>
                  <div className="mt-6 flex justify-end">
-                   <Image src="https://i.postimg.cc/GH8FkRGD/ssl-commerce-1.png" width={100} height={21} alt="Payment methods" />
+                   <Image src="https://i.postimg.cc/28T0N850/photo-2025-08-14-01-23-50-removebg-preview.png" width={100} height={21} alt="Payment methods" />
                 </div>
             </div>
         </div>
