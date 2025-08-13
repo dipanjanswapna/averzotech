@@ -6,7 +6,7 @@ import { Logo } from './logo';
 
 export function SiteFooter() {
   return (
-    <footer className="bg-secondary text-secondary-foreground">
+    <footer className="bg-white text-foreground">
       <div className="container py-8 md:py-12">
         <div className="mb-8">
             <Logo className="text-4xl" />
