@@ -47,10 +47,10 @@ export default function RegisterPage() {
       });
 
       toast({
-        title: "Account Created",
+        title: "Account Created Successfully!",
         description: role === 'vendor' 
-          ? "Your vendor account is awaiting admin approval. We will notify you."
-          : "Welcome to AVERZO! Please login to continue.",
+          ? "Your vendor account is now pending for admin approval. We will notify you via email once it's active."
+          : "Welcome to AVERZO! Please log in to continue your shopping journey.",
       });
       router.push('/login');
     } catch (error: any) {

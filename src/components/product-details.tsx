@@ -187,10 +187,11 @@ export function ProductDetails() {
         selectedColor: selectedColor?.name || 'N/A',
     };
     addToCart(productToAdd, quantity);
-    toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` })
-
+    
     if (buyNow) {
         router.push('/shipping');
+    } else {
+        toast({ title: "Added to Cart", description: `${product.name} has been added to your cart.` })
     }
   }
 

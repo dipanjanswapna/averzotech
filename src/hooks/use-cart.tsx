@@ -14,6 +14,7 @@ export interface AppliedCoupon {
     applicability?: {
         type: 'all' | 'products';
         ids: string[];
+        minPurchase?: number; // Add this line
     }
 }
 
@@ -54,7 +55,7 @@ export interface Product {
     };
     shipping: {
         estimatedDelivery: string;
-    }
+    };
     inventory: {
         sku: string;
     }
