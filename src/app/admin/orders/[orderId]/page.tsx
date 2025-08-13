@@ -409,7 +409,11 @@ export default function OrderDetailsPage() {
                     <CardTitle>Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-2">
-                    <Button variant="outline"><FileText className="mr-2 h-4 w-4"/> Invoice</Button>
+                    <Button variant="outline" asChild>
+                        <Link href={`/invoice/${orderId}`} target="_blank">
+                            <FileText className="mr-2 h-4 w-4"/> Invoice
+                        </Link>
+                    </Button>
                     <Button variant="outline"><Truck className="mr-2 h-4 w-4"/> Track</Button>
                 </CardContent>
             </Card>
@@ -418,3 +422,4 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
+
