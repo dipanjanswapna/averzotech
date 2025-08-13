@@ -63,15 +63,10 @@ export function SiteHeader() {
   };
 
   const getDashboardLink = () => {
-    if (!user) return '/profile';
-    switch (user.role) {
-      case 'admin':
-        return '/admin/dashboard';
-      case 'vendor':
-        return '/vendor/dashboard';
-      default:
-        return '/profile';
-    }
+    if (!user) return '/profile'; // Default fallback
+    if (user.role === 'admin') return '/admin/dashboard';
+    if (user.role === 'vendor') return '/vendor/dashboard';
+    return '/profile';
   }
 
   const categories = [

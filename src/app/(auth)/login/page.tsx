@@ -23,20 +23,6 @@ export default function LoginPage() {
   const db = getFirestore(app);
   const router = useRouter();
 
-  const handleLoginSuccess = (role: string, fullName: string) => {
-    toast({
-        title: "Login Successful",
-        description: `Welcome back, ${fullName}!`,
-    });
-    if (role === 'admin') {
-      router.push('/admin/dashboard');
-    } else if (role === 'vendor') {
-      router.push('/vendor/dashboard');
-    } else {
-      router.push('/');
-    }
-  };
-
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
     setIsLoading(true);
@@ -58,14 +44,20 @@ export default function LoginPage() {
             variant: "destructive",
             duration: 5000,
           });
-          setIsLoading(false);
-          return;
+        } else {
+           toast({
+              title: "Login Successful",
+              description: `Welcome back, ${userData.fullName}!`,
+          });
+          if (userData.role === 'admin') {
+            router.push('/admin/dashboard');
+          } else if (userData.role === 'vendor') {
+            router.push('/vendor/dashboard');
+          } else {
+            router.push('/');
+          }
         }
-
-        handleLoginSuccess(userData.role, userData.fullName);
-
       } else {
-         // This case might happen if user is in Auth but not Firestore
          toast({
           title: "Login Successful",
           description: "Welcome back!",
@@ -105,13 +97,20 @@ export default function LoginPage() {
             variant: "destructive",
             duration: 5000,
           });
-          setIsLoading(false);
-          return;
-        }
-        handleLoginSuccess(userData.role, userData.fullName);
-
+         } else {
+            toast({
+              title: "Login Successful",
+              description: `Welcome back, ${userData.fullName}!`,
+            });
+            if (userData.role === 'admin') {
+              router.push('/admin/dashboard');
+            } else if (userData.role === 'vendor') {
+              router.push('/vendor/dashboard');
+            } else {
+              router.push('/');
+            }
+         }
       } else {
-        // New user signing in with Google, create a document for them
         const newUser = {
             fullName: user.displayName || 'Google User',
             email: user.email,

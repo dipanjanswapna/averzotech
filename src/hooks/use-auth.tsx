@@ -57,9 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               });
             }
         } catch (error) {
-            console.error("Error fetching user data:", error);
-            // If fetching user data fails, sign out to avoid inconsistent state.
-            // This prevents the app from being stuck in a weird state if Firestore is down.
+            console.error("Error fetching user data, signing out:", error);
             await auth.signOut().catch(e => console.error("Sign out failed after fetch error:", e));
             setUser(null);
         }
