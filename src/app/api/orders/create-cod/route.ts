@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         // Set the order data
         batch.set(newOrderRef, {
             ...orderData,
-            status: 'Processing', // Initial status for COD orders
+            status: 'Pending', // Initial status for COD orders to allow for admin verification
             paymentDetails: {
                 status: 'Unpaid',
                 method: 'COD'

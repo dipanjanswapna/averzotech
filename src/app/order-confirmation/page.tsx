@@ -4,7 +4,7 @@
 import * as React from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { CheckCircle, Printer, ShoppingBag, Truck, ShieldCheck, Gift } from "lucide-react"
+import { CheckCircle, Printer, ShoppingBag, Truck, ShieldCheck, Gift, AlertTriangle } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,7 @@ import { doc, getDoc, collection, query, where, getDocs } from "firebase/firesto
 import { db } from "@/lib/firebase"
 import { useCart } from "@/hooks/use-cart"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 
 interface Order {
@@ -167,6 +168,15 @@ function ConfirmationContent() {
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 md:p-8">
+                         {orderDetails.payment.method === 'cod' && (
+                            <Alert variant="default" className="mb-8 bg-yellow-50 border-yellow-200 text-yellow-800 [&>svg]:text-yellow-500">
+                                <AlertTriangle className="h-4 w-4"/>
+                                <AlertTitle>Cash on Delivery</AlertTitle>
+                                <AlertDescription>
+                                    Please keep the exact amount ready. You will pay the courier when you receive your order.
+                                </AlertDescription>
+                            </Alert>
+                         )}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
                             <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2">Shipping Address</h3>

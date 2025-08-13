@@ -197,7 +197,7 @@ export default function OrderDetailsPage() {
   if (loading) return <p>Loading order details...</p>;
   if (!order) return <p>Order not found.</p>;
   
-  const currentStatusIndex = orderSteps.findIndex(step => step.label === order.status) + 1;
+  const currentStatusIndex = orderSteps.findIndex(step => step.label === order.status);
   const formatDate = (timestamp: any) => {
     if (!timestamp || !timestamp.seconds) return new Date().toLocaleString();
     return new Date(timestamp.seconds * 1000).toLocaleString();
@@ -218,7 +218,7 @@ export default function OrderDetailsPage() {
         </div>
       </div>
         <div className="mx-auto w-full max-w-5xl">
-            <Stepper initialStep={0} activeStep={currentStatusIndex} steps={orderSteps.map(s => ({label: s.label, description: s.date ? formatDate(s.date) : ''}))} />
+            <Stepper initialStep={0} activeStep={currentStatusIndex + 1} steps={orderSteps.map(s => ({label: s.label, description: s.date ? formatDate(s.date) : ''}))} />
         </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
