@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 const SSLCommerz = require('sslcommerz-lts');
+require('dotenv').config();
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`,
         ipn_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`,
         shipping_method: 'Courier',
-        product_name: items.map((item: any) => item.name).join(', ').substring(0, 99),
+        product_name: items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items',
         product_category: 'eCommerce',
         product_profile: 'general',
         cus_name: name,
