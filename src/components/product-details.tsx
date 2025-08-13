@@ -200,7 +200,9 @@ export function ProductDetails() {
        const productForWishlist: WishlistItem = {
             id: product.id, name: product.name, brand: product.brand,
             pricing: product.pricing, images: product.images,
-            inventory: { availability: product.inventory.availability }
+            inventory: { availability: product.inventory.availability },
+            variants: product.variants,
+            shipping: product.shipping
        };
       if (isInWishlist) {
           removeFromWishlist(product.id);

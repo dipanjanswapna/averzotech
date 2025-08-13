@@ -23,8 +23,15 @@ import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, AppUser } from '@/hooks/use-auth';
 import { Separator } from './ui/separator';
+
+const getDashboardLink = (user: AppUser | null) => {
+    if (!user) return '/profile'; // Default fallback
+    if (user.role === 'admin') return '/admin/dashboard';
+    if (user.role === 'vendor') return '/vendor/dashboard';
+    return '/profile';
+}
 
 export function SiteHeader() {
   const { user } = useAuth();
@@ -61,13 +68,6 @@ export function SiteHeader() {
       });
     }
   };
-
-  const getDashboardLink = () => {
-    if (!user) return '/profile'; // Default fallback
-    if (user.role === 'admin') return '/admin/dashboard';
-    if (user.role === 'vendor') return '/vendor/dashboard';
-    return '/profile';
-  }
 
   const categories = [
     { 
@@ -246,7 +246,7 @@ export function SiteHeader() {
     },
   ];
 
-  const dashboardLink = getDashboardLink();
+  const dashboardLink = getDashboardLink(user);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

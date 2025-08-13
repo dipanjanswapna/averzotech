@@ -120,21 +120,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       const savedShippingInfo = localStorage.getItem('shippingInfo');
       if (savedShippingInfo) setShippingInfoState(JSON.parse(savedShippingInfo));
-
-      const fetchShippingSettings = async () => {
-          const db = getFirestore(app);
-          const docRef = doc(db, 'site_settings', 'shipping');
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-              const data = docSnap.data();
-              setShippingSettings({
-                  standardFee: data.standardFee || 60,
-                  expressFee: data.expressFee || 120
-              });
-          }
-      };
-      fetchShippingSettings();
-
     } catch (error) {
         console.error("Failed to parse data from localStorage, clearing corrupted data.", error);
         // Clear corrupted data
@@ -143,6 +128,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('appliedGiftCard');
         localStorage.removeItem('shippingInfo');
     }
+
+    const fetchShippingSettings = async () => {
+        const db = getFirestore(app);
+        const docRef = doc(db, 'site_settings', 'shipping');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            setShippingSettings({
+                standardFee: data.standardFee || 60,
+                expressFee: data.expressFee || 120
+            });
+        }
+    };
+    fetchShippingSettings();
     setIsLoaded(true);
   }, []);
 
