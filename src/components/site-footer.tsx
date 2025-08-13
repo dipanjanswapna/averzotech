@@ -62,14 +62,14 @@ export function SiteFooter() {
             </div>
             <div className="col-span-2 lg:col-span-2">
                 <div className="flex items-start gap-4 mb-6">
-                    <Image src="https://placehold.co/48x48.png" width={48} height={48} alt="Original Guarantee" data-ai-hint="original guarantee badge"/>
+                    <Image src="https://i.postimg.cc/63X9JhjJ/Screenshot-2025-08-14-014934.png" width={48} height={48} alt="Original Guarantee" data-ai-hint="original guarantee badge"/>
                     <div>
                         <p className="font-bold">100% ORIGINAL</p>
                         <p className="text-sm text-muted-foreground">guarantee for all products at averzo.com</p>
                     </div>
                 </div>
                  <div className="flex items-start gap-4">
-                    <Image src="https://placehold.co/48x48.png" width={48} height={48} alt="Return within 14 days" data-ai-hint="return policy badge"/>
+                    <Image src="https://i.postimg.cc/KvwhhNjq/Screenshot-2025-08-14-015302.png" width={48} height={48} alt="Return within 14 days" data-ai-hint="return policy badge"/>
                     <div>
                         <p className="font-bold">Return within 14days</p>
                         <p className="text-sm text-muted-foreground">of receiving your order</p>
