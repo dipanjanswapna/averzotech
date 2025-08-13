@@ -21,7 +21,7 @@ import { OrderSummary } from "@/components/order-summary"
 export default function PaymentPage() {
     const router = useRouter();
     const { user } = useAuth();
-    const { cart, clearCart, subTotal, total, appliedCoupon, appliedGiftCard, shippingInfo } = useCart();
+    const { cart, clearCart, subTotal, total, appliedCoupon, appliedGiftCard, shippingInfo, shippingFee, taxes } = useCart();
     const { toast } = useToast();
     const [paymentMethod, setPaymentMethod] = React.useState('card');
     const [loading, setLoading] = React.useState(false);
@@ -69,8 +69,8 @@ export default function PaymentPage() {
             payment: {
                 method: paymentMethod,
                 subtotal: subTotal,
-                shipping: useCart().shippingFee,
-                tax: useCart().taxes,
+                shipping: shippingFee,
+                tax: taxes,
                 coupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : null,
                 giftCard: appliedGiftCard ? { code: appliedGiftCard.code, usedAmount: Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) } : null,
                 total: total,
