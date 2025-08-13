@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -16,8 +17,8 @@ export async function POST(req: NextRequest) {
          return NextResponse.json({ error: 'Shipping address is missing.' }, { status: 400 });
     }
     if (!store_id || !store_passwd) {
-        console.error("SSLCommerz store ID or password is not set in .env file.");
-        return NextResponse.json({ error: 'Payment gateway is not configured properly.' }, { status: 500 });
+        console.error("SSLCommerz store ID or password is not set in the environment variables.");
+        return NextResponse.json({ error: 'Payment gateway is not configured. Please contact support.' }, { status: 500 });
     }
     
     const { name, email, phone, fullAddress } = shippingAddress;
