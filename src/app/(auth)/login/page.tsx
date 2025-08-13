@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { Chrome } from 'lucide-react';
+import { AppUser } from '@/hooks/use-auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -22,6 +23,32 @@ export default function LoginPage() {
   const auth = getAuth(app);
   const db = getFirestore(app);
   const router = useRouter();
+
+  const handleSuccessfulLogin = (userData: AppUser) => {
+    if (userData.role === 'vendor' && userData.status !== 'active') {
+      signOut(auth);
+      toast({
+        title: "Approval Pending",
+        description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
+    toast({
+      title: "Login Successful",
+      description: `Welcome back, ${userData.fullName}!`,
+    });
+
+    if (userData.role === 'admin') {
+      router.push('/admin/dashboard');
+    } else if (userData.role === 'vendor') {
+      router.push('/vendor/dashboard');
+    } else {
+      router.push('/');
+    }
+  };
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -34,29 +61,8 @@ export default function LoginPage() {
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-        
-        if (userData.role === 'vendor' && userData.status !== 'active') {
-          await signOut(auth);
-          toast({
-            title: "Approval Pending",
-            description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
-            variant: "destructive",
-            duration: 5000,
-          });
-        } else {
-           toast({
-              title: "Login Successful",
-              description: `Welcome back, ${userData.fullName}!`,
-          });
-          if (userData.role === 'admin') {
-            router.push('/admin/dashboard');
-          } else if (userData.role === 'vendor') {
-            router.push('/vendor/dashboard');
-          } else {
-            router.push('/');
-          }
-        }
+        const userData = { uid: user.uid, ...userDoc.data() } as AppUser;
+        handleSuccessfulLogin(userData);
       } else {
          toast({
           title: "Login Successful",
@@ -88,28 +94,8 @@ export default function LoginPage() {
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
-        const userData = userDoc.data();
-         if (userData.role === 'vendor' && userData.status !== 'active') {
-          await signOut(auth);
-          toast({
-            title: "Approval Pending",
-            description: "Your vendor account is awaiting admin approval.",
-            variant: "destructive",
-            duration: 5000,
-          });
-         } else {
-            toast({
-              title: "Login Successful",
-              description: `Welcome back, ${userData.fullName}!`,
-            });
-            if (userData.role === 'admin') {
-              router.push('/admin/dashboard');
-            } else if (userData.role === 'vendor') {
-              router.push('/vendor/dashboard');
-            } else {
-              router.push('/');
-            }
-         }
+        const userData = { uid: user.uid, ...userDoc.data() } as AppUser;
+        handleSuccessfulLogin(userData);
       } else {
         const newUser = {
             fullName: user.displayName || 'Google User',

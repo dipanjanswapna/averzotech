@@ -6,15 +6,15 @@ import { nanoid } from 'nanoid';
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
-    const { total, shippingAddress, items, userId, payment, customerName } = orderData;
+    const { total, shippingAddress, items } = orderData;
     
     const store_id = process.env.STORE_ID;
     const store_passwd = process.env.STORE_PASSWORD;
     const is_live = process.env.IS_LIVE === 'true';
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    if (!shippingAddress) {
-         return NextResponse.json({ error: 'Shipping address is missing.' }, { status: 400 });
+    if (!shippingAddress?.phone || !shippingAddress?.fullAddress || !shippingAddress.name || !shippingAddress.email) {
+         return NextResponse.json({ error: 'Incomplete shipping address provided.' }, { status: 400 });
     }
     if (!store_id || !store_passwd) {
         console.error("SSLCommerz store ID or password is not set in the environment variables.");

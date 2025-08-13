@@ -105,7 +105,8 @@ export default function CartPage() {
             type: couponData.type,
             value: couponData.value,
             discountAmount: discountAmount,
-            applicability: couponData.applicability
+            applicability: couponData.applicability,
+            minPurchase: couponData.minPurchase
         };
         
         applyCoupon(couponToApply);
