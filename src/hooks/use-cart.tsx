@@ -131,6 +131,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     } catch (error) {
         console.error("Failed to parse data from localStorage", error);
+        // Clear corrupted data
+        localStorage.removeItem('shoppingCart');
+        localStorage.removeItem('appliedCoupon');
+        localStorage.removeItem('appliedGiftCard');
+        localStorage.removeItem('shippingInfo');
     }
     setIsLoaded(true);
   }, []);
@@ -238,11 +243,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0;
+    if (cart.length === 0) return 0;
 
     let applicableSubtotal = subTotal;
     if (appliedCoupon.applicability?.type === 'products') {
         const applicableProductIds = appliedCoupon.applicability.ids;
         const applicableItems = cart.filter(item => applicableProductIds.includes(item.id));
+        if (applicableItems.length === 0) return 0; // No applicable items
         applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
     }
 
@@ -266,7 +273,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [shippingInfo, availableShippingMethods]);
 
   const taxes = subTotal * 0.05;
-  const total = subTotalAfterCoupon - giftCardAmount + shippingFee + taxes;
+  const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + shippingFee + taxes);
 
   return (
     <CartContext.Provider value={{ 

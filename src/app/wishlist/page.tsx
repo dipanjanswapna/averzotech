@@ -28,7 +28,7 @@ export default function WishlistPage() {
   };
 
   const handleAddToCart = (item: WishlistItem) => {
-     if (item.inventory?.availability !== 'In Stock') {
+     if (item.inventory?.availability !== 'in-stock') {
         toast({
             title: "Out of Stock",
             description: "This item is currently unavailable.",
@@ -81,7 +81,7 @@ export default function WishlistPage() {
                                 data-ai-hint="product image"
                             />
                         </Link>
-                         <Badge variant={item.inventory?.availability === 'In Stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.inventory?.availability === 'In Stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
+                         <Badge variant={item.inventory?.availability === 'in-stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.inventory?.availability === 'in-stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
                             {item.inventory?.availability}
                         </Badge>
                         <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2">
@@ -90,7 +90,7 @@ export default function WishlistPage() {
                                 size="sm" 
                                 className="w-full text-xs" 
                                 onClick={() => handleAddToCart(item)}
-                                disabled={item.inventory?.availability !== 'In Stock'}
+                                disabled={item.inventory?.availability !== 'in-stock'}
                             >
                                 <ShoppingCart className="mr-1 h-3 w-3" /> Add to Cart
                            </Button>
@@ -133,3 +133,4 @@ export default function WishlistPage() {
     </div>
   );
 }
+

@@ -14,7 +14,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Logo } from "@/components/logo"
-import { doc, getDoc } from "firebase/firestore"
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useCart } from "@/hooks/use-cart"
 
@@ -62,36 +62,65 @@ function ConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
+    const transactionId = searchParams.get('tran_id');
     const { clearCart } = useCart();
 
     const [orderDetails, setOrderDetails] = React.useState<Order | null>(null);
     const [loading, setLoading] = React.useState(true);
     
     React.useEffect(() => {
-        if (!orderId) {
-            // Redirect if no orderId is present
-            router.push('/');
-            return;
-        }
-
-        // Clear the cart on successful order confirmation
-        clearCart();
-
         const fetchOrder = async () => {
             setLoading(true);
-            const orderRef = doc(db, 'orders', orderId);
-            const orderSnap = await getDoc(orderRef);
-            if (orderSnap.exists()) {
-                setOrderDetails({ id: orderSnap.id, ...orderSnap.data() } as Order);
-            } else {
-                console.error("Order not found!");
-                router.push('/');
+            let orderData: Order | null = null;
+            try {
+                if (orderId) {
+                    const orderRef = doc(db, 'orders', orderId);
+                    const orderSnap = await getDoc(orderRef);
+                    if (orderSnap.exists()) {
+                        orderData = { id: orderSnap.id, ...orderSnap.data() } as Order;
+                    }
+                } else if (transactionId) {
+                    // Fallback to find order by transaction ID if orderId is not in URL (e.g., from IPN success)
+                    const ordersRef = collection(db, 'orders');
+                    const q = query(ordersRef, where('paymentDetails.tran_id', '==', transactionId));
+                    const querySnapshot = await getDocs(q);
+                    if (!querySnapshot.empty) {
+                        const orderDoc = querySnapshot.docs[0];
+                        orderData = { id: orderDoc.id, ...orderDoc.data() } as Order;
+                    }
+                }
+                
+                if (orderData) {
+                    setOrderDetails(orderData);
+                    clearCart();
+                } else {
+                     console.error("Order not found!");
+                     toast({
+                         title: "Order Not Found",
+                         description: "We couldn't find the details for this order. Please check your profile.",
+                         variant: "destructive",
+                     });
+                     router.push('/profile/orders');
+                }
+            } catch (err) {
+                 console.error("Failed to fetch order details:", err);
+                 toast({
+                     title: "Error",
+                     description: "Could not load order details.",
+                     variant: "destructive",
+                 });
+                 router.push('/');
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
-        fetchOrder();
-    }, [orderId, router, clearCart]);
+        if (orderId || transactionId) {
+             fetchOrder();
+        } else {
+            router.push('/');
+        }
+    }, [orderId, transactionId, router, clearCart]);
 
 
     const handlePrint = () => {
@@ -253,6 +282,9 @@ function ConfirmationContent() {
     )
 }
 
+// Add a global toast instance for the component
+import { toast } from "@/hooks/use-toast";
+
 export default function OrderConfirmationPage() {
     return (
         <React.Suspense fallback={<div>Loading...</div>}>
@@ -260,3 +292,4 @@ export default function OrderConfirmationPage() {
         </React.Suspense>
     )
 }
+

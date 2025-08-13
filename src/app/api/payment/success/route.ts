@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     
     if (!tran_id) {
         console.error("Transaction ID missing in success response", {body});
-        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, process.env.NEXT_PUBLIC_APP_URL));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=data_missing`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
     }
 
     try {
@@ -18,8 +18,13 @@ export async function POST(req: NextRequest) {
         const pendingOrderSnap = await getDoc(pendingOrderRef);
         
         if (!pendingOrderSnap.exists()) {
-             console.error("Pending order not found for tran_id:", tran_id);
-             return NextResponse.redirect(new URL(`/payment/fail?reason=order_not_found&tran_id=${tran_id}`, process.env.NEXT_PUBLIC_APP_URL));
+             // This can happen if the IPN has already processed the order.
+             // We can assume the process was successful and redirect the user.
+             // For a more robust solution, we could query the `orders` collection for the `tran_id`.
+             console.log("Pending order not found for tran_id (already processed by IPN?):", tran_id);
+             const orderConfirmationUrl = new URL(`/order-confirmation`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+             orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); // Pass tran_id to find the order
+             return NextResponse.redirect(orderConfirmationUrl);
         }
 
         const orderData = pendingOrderSnap.data();
@@ -45,10 +50,10 @@ export async function POST(req: NextRequest) {
 
         await batch.commit();
 
-        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${orderRef.id}`, process.env.NEXT_PUBLIC_APP_URL));
+        return NextResponse.redirect(new URL(`/order-confirmation?orderId=${orderRef.id}`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
-        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, process.env.NEXT_PUBLIC_APP_URL));
+        return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
     }
 }

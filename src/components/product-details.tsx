@@ -503,9 +503,13 @@ export function ProductDetails() {
               <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3 >
                <p className="text-xs text-muted-foreground mt-1">Estimated Delivery: {product.shipping.estimatedDelivery}</p>
                 <div className="mt-2 text-sm space-y-1">
-                    {availableShippingMethods.map(method => (
-                       <p key={method.name}>• {method.name}: <span className="font-semibold">৳{method.fee}</span></p>
-                    ))}
+                    {availableShippingMethods.length > 0 ? (
+                         availableShippingMethods.map(method => (
+                           <p key={method.name}>• {method.name}: <span className="font-semibold">৳{method.fee}</span></p>
+                        ))
+                    ) : (
+                        <p>Loading shipping options...</p>
+                    )}
                 </div>
             </div>
             
@@ -607,7 +611,7 @@ export function ProductDetails() {
                     </div>
                  </div>
                  <div className="md:col-span-2">
-                    {reviews.map(review => (
+                    {reviews.length > 0 ? reviews.map(review => (
                         <div key={review.id} className="border-b py-4">
                             <div className="flex items-center mb-1">
                                 {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}/>)}
@@ -616,19 +620,19 @@ export function ProductDetails() {
                             <p className="text-sm text-muted-foreground mb-2">By {review.authorName} on {new Date(review.createdAt?.seconds * 1000).toLocaleDateString()}</p>
                             <p className="text-sm">{review.comment}</p>
                         </div>
-                    ))}
+                    )) : <p className="text-muted-foreground">No reviews yet. Be the first one to review!</p>}
                  </div>
              </div>
         </div>
         
         <div className="mt-12">
             <h2 className="text-2xl font-bold mb-4">Questions &amp; Answers</h2>
-            {qna.map(item => (
+            {qna.length > 0 ? qna.map(item => (
                 <div key={item.id} className="border-b py-4 text-sm">
                     <p className="font-semibold">Q: {item.question}</p>
                     {item.answer ? <p className="mt-1 text-muted-foreground">A: {item.answer}</p> : <p className="mt-1 text-muted-foreground text-xs">A: Answer pending.</p>}
                 </div>
-            ))}
+            )) : <p className="text-muted-foreground">No questions have been asked yet.</p>}
             <div className="mt-4">
                 <h3 className="font-semibold mb-2">Have a question?</h3>
                 <Textarea placeholder="Type your question here..." value={newQuestion} onChange={e => setNewQuestion(e.target.value)} />
@@ -676,5 +680,6 @@ export function ProductDetails() {
       </main>
       );
 }
+
 
 
