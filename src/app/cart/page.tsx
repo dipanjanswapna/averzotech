@@ -45,6 +45,7 @@ export default function CartPage() {
 
         if (couponSnap.empty) {
             toast({ title: "Invalid Coupon", description: "The coupon code you entered is not valid.", variant: "destructive"});
+            setIsCheckingCoupon(false);
             return;
         }
 
@@ -54,19 +55,23 @@ export default function CartPage() {
         
         if (couponData.status && couponData.status === 'Disabled') {
              toast({ title: "Coupon Disabled", description: "This coupon is currently disabled.", variant: "destructive"});
+            setIsCheckingCoupon(false);
             return;
         }
 
         if (new Date(couponData.endDate) < now) {
             toast({ title: "Coupon Expired", description: "This coupon has expired.", variant: "destructive"});
+            setIsCheckingCoupon(false);
             return;
         }
         if (new Date(couponData.startDate) > now) {
             toast({ title: "Coupon Not Active", description: "This coupon is not active yet.", variant: "destructive"});
+            setIsCheckingCoupon(false);
             return;
         }
         if (couponData.limit !== null && couponData.used >= couponData.limit) {
             toast({ title: "Coupon Limit Reached", description: "This coupon has reached its usage limit.", variant: "destructive"});
+            setIsCheckingCoupon(false);
             return;
         }
         
@@ -76,13 +81,15 @@ export default function CartPage() {
             const applicableItems = cart.filter(item => applicableProductIds.includes(item.id));
             if (applicableItems.length === 0) {
                  toast({ title: "Coupon Not Applicable", description: "This coupon is not valid for any items in your cart.", variant: "destructive"});
+                 setIsCheckingCoupon(false);
                  return;
             }
             applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
         }
 
         if (couponData.minPurchase > applicableSubtotal) {
-            toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase} on applicable items to use this coupon.`, variant: "destructive"});
+            toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase - applicableSubtotal} more on applicable items to use this coupon.`, variant: "destructive"});
+            setIsCheckingCoupon(false);
             return;
         }
 

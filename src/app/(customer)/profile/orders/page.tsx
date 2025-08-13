@@ -40,8 +40,8 @@ import {
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, getFirestore } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -59,6 +59,7 @@ export default function MyOrdersPage() {
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const db = getFirestore(app);
 
     const fetchOrders = async () => {
         if (!user) return;
