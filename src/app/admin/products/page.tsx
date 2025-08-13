@@ -221,8 +221,8 @@ export default function ProductsPage() {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                            <DropdownMenuItem asChild>
-                             <Link href={`/admin/products/edit/${product.id}`}>
-                                  <Eye className="mr-2 h-4 w-4"/> View Details
+                             <Link href={`/product/${product.id}`} target='_blank'>
+                                  <Eye className="mr-2 h-4 w-4"/> View on Site
                               </Link>
                            </DropdownMenuItem>
                            <DropdownMenuItem asChild>

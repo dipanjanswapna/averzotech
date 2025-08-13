@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ChevronRight, Home, PlusCircle } from "lucide-react"
+import { ChevronRight, PlusCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -63,14 +63,14 @@ export default function ShippingPage() {
             setAddresses(addressList);
             
             // Set default address based on shippingInfo or isDefault flag or first address
-            const currentShippingAddress = shippingInfo ? addressList.find(a => a.name === shippingInfo.name && a.phone === shippingInfo.phone) : null;
+            const currentShippingAddress = shippingInfo ? addressList.find(a => a.id === (shippingInfo as any).id) : null;
             const defaultAddress = addressList.find(a => a.isDefault);
             setSelectedAddress(currentShippingAddress || defaultAddress || (addressList.length > 0 ? addressList[0] : null));
 
             setLoadingAddresses(false);
         };
         fetchAddresses();
-    }, [user, router, shippingInfo, cart.length, toast]);
+    }, [user, router, cart.length, toast]);
     
     React.useEffect(() => {
         if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {
@@ -86,6 +86,7 @@ export default function ShippingPage() {
     React.useEffect(() => {
         if (selectedAddress && selectedShippingMethod) {
             const newShippingInfo: ShippingInfo = {
+                ...(selectedAddress as any), // include address id to remember selection
                 name: selectedAddress.name,
                 email: user?.email || '',
                 phone: selectedAddress.phone,

@@ -36,16 +36,28 @@ export default function LoginPage() {
 
       if (userDoc.exists()) {
         const userData = { uid: user.uid, ...userDoc.data() } as AppUser;
-        if (userData.role === 'vendor' && userData.status !== 'active') {
-            await signOut(auth);
-            toast({
-              title: "Approval Pending",
-              description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
-              variant: "destructive",
-              duration: 5000,
-            });
-            return;
+        if (userData.role === 'vendor') {
+            if (userData.status === 'pending') {
+                await signOut(auth);
+                toast({
+                title: "Approval Pending",
+                description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
+                variant: "destructive",
+                duration: 5000,
+                });
+                return;
+            } else if (userData.status === 'suspended') {
+                await signOut(auth);
+                toast({
+                title: "Account Suspended",
+                description: "Your vendor account has been suspended. Please contact support.",
+                variant: "destructive",
+                duration: 5000,
+                });
+                return;
+            }
         }
+
 
         toast({
           title: "Login Successful",
@@ -101,15 +113,26 @@ export default function LoginPage() {
 
       if (userDoc.exists()) {
         const userData = { uid: user.uid, ...userDoc.data() } as AppUser;
-         if (userData.role === 'vendor' && userData.status !== 'active') {
-            await signOut(auth);
-            toast({
-              title: "Approval Pending",
-              description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
-              variant: "destructive",
-              duration: 5000,
-            });
-            return;
+         if (userData.role === 'vendor') {
+            if (userData.status === 'pending') {
+                await signOut(auth);
+                toast({
+                title: "Approval Pending",
+                description: "Your vendor account is awaiting admin approval. Please wait for confirmation.",
+                variant: "destructive",
+                duration: 5000,
+                });
+                return;
+            } else if (userData.status === 'suspended') {
+                 await signOut(auth);
+                toast({
+                title: "Account Suspended",
+                description: "Your vendor account has been suspended. Please contact support.",
+                variant: "destructive",
+                duration: 5000,
+                });
+                return;
+            }
         }
 
         toast({
