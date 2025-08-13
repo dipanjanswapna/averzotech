@@ -80,7 +80,10 @@ export function SiteFooter() {
       </div>
        <div className="border-t border-border">
         <div className="container py-4 text-center text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} www.averzo.com. All rights reserved. AVERZO a partner of PRANGONS ECOSYSTEM.</p>
+           <div className="flex flex-col items-center gap-2">
+             <Image src="https://i.postimg.cc/28T0N850/photo-2025-08-14-01-23-50-removebg-preview.png" width={200} height={25} alt="Payment methods" data-ai-hint="payment methods" />
+             <p>© {new Date().getFullYear()} www.averzo.com. All rights reserved. AVERZO a partner of PRANGONS ECOSYSTEM.</p>
+           </div>
         </div>
       </div>
     </footer>
