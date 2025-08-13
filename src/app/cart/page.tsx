@@ -88,7 +88,7 @@ export default function CartPage() {
         const applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
 
         if (couponData.minPurchase > applicableSubtotal) {
-            toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase - applicableSubtotal} more on applicable items to use this coupon.`, variant: "destructive"});
+            toast({ title: "Minimum Purchase Not Met", description: `You need to spend at least ৳${couponData.minPurchase.toFixed(2)} on applicable items to use this coupon.`, variant: "destructive"});
             setIsCheckingCoupon(false);
             return;
         }

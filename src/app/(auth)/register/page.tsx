@@ -46,12 +46,19 @@ export default function RegisterPage() {
         createdAt: new Date(),
       });
 
-      toast({
-        title: "Account Created Successfully!",
-        description: role === 'vendor' 
-          ? "Your vendor account is pending admin approval. You will be notified upon activation."
-          : "Welcome to AVERZO! Please log in to continue.",
-      });
+      if (role === 'vendor') {
+        toast({
+          title: "Vendor Account Submitted",
+          description: "Your vendor account is pending admin approval. You will be notified upon activation.",
+          duration: 5000,
+        });
+      } else {
+         toast({
+          title: "Account Created Successfully!",
+          description: "Welcome to AVERZO! Please log in to continue.",
+        });
+      }
+
       router.push('/login');
     } catch (error: any) {
       console.error("Registration Error:", error);
