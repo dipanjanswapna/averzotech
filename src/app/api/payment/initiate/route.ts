@@ -1,15 +1,11 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import fetch from 'node-fetch';
-import { URLSearchParams } from 'url';
-
-require('dotenv').config();
+import { nanoid } from 'nanoid';
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
-    const { total, tran_id, shippingAddress, items, userId } = orderData;
+    const { total, shippingAddress, items, userId, payment, customerName } = orderData;
     
     const store_id = process.env.STORE_ID;
     const store_passwd = process.env.STORE_PASSWORD;
@@ -23,6 +19,7 @@ export async function POST(req: NextRequest) {
     }
     
     const { name, email, phone, fullAddress } = shippingAddress;
+    const tran_id = nanoid();
 
     const params = new URLSearchParams();
     params.append('store_id', store_id);
@@ -34,22 +31,24 @@ export async function POST(req: NextRequest) {
     params.append('fail_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail`);
     params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`);
     params.append('ipn_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`);
-    params.append('shipping_method', 'Courier');
+    params.append('shipping_method', shippingAddress.method || 'Courier');
     params.append('product_name', items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items');
     params.append('product_category', 'eCommerce');
     params.append('product_profile', 'general');
     params.append('cus_name', name);
     params.append('cus_email', email);
     params.append('cus_add1', fullAddress);
-    params.append('cus_city', 'Dhaka');
-    params.append('cus_state', 'Dhaka');
+    params.append('cus_add2', 'N/A');
+    params.append('cus_city', shippingAddress.district || 'Dhaka');
+    params.append('cus_state', shippingAddress.division || 'Dhaka');
     params.append('cus_postcode', '1000');
     params.append('cus_country', 'Bangladesh');
     params.append('cus_phone', phone);
     params.append('ship_name', name);
     params.append('ship_add1', fullAddress);
-    params.append('ship_city', 'Dhaka');
-    params.append('ship_state', 'Dhaka');
+    params.append('ship_add2', 'N/A');
+    params.append('ship_city', shippingAddress.district || 'Dhaka');
+    params.append('ship_state', shippingAddress.division || 'Dhaka');
     params.append('ship_postcode', '1000');
     params.append('ship_country', 'Bangladesh');
 
@@ -57,19 +56,24 @@ export async function POST(req: NextRequest) {
         const pendingOrderRef = doc(db, 'pending_orders', tran_id);
         await setDoc(pendingOrderRef, {
              ...orderData,
+             tran_id: tran_id,
              createdAt: serverTimestamp()
         });
         
         const sslcz_url = is_live 
             ? 'https://securepay.sslcommerz.com/gwprocess/v4/api.php' 
             : 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php';
-
-        const apiResponse = await fetch(sslcz_url, {
+        
+        const response = await fetch(sslcz_url, {
             method: 'POST',
-            body: params
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params,
+            cache: 'no-store'
         });
 
-        const responseData = await apiResponse.json();
+        const responseData = await response.json();
 
         if (responseData.status === 'SUCCESS' && responseData.GatewayPageURL) {
             return NextResponse.json({ GatewayPageURL: responseData.GatewayPageURL });
