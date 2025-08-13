@@ -112,6 +112,7 @@ export default function CartPage() {
         };
         
         applyCoupon(couponToApply);
+        setCouponCode('');
         toast({ title: "Coupon Applied!", description: `You've got a discount of ৳${discountAmount.toFixed(2)}.` });
 
     } catch(error) {
@@ -152,6 +153,7 @@ export default function CartPage() {
         }
 
         applyGiftCard({ code: giftCardData.code, balance: giftCardData.currentBalance });
+        setGiftCardCode('');
         toast({ title: "Gift Card Applied!", description: `৳${giftCardData.currentBalance.toFixed(2)} has been applied to your order.` });
 
     } catch (error) {

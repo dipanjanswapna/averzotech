@@ -60,6 +60,7 @@ interface Order {
     paymentDetails?: {
         method?: string;
         status?: string;
+        tran_id?: string;
     },
     trackingId?: string;
 }
@@ -173,7 +174,7 @@ function ConfirmationContent() {
                                 <AlertTriangle className="h-4 w-4"/>
                                 <AlertTitle>Cash on Delivery</AlertTitle>
                                 <AlertDescription>
-                                    Please keep the exact amount ready. You will pay the courier when you receive your order.
+                                    Your order is pending confirmation. Please keep the exact amount ready. You will pay the courier when you receive your order.
                                 </AlertDescription>
                             </Alert>
                          )}
