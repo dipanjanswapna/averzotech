@@ -75,6 +75,9 @@ export function SiteFooter() {
                         <p className="text-sm text-muted-foreground">of receiving your order</p>
                     </div>
                 </div>
+                 <div className="mt-6">
+                   <Image src="https://i.postimg.cc/GH8FkRGD/ssl-commerce-1.png" width={280} height={60} alt="Payment methods" />
+                </div>
             </div>
         </div>
       </div>
