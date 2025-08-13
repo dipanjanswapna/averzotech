@@ -297,7 +297,7 @@ function SearchPageContent() {
           removeFromWishlist(item.id);
           toast({ title: "Removed from Wishlist" });
       } else {
-          addToWishlist(item as WishlistItem);
+          addToWishlist(item as unknown as WishlistItem);
           toast({ title: "Added to Wishlist" });
       }
   }
