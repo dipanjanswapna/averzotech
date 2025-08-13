@@ -37,11 +37,17 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
 
   // This logic is for the Sheet-based mobile menu
   if (isMobile) {
+    if (!category.subCategories || category.subCategories.length === 0) {
+        return (
+             <Link href={category.href} className='flex-1 text-left py-2.5 font-semibold text-base'>{category.name}</Link>
+        )
+    }
+
     return (
        <Accordion type="single" collapsible className="w-full">
         <AccordionItem value={category.name} className="border-none">
           <AccordionTrigger className="py-2.5 font-semibold text-base hover:no-underline">
-             <Link href={category.href} className='flex-1 text-left'>{category.name}</Link>
+             {category.name}
           </AccordionTrigger>
           <AccordionContent className="pl-4">
               <Accordion type="multiple" collapsible className="w-full">
@@ -78,26 +84,28 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
           </Link>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        className="w-auto p-4" 
-        sideOffset={20} 
-        onMouseEnter={handleOpen} 
-        onMouseLeave={handleClose}
-        align="start"
-      >
-        <div className="grid grid-flow-col auto-cols-max gap-8">
-          {category.subCategories.map((group: any) => (
-             <div key={group.group} className="flex flex-col space-y-2">
-                <h3 className="font-bold text-primary">{group.group}</h3>
-                 {group.items.map((sub: string) => (
-                    <Link key={sub} href="#" className="text-muted-foreground hover:text-foreground text-sm">
-                      {sub}
-                    </Link>
-                  ))}
-             </div>
-          ))}
-        </div>
-      </DropdownMenuContent>
+      {category.subCategories && category.subCategories.length > 0 && (
+          <DropdownMenuContent 
+            className="w-auto p-4" 
+            sideOffset={20} 
+            onMouseEnter={handleOpen} 
+            onMouseLeave={handleClose}
+            align="start"
+          >
+            <div className="grid grid-flow-col auto-cols-max gap-8">
+              {category.subCategories.map((group: any) => (
+                 <div key={group.group} className="flex flex-col space-y-2">
+                    <h3 className="font-bold text-primary">{group.group}</h3>
+                     {group.items.map((sub: string) => (
+                        <Link key={sub} href="#" className="text-muted-foreground hover:text-foreground text-sm">
+                          {sub}
+                        </Link>
+                      ))}
+                 </div>
+              ))}
+            </div>
+          </DropdownMenuContent>
+      )}
     </DropdownMenu>
   );
 }

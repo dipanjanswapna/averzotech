@@ -17,6 +17,7 @@ import { Logo } from "@/components/logo"
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "@/lib/firebase"
 import { useCart } from "@/hooks/use-cart"
+import { useToast } from "@/hooks/use-toast"
 
 
 interface Order {
@@ -63,7 +64,8 @@ function ConfirmationContent() {
     const searchParams = useSearchParams();
     const orderId = searchParams.get('orderId');
     const transactionId = searchParams.get('tran_id');
-    const { clearCart } = useCart();
+    const { clearCart, cart } = useCart();
+    const { toast } = useToast();
 
     const [orderDetails, setOrderDetails] = React.useState<Order | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -92,7 +94,10 @@ function ConfirmationContent() {
                 
                 if (orderData) {
                     setOrderDetails(orderData);
-                    clearCart();
+                    // Clear cart only if it's not already empty to prevent repeated clearing on page refresh
+                    if (cart.length > 0) {
+                        clearCart();
+                    }
                 } else {
                      console.error("Order not found!");
                      toast({
@@ -120,7 +125,7 @@ function ConfirmationContent() {
         } else {
             router.push('/');
         }
-    }, [orderId, transactionId, router, clearCart]);
+    }, [orderId, transactionId, router, clearCart, toast, cart.length]);
 
 
     const handlePrint = () => {
@@ -282,9 +287,6 @@ function ConfirmationContent() {
     )
 }
 
-// Add a global toast instance for the component
-import { toast } from "@/hooks/use-toast";
-
 export default function OrderConfirmationPage() {
     return (
         <React.Suspense fallback={<div>Loading...</div>}>
@@ -292,4 +294,3 @@ export default function OrderConfirmationPage() {
         </React.Suspense>
     )
 }
-

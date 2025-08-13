@@ -3,21 +3,12 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from './use-toast';
+import type { Product } from './use-cart'; // Import a more complete Product type
 
-export interface WishlistItem {
-    id: string;
-    name: string;
-    brand: string;
-    images: string[];
-    pricing: {
-      price: number;
-      comparePrice?: number;
-      discount?: number;
-    };
-    inventory?: {
-        availability: string;
-    }
+export interface WishlistItem extends Omit<Product, 'quantity' | 'selectedColor' | 'selectedSize'> {
+    // Wishlist items don't have quantity or selected variants
 }
+
 
 interface WishlistContextType {
   wishlist: WishlistItem[];

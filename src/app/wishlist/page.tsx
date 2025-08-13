@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/hooks/use-toast";
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
+import { Product } from '@/hooks/use-cart';
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, clearWishlist } = useWishlist();
@@ -37,12 +38,12 @@ export default function WishlistPage() {
         return;
     }
     // A real app would need to handle variant selection (size, color)
-    const productToAdd = {
+    const productToAdd: Omit<Product, 'quantity'> = {
         ...item,
-        selectedSize: 'M', // Default or fetch available
-        selectedColor: 'Default', // Default or fetch available
-        shipping: { estimatedDelivery: '3-5 days' }, // Default or fetch
-        inventory: { sku: 'DEFAULT-SKU', ...item.inventory }
+        selectedSize: item.variants?.sizes?.[0] || 'M', // Default or fetch available
+        selectedColor: item.variants?.colors?.[0]?.name || 'Default', // Default or fetch available
+        shipping: item.shipping || { estimatedDelivery: '3-5 days' }, // Default or fetch
+        inventory: item.inventory || { sku: 'DEFAULT-SKU', availability: 'in-stock' }
     };
 
     addToCart(productToAdd as any);

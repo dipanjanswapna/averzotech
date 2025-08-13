@@ -38,7 +38,7 @@ export interface ShippingMethod {
 
 
 // Define the structure of a product in the cart
-interface Product {
+export interface Product {
     id: string;
     name: string;
     brand: string;
@@ -246,6 +246,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         const applicableItems = cart.filter(item => applicableProductIds.includes(item.id));
         if (applicableItems.length === 0) return 0; // No applicable items
         applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
+    }
+    
+    // Ensure minPurchase is met on the applicable subtotal
+    if (appliedCoupon.applicability?.minPurchase && applicableSubtotal < appliedCoupon.applicability.minPurchase) {
+      return 0;
     }
 
     if(appliedCoupon.type === 'fixed') {

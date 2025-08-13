@@ -8,9 +8,10 @@ import { X } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { formatPrice } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Product } from "@/hooks/use-cart";
 
 interface CartItemProps {
-  data: any
+  data: Product
 };
 
 const CartItem: React.FC<CartItemProps> = ({
