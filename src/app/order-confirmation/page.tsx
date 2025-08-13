@@ -125,7 +125,7 @@ function ConfirmationContent() {
         } else {
             router.push('/');
         }
-    }, [orderId, transactionId, router, clearCart, toast, cart.length]);
+    }, [orderId, transactionId, router, toast]);
 
 
     const handlePrint = () => {

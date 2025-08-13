@@ -14,8 +14,8 @@ export interface AppliedCoupon {
     applicability?: {
         type: 'all' | 'products';
         ids: string[];
-        minPurchase?: number; // Add this line
-    }
+    };
+    minPurchase?: number;
 }
 
 export interface AppliedGiftCard {
@@ -58,6 +58,11 @@ export interface Product {
     };
     inventory: {
         sku: string;
+        availability: 'in-stock' | 'out-of-stock';
+    };
+    variants: {
+        sizes: string[];
+        colors: { name: string, hex: string }[];
     }
     // Variant info
     selectedColor: string;
@@ -250,7 +255,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // Ensure minPurchase is met on the applicable subtotal
-    if (appliedCoupon.applicability?.minPurchase && applicableSubtotal < appliedCoupon.applicability.minPurchase) {
+    if (appliedCoupon.minPurchase && applicableSubtotal < appliedCoupon.minPurchase) {
       return 0;
     }
 
