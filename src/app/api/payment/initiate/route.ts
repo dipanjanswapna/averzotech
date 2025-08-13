@@ -21,36 +21,37 @@ export async function POST(req: NextRequest) {
     const { name, email, phone, fullAddress } = shippingAddress;
     const tran_id = nanoid();
 
-    const params = new URLSearchParams();
-    params.append('store_id', store_id);
-    params.append('store_passwd', store_passwd);
-    params.append('total_amount', String(Math.round(total)));
-    params.append('currency', 'BDT');
-    params.append('tran_id', tran_id);
-    params.append('success_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`);
-    params.append('fail_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail`);
-    params.append('cancel_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`);
-    params.append('ipn_url', `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`);
-    params.append('shipping_method', shippingAddress.method || 'Courier');
-    params.append('product_name', items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items');
-    params.append('product_category', 'eCommerce');
-    params.append('product_profile', 'general');
-    params.append('cus_name', name);
-    params.append('cus_email', email);
-    params.append('cus_add1', fullAddress);
-    params.append('cus_add2', 'N/A');
-    params.append('cus_city', shippingAddress.district || 'Dhaka');
-    params.append('cus_state', shippingAddress.division || 'Dhaka');
-    params.append('cus_postcode', '1000');
-    params.append('cus_country', 'Bangladesh');
-    params.append('cus_phone', phone);
-    params.append('ship_name', name);
-    params.append('ship_add1', fullAddress);
-    params.append('ship_add2', 'N/A');
-    params.append('ship_city', shippingAddress.district || 'Dhaka');
-    params.append('ship_state', shippingAddress.division || 'Dhaka');
-    params.append('ship_postcode', '1000');
-    params.append('ship_country', 'Bangladesh');
+    const post_body: any = {};
+    post_body.store_id = store_id;
+    post_body.store_passwd = store_passwd;
+    post_body.total_amount = total;
+    post_body.currency = 'BDT';
+    post_body.tran_id = tran_id;
+    post_body.success_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/success`;
+    post_body.fail_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/fail`;
+    post_body.cancel_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/cancel`;
+    post_body.ipn_url = `${process.env.NEXT_PUBLIC_APP_URL}/api/payment/ipn`;
+    post_body.shipping_method = shippingAddress.method || 'Courier';
+    post_body.product_name = items.map((item: any) => item.name).join(', ').substring(0, 99) || 'Assorted Items';
+    post_body.product_category = 'eCommerce';
+    post_body.product_profile = 'general';
+    post_body.cus_name = name;
+    post_body.cus_email = email;
+    post_body.cus_add1 = fullAddress;
+    post_body.cus_add2 = 'N/A';
+    post_body.cus_city = shippingAddress.district || 'Dhaka';
+    post_body.cus_state = shippingAddress.division || 'Dhaka';
+    post_body.cus_postcode = '1000';
+    post_body.cus_country = 'Bangladesh';
+    post_body.cus_phone = phone;
+    post_body.ship_name = name;
+    post_body.ship_add1 = fullAddress;
+    post_body.ship_add2 = 'N/A';
+    post_body.ship_city = shippingAddress.district || 'Dhaka';
+    post_body.ship_state = shippingAddress.division || 'Dhaka';
+    post_body.ship_postcode = '1000';
+    post_body.ship_country = 'Bangladesh';
+
 
     try {
         const pendingOrderRef = doc(db, 'pending_orders', tran_id);
@@ -69,12 +70,12 @@ export async function POST(req: NextRequest) {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: params,
+            body: new URLSearchParams(post_body),
             cache: 'no-store'
         });
 
         const responseData = await response.json();
-
+        
         if (responseData.status === 'SUCCESS' && responseData.GatewayPageURL) {
             return NextResponse.json({ GatewayPageURL: responseData.GatewayPageURL });
         } else {

@@ -14,14 +14,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
-import { nanoid } from "nanoid"
 import { OrderSummary } from "@/components/order-summary"
 
 
 export default function PaymentPage() {
     const router = useRouter();
     const { user } = useAuth();
-    const { cart, clearCart, subTotal, total, appliedCoupon, appliedGiftCard, shippingInfo, shippingFee, taxes } = useCart();
+    const { cart, subTotal, total, appliedCoupon, appliedGiftCard, shippingInfo, setShippingInfo, shippingFee, taxes } = useCart();
     const { toast } = useToast();
     const [paymentMethod, setPaymentMethod] = React.useState('card');
     const [loading, setLoading] = React.useState(false);
@@ -78,11 +77,10 @@ export default function PaymentPage() {
         };
 
         try {
-            const tran_id = nanoid();
             const response = await fetch('/api/payment/initiate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...orderData, tran_id })
+                body: JSON.stringify(orderData)
             });
 
             const data = await response.json();
