@@ -22,36 +22,38 @@ export default function VendorLayout({
   const auth = getAuth(app);
   
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // Not logged in, redirect to login
-        router.push('/login');
-        return;
-      }
-      
-      if (user.role !== 'vendor') {
-        // Not a vendor, redirect to home
-        toast({
-            title: "Access Denied",
-            description: "You do not have permission to access the vendor dashboard.",
-            variant: "destructive",
+    if (loading) {
+      return; // Wait until auth state is confirmed
+    }
+
+    if (!user) {
+      // Not logged in, redirect to login
+      router.push('/login');
+      return;
+    }
+    
+    if (user.role !== 'vendor') {
+      // Not a vendor, redirect to home
+      toast({
+          title: "Access Denied",
+          description: "You do not have permission to access the vendor dashboard.",
+          variant: "destructive",
+      });
+      router.push('/');
+      return;
+    }
+    
+    if (user.status !== 'active') {
+        // Vendor is not active, sign them out and show message
+        signOut(auth).then(() => {
+           toast({
+              title: "Approval Pending",
+              description: "Your vendor account has not been approved yet. You have been logged out.",
+              variant: "destructive",
+              duration: 5000,
+           });
+           router.push('/login');
         });
-        router.push('/');
-        return;
-      }
-      
-      if (user.status !== 'active') {
-          // Vendor is not active, sign them out and show message
-          signOut(auth).then(() => {
-             toast({
-                title: "Approval Pending",
-                description: "Your vendor account has not been approved yet. You have been logged out.",
-                variant: "destructive",
-                duration: 5000,
-             });
-             router.push('/login');
-          });
-      }
     }
   }, [user, loading, router, toast, auth]);
 

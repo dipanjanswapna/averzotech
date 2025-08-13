@@ -163,7 +163,7 @@ export default function EditVendorProductPage() {
     const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
     
     useEffect(() => {
-        if (!productId) return;
+        if (!productId || !user) return;
 
         const fetchProduct = async () => {
             setIsFetching(true);

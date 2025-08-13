@@ -30,9 +30,11 @@ export default function AdminLayout({
         if (userDoc.exists() && userDoc.data().role === 'admin') {
           setUser({ ...firebaseUser, ...userDoc.data() });
         } else {
-          router.push('/');
+          // If not an admin, redirect to login page.
+          router.push('/login');
         }
       } else {
+        // If not logged in, redirect to login page.
         router.push('/login');
       }
       setLoading(false);
@@ -50,6 +52,7 @@ export default function AdminLayout({
   }
 
   if (!user) {
+    // This state is briefly hit during redirect, returning null prevents flicker.
     return null; 
   }
 
