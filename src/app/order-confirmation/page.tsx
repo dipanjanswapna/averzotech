@@ -157,7 +157,7 @@ function ConfirmationContent() {
                             <div className="lg:col-span-1">
                                 <h3 className="font-semibold mb-2 flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-primary"/>Refund Policy</h3>
                                 <p className="text-muted-foreground text-sm">
-                                    We offer a 7-day return policy. <Link href="#" className="text-primary hover:underline">Learn More</Link>
+                                    We offer a 7-day return policy. <Link href="/returns-policy" className="text-primary hover:underline">Learn More</Link>
                                 </p>
                             </div>
                         </div>
@@ -233,7 +233,7 @@ function ConfirmationContent() {
                         <Separator className="my-8" />
                         
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                            <p className="text-sm text-muted-foreground text-center sm:text-left">Need help? Contact our <Link href="#" className="text-primary hover:underline">Customer Support</Link>.</p>
+                            <p className="text-sm text-muted-foreground text-center sm:text-left">Need help? Contact our <Link href="/contact-us" className="text-primary hover:underline">Customer Support</Link>.</p>
                             <div className="flex gap-2">
                                 <Button variant="outline" onClick={handlePrint}>
                                     <Printer className="mr-2 h-4 w-4" />
