@@ -20,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, Package, Truck, User, FileText, Gift } from 'lucide-react';
+import { ChevronLeft, Package, Truck, User, FileText, Gift, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Stepper, Step } from '@/components/ui/stepper';
@@ -38,6 +38,7 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch, increment, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 
 interface Order {
@@ -238,6 +239,15 @@ export default function OrderDetailsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
+          {order.payment.method === 'cod' && (
+            <Alert variant="default" className="bg-yellow-50 border-yellow-200 text-yellow-800 [&>svg]:text-yellow-500">
+                <AlertTriangle className="h-4 w-4"/>
+                <AlertTitle>Cash on Delivery Order</AlertTitle>
+                <AlertDescription>
+                    This is a COD order. Payment will be collected upon delivery.
+                </AlertDescription>
+            </Alert>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Order Items</CardTitle>
@@ -408,4 +418,3 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
-
