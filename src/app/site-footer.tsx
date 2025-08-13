@@ -21,8 +21,6 @@ export function SiteFooter() {
                     <li><Link href="/home-living" className="text-sm text-muted-foreground hover:text-primary">Home & Living</Link></li>
                     <li><Link href="/beauty" className="text-sm text-muted-foreground hover:text-primary">Beauty</Link></li>
                     <li><Link href="/shop" className="text-sm text-muted-foreground hover:text-primary">Genz</Link></li>
-                    <li><Link href="/admin/gift-cards" className="text-sm text-muted-foreground hover:text-primary">Gift Cards</Link></li>
-                    <li><Link href="/profile" className="text-sm text-muted-foreground hover:text-primary">Myntra Insider</Link></li>
                 </ul>
                  <h3 className="mt-6 mb-4 font-bold text-xs tracking-widest uppercase">USEFUL LINKS</h3>
                 <ul className="space-y-2">
@@ -30,8 +28,6 @@ export function SiteFooter() {
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Careers</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Site Map</Link></li>
                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Corporate Information</Link></li>
-                     <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Whitehat</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Cleartrip</Link></li>
                 </ul>
             </div>
              <div className='col-span-1'>
@@ -50,10 +46,10 @@ export function SiteFooter() {
                 </ul>
             </div>
              <div className='col-span-2 lg:col-span-1'>
-                <h3 className="mb-4 font-bold text-xs tracking-widest uppercase">EXPERIENCE MYNTRA APP ON MOBILE</h3>
+                <h3 className="mb-4 font-bold text-xs tracking-widest uppercase">EXPERIENCE AVERZO APP ON MOBILE</h3>
                  <div className="flex flex-col sm:flex-row lg:flex-col items-start gap-2">
-                    <Link href="#"><Image src="https://placehold.co/136x40.png" width={136} height={40} alt="Get it on Google Play" data-ai-hint="Google Play button"/></Link>
-                    <Link href="#"><Image src="https://placehold.co/136x40.png" width={136} height={40} alt="Download on the App Store" data-ai-hint="App Store button"/></Link>
+                    <Link href="#"><Image src="https://placehold.co/136x40.png" width={136} height={40} alt="Get it on Google Play" data-ai-hint="Google Play store button"/></Link>
+                    <Link href="#"><Image src="https://placehold.co/136x40.png" width={136} height={40} alt="Download on the App Store" data-ai-hint="Apple App store button"/></Link>
                 </div>
                 <h3 className="mt-6 mb-4 font-bold text-xs tracking-widest uppercase">KEEP IN TOUCH</h3>
                 <div className="flex space-x-4">

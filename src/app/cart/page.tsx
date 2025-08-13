@@ -139,13 +139,13 @@ export default function CartPage() {
         const giftCardDoc = giftCardSnap.docs[0];
         const giftCardData = giftCardDoc.data();
 
-        if (giftCardData.status !== 'Active' || giftCardData.currentBalance <= 0) {
-            toast({ title: "Gift Card Not Usable", description: "This gift card is either used or inactive.", variant: "destructive" });
-            return;
-        }
-
         if (new Date(giftCardData.expiryDate) < new Date()) {
              toast({ title: "Gift Card Expired", description: "This gift card has expired.", variant: "destructive" });
+            return;
+        }
+        
+        if (giftCardData.status !== 'Active' || giftCardData.currentBalance <= 0) {
+            toast({ title: "Gift Card Not Usable", description: "This gift card is either used or inactive.", variant: "destructive" });
             return;
         }
 

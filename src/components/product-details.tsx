@@ -233,6 +233,7 @@ export function ProductDetails() {
   };
 
   const hasPurchasedProduct = async (userId: string, productId: string): Promise<boolean> => {
+    if (!userId || !productId) return false;
     const ordersRef = collection(db, "orders");
     const q = query(
       ordersRef,
