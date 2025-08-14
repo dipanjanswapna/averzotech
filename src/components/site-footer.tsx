@@ -79,7 +79,7 @@ export function SiteFooter() {
         </div>
       </div>
        <div className="relative border-t border-border text-white">
-        <Image src="https://i.postimg.cc/PxH2GnKd/beautiful-young-woman-wearing-professional-makeup.jpg" alt="Footer background" layout="fill" objectFit="cover" className="z-0" />
+        <Image src="https://i.postimg.cc/PxH2GnKd/beautiful-young-woman-wearing-professional-makeup.jpg" alt="Footer background" fill className="z-0 object-cover" />
         <div className="relative z-10 container py-4 text-center text-xs bg-black bg-opacity-50">
            <div className="flex flex-col items-center gap-2">
              <Image src="https://i.postimg.cc/28T0N850/photo-2025-08-14-01-23-50-removebg-preview.png" width={100} height={12} alt="Payment methods" data-ai-hint="payment methods" />
