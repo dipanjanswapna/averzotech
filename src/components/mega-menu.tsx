@@ -54,12 +54,14 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
                 {category.subCategories.map((group: any) => (
                     <AccordionItem value={group.group} key={group.group} className="border-none">
                         <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:no-underline">
-                            {group.group}
+                            <Link href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}`}>
+                                {group.group}
+                            </Link>
                         </AccordionTrigger>
                          <AccordionContent className="pl-4">
                             <div className="flex flex-col space-y-2">
                             {group.items.map((sub: string) => (
-                                <Link key={sub} href="#" className="text-muted-foreground hover:text-foreground text-sm py-1.5">
+                                <Link key={sub} href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}&subcategory=${encodeURIComponent(sub)}`} className="text-muted-foreground hover:text-foreground text-sm py-1.5">
                                   {sub}
                                 </Link>
                               ))}
@@ -95,9 +97,13 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
             <div className="grid grid-flow-col auto-cols-max gap-8">
               {category.subCategories.map((group: any) => (
                  <div key={group.group} className="flex flex-col space-y-2">
-                    <h3 className="font-bold text-primary">{group.group}</h3>
+                    <h3 className="font-bold text-primary">
+                      <Link href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}`} className="hover:underline">
+                        {group.group}
+                      </Link>
+                    </h3>
                      {group.items.map((sub: string) => (
-                        <Link key={sub} href="#" className="text-muted-foreground hover:text-foreground text-sm">
+                        <Link key={sub} href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}&subcategory=${encodeURIComponent(sub)}`} className="text-muted-foreground hover:text-foreground text-sm">
                           {sub}
                         </Link>
                       ))}
