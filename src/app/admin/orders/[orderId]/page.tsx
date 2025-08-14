@@ -71,6 +71,10 @@ interface Order {
             code: string;
             discountAmount: number;
         } | null;
+        giftCard?: {
+            code: string;
+            usedAmount: number;
+        } | null;
         total: number;
     };
     paymentDetails?: {
@@ -318,6 +322,12 @@ export default function OrderDetailsPage() {
                             <span className='font-semibold'>- ৳{order.payment.coupon.discountAmount.toFixed(2)}</span>
                         </div>
                     )}
+                    {order.payment.giftCard && (
+                         <div className="flex justify-between text-blue-600">
+                            <span>Gift Card ({order.payment.giftCard.code.substring(0,9)}...)</span>
+                            <span className='font-semibold'>- ৳{order.payment.giftCard.usedAmount.toFixed(2)}</span>
+                        </div>
+                    )}
                      <Separator />
                      <div className="flex justify-between font-bold text-base">
                         <span>Total</span>
@@ -422,4 +432,3 @@ export default function OrderDetailsPage() {
     </div>
   );
 }
-
