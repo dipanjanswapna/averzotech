@@ -216,7 +216,7 @@ export function SiteHeader() {
             </DropdownMenu>
         </div>
       </div>
-      <div className="h-10 items-center border-t hidden md:flex">
+       <div className="h-10 items-center border-t hidden md:flex">
           <div className="container">
             <nav className="flex items-center gap-6 text-sm font-medium">
               {categories.map((category) => (
