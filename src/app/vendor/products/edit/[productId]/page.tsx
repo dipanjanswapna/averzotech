@@ -43,59 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
-
-const initialFilterCategories = [
-    { 
-      name: 'Men',
-      groups: [
-        { name: 'Topwear', subcategories: ['T-Shirts', 'Casual Shirts', 'Formal Shirts', 'Sweatshirts', 'Jackets'] },
-        { name: 'Bottomwear', subcategories: ['Jeans', 'Casual Trousers', 'Formal Trousers', 'Shorts', 'Track Pants'] },
-        { name: 'Footwear', subcategories: ['Casual Shoes', 'Sports Shoes', 'Formal Shoes', 'Sneakers', 'Sandals'] },
-        { name: 'Accessories', subcategories: ['Watches', 'Wallets', 'Belts', 'Sunglasses', 'Bags'] }
-      ]
-    },
-    { 
-      name: 'Women', 
-      groups: [
-        { name: 'Indian & Fusion Wear', subcategories: ['Kurtas & Suits', 'Sarees', 'Lehengas', 'Ethnic Gowns'] },
-        { name: 'Western Wear', subcategories: ['Dresses', 'Tops', 'T-Shirts', 'Jeans', 'Skirts'] },
-        { name: 'Footwear', subcategories: ['Flats', 'Heels', 'Boots', 'Sports Shoes'] },
-        { name: 'Jewellery & Accessories', subcategories: ['Earrings', 'Necklaces', 'Handbags', 'Watches'] }
-      ]
-    },
-    { name: 'Kids', groups: [
-        { name: 'Boys Clothing', subcategories: ['T-Shirts', 'Shirts', 'Jeans', 'Shorts'] },
-        { name: 'Girls Clothing', subcategories: ['Dresses', 'Tops', 'Skirts', 'T-shirts'] },
-        { name: 'Infants', subcategories: ['Rompers', 'Bodysuits', 'Sleepwear'] },
-        { name: 'Toys & Games', subcategories: ['Action Figures', 'Dolls', 'Board Games', 'Puzzles'] }
-    ]},
-    { name: 'Home & Living', groups: [
-        { name: 'Bed & Bath', subcategories: ['Bedsheets', 'Pillows', 'Towels', 'Bathrobes'] },
-        { name: 'Decor', subcategories: ['Vases', 'Photo Frames', 'Wall Art', 'Candles'] },
-        { name: 'Kitchen & Dining', subcategories: ['Dinnerware', 'Cookware', 'Storage', 'Cutlery'] }
-    ]},
-    { name: 'Beauty', groups: [
-        { name: 'Makeup', subcategories: ['Lipstick', 'Foundation', 'Mascara', 'Eyeshadow'] },
-        { name: 'Skincare', subcategories: ['Moisturizer', 'Cleanser', 'Sunscreen', 'Face Masks'] },
-        { name: 'Fragrance', subcategories: ['Perfumes', 'Deodorants', 'Body Mists'] },
-        { name: 'Haircare', subcategories: ['Shampoo', 'Conditioner', 'Hair Oil', 'Styling Tools'] }
-    ]},
-    { name: 'Electronics', groups: [
-        { name: 'Mobiles & Wearables', subcategories: ['Smartphones', 'Smartwatches', 'Headphones', 'Speakers']},
-        { name: 'Laptops & Computers', subcategories: ['Laptops', 'Desktops', 'Monitors', 'Keyboards', 'Mouse']},
-        { name: 'Cameras & Drones', subcategories: ['DSLRs', 'Mirrorless Cameras', 'Drones', 'Action Cameras']},
-    ]},
-    { name: 'Sports', groups: [
-        { name: 'Cricket', subcategories: ['Bats', 'Balls', 'Pads', 'Gloves']},
-        { name: 'Football', subcategories: ['Footballs', 'Jerseys', 'Boots', 'Shin Guards']},
-        { name: 'Fitness', subcategories: ['Dumbbells', 'Yoga Mats', 'Resistance Bands', 'Trackers']},
-    ]},
-    { name: 'Books', groups: [
-        { name: 'Fiction', subcategories: ['Mystery', 'Thriller', 'Sci-Fi', 'Fantasy', 'Romance']},
-        { name: 'Non-Fiction', subcategories: ['Biography', 'History', 'Self-Help', 'Business']},
-        { name: "Children's Books", subcategories: ['Picture Books', 'Story Books', 'Young Adult']},
-    ]},
-];
+import { filterCategories as initialFilterCategories } from '@/lib/categories';
 
 interface ImageObject {
     file?: File;
@@ -292,8 +240,8 @@ export default function EditVendorProductPage() {
           setFilterCategories(prevCategories => {
             return prevCategories.map(cat => {
               if (cat.name === selectedCategory) {
-                if (cat.groups.some(g => g.name.toLowerCase() === newGroupName.toLowerCase())) return cat;
-                return { ...cat, groups: [...cat.groups, { name: newGroupName, subcategories: [] }] };
+                if (cat.subCategories.some((g:any) => g.group.toLowerCase() === newGroupName.toLowerCase())) return cat;
+                return { ...cat, subCategories: [...cat.subCategories, { group: newGroupName, items: [] }] };
               }
               return cat;
             });
@@ -310,10 +258,10 @@ export default function EditVendorProductPage() {
               if (cat.name === selectedCategory) {
                 return {
                   ...cat,
-                  groups: cat.groups.map(group => {
-                    if (group.name === selectedGroup) {
-                       if (group.subcategories.some(s => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
-                      return { ...group, subcategories: [...group.subcategories, newSubcategoryName] };
+                  subCategories: cat.subCategories.map((group:any) => {
+                    if (group.group === selectedGroup) {
+                       if (group.items.some((s:any) => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
+                      return { ...group, items: [...group.items, newSubcategoryName] };
                     }
                     return group;
                   })
@@ -328,12 +276,13 @@ export default function EditVendorProductPage() {
 
     const availableGroups = useMemo(() => {
         if (!selectedCategory) return [];
-        return filterCategories.find(c => c.name === selectedCategory)?.groups || [];
+        return filterCategories.find(c => c.name === selectedCategory)?.subCategories || [];
     }, [selectedCategory, filterCategories]);
 
     const availableSubcategories = useMemo(() => {
         if (!selectedGroup) return [];
-        return availableGroups.find(g => g.name === selectedGroup)?.subcategories || [];
+        const group: any = availableGroups.find((g: any) => g.group === selectedGroup);
+        return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
 
     const handleUpdateProduct = async () => {
@@ -667,7 +616,7 @@ export default function EditVendorProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map(g => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
+                          {availableGroups.map((g: any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -698,7 +647,7 @@ export default function EditVendorProductPage() {
                       <Select onValueChange={setSelectedSubcategory} value={selectedSubcategory} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select sub-category" /></SelectTrigger>
                         <SelectContent>
-                          {availableSubcategories.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          {availableSubcategories.map((s:any) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -786,5 +735,3 @@ export default function EditVendorProductPage() {
     </div>
   );
 }
-
-    

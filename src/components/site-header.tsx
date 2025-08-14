@@ -144,6 +144,12 @@ export function SiteHeader() {
             </Link>
         </div>
 
+        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            {categories.map((category) => (
+            <MegaMenu key={category.name} category={category} />
+            ))}
+        </nav>
+
         <div className="flex flex-1 items-center justify-end gap-2">
              <form onSubmit={handleSearch} className="hidden md:flex items-center gap-2 rounded-md border border-input p-1 pl-3 w-full max-w-xs">
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -216,27 +222,6 @@ export function SiteHeader() {
             </DropdownMenu>
         </div>
       </div>
-       <div className="h-10 items-center border-t hidden md:flex">
-          <div className="container">
-            <nav className="flex items-center gap-6 text-sm font-medium">
-              {categories.map((category) => (
-                <MegaMenu key={category.name} category={category} />
-              ))}
-            </nav>
-          </div>
-       </div>
-       <div className="md:hidden h-10 items-center border-t flex">
-          <div className="container">
-            <ScrollArea className="-mx-4">
-              <nav className="flex items-center gap-6 text-sm font-medium px-4">
-                 {categories.map((category) => (
-                    <Link key={category.name} href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
-                ))}
-              </nav>
-              <ScrollBar orientation="horizontal" className="invisible" />
-            </ScrollArea>
-          </div>
-       </div>
     </header>
   );
 }
