@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 
 export default function ReturnsPolicyPage() {
   return (
@@ -54,7 +53,6 @@ export default function ReturnsPolicyPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

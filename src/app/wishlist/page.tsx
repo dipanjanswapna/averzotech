@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, ShoppingCart, Star, Home } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/hooks/use-toast";
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
@@ -130,7 +129,6 @@ export default function WishlistPage() {
             </div>
         )}
       </main>
-      <SiteFooter />
     </div>
   );
 }

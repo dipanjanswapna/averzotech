@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 
 export default function TermsAndConditionsPage() {
   return (
@@ -50,7 +49,6 @@ export default function TermsAndConditionsPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

@@ -2,7 +2,6 @@
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Gift } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -56,7 +55,6 @@ export default function GiftCardsPage() {
         </section>
 
       </main>
-      <SiteFooter />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { XCircle, Clock, CheckCircle } from 'lucide-react';
 
 export default function CancellationPolicyPage() {
@@ -67,7 +66,6 @@ export default function CancellationPolicyPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

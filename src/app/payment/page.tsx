@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
@@ -128,7 +127,6 @@ export default function PaymentPage() {
                 <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
                     <p>Redirecting to shipping page...</p>
                 </main>
-                <SiteFooter />
             </div>
         )
     }
@@ -228,7 +226,6 @@ export default function PaymentPage() {
                     </div>
                 </div>
             </main>
-            <SiteFooter />
         </div>
     )
 }

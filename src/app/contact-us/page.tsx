@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -92,7 +91,6 @@ export default function ContactUsPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

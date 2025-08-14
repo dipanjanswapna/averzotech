@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -94,7 +93,6 @@ export default function BeautyPage() {
                         </div>
                     </div>
                 </main>
-                <SiteFooter />
             </div>
         )
     }
@@ -233,9 +231,6 @@ export default function BeautyPage() {
 
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }
-
-    

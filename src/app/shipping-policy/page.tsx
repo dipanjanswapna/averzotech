@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Truck, Clock, MapPin } from 'lucide-react';
 
 export default function ShippingPolicyPage() {
@@ -64,7 +63,6 @@ export default function ShippingPolicyPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

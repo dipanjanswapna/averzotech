@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import Link from 'next/link';
 import { filterCategories } from '@/lib/categories';
 
@@ -55,7 +54,6 @@ export default function SiteMapPage() {
             </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

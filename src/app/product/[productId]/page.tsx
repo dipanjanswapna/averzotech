@@ -1,7 +1,6 @@
 
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Metadata } from 'next';
@@ -35,7 +34,6 @@ export default function ProductDetailsPage() {
             <div className="flex min-h-screen flex-col bg-background">
                 <SiteHeader />
                 <ProductDetails />
-                <SiteFooter />
             </div>
         </React.Suspense>
     )

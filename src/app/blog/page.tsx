@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,7 +68,6 @@ export default function BlogPage() {
           ))}
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

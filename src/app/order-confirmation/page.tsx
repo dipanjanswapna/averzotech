@@ -10,7 +10,6 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Logo } from "@/components/logo"
@@ -274,7 +273,7 @@ function ConfirmationContent() {
                                 </div>
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-bold text-lg">
-                                    <p>Grand Total</p>
+                                    <p>Total</p>
                                     <p>৳{orderDetails.payment.total.toFixed(2)}</p>
                                 </div>
                             </div>
@@ -298,7 +297,6 @@ function ConfirmationContent() {
                     </CardContent>
                 </Card>
             </main>
-            <SiteFooter />
         </div>
     )
 }

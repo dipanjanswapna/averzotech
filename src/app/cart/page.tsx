@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, Heart, Gift, ChevronLeft, X } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { useToast } from '@/hooks/use-toast';
 import { useCart, AppliedCoupon } from '@/hooks/use-cart';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -315,7 +314,6 @@ export default function CartPage() {
             </div>
         )}
       </main>
-      <SiteFooter />
     </div>
   );
 }

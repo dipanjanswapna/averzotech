@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Building, Target, Users, Handshake } from 'lucide-react';
 
 export default function CorporateInformationPage() {
@@ -60,7 +59,6 @@ export default function CorporateInformationPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

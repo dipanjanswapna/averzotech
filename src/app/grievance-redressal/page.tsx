@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Mail, Phone } from 'lucide-react';
 
 export default function GrievanceRedressalPage() {
@@ -62,7 +61,6 @@ export default function GrievanceRedressalPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

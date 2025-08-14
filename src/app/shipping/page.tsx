@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
@@ -209,7 +208,6 @@ export default function ShippingPage() {
                     </div>
                 </div>
             </main>
-            <SiteFooter />
         </div>
     )
 }

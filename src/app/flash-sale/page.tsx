@@ -2,7 +2,6 @@
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -92,7 +91,6 @@ const LoadingSkeleton = () => (
             </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
 );
 
@@ -186,7 +184,6 @@ export default function FlashSalePage() {
                   <p className="text-muted-foreground mt-4">Check back later for exciting deals!</p>
                    <Button asChild className="mt-6"><Link href="/">Go Home</Link></Button>
               </main>
-              <SiteFooter />
           </div>
       )
   }
@@ -317,7 +314,6 @@ export default function FlashSalePage() {
             </Button>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

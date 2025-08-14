@@ -1,6 +1,5 @@
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 
 export default function PrivacyPolicyPage() {
   return (
@@ -52,7 +51,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }
