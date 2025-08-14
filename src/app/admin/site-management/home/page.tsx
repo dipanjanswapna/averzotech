@@ -26,6 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ContentItem {
   id?: string;
@@ -37,6 +38,9 @@ interface ContentItem {
   link?: string;
   name?: string;
   discount?: string;
+  title?: string;
+  subtitle?: string;
+  layout?: 'full' | 'half';
 }
 
 interface DealProduct {
@@ -66,6 +70,7 @@ export default function HomePageManager() {
   const [brands, setBrands] = useState<ContentItem[]>([]);
   const [deals, setDeals] = useState<DealProduct[]>([]);
   const [categories, setCategories] = useState<ContentItem[]>([]);
+  const [ctaImages, setCtaImages] = useState<ContentItem[]>([]);
   
   // Fetch all content from Firestore
   useEffect(() => {
@@ -79,6 +84,7 @@ export default function HomePageManager() {
         setBrands(data.brands?.map((brand: any) => ({ ...brand, preview: brand.url, id: Math.random().toString() })) || []);
         setDeals(data.deals || []);
         setCategories(data.categories?.map((cat: any) => ({ ...cat, preview: cat.url, id: Math.random().toString() })) || []);
+        setCtaImages(data.ctaImages?.map((cta: any) => ({...cta, preview: cta.url, id: Math.random().toString() })) || []);
       }
       setIsFetching(false);
     };
@@ -173,6 +179,7 @@ export default function HomePageManager() {
         brands: await processItems(brands, 'site_content/homepage/brands'),
         deals,
         categories: await processItems(categories, 'site_content/homepage/categories'),
+        ctaImages: await processItems(ctaImages, 'site_content/homepage/cta'),
       };
 
       await setDoc(doc(db, 'site_content', 'homepage'), homepageContent, { merge: true });
@@ -336,6 +343,42 @@ export default function HomePageManager() {
             </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Pre-Footer CTA</CardTitle>
+            <CardDescription>Manage the three-image call-to-action section above the footer.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+           {ctaImages.map((cta, index) => (
+                <div key={cta.id} className="p-4 border rounded-lg space-y-2 bg-secondary/50">
+                     <Image src={cta.preview || 'https://placehold.co/800x400.png'} alt={cta.title || ''} width={400} height={200} className="object-cover rounded-md mx-auto aspect-video" />
+                     <div className="grid grid-cols-2 gap-4">
+                        <Input placeholder="Title (e.g. Snug & Fun)" value={cta.title || ''} onChange={(e) => handleTextChange(index, 'title', e.target.value, setCtaImages, ctaImages)}/>
+                        <Input placeholder="Subtitle (e.g. Kid, live, play)" value={cta.subtitle || ''} onChange={(e) => handleTextChange(index, 'subtitle', e.target.value, setCtaImages, ctaImages)}/>
+                        <Input placeholder="Image URL" value={cta.url || ''} className="col-span-2" onChange={(e) => handleUrlChange(index, e.target.value, setCtaImages, ctaImages)} />
+                        <Input placeholder="Link URL" value={cta.link || ''} className="col-span-2" onChange={(e) => handleTextChange(index, 'link', e.target.value, setCtaImages, ctaImages)}/>
+                        <Input placeholder="AI Hint" value={cta.dataAiHint || ''} onChange={(e) => handleTextChange(index, 'dataAiHint', e.target.value, setCtaImages, ctaImages)}/>
+                        <Select value={cta.layout} onValueChange={(value) => handleTextChange(index, 'layout', value, setCtaImages, ctaImages)}>
+                            <SelectTrigger><SelectValue placeholder="Select Layout" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="full">Full Width</SelectItem>
+                                <SelectItem value="half">Half Width</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Input type="file" className="text-xs col-span-2" onChange={(e) => handleFileChange(e, index, setCtaImages, ctaImages)}/>
+                     </div>
+                    <Button variant="ghost" size="sm" className="w-full text-destructive" onClick={() => handleRemoveItem(index, setCtaImages)}>
+                        <Trash2 className="h-4 w-4 mr-2"/> Remove Item
+                    </Button>
+                </div>
+            ))}
+            <Button variant="outline" className="mt-4" onClick={() => handleAddItem(setCtaImages, { preview: 'https://placehold.co/800x400.png', title: '', subtitle: '', link: '', dataAiHint: '', layout: 'half' })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add CTA Item
+            </Button>
+        </CardContent>
+      </Card>
+
 
       <div className="flex justify-end sticky bottom-4">
           <Button onClick={handleSaveChanges} disabled={isLoading || isFetching} size="lg" className="shadow-lg">
