@@ -322,7 +322,7 @@ export function ProductDetails() {
               answer: ""
           });
           const qnaQuery = query(qnaRef, orderBy('questionCreatedAt', 'desc'));
-          const qnaSnap = await getDocs(qnaQuery);
+          const qnaSnap = await getDocs(qnaRef);
           setQna(qnaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnA)));
           setNewQuestion("");
           toast({ title: "Question Submitted!", description: "Your question has been posted." });
@@ -523,15 +523,15 @@ export function ProductDetails() {
             
             <div className="mt-4 flex gap-4">
                 <div className="text-center text-sm">
-                    <img src="https://placehold.co/50x50.png" alt="100% Original" className="mx-auto" data-ai-hint="original guarantee" />
+                    <img src="https://i.postimg.cc/63X9JhjJ/Screenshot-2025-08-14-014934.png" alt="100% Original" className="mx-auto h-12 w-12" data-ai-hint="original guarantee" />
                     <p>100% Original</p>
                 </div>
                  <div className="text-center text-sm">
-                    <img src="https://placehold.co/50x50.png" alt="Secure Payments" className="mx-auto" data-ai-hint="secure payment" />
+                    <img src="https://i.postimg.cc/ZRjzcwfj/Screenshot-2025-08-15-021258.png" alt="Secure Payments" className="mx-auto h-12 w-12" data-ai-hint="secure payment" />
                     <p>Secure Payments</p>
                 </div>
                  <div className="text-center text-sm">
-                    <img src="https://placehold.co/50x50.png" alt="Easy Returns" className="mx-auto" data-ai-hint="return policy" />
+                    <img src="https://i.postimg.cc/KvwhhNjq/Screenshot-2025-08-14-015302.png" alt="Easy Returns" className="mx-auto h-12 w-12" data-ai-hint="return policy" />
                     <p>Easy Returns</p>
                 </div>
             </div>
