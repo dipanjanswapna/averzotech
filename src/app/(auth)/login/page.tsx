@@ -153,6 +153,7 @@ export default function LoginPage() {
             email: user.email,
             role: 'customer',
             status: 'active',
+            uid: user.uid,
             createdAt: new Date(),
         };
         await setDoc(userDocRef, newUser);
