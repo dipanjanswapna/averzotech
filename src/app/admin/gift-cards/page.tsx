@@ -57,7 +57,12 @@ export default function GiftCardsPage() {
         const giftCardList = giftCardSnapshot.docs.map(doc => {
             const data = doc.data();
             let status = data.status;
-            if (status === 'Active' && new Date(data.expiryDate) < new Date()) {
+
+            // Fix for date comparison: Add time to expiry date to compare against end of day
+            const expiryDate = new Date(data.expiryDate);
+            expiryDate.setHours(23, 59, 59, 999); // Set to end of day to include the expiry day
+
+            if (status === 'Active' && expiryDate < new Date()) {
                 status = 'Expired';
             }
              if (status === 'Active' && data.currentBalance <= 0) {

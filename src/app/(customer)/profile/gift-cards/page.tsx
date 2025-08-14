@@ -43,10 +43,25 @@ export default function MyGiftCardsPage() {
                 const giftCardsRef = collection(db, 'giftCards');
                 const q = query(giftCardsRef, where("recipientEmail", "==", user.email));
                 const querySnapshot = await getDocs(q);
-                const cardsList = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                } as GiftCard));
+                const cardsList = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    let status = data.status;
+
+                    const expiryDate = new Date(data.expiryDate);
+                    expiryDate.setHours(23, 59, 59, 999);
+
+                    if (status === 'Active' && expiryDate < new Date()) {
+                        status = 'Expired';
+                    }
+                    if (status === 'Active' && data.currentBalance <= 0) {
+                        status = 'Used';
+                    }
+                    return {
+                        id: doc.id,
+                        ...data,
+                        status,
+                    } as GiftCard
+                });
                 setGiftCards(cardsList);
             } catch (error) {
                 console.error("Error fetching gift cards:", error);
