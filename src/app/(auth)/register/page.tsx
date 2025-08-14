@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, signOut } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -47,19 +47,21 @@ export default function RegisterPage() {
       });
 
       if (role === 'vendor') {
+        await signOut(auth);
         toast({
           title: "Vendor Account Submitted",
           description: "Your vendor account is pending admin approval. You will be notified upon activation.",
           duration: 5000,
         });
+         router.push('/login');
       } else {
          toast({
           title: "Account Created Successfully!",
-          description: "Welcome to AVERZO! Please log in to continue.",
+          description: "Welcome to AVERZO!",
         });
+        router.push('/');
       }
 
-      router.push('/login');
     } catch (error: any) {
       console.error("Registration Error:", error);
       toast({
