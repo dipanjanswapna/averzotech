@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, runTransaction } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,6 +12,20 @@ export async function POST(req: NextRequest) {
         }
 
         const batch = writeBatch(db);
+        
+        // Handle gift card logic
+        if (orderData.payment?.giftCard?.code) {
+             const giftCardRef = doc(db, 'giftCards', orderData.payment.giftCard.code);
+             const giftCardSnap = await getDoc(giftCardRef);
+             if(!giftCardSnap.exists() || giftCardSnap.data()?.currentBalance < orderData.payment.giftCard.usedAmount) {
+                 return NextResponse.json({ error: 'Gift card is invalid or has insufficient balance.' }, { status: 400 });
+             }
+             const newBalance = giftCardSnap.data().currentBalance - orderData.payment.giftCard.usedAmount;
+             batch.update(giftCardRef, { 
+                 currentBalance: newBalance,
+                 status: newBalance <= 0 ? 'Used' : 'Active' 
+            });
+        }
         
         // Create a new document in the "orders" collection
         const newOrderRef = doc(collection(db, "orders"));

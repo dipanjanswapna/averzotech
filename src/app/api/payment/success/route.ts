@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
                  return NextResponse.redirect(new URL(`/order-confirmation?orderId=${existingOrderId}`, appUrl), { status: 302 });
              }
 
-             console.error("Could not find pending order or existing order for tran_id:", tran_id);
+             console.error("Could not find order even after waiting. Redirecting with transaction ID for final lookup.");
              const orderConfirmationUrl = new URL(`/order-confirmation`, appUrl);
              orderConfirmationUrl.searchParams.set('tran_id', tran_id as string); // Pass tran_id for final lookup on client
              return NextResponse.redirect(orderConfirmationUrl, { status: 302 });
@@ -55,6 +55,21 @@ export async function POST(req: NextRequest) {
         const orderData = pendingOrderSnap.data();
         const batch = writeBatch(db);
         const newOrderRef = doc(collection(db, "orders"));
+
+        // Handle gift card logic
+        if (orderData.payment?.giftCard?.code) {
+             const giftCardRef = doc(db, 'giftCards', orderData.payment.giftCard.code);
+             const giftCardSnap = await getDoc(giftCardRef);
+             if(!giftCardSnap.exists() || giftCardSnap.data()?.currentBalance < orderData.payment.giftCard.usedAmount) {
+                // Invalid gift card, fail the payment. This is a server-side check.
+                return NextResponse.redirect(new URL(`/payment/fail?reason=invalid_gift_card&tran_id=${tran_id}`, appUrl), { status: 302 });
+             }
+             const newBalance = giftCardSnap.data().currentBalance - orderData.payment.giftCard.usedAmount;
+             batch.update(giftCardRef, { 
+                 currentBalance: newBalance,
+                 status: newBalance <= 0 ? 'Used' : 'Active' 
+            });
+        }
         
         batch.set(newOrderRef, {
             ...orderData,
