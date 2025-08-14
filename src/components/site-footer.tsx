@@ -10,7 +10,7 @@ export function SiteFooter() {
       <div className="container py-8 md:py-12">
         <div className="mb-8 flex items-center gap-2">
             <Logo />
-            <span className="text-2xl font-bold font-headline">AVERZO</span>
+            <span className="text-2xl font-bold font-headline">ᴬⱽᴱᴿᶻᴼ</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
             <div className='col-span-1'>
