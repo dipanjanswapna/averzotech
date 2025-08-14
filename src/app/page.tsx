@@ -4,7 +4,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import {
   Carousel,
   CarouselContent,
@@ -187,12 +186,11 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <>
       <SiteHeader />
-      <main className="flex-grow">
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full aspect-[12/6]" />
+            <Skeleton className="w-full aspect-[2/1] md:aspect-[12/5]" />
           ) : (
             <Carousel
               className="w-full"
@@ -444,9 +442,7 @@ export default function Home() {
             )}
           </div>
         </section>
-      </main>
-      <SiteFooter />
-    </div>
+    </>
   );
 }
 

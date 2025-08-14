@@ -7,6 +7,8 @@ import { AuthProvider } from '@/hooks/use-auth';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { PromotionalPopup } from '@/components/promotional-popup';
+import { PromoBar } from '@/components/promo-bar';
+import { SiteFooter } from '@/components/site-footer';
 
 export const metadata: Metadata = {
   title: 'AVERZO',
@@ -29,10 +31,14 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
-              <div className="pb-16 md:pb-0">
-                {children}
+              <div className="flex flex-col min-h-screen">
+                <main className="flex-grow">
+                  {children}
+                </main>
+                <PromotionalPopup />
+                <PromoBar />
+                <SiteFooter />
               </div>
-              <PromotionalPopup />
               <MobileBottomNav />
               <Toaster />
             </WishlistProvider>
