@@ -2,7 +2,6 @@
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -451,7 +450,6 @@ function ShopPageContent() {
             </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }
