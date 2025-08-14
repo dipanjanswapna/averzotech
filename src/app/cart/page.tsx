@@ -141,8 +141,11 @@ export default function CartPage() {
 
         const giftCardDoc = giftCardSnap.docs[0];
         const giftCardData = giftCardDoc.data();
+        
+        const expiryDate = new Date(giftCardData.expiryDate);
+        expiryDate.setHours(23, 59, 59, 999);
 
-        if (new Date(giftCardData.expiryDate) < new Date()) {
+        if (expiryDate < new Date()) {
              toast({ title: "Gift Card Expired", description: "This gift card has expired.", variant: "destructive" });
             return;
         }
