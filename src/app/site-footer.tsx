@@ -6,7 +6,7 @@ import { Logo } from './logo';
 
 export function SiteFooter() {
   return (
-    <footer className="bg-secondary text-secondary-foreground">
+    <footer className="bg-white text-foreground">
       <div className="container py-8 md:py-12">
         <div className="mb-8">
             <Logo className="text-4xl" />
@@ -21,6 +21,7 @@ export function SiteFooter() {
                     <li><Link href="/home-living" className="text-sm text-muted-foreground hover:text-primary">Home & Living</Link></li>
                     <li><Link href="/beauty" className="text-sm text-muted-foreground hover:text-primary">Beauty</Link></li>
                     <li><Link href="/shop" className="text-sm text-muted-foreground hover:text-primary">Genz</Link></li>
+                    <li><Link href="/gift-cards" className="text-sm text-muted-foreground hover:text-primary">Gift Cards</Link></li>
                 </ul>
                  <h3 className="mt-6 mb-4 font-bold text-xs tracking-widest uppercase">USEFUL LINKS</h3>
                 <ul className="space-y-2">
@@ -61,14 +62,14 @@ export function SiteFooter() {
             </div>
             <div className="col-span-2 lg:col-span-2">
                 <div className="flex items-start gap-4 mb-6">
-                    <Image src="https://placehold.co/48x48.png" width={48} height={48} alt="Original Guarantee" data-ai-hint="original guarantee badge"/>
+                    <Image src="https://i.postimg.cc/63X9JhjJ/Screenshot-2025-08-14-014934.png" width={48} height={48} alt="Original Guarantee" data-ai-hint="original guarantee badge"/>
                     <div>
                         <p className="font-bold">100% ORIGINAL</p>
                         <p className="text-sm text-muted-foreground">guarantee for all products at averzo.com</p>
                     </div>
                 </div>
                  <div className="flex items-start gap-4">
-                    <Image src="https://placehold.co/48x48.png" width={48} height={48} alt="Return within 14 days" data-ai-hint="return policy badge"/>
+                    <Image src="https://i.postimg.cc/KvwhhNjq/Screenshot-2025-08-14-015302.png" width={48} height={48} alt="Return within 14 days" data-ai-hint="return policy badge"/>
                     <div>
                         <p className="font-bold">Return within 14days</p>
                         <p className="text-sm text-muted-foreground">of receiving your order</p>
@@ -77,9 +78,13 @@ export function SiteFooter() {
             </div>
         </div>
       </div>
-       <div className="border-t border-border">
-        <div className="container py-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} www.averzo.com. All rights reserved.
+       <div className="relative border-t border-border text-white">
+        <Image src="https://i.postimg.cc/1XCSdHGr/beautiful-young-woman-wearing-professional-makeup.jpg" alt="Footer background" layout="fill" objectFit="cover" className="z-0" />
+        <div className="relative z-10 container py-4 text-center text-xs bg-black bg-opacity-50">
+           <div className="flex flex-col items-center gap-2">
+             <Image src="https://i.postimg.cc/28T0N850/photo-2025-08-14-01-23-50-removebg-preview.png" width={100} height={12} alt="Payment methods" data-ai-hint="payment methods" />
+             <p>© {new Date().getFullYear()} www.averzo.com. All rights reserved. AVERZO a partner of PRANGONS ECOSYSTEM.</p>
+           </div>
         </div>
       </div>
     </footer>
