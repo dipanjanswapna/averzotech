@@ -40,12 +40,23 @@ export function PromoBar() {
   };
 
   return (
-    <div style={promoBarStyle}>
-      <div className="container mx-auto px-4">
-        <Link href={content.link || '#'} className="flex items-center justify-center h-12 text-white font-semibold text-center">
-          <p>{content.text}</p>
-        </Link>
-      </div>
+    <div style={promoBarStyle} className="overflow-hidden">
+      <Link href={content.link || '#'} className="flex items-center h-12 text-white font-semibold">
+        <div className="relative flex w-full whitespace-nowrap overflow-hidden">
+           <div className="flex animate-marquee">
+                <span className="mx-4">{content.text}</span>
+                <span className="mx-4">{content.text}</span>
+                <span className="mx-4">{content.text}</span>
+                <span className="mx-4">{content.text}</span>
+           </div>
+            <div className="absolute top-0 flex animate-marquee2">
+                <span className="mx-4">{content.text}</span>
+                <span className="mx-4">{content.text}</span>
+                <span className="mx-4">{content.text}</span>
+                <span className="mx-4">{content.text}</span>
+           </div>
+        </div>
+      </Link>
     </div>
   );
 }
