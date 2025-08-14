@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, LogOut } from 'lucide-react';
+import { Menu, Search, ShoppingCart, User, Heart, LogOut, Phone, Facebook, Instagram, Youtube, Twitter } from 'lucide-react';
 import React, { useState } from 'react';
 import { getAuth, signOut } from 'firebase/auth';
 import { app } from '@/lib/firebase';
@@ -84,7 +84,27 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
+       <div className="bg-secondary text-secondary-foreground text-xs">
+         <div className="container flex h-8 items-center justify-between">
+           <div className="flex gap-4 items-center">
+             <span className='hidden sm:inline'>Welcome to Averzo!</span>
+              <Link href="/contact-us" className="flex items-center gap-1 hover:text-primary">
+                <Phone className="h-3 w-3" /> Customer Care
+              </Link>
+           </div>
+           <div className="flex items-center gap-4">
+              <span className='hidden sm:inline'>Follow us on:</span>
+              <div className="flex items-center gap-2">
+                 <Link href="#"><Facebook className="h-4 w-4" /></Link>
+                 <Link href="#"><Instagram className="h-4 w-4" /></Link>
+                 <Link href="#"><Youtube className="h-4 w-4" /></Link>
+                 <Link href="#"><Twitter className="h-4 w-4" /></Link>
+              </div>
+           </div>
+         </div>
+       </div>
+
+      <div className="container flex h-16 items-center">
         <div className="flex items-center gap-4">
            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild>
