@@ -105,135 +105,203 @@ export function SiteHeader() {
        </div>
 
       <div className="container flex h-16 items-center">
-        <div className="flex items-center gap-4">
-           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden">
-                        <Menu className="h-6 w-6" />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] flex flex-col p-0">
-                    <SheetHeader className="p-4 border-b">
-                         {user ? (
-                            <div className="flex items-center gap-3">
-                                 <Avatar className="h-12 w-12">
-                                    <AvatarImage src={user.photoURL || ''} alt={user.fullName} />
-                                    <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-bold">{user.fullName}</p>
-                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+        {/* Mobile Header */}
+        <div className="md:hidden flex flex-1 items-center justify-between">
+             <div className="flex items-center gap-2">
+                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Menu className="h-6 w-6" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[300px] flex flex-col p-0">
+                        <SheetHeader className="p-4 border-b">
+                            {user ? (
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-12 w-12">
+                                        <AvatarImage src={user.photoURL || ''} alt={user.fullName} />
+                                        <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-bold">{user.fullName}</p>
+                                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                                    </div>
                                 </div>
+                            ) : (
+                                <SheetTitle>Welcome Guest</SheetTitle>
+                            )}
+                        </SheetHeader>
+                        <ScrollArea className="flex-1">
+                          <div className="p-4">
+                            <nav className="flex flex-col space-y-2">
+                              {user ? (
+                                <>
+                                    <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
+                                    <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                                    <Link href="/cart" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><ShoppingCart className="mr-2 h-5 w-5" />Cart</Link>
+                                    <Separator className="my-2" />
+                                    <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
+                                        <LogOut className="mr-2 h-5 w-5" /> Logout
+                                    </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
+                                  <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
+                                </>
+                              )}
+                            </nav>
+                            <Separator className="my-4" />
+                            <div className="flex flex-col space-y-1">
+                              {categories.map((category) => (
+                                <MegaMenu key={category.name} category={category} isMobile={true} />
+                              ))}
                             </div>
-                         ) : (
-                            <SheetTitle>Welcome Guest</SheetTitle>
-                         )}
-                    </SheetHeader>
-                    <ScrollArea className="flex-1">
-                      <div className="p-4">
-                        <nav className="flex flex-col space-y-2">
-                          {user ? (
-                            <>
-                                <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
-                                <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
-                                <Link href="/cart" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><ShoppingCart className="mr-2 h-5 w-5" />Cart</Link>
-                                <Separator className="my-2" />
-                                <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
-                                    <LogOut className="mr-2 h-5 w-5" /> Logout
-                                </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button asChild onClick={() => setIsSheetOpen(false)}><Link href="/login">Login</Link></Button>
-                              <Button variant="outline" asChild onClick={() => setIsSheetOpen(false)}><Link href="/register">Sign Up</Link></Button>
-                            </>
-                          )}
-                        </nav>
-                        <Separator className="my-4" />
-                        <div className="flex flex-col space-y-1">
-                          {categories.map((category) => (
-                            <MegaMenu key={category.name} category={category} isMobile={true} />
-                          ))}
-                        </div>
-                      </div>
-                    </ScrollArea>
-                </SheetContent>
-            </Sheet>
-            <Link href="/" className="mr-4">
-              <Logo />
-            </Link>
+                          </div>
+                        </ScrollArea>
+                    </SheetContent>
+                </Sheet>
+                 <Link href="/">
+                    <Logo />
+                </Link>
+            </div>
+            <div className="flex items-center gap-1">
+                <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen} modal={false} >
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Search className="h-5 w-5" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="top" className="p-4">
+                        <form onSubmit={handleSearch} className="flex gap-2">
+                            <Input name="q" placeholder="Search for products, brands and more" className="flex-1" autoFocus />
+                            <Button type="submit">Search</Button>
+                        </form>
+                    </SheetContent>
+                </Sheet>
+                 <Button variant="ghost" size="icon" asChild>
+                    <Link href="/wishlist">
+                        <Heart className="h-5 w-5" />
+                    </Link>
+                </Button>
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href="/cart">
+                        <ShoppingCart className="h-5 w-5" />
+                    </Link>
+                </Button>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                         <Button variant="ghost" size="icon">
+                            <Avatar className="h-7 w-7">
+                                <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
+                                <AvatarFallback>{user ? user.fullName.charAt(0).toUpperCase() : <User className='h-5 w-5' />}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    {user ? (
+                        <>
+                            <DropdownMenuLabel>
+                                <p className='font-bold'>{user.fullName}</p>
+                                <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild><Link href={dashboardLink}>Dashboard</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/profile/orders">Orders</Link></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+                                <LogOut className='mr-2 h-4 w-4' />
+                                Logout
+                            </DropdownMenuItem>
+                        </>
+                    ) : (
+                        <>
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                                <Link href="/login">Login</Link>
+                            </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                <Link href="/register">Sign Up</Link>
+                            </DropdownMenuItem>
+                        </>
+                    )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
 
-        <div className="hidden md:flex flex-1 items-center justify-end gap-2">
-             <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-md border border-input p-1 pl-3 w-full max-w-xs">
+
+        {/* Desktop Header */}
+        <div className="hidden md:flex flex-1 items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link href="/">
+              <Logo />
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-md border border-input p-1 pl-3 w-full max-w-xs">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input name="q" type="search" placeholder="Search..." className="h-auto w-full border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0" />
             </form>
-             <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen} modal={false} >
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden">
-                        <Search className="h-5 w-5" />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="top" className="p-4">
-                    <form onSubmit={handleSearch} className="flex gap-2">
-                        <Input name="q" placeholder="Search for products, brands and more" className="flex-1" autoFocus />
-                        <Button type="submit">Search</Button>
-                    </form>
-                </SheetContent>
-            </Sheet>
-            <Button variant="ghost" size="icon" asChild>
+
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" asChild>
                 <Link href="/wishlist">
-                    <Heart className="h-5 w-5" />
-                    <span className="sr-only">Wishlist</span>
+                  <Heart className="h-5 w-5" />
+                  <span className="sr-only">Wishlist</span>
                 </Link>
-            </Button>
-            <Button variant="ghost" size="icon" asChild>
+              </Button>
+              <Button variant="ghost" size="icon" asChild>
                 <Link href="/cart">
-                    <ShoppingCart className="h-5 w-5" />
-                    <span className="sr-only">Cart</span>
+                  <ShoppingCart className="h-5 w-5" />
+                  <span className="sr-only">Cart</span>
                 </Link>
-            </Button>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
-                        <AvatarFallback>{user ? user.fullName.charAt(0).toUpperCase() : <User className='h-5 w-5' />}</AvatarFallback>
-                    </Avatar>
+              </Button>
+               <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
+                            <AvatarFallback>{user ? user.fullName.charAt(0).toUpperCase() : <User className='h-5 w-5' />}</AvatarFallback>
+                        </Avatar>
                     </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                {user ? (
-                    <>
-                        <DropdownMenuLabel>
-                            <p className='font-bold'>{user.fullName}</p>
-                            <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild><Link href={dashboardLink}>Dashboard</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
-                        <DropdownMenuItem asChild><Link href="/profile/orders">Orders</Link></DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
-                            <LogOut className='mr-2 h-4 w-4' />
-                            Logout
-                        </DropdownMenuItem>
-                    </>
-                ) : (
-                    <>
-                        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href="/login">Login</Link>
-                        </DropdownMenuItem>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {user ? (
+                        <>
+                            <DropdownMenuLabel>
+                                <p className='font-bold'>{user.fullName}</p>
+                                <p className='text-xs text-muted-foreground font-normal'>{user.email}</p>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild><Link href={dashboardLink}>Dashboard</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/profile/orders">Orders</Link></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+                                <LogOut className='mr-2 h-4 w-4' />
+                                Logout
+                            </DropdownMenuItem>
+                        </>
+                    ) : (
+                        <>
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
-                            <Link href="/register">Sign Up</Link>
-                        </DropdownMenuItem>
-                    </>
-                )}
-                </DropdownMenuContent>
-            </DropdownMenu>
+                              <Link href="/login">Login</Link>
+                            </DropdownMenuItem>
+                             <DropdownMenuItem asChild>
+                              <Link href="/register">Sign Up</Link>
+                            </DropdownMenuItem>
+                        </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+          </div>
         </div>
       </div>
        <div className="h-10 items-center border-t flex">
