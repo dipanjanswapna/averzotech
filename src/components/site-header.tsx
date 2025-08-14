@@ -123,7 +123,7 @@ export function SiteHeader() {
                                         <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <p className="font-bold">{user.fullName}</p>
+                                        <SheetTitle className="text-left font-bold">{user.fullName}</SheetTitle>
                                         <p className="text-xs text-muted-foreground">{user.email}</p>
                                     </div>
                                 </div>
@@ -173,6 +173,9 @@ export function SiteHeader() {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="top" className="p-4">
+                        <SheetHeader className="sr-only">
+                           <SheetTitle>Search</SheetTitle>
+                        </SheetHeader>
                         <form onSubmit={handleSearch} className="flex gap-2">
                             <Input name="q" placeholder="Search for products, brands and more" className="flex-1" autoFocus />
                             <Button type="submit">Search</Button>
