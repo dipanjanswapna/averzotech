@@ -49,8 +49,8 @@ export function SiteFooter() {
              <div className='col-span-2 lg:col-span-1'>
                 <h3 className="mb-4 font-bold text-xs tracking-widest uppercase">EXPERIENCE AVERZO APP ON MOBILE</h3>
                  <div className="flex flex-col sm:flex-row lg:flex-col items-start gap-2">
-                    <Link href="#"><Image src="https://placehold.co/136x40.png" width={136} height={40} alt="Get it on Google Play" data-ai-hint="Google Play store button"/></Link>
-                    <Link href="#"><Image src="https://placehold.co/136x40.png" width={136} height={40} alt="Download on the App Store" data-ai-hint="Apple App store button"/></Link>
+                    <Link href="#"><Image src="https://i.postimg.cc/Pq0n1Jt2/Screenshot-2025-08-14-112949.png" width={136} height={40} alt="Get it on Google Play" data-ai-hint="Google Play store button"/></Link>
+                    <Link href="#"><Image src="https://i.postimg.cc/NM8CLjLy/Screenshot-2025-08-14-113230.png" width={136} height={40} alt="Download on the App Store" data-ai-hint="Apple App store button"/></Link>
                 </div>
                 <h3 className="mt-6 mb-4 font-bold text-xs tracking-widest uppercase">KEEP IN TOUCH</h3>
                 <div className="flex space-x-4">
