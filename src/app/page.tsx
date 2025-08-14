@@ -192,7 +192,7 @@ export default function Home() {
       <main className="flex-grow">
         <section className="relative w-full">
           {loading ? (
-            <Skeleton className="w-full h-[40vh] md:h-[calc(100vh-80px)]" />
+            <Skeleton className="w-full h-[calc(100svh-128px)]" />
           ) : (
             <Carousel
               className="w-full"
@@ -203,7 +203,7 @@ export default function Home() {
               <CarouselContent>
                 {(content.heroImages || []).map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="relative h-[40vh] md:h-[calc(100vh-80px)]">
+                    <div className="relative h-[calc(100svh-128px)]">
                       <Image
                         src={image.url}
                         alt={image.alt}
