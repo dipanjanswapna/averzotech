@@ -25,10 +25,10 @@ export function SiteFooter() {
                 </ul>
                  <h3 className="mt-6 mb-4 font-bold text-xs tracking-widest uppercase">USEFUL LINKS</h3>
                 <ul className="space-y-2">
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Careers</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Site Map</Link></li>
-                    <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Corporate Information</Link></li>
+                    <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary">Blog</Link></li>
+                    <li><Link href="/careers" className="text-sm text-muted-foreground hover:text-primary">Careers</Link></li>
+                    <li><Link href="/site-map" className="text-sm text-muted-foreground hover:text-primary">Site Map</Link></li>
+                    <li><Link href="/corporate-information" className="text-sm text-muted-foreground hover:text-primary">Corporate Information</Link></li>
                 </ul>
             </div>
              <div className='col-span-1'>
