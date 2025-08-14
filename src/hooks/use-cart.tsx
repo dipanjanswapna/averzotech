@@ -104,8 +104,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   const [shippingInfo, setShippingInfoState] = useState<ShippingInfo | null>(null);
-  const [shippingSettings, setShippingSettings] = useState({ standardFee: 60, expressFee: 120 });
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  // Hardcoded shipping settings
+  const shippingSettings = { standardFee: 60, expressFee: 120 };
+
 
   // Load cart from localStorage on initial render
   useEffect(() => {
@@ -129,20 +132,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem('appliedGiftCard');
         localStorage.removeItem('shippingInfo');
     }
-
-    const fetchShippingSettings = async () => {
-        const db = getFirestore(app);
-        const docRef = doc(db, 'site_settings', 'shipping');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            setShippingSettings({
-                standardFee: data.standardFee || 60,
-                expressFee: data.expressFee || 120
-            });
-        }
-    };
-    fetchShippingSettings();
     setIsLoaded(true);
   }, []);
 

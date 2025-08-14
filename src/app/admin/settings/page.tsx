@@ -22,42 +22,6 @@ import React, { useState, useEffect } from 'react';
 export default function SettingsPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [shippingLoading, setShippingLoading] = useState(false);
-
-    // Shipping settings state
-    const [standardFee, setStandardFee] = useState('');
-    const [expressFee, setExpressFee] = useState('');
-
-    useEffect(() => {
-        const fetchShippingSettings = async () => {
-            const docRef = doc(db, 'site_settings', 'shipping');
-            const docSnap = await getDoc(docRef);
-            if(docSnap.exists()) {
-                const data = docSnap.data();
-                setStandardFee(data.standardFee || '');
-                setExpressFee(data.expressFee || '');
-            }
-        };
-        fetchShippingSettings();
-    }, []);
-
-    const handleSaveShippingSettings = async () => {
-        setShippingLoading(true);
-        try {
-            const docRef = doc(db, 'site_settings', 'shipping');
-            await setDoc(docRef, {
-                standardFee: Number(standardFee),
-                expressFee: Number(expressFee)
-            }, { merge: true });
-            toast({ title: "Success", description: "Shipping settings have been updated." });
-        } catch (error) {
-            console.error("Error saving shipping settings: ", error);
-            toast({ title: "Error", description: "Could not save shipping settings.", variant: "destructive" });
-        } finally {
-            setShippingLoading(false);
-        }
-    };
-
 
   return (
     <div className="space-y-8">
@@ -85,27 +49,6 @@ export default function SettingsPage() {
                 </CardFooter>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Shipping Settings</CardTitle>
-                    <CardDescription>Set the default shipping fees for your store.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="standard-fee">Standard Delivery Fee (৳)</Label>
-                        <Input id="standard-fee" type="number" placeholder="e.g. 60" value={standardFee} onChange={e => setStandardFee(e.target.value)} disabled={shippingLoading} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="express-fee">Express Delivery Fee (৳)</Label>
-                        <Input id="express-fee" type="number" placeholder="e.g. 120" value={expressFee} onChange={e => setExpressFee(e.target.value)} disabled={shippingLoading} />
-                    </div>
-                </CardContent>
-                <CardFooter>
-                     <Button onClick={handleSaveShippingSettings} disabled={shippingLoading}>{shippingLoading ? 'Saving...' : 'Save Shipping Settings'}</Button>
-                </CardFooter>
-            </Card>
-
-            
             <Card>
                 <CardHeader>
                     <CardTitle>Notifications</CardTitle>
