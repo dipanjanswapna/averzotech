@@ -391,6 +391,18 @@ export function SiteHeader() {
             </nav>
           </div>
        </div>
+       <div className="md:hidden h-10 items-center border-t flex">
+          <div className="container">
+            <ScrollArea className="-mx-4">
+              <nav className="flex items-center gap-6 text-sm font-medium px-4">
+                 {categories.map((category) => (
+                    <Link key={category.name} href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
+                ))}
+              </nav>
+              <ScrollBar orientation="horizontal" className="invisible" />
+            </ScrollArea>
+          </div>
+       </div>
     </header>
   );
 }
