@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, GripVertical, PlusCircle } from 'lucide-react';
+import { Trash2, GripVertical, PlusCircle, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
@@ -65,6 +65,8 @@ export default function HomePageManager() {
   const [isFetching, setIsFetching] = useState(true);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
   const [allProducts, setAllProducts] = useState<ProductForSelection[]>([]);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+
 
   const [heroImages, setHeroImages] = useState<ContentItem[]>([]);
   const [brands, setBrands] = useState<ContentItem[]>([]);
@@ -107,6 +109,13 @@ export default function HomePageManager() {
     fetchHomepageContent();
     fetchProducts();
   }, []);
+
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter(product => 
+        product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+        product.brand.toLowerCase().includes(productSearchTerm.toLowerCase())
+    );
+  }, [allProducts, productSearchTerm]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
       if (e.target.files && e.target.files[0]) {
@@ -297,20 +306,31 @@ export default function HomePageManager() {
                       <DialogHeader>
                           <DialogTitle>Select "Deals of the Day" Products</DialogTitle>
                       </DialogHeader>
-                      <ScrollArea className="h-96">
-                          <div className="grid grid-cols-3 gap-4 p-4">
-                              {allProducts.map(product => {
-                                  const isSelected = deals.some(d => d.id === product.id);
-                                  return (
-                                      <div key={product.id} className={`border rounded-lg p-2 text-center cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`} onClick={() => handleToggleDeal(product)}>
-                                          <Image src={product.images[0]} alt={product.name} width={100} height={100} className="object-cover rounded-md mx-auto aspect-square"/>
-                                          <p className="text-xs font-semibold mt-1 truncate">{product.name}</p>
-                                          <p className="text-xs text-muted-foreground">{product.brand}</p>
-                                      </div>
-                                  )
-                              })}
+                      <div className="p-4">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search by name or brand..." 
+                                className="pl-9 mb-4" 
+                                value={productSearchTerm}
+                                onChange={(e) => setProductSearchTerm(e.target.value)}
+                            />
                           </div>
-                      </ScrollArea>
+                          <ScrollArea className="h-96">
+                              <div className="grid grid-cols-3 gap-4">
+                                  {filteredProducts.map(product => {
+                                      const isSelected = deals.some(d => d.id === product.id);
+                                      return (
+                                          <div key={product.id} className={`border rounded-lg p-2 text-center cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`} onClick={() => handleToggleDeal(product)}>
+                                              <Image src={product.images[0]} alt={product.name} width={100} height={100} className="object-cover rounded-md mx-auto aspect-square"/>
+                                              <p className="text-xs font-semibold mt-1 truncate">{product.name}</p>
+                                              <p className="text-xs text-muted-foreground">{product.brand}</p>
+                                          </div>
+                                      )
+                                  })}
+                              </div>
+                          </ScrollArea>
+                      </div>
                   </DialogContent>
               </Dialog>
           </CardContent>
