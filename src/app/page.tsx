@@ -318,7 +318,7 @@ export default function Home() {
                             alt={brand.alt}
                             width={200}
                             height={200}
-                            className="aspect-square h-auto w-full rounded-full object-cover"
+                            className="aspect-square h-auto w-full rounded-full object-cover border-2 border-red-500"
                             data-ai-hint={brand.dataAiHint}
                           />
                         </Link>
