@@ -201,7 +201,7 @@ export default function ShippingPage() {
                     </div>
                     <div className="lg:col-span-1">
                         <div className="sticky top-24">
-                           <OrderSummary />
+                           <OrderSummary shippingMethod={selectedShippingMethod ?? undefined} />
                              <Button size="lg" className="w-full mt-6" onClick={handleContinue} disabled={!selectedAddress || !selectedShippingMethod}>
                                 Continue to Payment
                             </Button>

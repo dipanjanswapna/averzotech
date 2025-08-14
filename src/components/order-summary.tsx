@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/hooks/use-cart";
 import { Separator } from "./ui/separator";
 
-export const OrderSummary: React.FC = () => {
+export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMethod }) => {
     const { subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total, shippingInfo } = useCart();
 
     return (
@@ -33,7 +33,7 @@ export const OrderSummary: React.FC = () => {
                     )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
-                        <p className="font-semibold">{shippingInfo?.method ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
+                        <p className="font-semibold">{shippingInfo?.method || shippingMethod ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
                     </div>
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Taxes</p>
