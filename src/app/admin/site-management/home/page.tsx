@@ -316,21 +316,21 @@ export default function HomePageManager() {
                                 onChange={(e) => setProductSearchTerm(e.target.value)}
                             />
                           </div>
-                          <ScrollArea className="h-96">
-                              <div className="grid grid-cols-3 gap-4">
-                                  {filteredProducts.map(product => {
-                                      const isSelected = deals.some(d => d.id === product.id);
-                                      return (
-                                          <div key={product.id} className={`border rounded-lg p-2 text-center cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`} onClick={() => handleToggleDeal(product)}>
-                                              <Image src={product.images[0]} alt={product.name} width={100} height={100} className="object-cover rounded-md mx-auto aspect-square"/>
-                                              <p className="text-xs font-semibold mt-1 truncate">{product.name}</p>
-                                              <p className="text-xs text-muted-foreground">{product.brand}</p>
-                                          </div>
-                                      )
-                                  })}
-                              </div>
-                          </ScrollArea>
                       </div>
+                      <ScrollArea className="h-96 border-t">
+                          <div className="grid grid-cols-3 gap-4 p-4">
+                              {filteredProducts.map(product => {
+                                  const isSelected = deals.some(d => d.id === product.id);
+                                  return (
+                                      <div key={product.id} className={`border rounded-lg p-2 text-center cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`} onClick={() => handleToggleDeal(product)}>
+                                          <Image src={product.images[0]} alt={product.name} width={100} height={100} className="object-cover rounded-md mx-auto aspect-square"/>
+                                          <p className="text-xs font-semibold mt-1 truncate">{product.name}</p>
+                                          <p className="text-xs text-muted-foreground">{product.brand}</p>
+                                      </div>
+                                  )
+                              })}
+                          </div>
+                      </ScrollArea>
                   </DialogContent>
               </Dialog>
           </CardContent>
