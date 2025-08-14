@@ -9,7 +9,6 @@ import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { PromotionalPopup } from '@/components/promotional-popup';
 import { PromoBar } from '@/components/promo-bar';
 import { SiteFooter } from '@/components/site-footer';
-import { PreFooterCta } from '@/components/pre-footer-cta';
 
 export const metadata: Metadata = {
   title: 'AVERZO',
@@ -37,7 +36,6 @@ export default function RootLayout({
                   {children}
                 </main>
                 <PromotionalPopup />
-                <PreFooterCta />
                 <PromoBar />
                 <SiteFooter />
               </div>
