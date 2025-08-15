@@ -4,24 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, deleteDoc, writeBatch, increment, collection, serverTimestamp } from 'firebase/firestore';
-
-const bKashConfig = {
-    baseURL: process.env.BKASH_IS_LIVE === 'true' ? 'https://tokenized.pay.bka.sh/v1.2.0-beta' : 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
-    app_key: process.env.BKASH_APP_KEY || '',
-    app_secret: process.env.BKASH_APP_SECRET || '',
-    username: process.env.BKASH_USERNAME || '',
-    password: process.env.BKASH_PASSWORD || '',
-};
-
-async function getBkashToken() {
-    const response = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/token/grant`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'username': bKashConfig.username, 'password': bKashConfig.password },
-        body: JSON.stringify({ app_key: bKashConfig.app_key, app_secret: bKashConfig.app_secret }),
-        cache: 'no-store'
-    });
-    return (await response.json()).id_token;
-}
+import { bkashPaymentRequest } from '@/lib/bkash';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -33,14 +16,7 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const id_token = await getBkashToken();
-        const executeResponse = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/execute`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': id_token, 'X-App-Key': bKashConfig.app_key },
-            body: JSON.stringify({ paymentID }),
-            cache: 'no-store'
-        });
-        const executeData = await executeResponse.json();
+        const executeData = await bkashPaymentRequest('execute', { paymentID });
 
         if (executeData.statusCode === '0000' && executeData.transactionStatus === 'Completed') {
             const pendingOrderRef = doc(db, 'pending_orders', paymentID);
@@ -64,10 +40,10 @@ export async function GET(req: NextRequest) {
             batch.delete(pendingOrderRef);
             await batch.commit();
 
-            return NextResponse.redirect(new URL(`/order-confirmation?orderId=${'${newOrderRef.id}'}`, appUrl), { status: 302 });
+            return NextResponse.redirect(new URL(`/order-confirmation?orderId=${newOrderRef.id}`, appUrl), { status: 302 });
         } else {
              console.error("bKash execute payment failed:", executeData);
-             return NextResponse.redirect(new URL(`/payment/fail?reason=${'${executeData.statusMessage || 'Payment_failed'}'}`, appUrl), { status: 302 });
+             return NextResponse.redirect(new URL(`/payment/fail?reason=${executeData.statusMessage || 'Payment_failed'}`, appUrl), { status: 302 });
         }
 
     } catch (error) {

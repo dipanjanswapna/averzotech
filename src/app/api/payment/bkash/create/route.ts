@@ -5,32 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
-
-const bKashConfig = {
-    baseURL: process.env.BKASH_IS_LIVE === 'true' ? 'https://tokenized.pay.bka.sh/v1.2.0-beta' : 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
-    app_key: process.env.BKASH_APP_KEY || '',
-    app_secret: process.env.BKASH_APP_SECRET || '',
-    username: process.env.BKASH_USERNAME || '',
-    password: process.env.BKASH_PASSWORD || '',
-};
-
-async function getBkashToken() {
-    const response = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/token/grant`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'username': bKashConfig.username,
-            'password': bKashConfig.password,
-        },
-        body: JSON.stringify({
-            app_key: bKashConfig.app_key,
-            app_secret: bKashConfig.app_secret,
-        }),
-        cache: 'no-store'
-    });
-    const data = await response.json();
-    return data.id_token;
-}
+import { bkashPaymentRequest } from '@/lib/bkash';
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
@@ -38,7 +13,6 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     try {
-        const id_token = await getBkashToken();
         const paymentID = nanoid();
 
         await setDoc(doc(db, 'pending_orders', paymentID), {
@@ -47,26 +21,16 @@ export async function POST(req: NextRequest) {
              createdAt: serverTimestamp()
         });
         
-        const createPaymentResponse = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/create`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': id_token,
-                'X-App-Key': bKashConfig.app_key,
-            },
-            body: JSON.stringify({
-                mode: '0011',
-                payerReference: orderData.userId,
-                callbackURL: `${'${appUrl}'}/api/payment/bkash/callback`,
-                amount: total,
-                currency: 'BDT',
-                intent: 'sale',
-                merchantInvoiceNumber: paymentID
-            }),
-            cache: 'no-store'
+        const createPaymentData = await bkashPaymentRequest('create', {
+            mode: '0011',
+            payerReference: orderData.userId,
+            callbackURL: `${appUrl}/api/payment/bkash/callback`,
+            amount: total,
+            currency: 'BDT',
+            intent: 'sale',
+            merchantInvoiceNumber: paymentID
         });
 
-        const createPaymentData = await createPaymentResponse.json();
 
         if (createPaymentData.statusCode === '0000' && createPaymentData.bkashURL) {
             return NextResponse.json({ bkashURL: createPaymentData.bkashURL });
