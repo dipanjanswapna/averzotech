@@ -13,6 +13,7 @@ import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { OrderSummary } from "@/components/order-summary"
+import Image from "next/image"
 
 export default function PaymentPage() {
     const router = useRouter();
@@ -92,8 +93,27 @@ export default function PaymentPage() {
             } finally {
                 setLoading(false);
             }
+        } else if (paymentMethod === 'bkash') {
+            try {
+                const response = await fetch('/api/payment/bkash/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+                const data = await response.json();
+                if (response.ok && data.bkashURL) {
+                    window.location.href = data.bkashURL;
+                } else {
+                     toast({ title: "bKash Payment Failed", description: data.statusMessage || "Could not initiate bKash payment.", variant: "destructive" });
+                }
+            } catch (error) {
+                 console.error("bKash initiation error:", error);
+                 toast({ title: "Error", description: "Could not connect to bKash.", variant: "destructive" });
+            } finally {
+                setLoading(false);
+            }
         } else {
-            // Handle online payment
+            // Handle other online payment (SSLCommerz)
             try {
                 const response = await fetch('/api/payment/initiate', {
                     method: 'POST',
@@ -170,9 +190,12 @@ export default function PaymentPage() {
                              <h2 className="text-2xl font-headline mb-4">Payment</h2>
                              <p className="text-muted-foreground">All transactions are secure and encrypted.</p>
                              <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
-                                <TabsList className="grid w-full grid-cols-3">
+                                <TabsList className="grid w-full grid-cols-4">
                                     <TabsTrigger value="card"><CreditCard className="w-4 h-4 mr-2"/> Card</TabsTrigger>
                                     <TabsTrigger value="mobile-banking"> <Landmark className="w-4 h-4 mr-2" />Mobile Banking</TabsTrigger>
+                                     <TabsTrigger value="bkash">
+                                         <Image src="/bkash.png" alt="bKash" width={20} height={20} className="mr-2" /> bKash
+                                    </TabsTrigger>
                                     <TabsTrigger value="cod"><Truck className="w-4 h-4 mr-2"/>COD</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="card">
@@ -188,6 +211,14 @@ export default function PaymentPage() {
                                      <Card>
                                         <CardContent className="p-6 text-center">
                                             <p className="text-muted-foreground mb-4">You will be redirected to SSLCommerz's secure gateway to complete your payment with your selected provider.</p>
+                                        </CardContent>
+                                     </Card>
+                                </TabsContent>
+                                <TabsContent value="bkash">
+                                     <Card>
+                                        <CardContent className="p-6 text-center">
+                                            <Image src="/bkash.png" alt="bKash Logo" width={80} height={80} className="mx-auto mb-4" />
+                                            <p className="text-muted-foreground mt-2">You will be redirected to bKash to complete your payment securely.</p>
                                         </CardContent>
                                      </Card>
                                 </TabsContent>
