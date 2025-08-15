@@ -19,6 +19,7 @@ import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId }
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PreFooterCta } from '@/components/pre-footer-cta';
+import type { Metadata } from 'next';
 
 interface HeroImage {
   url: string;
@@ -104,7 +105,6 @@ export default function Home() {
         const data = docSnap.data() as HomepageContent;
         setContent(data);
         
-        // Batch fetch product details for deals
         const dealProductIds = (data.deals || []).map((d) => d.id).filter(Boolean);
         let dealsWithDetails: Deal[] = [];
 
@@ -135,7 +135,6 @@ export default function Home() {
         setDeals(dealsWithDetails);
 
       } else {
-        // Fallback to default images if nothing is set in Firestore
         setContent({
             heroImages: [
                 { url: 'https://placehold.co/1200x600.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
