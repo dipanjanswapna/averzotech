@@ -115,12 +115,27 @@ export async function getBkashToken(): Promise<string> {
 export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query' | 'searchTransaction' | 'refund' | 'refundStatus', body: object) => {
      const token = await getBkashToken();
      let url;
+     let headers: HeadersInit = {
+         'Accept': 'application/json',
+         'Authorization': token,
+         'X-App-Key': bKashConfig.app_key,
+         'Content-Type': 'application/json',
+     };
+
      switch (endpoint) {
+        case 'create':
+            url = `${bKashConfig.baseURL}/tokenized/checkout/create`;
+            break;
+        case 'execute':
+            url = `${bKashConfig.baseURL}/tokenized/checkout/execute`;
+             // Execute does not need content-type as per some docs, but it's safer with it.
+            break;
         case 'query':
             url = `${bKashConfig.baseURL}/tokenized/checkout/payment/status`;
             break;
         case 'searchTransaction':
             url = `${bKashConfig.baseURL}/tokenized/checkout/general/searchTransaction`;
+            // This endpoint might not need a Content-Type for POST with body. Let's keep it.
             break;
         case 'refund':
             url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
@@ -129,18 +144,12 @@ export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'quer
             url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
             break;
         default:
-            url = `${bKashConfig.baseURL}/tokenized/checkout/${endpoint}`;
-            break;
+            throw new Error(`Unknown bKash endpoint: ${endpoint}`);
      }
      
      const response = await fetch(url, {
          method: 'POST',
-         headers: {
-             'Accept': 'application/json',
-             'Authorization': token,
-             'X-App-Key': bKashConfig.app_key,
-             'Content-Type': 'application/json',
-         },
+         headers: headers,
          body: JSON.stringify(body),
          cache: 'no-store'
      });
