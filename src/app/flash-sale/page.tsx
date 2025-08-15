@@ -1,4 +1,3 @@
-
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
@@ -34,12 +33,6 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, getDocs, query, where, Timestamp, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Flash Sale | AVERZO',
-  description: 'Hurry! Grab the best deals before they are gone. Limited time offers on top products.',
-};
 
 interface Product {
     id: string;

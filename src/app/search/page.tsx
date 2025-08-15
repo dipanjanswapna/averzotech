@@ -1,4 +1,3 @@
-
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
@@ -33,13 +32,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Search Results | AVERZO',
-  description: 'Find the best products from your search on AVERZO.',
-};
-
 
 interface Product {
   id: string;

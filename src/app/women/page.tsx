@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -18,12 +17,6 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: "Women's Fashion | AVERZO",
-  description: 'Explore the latest in women\'s fashion. Shop for dresses, sarees, western wear, accessories, and more.',
-};
 
 interface ContentItem {
   url: string;

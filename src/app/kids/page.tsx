@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -18,12 +17,6 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: "Kids' Fashion & Toys | AVERZO",
-  description: "Shop for adorable outfits, toys, and essentials for kids. Find the best deals on boys', girls', and infants' clothing.",
-};
 
 interface ContentItem {
   url: string;

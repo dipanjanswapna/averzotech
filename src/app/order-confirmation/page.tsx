@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -18,13 +17,6 @@ import { db } from "@/lib/firebase"
 import { useCart } from "@/hooks/use-cart"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'Order Confirmed | AVERZO',
-  description: 'Thank you for your order! View your order confirmation details here.',
-};
-
 
 interface Order {
     id: string;
