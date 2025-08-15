@@ -113,7 +113,12 @@ export async function getBkashToken(): Promise<string> {
 
 export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query', body: object) => {
      const token = await getBkashToken();
-     const url = `${bKashConfig.baseURL}/tokenized/checkout/${endpoint}`;
+     let url;
+     if (endpoint === 'query') {
+        url = `${bKashConfig.baseURL}/tokenized/checkout/payment/status`;
+     } else {
+        url = `${bKashConfig.baseURL}/tokenized/checkout/${endpoint}`;
+     }
      
      const response = await fetch(url, {
          method: 'POST',
