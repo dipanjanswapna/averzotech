@@ -1,3 +1,4 @@
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,7 +15,7 @@ const bKashConfig = {
 };
 
 async function getBkashToken() {
-    const response = await fetch(`${bKashConfig.baseURL}/tokenized/checkout/token/grant`, {
+    const response = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/token/grant`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
              createdAt: serverTimestamp()
         });
         
-        const createPaymentResponse = await fetch(`${bKashConfig.baseURL}/tokenized/checkout/create`, {
+        const createPaymentResponse = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
             body: JSON.stringify({
                 mode: '0011',
                 payerReference: orderData.userId,
-                callbackURL: `${appUrl}/api/payment/bkash/callback`,
+                callbackURL: `${'${appUrl}'}/api/payment/bkash/callback`,
                 amount: total,
                 currency: 'BDT',
                 intent: 'sale',

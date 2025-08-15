@@ -1,3 +1,4 @@
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,7 +14,7 @@ const bKashConfig = {
 };
 
 async function getBkashToken() {
-    const response = await fetch(`${bKashConfig.baseURL}/tokenized/checkout/token/grant`, {
+    const response = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/token/grant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'username': bKashConfig.username, 'password': bKashConfig.password },
         body: JSON.stringify({ app_key: bKashConfig.app_key, app_secret: bKashConfig.app_secret }),
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
 
     try {
         const id_token = await getBkashToken();
-        const executeResponse = await fetch(`${bKashConfig.baseURL}/tokenized/checkout/execute`, {
+        const executeResponse = await fetch(`${'${bKashConfig.baseURL}'}/tokenized/checkout/execute`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': id_token, 'X-App-Key': bKashConfig.app_key },
             body: JSON.stringify({ paymentID }),
@@ -63,10 +64,10 @@ export async function GET(req: NextRequest) {
             batch.delete(pendingOrderRef);
             await batch.commit();
 
-            return NextResponse.redirect(new URL(`/order-confirmation?orderId=${newOrderRef.id}`, appUrl), { status: 302 });
+            return NextResponse.redirect(new URL(`/order-confirmation?orderId=${'${newOrderRef.id}'}`, appUrl), { status: 302 });
         } else {
              console.error("bKash execute payment failed:", executeData);
-             return NextResponse.redirect(new URL(`/payment/fail?reason=${executeData.statusMessage || 'Payment_failed'}`, appUrl), { status: 302 });
+             return NextResponse.redirect(new URL(`/payment/fail?reason=${'${executeData.statusMessage || 'Payment_failed'}'}`, appUrl), { status: 302 });
         }
 
     } catch (error) {

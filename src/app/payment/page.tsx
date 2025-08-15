@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -83,7 +84,7 @@ export default function PaymentPage() {
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    router.push(`/order-confirmation?orderId=${result.orderId}`);
+                    router.push(`/order-confirmation?orderId=${'${result.orderId}'}`);
                 } else {
                     toast({ title: "Order Failed", description: result.error || "Could not place your order.", variant: "destructive" });
                 }
@@ -245,7 +246,7 @@ export default function PaymentPage() {
                                 onClick={handlePlaceOrder}
                                 disabled={loading || cart.length === 0}
                             >
-                               {loading ? 'Processing...' : paymentMethod === 'cod' ? `Place Order (৳${total.toFixed(2)})` : `Pay ৳${total.toFixed(2)}`}
+                               {loading ? 'Processing...' : paymentMethod === 'cod' ? `Place Order (৳${'${total.toFixed(2)}'})` : `Pay ৳${'${total.toFixed(2)}'}`}
                             </Button>
                         </div>
                     </div>
