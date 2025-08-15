@@ -3,6 +3,12 @@ import { SiteHeader } from '@/components/site-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Blog | AVERZO',
+  description: 'Your daily dose of fashion, lifestyle, and inspiration from AVERZO.',
+};
 
 const blogPosts = [
   {

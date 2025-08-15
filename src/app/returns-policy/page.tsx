@@ -1,5 +1,11 @@
 
 import { SiteHeader } from '@/components/site-header';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Returns & Exchanges | AVERZO',
+  description: 'Our returns and exchanges policy. Learn how to return a product and about our non-returnable items.',
+};
 
 export default function ReturnsPolicyPage() {
   return (

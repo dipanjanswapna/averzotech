@@ -13,6 +13,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { Product } from '@/hooks/use-cart';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'My Wishlist | AVERZO',
+  description: 'View and manage your saved items. Add them to your cart when you are ready.',
+};
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, clearWishlist } = useWishlist();

@@ -18,6 +18,12 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Sports & Activewear | AVERZO',
+  description: 'Gear up for your favorite sports. Shop for cricket, football, fitness gear, and more at AVERZO.',
+};
 
 interface ContentItem {
   url: string;

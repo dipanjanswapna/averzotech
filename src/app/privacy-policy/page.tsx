@@ -1,5 +1,11 @@
 
 import { SiteHeader } from '@/components/site-header';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy | AVERZO',
+  description: 'Learn how AVERZO collects, uses, and protects your personal information. Your privacy is important to us.',
+};
 
 export default function PrivacyPolicyPage() {
   return (

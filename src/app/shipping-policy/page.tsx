@@ -1,6 +1,12 @@
 
 import { SiteHeader } from '@/components/site-header';
 import { Truck, Clock, MapPin } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Shipping Policy | AVERZO',
+  description: 'Learn about our shipping partners, delivery times, and costs. We partner with leading couriers to deliver your order safely and on time.',
+};
 
 export default function ShippingPolicyPage() {
   return (

@@ -19,6 +19,13 @@ import { cn } from "@/lib/utils"
 import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
 import { Badge } from "@/components/ui/badge"
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Shipping Information | AVERZO',
+  description: 'Provide your shipping details to proceed with your order.',
+};
+
 
 interface Address {
     id: string;

@@ -1,5 +1,11 @@
 
 import { SiteHeader } from '@/components/site-header';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Terms & Conditions | AVERZO',
+  description: 'Read the terms and conditions for using the AVERZO website and services.',
+};
 
 export default function TermsAndConditionsPage() {
   return (
@@ -42,7 +48,7 @@ export default function TermsAndConditionsPage() {
             <p>This Website is provided “as is,” with all faults, and AVERZO express no representations or warranties, of any kind related to this Website or the materials contained on this Website. Also, nothing contained on this Website shall be interpreted as advising you.</p>
 
             <h2 className="font-semibold text-2xl">6. Limitation of liability</h2>
-            <p>In no event shall AVERZO, nor any of its officers, directors and employees, shall be held liable for anything arising out of or in any way connected with your use of this Website whether such liability is under contract. AVERZO, including its officers, directors and employees shall not be held liable for any indirect, consequential or special liability arising out of or in any way related to your use of this Website.</p>
+            <p>In no event shall AVERZO, nor any of its officers, directors and employees, shall be held liable for anything arising out of or in any way connected with your use of this Website whether such liability is under contract. AVERZO, including its officers, directors and employees shall not not be held liable for any indirect, consequential or special liability arising out of or in any way related to your use of this Website.</p>
 
             <h2 className="font-semibold text-2xl">7. Governing Law & Jurisdiction</h2>
             <p>These Terms will be governed by and interpreted in accordance with the laws of Bangladesh, and you submit to the non-exclusive jurisdiction of the state and federal courts located in Bangladesh for the resolution of any disputes.</p>

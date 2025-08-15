@@ -2,6 +2,12 @@
 import { SiteHeader } from '@/components/site-header';
 import Link from 'next/link';
 import { filterCategories } from '@/lib/categories';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Site Map | AVERZO',
+  description: 'Find your way around AVERZO. Explore all our pages and categories.',
+};
 
 export default function SiteMapPage() {
   return (

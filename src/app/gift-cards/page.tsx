@@ -6,6 +6,12 @@ import { Gift } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Gift Cards | AVERZO',
+  description: 'The perfect gift for any occasion. Give the gift of endless choices with an AVERZO gift card.',
+};
 
 export default function GiftCardsPage() {
   return (

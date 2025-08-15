@@ -6,6 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Home, Mail, Phone } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Contact Us | AVERZO',
+  description: 'Get in touch with AVERZO. We are here to help you with your queries and concerns.',
+};
 
 export default function ContactUsPage() {
   return (

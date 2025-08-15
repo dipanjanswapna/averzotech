@@ -14,6 +14,12 @@ import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { OrderSummary } from "@/components/order-summary"
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Payment | AVERZO',
+  description: 'Choose your payment method and complete your purchase.',
+};
 
 
 export default function PaymentPage() {

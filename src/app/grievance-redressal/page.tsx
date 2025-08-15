@@ -1,6 +1,12 @@
 
 import { SiteHeader } from '@/components/site-header';
 import { Mail, Phone } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Grievance Redressal | AVERZO',
+  description: 'Our commitment to resolving your issues. Learn how to escalate a grievance with our Grievance Officer.',
+};
 
 export default function GrievanceRedressalPage() {
   return (

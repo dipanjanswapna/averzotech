@@ -15,6 +15,12 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { OrderSummary } from '@/components/order-summary';
 import { useRouter } from 'next/navigation';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Shopping Cart | AVERZO',
+  description: 'Review the items in your shopping cart and proceed to checkout.',
+};
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, subTotal, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard, shippingInfo } = useCart();

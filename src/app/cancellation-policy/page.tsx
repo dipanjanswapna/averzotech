@@ -1,6 +1,12 @@
 
 import { SiteHeader } from '@/components/site-header';
 import { XCircle, Clock, CheckCircle } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Cancellation Policy | AVERZO',
+  description: 'Understand how to cancel your order with AVERZO, our cancellation timeframe, and refund process for cancelled orders.',
+};
 
 export default function CancellationPolicyPage() {
   return (

@@ -18,6 +18,12 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Home & Living | AVERZO',
+  description: 'Decorate your space with style. Shop for bedsheets, decor, kitchenware, and more at AVERZO.',
+};
 
 interface ContentItem {
   url: string;

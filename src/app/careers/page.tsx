@@ -4,6 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Careers | AVERZO',
+  description: 'Join our passionate team and help us reshape the future of e-commerce in Bangladesh. View our open positions.',
+};
 
 const jobOpenings = [
   {

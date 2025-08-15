@@ -2,7 +2,6 @@
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -34,6 +33,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Search Results | AVERZO',
+  description: 'Find the best products from your search on AVERZO.',
+};
+
 
 interface Product {
   id: string;
@@ -439,7 +445,6 @@ function SearchPageContent() {
             </div>
         </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

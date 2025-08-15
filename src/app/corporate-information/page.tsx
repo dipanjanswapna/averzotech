@@ -1,6 +1,12 @@
 
 import { SiteHeader } from '@/components/site-header';
 import { Building, Target, Users, Handshake } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Corporate Information | AVERZO',
+  description: 'Learn more about Averzo, our mission, our team, and how to partner with us. We aim to provide a joyful and seamless shopping experience.',
+};
 
 export default function CorporateInformationPage() {
   return (
