@@ -246,7 +246,7 @@ export default function PaymentPage() {
                                 onClick={handlePlaceOrder}
                                 disabled={loading || cart.length === 0}
                             >
-                               {loading ? 'Processing...' : paymentMethod === 'cod' ? `Place Order (৳${total.toFixed(2)})` : `Pay ৳${total.toFixed(2)}`}
+                               {loading ? 'Processing...' : `Pay ৳${total.toFixed(2)}`}
                             </Button>
                         </div>
                     </div>
