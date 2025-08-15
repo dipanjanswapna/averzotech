@@ -82,12 +82,13 @@ interface Campaign {
 interface HomepageContent {
   heroImages: HeroImage[];
   brands: Brand[];
-  deals: Deal[];
+  deals: { id: string }[];
   categories: CategoryCard[];
 }
 
 export default function Home() {
   const [content, setContent] = useState<Partial<HomepageContent>>({});
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [flashSale, setFlashSale] = useState<Campaign | null>(null);
   const [otherCampaigns, setOtherCampaigns] = useState<Campaign[]>([]);
   const [flashSaleItems, setFlashSaleItems] = useState<FlashSaleItem[]>([]);
@@ -100,10 +101,11 @@ export default function Home() {
       const docRef = doc(db, 'site_content', 'homepage');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        const data = docSnap.data();
+        const data = docSnap.data() as HomepageContent;
+        setContent(data);
         
         // Batch fetch product details for deals
-        const dealProductIds = (data.deals || []).map((d: any) => d.id).filter(Boolean);
+        const dealProductIds = (data.deals || []).map((d) => d.id).filter(Boolean);
         let dealsWithDetails: Deal[] = [];
 
         if (dealProductIds.length > 0) {
@@ -130,12 +132,7 @@ export default function Home() {
             }).filter(Boolean) as Deal[];
         }
         
-        setContent({
-            heroImages: data.heroImages || [],
-            brands: data.brands || [],
-            deals: dealsWithDetails,
-            categories: data.categories || [],
-        });
+        setDeals(dealsWithDetails);
 
       } else {
         // Fallback to default images if nothing is set in Firestore
@@ -342,7 +339,7 @@ export default function Home() {
                      </div>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
-                        {(content.deals || []).map((deal, index) => (
+                        {deals.map((deal, index) => (
                             <Link href={`/product/${deal.id}`} key={index} className="group block">
                                 <div className="relative overflow-hidden rounded-lg">
                                     <Image
