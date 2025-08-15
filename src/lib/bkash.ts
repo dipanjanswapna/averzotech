@@ -26,6 +26,7 @@ async function grantToken(): Promise<Token> {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'username': bKashConfig.username,
             'password': bKashConfig.password,
         },
@@ -36,8 +37,9 @@ async function grantToken(): Promise<Token> {
         cache: 'no-store'
     });
     const data = await response.json();
-    if (!data.id_token) {
-        throw new Error('bKash token grant failed');
+    if (!data.id_token || data.statusCode !== '0000') {
+        console.error("bKash grant token error response:", data);
+        throw new Error(`bKash token grant failed: ${data.statusMessage || 'Unknown error'}`);
     }
     const expires_in_seconds = parseInt(data.expires_in, 10);
     const token: Token = {
@@ -56,6 +58,7 @@ async function refreshToken(existingRefreshToken: string): Promise<Token> {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'username': bKashConfig.username,
             'password': bKashConfig.password,
         },
@@ -67,7 +70,8 @@ async function refreshToken(existingRefreshToken: string): Promise<Token> {
         cache: 'no-store'
     });
     const data = await response.json();
-     if (!data.id_token) {
+     if (!data.id_token || data.statusCode !== '0000') {
+        console.error("bKash refresh token error response:", data);
         // If refresh fails, try granting a new token from scratch
         return grantToken();
     }
@@ -114,6 +118,7 @@ export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'quer
          method: 'POST',
          headers: {
              'Content-Type': 'application/json',
+             'Accept': 'application/json',
              'Authorization': token,
              'X-App-Key': bKashConfig.app_key,
          },
