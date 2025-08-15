@@ -119,29 +119,32 @@ export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'quer
          'Accept': 'application/json',
          'Authorization': token,
          'X-App-Key': bKashConfig.app_key,
-         'Content-Type': 'application/json',
      };
 
      switch (endpoint) {
         case 'create':
             url = `${bKashConfig.baseURL}/tokenized/checkout/create`;
+            headers['Content-Type'] = 'application/json';
             break;
         case 'execute':
             url = `${bKashConfig.baseURL}/tokenized/checkout/execute`;
-             // Execute does not need content-type as per some docs, but it's safer with it.
+            headers['Content-Type'] = 'application/json';
             break;
         case 'query':
             url = `${bKashConfig.baseURL}/tokenized/checkout/payment/status`;
+             headers['Content-Type'] = 'application/json';
             break;
         case 'searchTransaction':
             url = `${bKashConfig.baseURL}/tokenized/checkout/general/searchTransaction`;
-            // This endpoint might not need a Content-Type for POST with body. Let's keep it.
+            headers['Content-Type'] = 'application/json';
             break;
         case 'refund':
             url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
+             headers['Content-Type'] = 'application/json';
             break;
         case 'refundStatus':
             url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
+             headers['Content-Type'] = 'application/json';
             break;
         default:
             throw new Error(`Unknown bKash endpoint: ${endpoint}`);
