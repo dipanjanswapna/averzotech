@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
             mode: '0011',
             payerReference: orderData.userId,
             callbackURL: `${appUrl}/api/payment/bkash/callback`,
-            amount: total,
+            amount: String(total),
             currency: 'BDT',
             intent: 'sale',
             merchantInvoiceNumber: paymentID
