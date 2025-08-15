@@ -27,12 +27,13 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { collection, getDocs, query, where, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, getDoc, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface Product {
   id: string;
@@ -118,6 +119,7 @@ function ShopPageContent() {
   const { toast } = useToast();
 
   const [allProducts, setAllProducts] = React.useState<Product[]>([]);
+  const [recommendedProducts, setRecommendedProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = React.useState(false);
   const [displayedItems, setDisplayedItems] = React.useState<Product[]>([]);
@@ -175,6 +177,36 @@ function ShopPageContent() {
     };
     fetchProducts();
   }, [searchParams]);
+
+  React.useEffect(() => {
+    const fetchRecommendations = async () => {
+        if (loading || allProducts.length === 0) return;
+
+        let recommendations: Product[] = [];
+        const currentIds = new Set(displayedItems.map(p => p.id));
+
+        // If there are filtered items, recommend from the same category
+        if (displayedItems.length > 0) {
+            const seedCategory = displayedItems[0].organization.category;
+            recommendations = allProducts
+                .filter(p => p.organization.category === seedCategory && !currentIds.has(p.id))
+                .slice(0, 4);
+        }
+
+        // If no recommendations found yet (e.g., no items match filter), get some popular ones
+        if (recommendations.length < 4) {
+            const fallbackRecs = allProducts
+                .filter(p => !currentIds.has(p.id))
+                .slice(0, 4 - recommendations.length);
+            recommendations.push(...fallbackRecs);
+        }
+        
+        setRecommendedProducts(recommendations);
+    };
+
+    fetchRecommendations();
+  }, [displayedItems, allProducts, loading]);
+
 
   const updateURL = React.useCallback((newFilters: Record<string, string | number | number[]>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -308,7 +340,7 @@ function ShopPageContent() {
           removeFromWishlist(item.id);
           toast({ title: "Removed from Wishlist" });
       } else {
-          addToWishlist(item as WishlistItem);
+          addToWishlist(item as unknown as WishlistItem);
           toast({ title: "Added to Wishlist" });
       }
   }
@@ -445,6 +477,55 @@ function ShopPageContent() {
                     <h2 className="text-2xl font-bold mb-2">No Products Found</h2>
                     <p className="text-muted-foreground mb-4">Try adjusting your filters to find what you're looking for.</p>
                     <Button variant="outline" onClick={handleResetFilters}>Reset Filters</Button>
+                </div>
+              )}
+
+              {recommendedProducts.length > 0 && (
+                <div className="mt-16">
+                    <Separator />
+                    <div className="my-8 text-center">
+                        <h2 className="text-2xl font-bold">You Might Also Like</h2>
+                        <p className="text-muted-foreground">Based on your current view</p>
+                    </div>
+                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                        {recommendedProducts.map((item) => {
+                        const isInWishlist = wishlist.some(w => w.id === item.id);
+                        return (
+                        <div key={item.id} className="group block">
+                                <div className="relative overflow-hidden rounded-lg">
+                                    <Link href={`/product/${item.id}`}>
+                                    <Image
+                                        src={item.images[0] || 'https://placehold.co/400x500.png'}
+                                        alt={item.name}
+                                        width={400}
+                                        height={500}
+                                        className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                        data-ai-hint={item.dataAiHint || 'product image'}
+                                    />
+                                    </Link>
+                                    <Button 
+                                    variant="secondary" 
+                                    size="icon" 
+                                    className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white"
+                                    onClick={() => handleWishlistToggle(item)}
+                                    >
+                                        <Heart className={cn("h-4 w-4", isInWishlist ? "text-red-500 fill-red-500" : "text-foreground")} />
+                                    </Button>
+                                </div>
+                                <div className="pt-2">
+                                    <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                    <p className="text-sm font-semibold mt-1 text-foreground">
+                                        ৳{item.pricing.price}{' '}
+                                        {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span>}
+                                        {' '}
+                                        {item.pricing.discount && <span className="text-xs text-orange-400 font-bold">({item.pricing.discount}% OFF)</span>}
+                                    </p>
+                                </div>
+                            </div>
+                        )
+                        })}
+                    </div>
                 </div>
               )}
             </div>
