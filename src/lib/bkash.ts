@@ -112,7 +112,7 @@ export async function getBkashToken(): Promise<string> {
     return newToken.id_token;
 }
 
-export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query' | 'searchTransaction' | 'refund', body: object) => {
+export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query' | 'searchTransaction' | 'refund' | 'refundStatus', body: object) => {
      const token = await getBkashToken();
      let url;
      switch (endpoint) {
@@ -123,7 +123,9 @@ export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'quer
             url = `${bKashConfig.baseURL}/tokenized/checkout/general/searchTransaction`;
             break;
         case 'refund':
-            // The refund API has a different base URL structure in sandbox vs production for v2
+            url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
+            break;
+        case 'refundStatus':
             url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
             break;
         default:
