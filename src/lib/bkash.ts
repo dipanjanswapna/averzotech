@@ -6,6 +6,7 @@ import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firest
 
 const bKashConfig = {
     baseURL: process.env.BKASH_IS_LIVE === 'true' ? 'https://tokenized.pay.bka.sh/v1.2.0-beta' : 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
+    refundURL: process.env.BKASH_IS_LIVE === 'true' ? 'https://tokenized.pay.bka.sh/v1.2.0-beta' : 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
     app_key: process.env.BKASH_APP_KEY || '',
     app_secret: process.env.BKASH_APP_SECRET || '',
     username: process.env.BKASH_USERNAME || '',
@@ -111,15 +112,23 @@ export async function getBkashToken(): Promise<string> {
     return newToken.id_token;
 }
 
-export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query' | 'searchTransaction', body: object) => {
+export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query' | 'searchTransaction' | 'refund', body: object) => {
      const token = await getBkashToken();
      let url;
-     if (endpoint === 'query') {
-        url = `${bKashConfig.baseURL}/tokenized/checkout/payment/status`;
-     } else if (endpoint === 'searchTransaction') {
-        url = `${bKashConfig.baseURL}/tokenized/checkout/general/searchTransaction`;
-     } else {
-        url = `${bKashConfig.baseURL}/tokenized/checkout/${endpoint}`;
+     switch (endpoint) {
+        case 'query':
+            url = `${bKashConfig.baseURL}/tokenized/checkout/payment/status`;
+            break;
+        case 'searchTransaction':
+            url = `${bKashConfig.baseURL}/tokenized/checkout/general/searchTransaction`;
+            break;
+        case 'refund':
+            // The refund API has a different base URL structure in sandbox vs production for v2
+            url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
+            break;
+        default:
+            url = `${bKashConfig.baseURL}/tokenized/checkout/${endpoint}`;
+            break;
      }
      
      const response = await fetch(url, {
@@ -128,7 +137,7 @@ export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'quer
              'Accept': 'application/json',
              'Authorization': token,
              'X-App-Key': bKashConfig.app_key,
-             ...(endpoint === 'create' && {'Content-Type': 'application/json'}),
+             'Content-Type': 'application/json',
          },
          body: JSON.stringify(body),
          cache: 'no-store'

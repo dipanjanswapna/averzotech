@@ -20,7 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, Package, Truck, User, FileText, Gift, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Package, Truck, User, FileText, Gift, AlertTriangle, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Stepper, Step } from '@/components/ui/stepper';
@@ -39,6 +39,7 @@ import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 
 
 interface Order {
@@ -80,6 +81,8 @@ interface Order {
     paymentDetails?: {
         method?: string;
         status?: string;
+        paymentID?: string;
+        trxID?: string;
     },
     notes: { id: string; author: string; date: any; note: string; }[];
     trackingId?: string;
@@ -102,6 +105,11 @@ export default function OrderDetailsPage() {
   const [newStatus, setNewStatus] = useState('');
   const [newNote, setNewNote] = useState('');
   const [trackingId, setTrackingId] = useState('');
+
+  // Refund state
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [isRefunding, setIsRefunding] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -205,6 +213,47 @@ export default function OrderDetailsPage() {
         toast({ title: "Error", description: "Failed to add note.", variant: "destructive" });
     }
   };
+
+  const handleRefund = async () => {
+    if (!order || !refundAmount || !refundReason) {
+      toast({ title: "Missing Information", description: "Please enter a refund amount and reason.", variant: "destructive" });
+      return;
+    }
+    if (parseFloat(refundAmount) > order.payment.total) {
+        toast({ title: "Invalid Amount", description: "Refund amount cannot be greater than the order total.", variant: "destructive" });
+        return;
+    }
+
+    setIsRefunding(true);
+    try {
+        const response = await fetch('/api/payment/bkash/refund', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                paymentId: order.paymentDetails?.paymentID,
+                trxId: order.paymentDetails?.trxID,
+                amount: refundAmount,
+                reason: refundReason,
+                sku: `order-${order.id}`
+            })
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            toast({ title: "Refund Successful", description: `Refund of ৳${result.refundAmount} processed. TrxID: ${result.refundTrxId}` });
+            await handleAddNote(`Refund of ৳${result.refundAmount} processed. TrxID: ${result.refundTrxId}`, 'System');
+            setRefundAmount('');
+            setRefundReason('');
+        } else {
+            toast({ title: "Refund Failed", description: result.errorMessage || "An unknown error occurred.", variant: "destructive" });
+        }
+
+    } catch (error: any) {
+        toast({ title: "Error", description: "Failed to process refund request.", variant: "destructive" });
+    } finally {
+        setIsRefunding(false);
+    }
+  }
   
   if (loading) return <p>Loading order details...</p>;
   if (!order) return <p>Order not found.</p>;
@@ -219,6 +268,8 @@ export default function OrderDetailsPage() {
     return new Date(timestamp.seconds * 1000).toLocaleString();
   };
   const paymentMethodDisplay = order.payment.method === 'cod' ? 'Cash on Delivery' : order.payment.method;
+
+  const isRefundable = order.payment.method === 'bkash' && (order.status === 'Processing' || order.status === 'Fulfilled') && order.paymentDetails?.trxID;
 
   return (
     <div className="space-y-8">
@@ -397,6 +448,29 @@ export default function OrderDetailsPage() {
                     <Button className="w-full" variant="secondary" onClick={handleUpdateTracking}>Save Tracking ID</Button>
                 </CardFooter>
             </Card>
+             {isRefundable && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Undo2 className="h-5 w-5"/> Refund Payment</CardTitle>
+                        <CardDescription>Issue a full or partial refund for this bKash transaction.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="refund-amount">Refund Amount (Max: ৳{order.payment.total})</Label>
+                            <Input id="refund-amount" type="number" placeholder="Enter amount" value={refundAmount} onChange={e => setRefundAmount(e.target.value)} disabled={isRefunding} />
+                        </div>
+                        <div className="space-y-2">
+                             <Label htmlFor="refund-reason">Reason for Refund</Label>
+                            <Input id="refund-reason" placeholder="e.g., Item returned" value={refundReason} onChange={e => setRefundReason(e.target.value)} disabled={isRefunding} />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button variant="destructive" className="w-full" onClick={handleRefund} disabled={isRefunding}>
+                            {isRefunding ? 'Refunding...' : 'Process Refund'}
+                        </Button>
+                    </CardFooter>
+                 </Card>
+            )}
             <Card>
                  <CardHeader>
                     <CardTitle>Order Notes</CardTitle>
