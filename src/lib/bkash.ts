@@ -117,34 +117,29 @@ export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'quer
      let url;
      let headers: HeadersInit = {
          'Accept': 'application/json',
-         'Authorization': token,
+         'Authorization': `Bearer ${token}`,
          'X-App-Key': bKashConfig.app_key,
+         'Content-Type': 'application/json'
      };
 
      switch (endpoint) {
         case 'create':
             url = `${bKashConfig.baseURL}/tokenized/checkout/create`;
-            headers['Content-Type'] = 'application/json';
             break;
         case 'execute':
             url = `${bKashConfig.baseURL}/tokenized/checkout/execute`;
-            headers['Content-Type'] = 'application/json';
             break;
         case 'query':
             url = `${bKashConfig.baseURL}/tokenized/checkout/payment/status`;
-             headers['Content-Type'] = 'application/json';
             break;
         case 'searchTransaction':
             url = `${bKashConfig.baseURL}/tokenized/checkout/general/searchTransaction`;
-            headers['Content-Type'] = 'application/json';
             break;
         case 'refund':
-            url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
-             headers['Content-Type'] = 'application/json';
+            url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund/transaction`;
             break;
         case 'refundStatus':
-            url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund`;
-             headers['Content-Type'] = 'application/json';
+            url = `${bKashConfig.refundURL}/v2/tokenized-checkout/payment/refund/status`;
             break;
         default:
             throw new Error(`Unknown bKash endpoint: ${endpoint}`);
