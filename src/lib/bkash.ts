@@ -111,11 +111,13 @@ export async function getBkashToken(): Promise<string> {
     return newToken.id_token;
 }
 
-export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query', body: object) => {
+export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'query' | 'searchTransaction', body: object) => {
      const token = await getBkashToken();
      let url;
      if (endpoint === 'query') {
         url = `${bKashConfig.baseURL}/tokenized/checkout/payment/status`;
+     } else if (endpoint === 'searchTransaction') {
+        url = `${bKashConfig.baseURL}/tokenized/checkout/general/searchTransaction`;
      } else {
         url = `${bKashConfig.baseURL}/tokenized/checkout/${endpoint}`;
      }
@@ -123,10 +125,10 @@ export const bkashPaymentRequest = async (endpoint: 'create' | 'execute' | 'quer
      const response = await fetch(url, {
          method: 'POST',
          headers: {
-             'Content-Type': 'application/json',
              'Accept': 'application/json',
              'Authorization': token,
              'X-App-Key': bKashConfig.app_key,
+             ...(endpoint === 'create' && {'Content-Type': 'application/json'}),
          },
          body: JSON.stringify(body),
          cache: 'no-store'
