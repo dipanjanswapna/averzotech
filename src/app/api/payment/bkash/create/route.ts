@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
-import { bkashPaymentRequest } from '@/lib/bkash';
+import { createPayment } from '@/lib/bkash';
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
@@ -13,27 +13,23 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     try {
-        const paymentID = nanoid();
+        const orderId = nanoid();
 
-        await setDoc(doc(db, 'pending_orders', paymentID), {
+        await setDoc(doc(db, 'pending_orders', orderId), {
              ...orderData,
-             paymentID: paymentID,
+             orderId: orderId,
              createdAt: serverTimestamp()
         });
         
-        const createPaymentData = await bkashPaymentRequest('create', {
-            mode: '0011',
-            payerReference: orderData.userId,
-            callbackURL: `${appUrl}/api/payment/bkash/callback`,
-            amount: String(total),
-            currency: 'BDT',
-            intent: 'sale',
-            merchantInvoiceNumber: paymentID
-        });
+        const createPaymentData = await createPayment(
+            String(total),
+            orderId,
+            'sale',
+            `${appUrl}/api/payment/bkash/callback`
+        );
 
-
-        if (createPaymentData.statusCode === '0000' && createPaymentData.bkashURL) {
-            return NextResponse.json({ bkashURL: createPaymentData.bkashURL });
+        if (createPaymentData.status === 'success' && createPaymentData.bkashURL) {
+            return NextResponse.json({ paymentUrl: createPaymentData.bkashURL });
         } else {
             console.error("bKash create payment failed:", createPaymentData);
             return NextResponse.json({

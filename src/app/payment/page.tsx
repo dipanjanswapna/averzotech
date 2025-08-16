@@ -102,8 +102,8 @@ export default function PaymentPage() {
                     body: JSON.stringify(orderData)
                 });
                 const data = await response.json();
-                if (response.ok && data.bkashURL) {
-                    window.location.href = data.bkashURL;
+                if (response.ok && data.paymentUrl) {
+                    window.location.href = data.paymentUrl;
                 } else {
                      toast({ title: "bKash Payment Failed", description: data.statusMessage || "Could not initiate bKash payment.", variant: "destructive" });
                 }
