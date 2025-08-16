@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 
 interface ContentItem {
   id?: string;
@@ -57,6 +58,11 @@ interface ProductForSelection {
     images: string[];
 }
 
+interface CarouselSettings {
+    autoplay: boolean;
+    autoplaySpeed: number;
+}
+
 
 export default function HomePageManager() {
   const { toast } = useToast();
@@ -69,6 +75,7 @@ export default function HomePageManager() {
 
 
   const [heroImages, setHeroImages] = useState<ContentItem[]>([]);
+  const [carouselSettings, setCarouselSettings] = useState<CarouselSettings>({ autoplay: true, autoplaySpeed: 4000 });
   const [brands, setBrands] = useState<ContentItem[]>([]);
   const [deals, setDeals] = useState<DealProduct[]>([]);
   const [categories, setCategories] = useState<ContentItem[]>([]);
@@ -83,6 +90,7 @@ export default function HomePageManager() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setHeroImages(data.heroImages?.map((img: any) => ({ ...img, preview: img.url, id: Math.random().toString() })) || []);
+        setCarouselSettings(data.carouselSettings || { autoplay: true, autoplaySpeed: 4000 });
         setBrands(data.brands?.map((brand: any) => ({ ...brand, preview: brand.url, id: Math.random().toString() })) || []);
         setDeals(data.deals || []);
         setCategories(data.categories?.map((cat: any) => ({ ...cat, preview: cat.url, id: Math.random().toString() })) || []);
@@ -185,6 +193,7 @@ export default function HomePageManager() {
 
       const homepageContent = {
         heroImages: await processItems(heroImages, 'site_content/homepage/hero'),
+        carouselSettings,
         brands: await processItems(brands, 'site_content/homepage/brands'),
         deals,
         categories: await processItems(categories, 'site_content/homepage/categories'),
@@ -231,6 +240,24 @@ export default function HomePageManager() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+            <div className="border p-4 rounded-lg space-y-4">
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="autoplay-switch" className="font-semibold">Enable Autoplay</Label>
+                    <Switch id="autoplay-switch" checked={carouselSettings.autoplay} onCheckedChange={(checked) => setCarouselSettings(s => ({ ...s, autoplay: checked }))} />
+                </div>
+                {carouselSettings.autoplay && (
+                    <div className="space-y-2">
+                        <Label htmlFor="autoplay-speed">Autoplay Delay (in seconds)</Label>
+                        <Input 
+                            id="autoplay-speed" 
+                            type="number" 
+                            value={carouselSettings.autoplaySpeed / 1000} 
+                            onChange={(e) => setCarouselSettings(s => ({ ...s, autoplaySpeed: Number(e.target.value) * 1000 }))}
+                            placeholder="e.g. 4"
+                        />
+                    </div>
+                )}
+            </div>
             {heroImages.map((image, index) => (
               <div key={image.id} className="flex items-start gap-4 p-4 border rounded-lg bg-secondary/50">
                 <GripVertical className="h-5 w-5 text-muted-foreground mt-8 cursor-grab" />

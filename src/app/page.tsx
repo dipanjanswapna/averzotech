@@ -19,6 +19,7 @@ import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId }
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PreFooterCta } from '@/components/pre-footer-cta';
+import Autoplay from "embla-carousel-autoplay"
 
 interface HeroImage {
   url: string;
@@ -78,9 +79,15 @@ interface Campaign {
     bannerUrl?: string;
 }
 
+interface CarouselSettings {
+    autoplay: boolean;
+    autoplaySpeed: number;
+}
+
 
 interface HomepageContent {
   heroImages: HeroImage[];
+  carouselSettings: CarouselSettings;
   brands: Brand[];
   deals: { id: string }[];
   categories: CategoryCard[];
@@ -94,6 +101,10 @@ export default function Home() {
   const [flashSaleItems, setFlashSaleItems] = useState<FlashSaleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
+
+  const autoplayPlugin = React.useRef(
+    Autoplay({ delay: content.carouselSettings?.autoplaySpeed || 4000, stopOnInteraction: true })
+  );
 
    useEffect(() => {
     const fetchHomepageContent = async () => {
@@ -139,6 +150,7 @@ export default function Home() {
                 { url: 'https://placehold.co/1200x600.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
                 { url: 'https://placehold.co/1200x600.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
             ],
+            carouselSettings: { autoplay: true, autoplaySpeed: 4000 },
             brands: Array(10).fill({ url: 'https://placehold.co/200x200.png', alt: 'Brand logo', dataAiHint: 'brand logo' }),
             deals: [],
             categories: Array(6).fill({ url: 'https://placehold.co/400x500.png', name: 'Category', discount: 'Up to 50% Off', link: '#', dataAiHint: 'fashion category' }),
@@ -193,6 +205,9 @@ export default function Home() {
               opts={{
                 loop: true,
               }}
+              plugins={content.carouselSettings?.autoplay ? [autoplayPlugin.current] : []}
+              onMouseEnter={autoplayPlugin.current.stop}
+              onMouseLeave={autoplayPlugin.current.reset}
             >
               <CarouselContent>
                 {(content.heroImages || []).map((image, index) => (
