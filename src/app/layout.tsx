@@ -6,9 +6,22 @@ import { CartProvider } from '@/hooks/use-cart';
 import { AuthProvider } from '@/hooks/use-auth';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
-import { PromotionalPopup } from '@/components/promotional-popup';
-import { PromoBar } from '@/components/promo-bar';
 import { SiteFooter } from '@/components/site-footer';
+import { Playfair_Display, PT_Sans } from 'next/font/google';
+import { DynamicComponents } from '@/components/dynamic-components';
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair-display',
+  display: 'swap',
+});
+
+const ptSans = PT_Sans({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-pt-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
@@ -25,12 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${ptSans.variable}`}>
       <body className="font-body antialiased">
         <AuthProvider>
           <CartProvider>
@@ -39,8 +47,7 @@ export default function RootLayout({
                 <main className="flex-grow">
                   {children}
                 </main>
-                <PromotionalPopup />
-                <PromoBar />
+                <DynamicComponents />
                 <SiteFooter />
               </div>
               <MobileBottomNav />
