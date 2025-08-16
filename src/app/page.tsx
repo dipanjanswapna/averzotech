@@ -114,7 +114,7 @@ export default function Home() {
             const productsData = productSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
 
             dealsWithDetails = dealProductIds.map((id: string) => {
-                const productData = productsData.find(p => p.id === id);
+                const productData:any = productsData.find(p => p.id === id);
                 if (productData) {
                     return {
                         id: productData.id,
@@ -506,5 +506,3 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
-
-    

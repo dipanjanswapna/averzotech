@@ -380,7 +380,7 @@ export default function NewProductPage() {
                     <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {images.map((image, index) => (
                         <div key={index} className="relative group">
-                            <Image src={image.url} alt={`Product Image ${index + 1}`} width={150} height={150} className="rounded-md aspect-square object-cover" />
+                            <Image src={image.url} alt={`Product Image ${index + 1}`} width={150} height={150} className="rounded-md aspect-square object-cover" data-ai-hint="product image" />
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                 <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(index)} disabled={isLoading}><Trash2 className="w-4 h-4"/></Button>
                             </div>

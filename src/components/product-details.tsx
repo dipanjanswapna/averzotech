@@ -682,5 +682,3 @@ export function ProductDetails() {
       </main>
       );
 }
-
-    

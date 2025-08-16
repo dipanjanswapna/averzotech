@@ -121,6 +121,7 @@ function SearchPageContent() {
   const { toast } = useToast();
 
   const [allProducts, setAllProducts] = React.useState<Product[]>([]);
+  const [recommendedProducts, setRecommendedProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = React.useState(false);
   const [displayedItems, setDisplayedItems] = React.useState<Product[]>([]);
@@ -170,6 +171,36 @@ function SearchPageContent() {
     };
     fetchProducts();
   }, [searchQuery, toast]);
+
+  React.useEffect(() => {
+    const fetchRecommendations = async () => {
+        if (loading || allProducts.length === 0) return;
+
+        let recommendations: Product[] = [];
+        const currentIds = new Set(displayedItems.map(p => p.id));
+
+        // If there are filtered items, recommend from the same category
+        if (displayedItems.length > 0) {
+            const seedCategory = displayedItems[0].organization.category;
+            recommendations = allProducts
+                .filter(p => p.organization.category === seedCategory && !currentIds.has(p.id))
+                .slice(0, 4);
+        }
+
+        // If no recommendations found yet (e.g., no items match filter), get some popular ones
+        if (recommendations.length < 4) {
+            const fallbackRecs = allProducts
+                .filter(p => !currentIds.has(p.id))
+                .slice(0, 4 - recommendations.length);
+            recommendations.push(...fallbackRecs);
+        }
+        
+        setRecommendedProducts(recommendations);
+    };
+
+    fetchRecommendations();
+  }, [displayedItems, allProducts, loading]);
+
 
   const updateURL = React.useCallback((newFilters: Record<string, string | number | number[]>) => {
     const params = new URLSearchParams(searchParams.toString());
