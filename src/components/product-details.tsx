@@ -643,8 +643,8 @@ export function ProductDetails() {
                                 />
                             </div>
                             <div className="pt-2">
-                                <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
-                                <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                <h3 className="text-sm font-bold text-foreground">{item.name}</h3>
+                                <p className="text-xs text-muted-foreground truncate">{item.brand}</p>
                                 <p className="text-sm font-semibold mt-1 text-foreground">
                                     ৳ {item.price}
                                 </p>
