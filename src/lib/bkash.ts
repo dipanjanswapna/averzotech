@@ -15,12 +15,24 @@ const bKashConfig = {
 
 interface Token {
     id_token: string;
+    refresh_token: string;
     expires_at: number; // Store expiry time as a timestamp
 }
 
-let cachedToken: Token | null = null;
-
 async function grantToken(): Promise<Token> {
+    const tokenDocRef = doc(db, 'bkash_tokens', 'app_token');
+    const tokenSnap = await getDoc(tokenDocRef);
+    const now = Date.now();
+
+    if (tokenSnap.exists()) {
+        const tokenData = tokenSnap.data() as Token;
+        // Check if token is valid for at least 5 more minutes
+        if (tokenData.expires_at > now + 5 * 60 * 1000) {
+            return tokenData;
+        }
+    }
+    
+    // If no valid token, grant a new one
     const response = await fetch(bKashConfig.tokenURL, {
         method: 'POST',
         headers: {
@@ -40,59 +52,84 @@ async function grantToken(): Promise<Token> {
         throw new Error(`bKash token grant failed: ${data.statusMessage || 'Unknown error'}`);
     }
     const expires_in_seconds = parseInt(data.expires_in, 10) || 3600;
-    const token: Token = {
+    const newToken: Token = {
         id_token: data.id_token,
+        refresh_token: data.refresh_token,
         expires_at: Date.now() + (expires_in_seconds * 1000)
     };
     
-    cachedToken = token;
-    return token;
+    await setDoc(tokenDocRef, newToken);
+    return newToken;
 }
 
 export async function getBkashToken(): Promise<string> {
-    const now = Date.now();
-    // Add a 5-minute buffer before expiry
-    if (cachedToken && cachedToken.expires_at > now + 5 * 60 * 1000) {
-        return cachedToken.id_token;
-    }
+    const tokenData = await grantToken();
+    return tokenData.id_token;
+}
+
+export async function bkashPaymentRequest(endpoint: 'create' | 'execute' | 'query' | 'search' | 'refund' | 'refundStatus', body: object) {
+    const token = await getBkashToken();
     
-    const newToken = await grantToken();
-    return newToken.id_token;
+    const urlMap = {
+        create: `${bKashConfig.baseURL}/checkout/payment/create`,
+        execute: `${bKashConfig.baseURL}/checkout/payment/execute`,
+        query: `${bKashConfig.baseURL}/checkout/payment/status`,
+        search: `${bKashConfig.baseURL}/checkout/payment/search`,
+        refund: `${bKashConfig.baseURL}/checkout/payment/refund`,
+        refundStatus: `${bKashConfig.baseURL}/checkout/payment/refund`,
+    };
+
+    const response = await fetch(urlMap[endpoint], {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`, // Corrected: Added 'Bearer ' prefix
+            'X-App-Key': bKashConfig.app_key,
+        },
+        body: JSON.stringify(body),
+        cache: 'no-store'
+    });
+    
+    return response.json();
 }
 
 export const createPayment = async (amount: string, orderId: string, intent: string, callbackURL: string) => {
-    const token = await getBkashToken();
-    const response = await fetch(`${bKashConfig.baseURL}/checkout/payment/create`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'X-App-Key': bKashConfig.app_key,
-        },
-        body: JSON.stringify({
-            mode: 'checkout',
-            amount: amount,
-            currency: 'BDT',
-            orderId: orderId,
-            payerReference: orderId,
-            callbackURL: callbackURL,
-            intent: intent,
-        }),
-        cache: 'no-store'
+    return bkashPaymentRequest('create', {
+        mode: 'checkout',
+        amount: amount,
+        currency: 'BDT',
+        merchantInvoiceNumber: orderId,
+        payerReference: orderId,
+        callbackURL: callbackURL,
+        intent: intent,
     });
-    return response.json();
 };
 
 export const executePayment = async (paymentID: string) => {
-    const token = await getBkashToken();
-    const response = await fetch(`${bKashConfig.baseURL}/checkout/payment/execute/${paymentID}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'X-App-Key': bKashConfig.app_key,
-        },
-        cache: 'no-store'
+    return bkashPaymentRequest('execute', { paymentID });
+};
+
+export const queryPayment = async (paymentID: string) => {
+    return bkashPaymentRequest('query', { paymentID });
+};
+
+export const searchTransaction = async (trxID: string) => {
+    return bkashPaymentRequest('search', { trxID });
+}
+
+export const refundTransaction = async (paymentID: string, trxID: string, amount: string, reason: string, sku: string) => {
+    return bkashPaymentRequest('refund', {
+        paymentID,
+        trxID,
+        amount,
+        reason,
+        sku
     });
-    return response.json();
+};
+
+export const refundStatus = async (paymentID: string, trxID: string) => {
+    return bkashPaymentRequest('refundStatus', {
+        paymentID,
+        trxID
+    });
 };
