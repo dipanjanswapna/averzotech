@@ -1,3 +1,4 @@
+
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
@@ -32,11 +33,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 interface Product {
   id: string;
   name: string;
   brand: string;
+  description: string;
   pricing: {
     price: number;
     comparePrice?: number;
@@ -46,6 +49,8 @@ interface Product {
     category: string;
     group: string;
     subcategory: string;
+    status: string;
+    tags?: string[];
   };
   inventory: {
     availability: string;
@@ -144,11 +149,16 @@ function SearchPageContent() {
       setLoading(true);
       try {
         const productsRef = collection(db, 'products');
-        
-        // Simple case-insensitive search. For production, a dedicated search service like Algolia or Typesense is recommended.
         const productSnapshot = await getDocs(productsRef);
         const allDocs = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        const filteredDocs = allDocs.filter(doc => doc.name.toLowerCase().includes(searchQuery.toLowerCase()) || doc.brand.toLowerCase().includes(searchQuery.toLowerCase()));
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        
+        const filteredDocs = allDocs.filter(doc => 
+            doc.name.toLowerCase().includes(lowerCaseQuery) || 
+            doc.brand.toLowerCase().includes(lowerCaseQuery) ||
+            doc.description.toLowerCase().includes(lowerCaseQuery) ||
+            (doc.organization.tags && doc.organization.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)))
+        );
 
         setAllProducts(filteredDocs);
       } catch (error) {
@@ -432,6 +442,55 @@ function SearchPageContent() {
                     <h2 className="text-2xl font-bold mb-2">No Products Found for "{searchQuery}"</h2>
                     <p className="text-muted-foreground mb-4">Try a different search term or adjust your filters.</p>
                     <Button variant="outline" onClick={handleResetFilters}>Reset Filters</Button>
+                </div>
+              )}
+
+              {displayedItems.length === 0 && recommendedProducts.length > 0 && (
+                <div className="mt-16">
+                    <Separator />
+                    <div className="my-8 text-center">
+                        <h2 className="text-2xl font-bold">You Might Also Like</h2>
+                        <p className="text-muted-foreground">Based on your current view</p>
+                    </div>
+                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
+                        {recommendedProducts.map((item) => {
+                        const isInWishlist = wishlist.some(w => w.id === item.id);
+                        return (
+                        <div key={item.id} className="group block">
+                                <div className="relative overflow-hidden rounded-lg">
+                                    <Link href={`/product/${item.id}`}>
+                                    <Image
+                                        src={item.images[0] || 'https://placehold.co/400x500.png'}
+                                        alt={item.name}
+                                        width={400}
+                                        height={500}
+                                        className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
+                                        data-ai-hint={item.dataAiHint || 'product image'}
+                                    />
+                                    </Link>
+                                    <Button 
+                                    variant="secondary" 
+                                    size="icon" 
+                                    className="absolute top-2 right-2 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 bg-white/80 hover:bg-white"
+                                    onClick={() => handleWishlistToggle(item)}
+                                    >
+                                        <Heart className={cn("h-4 w-4", isInWishlist ? "text-red-500 fill-red-500" : "text-foreground")} />
+                                    </Button>
+                                </div>
+                                <div className="pt-2">
+                                    <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                    <p className="text-sm font-semibold mt-1 text-foreground">
+                                        ৳{item.pricing.price}{' '}
+                                        {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span>}
+                                        {' '}
+                                        {item.pricing.discount && <span className="text-xs text-orange-400 font-bold">({item.pricing.discount}% OFF)</span>}
+                                    </p>
+                                </div>
+                            </div>
+                        )
+                        })}
+                    </div>
                 </div>
               )}
             </div>
