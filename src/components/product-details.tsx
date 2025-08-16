@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Gift } from 'lucide-react';
+import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Gift, Facebook, Twitter, Link as LinkIcon } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   Accordion,
@@ -34,6 +34,7 @@ import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 
 interface Product {
@@ -212,27 +213,6 @@ export function ProductDetails() {
           toast({ title: "Added to Wishlist" });
       }
   }
-  
-  const handleShare = async () => {
-      if (navigator.share && product) {
-        try {
-          await navigator.share({
-            title: product.name,
-            text: `Check out this product: ${product.name}`,
-            url: window.location.href,
-          });
-        } catch (error: any) {
-           if (error.name !== 'AbortError') {
-             console.error('Share failed:', error);
-             navigator.clipboard.writeText(window.location.href);
-             toast({ title: "Link Copied!", description: "Share failed, but the link is on your clipboard." });
-           }
-        }
-      } else {
-          navigator.clipboard.writeText(window.location.href);
-          toast({ title: "Link Copied!", description: "Product link copied to clipboard." });
-      }
-  };
 
   const hasPurchasedProduct = async (userId: string, productId: string): Promise<boolean> => {
     if (!userId || !productId) return false;
@@ -431,9 +411,27 @@ export function ProductDetails() {
                 <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
                 <h2 className="text-xl text-muted-foreground">{product.brand}</h2>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleShare}>
-                <Share2 className="h-5 w-5" />
-              </Button>
+               <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`, '_blank')}>
+                    <Facebook className="mr-2 h-4 w-4" /> Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => window.open(`https://twitter.com/intent/tweet?url=${window.location.href}&text=Check out this product!`, '_blank')}>
+                    <Twitter className="mr-2 h-4 w-4" /> Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast({ title: "Link Copied!", description: "Product link copied to clipboard." });
+                  }}>
+                    <LinkIcon className="mr-2 h-4 w-4" /> Copy Link
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             <div className="flex items-center mt-2">
