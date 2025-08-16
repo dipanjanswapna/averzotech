@@ -35,6 +35,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { LoadingSpinner } from './ui/loading-spinner';
 
 
 interface Product {
@@ -316,30 +317,7 @@ export function ProductDetails() {
   
   if (loading) {
     return (
-        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-                <div>
-                    <Skeleton className="w-full aspect-[3/4] rounded-lg" />
-                     <div className="grid grid-cols-5 gap-2 mt-4">
-                        <Skeleton className="w-full aspect-square rounded-lg" />
-                        <Skeleton className="w-full aspect-square rounded-lg" />
-                        <Skeleton className="w-full aspect-square rounded-lg" />
-                        <Skeleton className="w-full aspect-square rounded-lg" />
-                        <Skeleton className="w-full aspect-square rounded-lg" />
-                     </div>
-                </div>
-                 <div>
-                    <Skeleton className="h-8 w-1/2 mb-2" />
-                    <Skeleton className="h-6 w-3/4 mb-4" />
-                    <Skeleton className="h-4 w-1/4 mb-4" />
-                    <Skeleton className="h-10 w-1/3 mb-4" />
-                    <div className="flex gap-4 mt-6">
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                    </div>
-                 </div>
-             </div>
-        </main>
+        <LoadingSpinner />
     )
   }
 
@@ -521,15 +499,15 @@ export function ProductDetails() {
             
             <div className="mt-4 flex gap-4">
                 <div className="text-center text-sm">
-                    <img src="https://i.postimg.cc/63X9JhjJ/Screenshot-2025-08-14-014934.png" alt="100% Original" className="mx-auto h-12 w-12" data-ai-hint="original guarantee" />
+                    <Image src="https://i.postimg.cc/63X9JhjJ/Screenshot-2025-08-14-014934.png" alt="100% Original" className="mx-auto h-12 w-12" data-ai-hint="original guarantee" />
                     <p>100% Original</p>
                 </div>
                  <div className="text-center text-sm">
-                    <img src="https://i.postimg.cc/ZRjzcwfj/Screenshot-2025-08-15-021258.png" alt="Secure Payments" className="mx-auto h-12 w-12" data-ai-hint="secure payment" />
+                    <Image src="https://i.postimg.cc/ZRjzcwfj/Screenshot-2025-08-15-021258.png" alt="Secure Payments" className="mx-auto h-12 w-12" data-ai-hint="secure payment" />
                     <p>Secure Payments</p>
                 </div>
                  <div className="text-center text-sm">
-                    <img src="https://i.postimg.cc/KvwhhNjq/Screenshot-2025-08-14-015302.png" alt="Easy Returns" className="mx-auto h-12 w-12" data-ai-hint="return policy" />
+                    <Image src="https://i.postimg.cc/KvwhhNjq/Screenshot-2025-08-14-015302.png" alt="Easy Returns" className="mx-auto h-12 w-12" data-ai-hint="return policy" />
                     <p>Easy Returns</p>
                 </div>
             </div>
