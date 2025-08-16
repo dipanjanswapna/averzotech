@@ -390,7 +390,7 @@ export function ProductDetails() {
   return (
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-sm text-muted-foreground mb-4">
-          <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{product.brand} {product.organization.subcategory}</span>
+          <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{product.name}</span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Image Gallery and Video */}
@@ -428,8 +428,8 @@ export function ProductDetails() {
           <div>
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-foreground">{product.brand}</h1>
-                <h2 className="text-xl text-muted-foreground">{product.name}</h2>
+                <h1 className="text-2xl font-bold text-foreground">{product.name}</h1>
+                <h2 className="text-xl text-muted-foreground">{product.brand}</h2>
               </div>
               <Button variant="ghost" size="icon" onClick={handleShare}>
                 <Share2 className="h-5 w-5" />
@@ -552,7 +552,7 @@ export function ProductDetails() {
                 <AccordionContent className="space-y-2 text-sm">
                     <p>{product.description}</p>
                     <div>
-                        <h4 className="font-semibold mb-1">Specifications:</h4>
+                        <h3 className="font-semibold mb-1">Specifications:</h3>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                             {product.specifications.map(spec => (
                                 <React.Fragment key={spec.label}>
