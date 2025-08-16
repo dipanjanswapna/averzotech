@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
+import { generateProductDescription } from '@/ai/flows/generate-product-description';
 
 const initialFilterCategories = [
     { 
@@ -109,10 +110,12 @@ export default function NewVendorProductPage() {
     const { user } = useAuth();
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Product Details
     const [productName, setProductName] = useState('');
     const [description, setDescription] = useState('');
+    const [descriptionKeywords, setDescriptionKeywords] = useState('');
     const [brand, setBrand] = useState('');
     const [vendor, setVendor] = useState('');
     
@@ -277,6 +280,28 @@ export default function NewVendorProductPage() {
         return availableGroups.find(g => g.name === selectedGroup)?.subcategories || [];
     }, [selectedGroup, availableGroups]);
 
+    const handleGenerateDescription = async () => {
+        if (!productName || !brand) {
+            toast({
+                title: 'Missing Information',
+                description: 'Please enter a product name and brand before generating a description.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        setIsGenerating(true);
+        try {
+            const keywords = descriptionKeywords.split(',').map(k => k.trim()).filter(Boolean);
+            const generatedDesc = await generateProductDescription({ productName, brand, keywords });
+            setDescription(generatedDesc);
+        } catch (error) {
+            console.error("AI Description generation failed:", error);
+            toast({ title: "Generation Failed", description: "Could not generate a description at this time.", variant: 'destructive' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleSaveProduct = async () => {
         setIsLoading(true);
         try {
@@ -379,12 +404,21 @@ export default function NewVendorProductPage() {
                 <Input id="product-name" placeholder="e.g. Stylish T-Shirt" value={productName} onChange={e => setProductName(e.target.value)} disabled={isLoading} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="product-description">Description</Label>
-                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
-              </div>
-               <div className="space-y-2">
                 <Label htmlFor="product-brand">Brand</Label>
                 <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description-keywords">AI Generate Description</Label>
+                <div className="flex gap-2">
+                   <Input id="description-keywords" placeholder="Keywords (e.g. summer, cotton, casual)" value={descriptionKeywords} onChange={e => setDescriptionKeywords(e.target.value)} disabled={isGenerating || isLoading} />
+                   <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
+                     <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate'}
+                   </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="product-description">Description</Label>
+                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={6} />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
@@ -434,7 +468,7 @@ export default function NewVendorProductPage() {
                     <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                         {images.map((image, index) => (
                         <div key={index} className="relative group">
-                            <Image src={image.url} alt={`Product Image ${index + 1}`} width={150} height={150} className="rounded-md aspect-square object-cover" data-ai-hint="product image"/>
+                            <Image src={image.url} alt={`Product Image ${index + 1}`} width={150} height={150} className="rounded-md aspect-square object-cover" data-ai-hint="product image" />
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                 <Button variant="destructive" size="icon" className="h-8 w-8 rounded-full" onClick={() => handleRemoveImage(index)} disabled={isLoading}><Trash2 className="w-4 h-4"/></Button>
                             </div>
@@ -607,7 +641,7 @@ export default function NewVendorProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map(g => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
+                          {availableGroups.map((g:any) => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
