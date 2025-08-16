@@ -18,15 +18,6 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-    title: 'Kids\' Fashion',
-    description: 'Shop the cutest and most stylish outfits for kids. Find clothes, shoes, and accessories for boys, girls, and infants.',
-    alternates: {
-        canonical: '/kids',
-    },
-};
 
 interface ContentItem {
   url: string;

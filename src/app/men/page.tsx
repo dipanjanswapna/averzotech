@@ -18,15 +18,6 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-    title: 'Men\'s Fashion',
-    description: 'Explore the latest trends in men\'s fashion. Shop for t-shirts, shirts, jeans, shoes, and accessories from top brands.',
-    alternates: {
-        canonical: '/men',
-    },
-};
 
 interface ContentItem {
   url: string;

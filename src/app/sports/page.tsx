@@ -18,15 +18,6 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-    title: 'Sports & Activewear',
-    description: 'Gear up with the best sports and activewear. Shop for cricket, football, fitness gear, and more.',
-    alternates: {
-        canonical: '/sports',
-    },
-};
 
 interface ContentItem {
   url: string;

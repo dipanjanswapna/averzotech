@@ -18,15 +18,6 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-    title: 'Books',
-    description: 'Explore a world of stories. Shop for fiction, non-fiction, and children\'s books from your favorite authors.',
-    alternates: {
-        canonical: '/books',
-    },
-};
 
 interface ContentItem {
   url: string;
