@@ -35,6 +35,14 @@ const blogPosts = [
     link: '#',
     dataAiHint: 'fashion accessories',
   },
+  {
+    title: 'কোন গেমিং ল্যাপটপ আপনার জন্য সেরা?',
+    description: 'Find the best gaming laptop that fits your budget and needs.',
+    image: 'https://placehold.co/600x400.png',
+    date: 'August 20, 2025',
+    link: '#',
+    dataAiHint: 'gaming laptop',
+  }
 ];
 
 export default function BlogPage() {
