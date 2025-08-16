@@ -5,3 +5,20 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+  # Set minInstances to 1 to keep one instance warm, reducing cold starts.
+  minInstances: 1
+
+# Add headers to instruct browsers to cache static assets for a long time.
+headers:
+  - source: /_next/static/**
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - source: /fonts/**
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
+  - source: /images/**
+    headers:
+      - key: Cache-Control
+        value: public, max-age=31536000, immutable
