@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface Stat {
     title: string;
@@ -86,12 +87,7 @@ export default function AdminDashboard() {
 
 
   if (loading) {
-      return (
-        <div className="space-y-8">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p>Loading dashboard data...</p>
-        </div>
-      )
+      return <LoadingSpinner />;
   }
   
   if (!dashboardData) {

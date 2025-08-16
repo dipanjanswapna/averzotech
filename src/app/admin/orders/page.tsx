@@ -30,6 +30,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Input } from '@/components/ui/input';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface Order {
     id: string;
@@ -110,7 +111,7 @@ export default function OrdersPage() {
     };
 
     if (loading) {
-        return <div className="space-y-8"><h1 className="text-3xl font-bold">Orders</h1><p>Loading orders...</p></div>
+        return <LoadingSpinner />;
     }
 
   return (

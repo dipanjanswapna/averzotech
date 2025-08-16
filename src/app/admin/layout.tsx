@@ -9,6 +9,7 @@ import { app } from '@/lib/firebase';
 import { AdminSidebar } from '@/components/admin-sidebar';
 import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 
 export default function AdminLayout({
@@ -42,11 +43,7 @@ export default function AdminLayout({
   }, [auth, db, router]);
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <p>Verifying Admin Access...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (userRole !== 'admin') {

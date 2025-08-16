@@ -87,3 +87,29 @@
 .stepper-step-container[data-completed="true"] ~ .stepper-separator {
      @apply bg-primary;
 }
+
+@keyframes drive {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(150vw);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-drive {
+    animation: drive 3s ease-in-out infinite;
+}
+
+.animate-spin-wheel {
+    animation: spin 0.7s linear infinite;
+}
