@@ -455,8 +455,8 @@ function SearchPageContent() {
                                 </Button>
                             </div>
                             <div className="pt-2">
-                                <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
-                                <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                <h3 className="text-sm font-bold text-foreground">{item.name}</h3>
+                                <p className="text-xs text-muted-foreground truncate">{item.brand}</p>
                                 <p className="text-sm font-semibold mt-1 text-foreground">
                                     ৳{item.pricing.price}{' '}
                                     {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span>}
@@ -476,7 +476,7 @@ function SearchPageContent() {
                 </div>
               )}
 
-              {displayedItems.length === 0 && recommendedProducts.length > 0 && (
+              {recommendedProducts.length > 0 && (
                 <div className="mt-16">
                     <Separator />
                     <div className="my-8 text-center">
@@ -509,8 +509,8 @@ function SearchPageContent() {
                                     </Button>
                                 </div>
                                 <div className="pt-2">
-                                    <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
-                                    <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                    <h3 className="text-sm font-bold text-foreground">{item.name}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{item.brand}</p>
                                     <p className="text-sm font-semibold mt-1 text-foreground">
                                         ৳{item.pricing.price}{' '}
                                         {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span>}

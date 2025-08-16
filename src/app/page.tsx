@@ -257,8 +257,8 @@ export default function Home() {
                                             </div>
                                         </div>
                                         <div className="pt-2">
-                                            <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
-                                            <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
+                                            <h3 className="text-sm font-bold text-foreground">{deal.name}</h3>
+                                            <p className="text-xs text-muted-foreground truncate">{deal.brand}</p>
                                             <p className="text-sm font-semibold mt-1 text-foreground">
                                                 ৳{deal.pricing.price}{' '}
                                                 {deal.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{deal.pricing.comparePrice}</span>}
@@ -356,8 +356,8 @@ export default function Home() {
                                     </div>
                                 </div>
                                 <div className="pt-2">
-                                    <h3 className="text-sm font-bold text-foreground">{deal.brand}</h3>
-                                    <p className="text-xs text-muted-foreground truncate">{deal.name}</p>
+                                    <h3 className="text-sm font-bold text-foreground">{deal.name}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{deal.brand}</p>
                                     <p className="text-sm font-semibold mt-1 text-foreground">
                                         ৳{deal.price}{' '}
                                         {deal.originalPrice && <span className="text-xs text-muted-foreground line-through">৳{deal.originalPrice}</span>}
@@ -497,7 +497,7 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
                     <div className="flex flex-col items-center">
                          <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.minutes)}</span>
                     </div>
-                    <span className="text-xl">:</span>
+                     <span className="text-xl">:</span>
                      <div className="flex flex-col items-center">
                          <span className="p-2 bg-secondary rounded-md">{formatTime(timeLeft.seconds)}</span>
                     </div>

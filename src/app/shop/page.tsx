@@ -1,3 +1,4 @@
+
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
@@ -458,8 +459,8 @@ function ShopPageContent() {
                                 </Button>
                             </div>
                             <div className="pt-2">
-                                <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
-                                <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                <h3 className="text-sm font-bold text-foreground">{item.name}</h3>
+                                <p className="text-xs text-muted-foreground truncate">{item.brand}</p>
                                 <p className="text-sm font-semibold mt-1 text-foreground">
                                     ৳{item.pricing.price}{' '}
                                     {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span>}
@@ -512,8 +513,8 @@ function ShopPageContent() {
                                     </Button>
                                 </div>
                                 <div className="pt-2">
-                                    <h3 className="text-sm font-bold text-foreground">{item.brand}</h3>
-                                    <p className="text-xs text-muted-foreground truncate">{item.name}</p>
+                                    <h3 className="text-sm font-bold text-foreground">{item.name}</h3>
+                                    <p className="text-xs text-muted-foreground truncate">{item.brand}</p>
                                     <p className="text-sm font-semibold mt-1 text-foreground">
                                         ৳{item.pricing.price}{' '}
                                         {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span>}
