@@ -5,7 +5,7 @@ import React from 'react';
 
 export function LoadingSpinner() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-screen overflow-hidden">
         <div className="relative w-full flex justify-center">
             <div className="animate-drive relative">
                 <div className="w-24 h-12 bg-blue-500 rounded-t-lg"></div>
@@ -16,7 +16,7 @@ export function LoadingSpinner() {
                 </div>
             </div>
         </div>
-        <p className="text-white mt-8 text-lg font-semibold">Loading...</p>
+        <p className="text-foreground mt-8 text-lg font-semibold">Loading...</p>
     </div>
   );
 }
