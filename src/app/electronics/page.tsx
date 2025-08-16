@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -17,6 +18,15 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Electronics',
+    description: 'Find the latest electronics, including smartphones, laptops, cameras, and accessories. Shop top brands at great prices.',
+    alternates: {
+        canonical: '/electronics',
+    },
+};
 
 interface ContentItem {
   url: string;

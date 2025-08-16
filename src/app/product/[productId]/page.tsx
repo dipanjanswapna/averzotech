@@ -17,6 +17,9 @@ export async function generateMetadata({ params }: { params: { productId: string
       return {
         title: `${product.name} by ${product.brand} | AVERZO`,
         description: product.description,
+        alternates: {
+          canonical: `/product/${params.productId}`,
+        },
       };
     }
   } catch (error) {

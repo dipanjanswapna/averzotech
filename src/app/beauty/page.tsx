@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -17,6 +18,15 @@ import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Beauty & Personal Care',
+    description: 'Discover the best in beauty and personal care. Shop makeup, skincare, fragrances, and more from top brands.',
+    alternates: {
+        canonical: '/beauty',
+    },
+};
 
 interface ContentItem {
   url: string;

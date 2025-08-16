@@ -11,7 +11,11 @@ import { PromoBar } from '@/components/promo-bar';
 import { SiteFooter } from '@/components/site-footer';
 
 export const metadata: Metadata = {
-  title: 'AVERZO',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  title: {
+    default: 'AVERZO',
+    template: `%s | AVERZO`,
+  },
   description: 'The ultimate destination for all your needs.',
 };
 
