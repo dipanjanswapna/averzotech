@@ -499,15 +499,15 @@ export function ProductDetails() {
             
             <div className="mt-4 flex gap-4">
                 <div className="text-center text-sm">
-                    <Image src="https://i.postimg.cc/63X9JhjJ/Screenshot-2025-08-14-014934.png" alt="100% Original" className="mx-auto h-12 w-12" data-ai-hint="original guarantee" />
+                    <Image src="https://i.postimg.cc/63X9JhjJ/Screenshot-2025-08-14-014934.png" alt="100% Original" width={48} height={48} className="mx-auto h-12 w-12" data-ai-hint="original guarantee" />
                     <p>100% Original</p>
                 </div>
                  <div className="text-center text-sm">
-                    <Image src="https://i.postimg.cc/ZRjzcwfj/Screenshot-2025-08-15-021258.png" alt="Secure Payments" className="mx-auto h-12 w-12" data-ai-hint="secure payment" />
+                    <Image src="https://i.postimg.cc/ZRjzcwfj/Screenshot-2025-08-15-021258.png" alt="Secure Payments" width={48} height={48} className="mx-auto h-12 w-12" data-ai-hint="secure payment" />
                     <p>Secure Payments</p>
                 </div>
                  <div className="text-center text-sm">
-                    <Image src="https://i.postimg.cc/KvwhhNjq/Screenshot-2025-08-14-015302.png" alt="Easy Returns" className="mx-auto h-12 w-12" data-ai-hint="return policy" />
+                    <Image src="https://i.postimg.cc/KvwhhNjq/Screenshot-2025-08-14-015302.png" alt="Easy Returns" width={48} height={48} className="mx-auto h-12 w-12" data-ai-hint="return policy" />
                     <p>Easy Returns</p>
                 </div>
             </div>
