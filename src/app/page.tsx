@@ -19,7 +19,6 @@ import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId }
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PreFooterCta } from '@/components/pre-footer-cta';
-import type { Metadata } from 'next';
 
 interface HeroImage {
   url: string;
