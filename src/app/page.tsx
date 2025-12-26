@@ -199,7 +199,7 @@ export default function Home() {
       <SiteHeader />
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full aspect-[2/1] md:aspect-[16/5]" />
+            <Skeleton className="w-full md:aspect-[16/5]" />
           ) : (
             <Carousel
               className="w-full"
@@ -323,13 +323,13 @@ export default function Home() {
                     {(content.brands || []).map((brand, index) => (
                       <CarouselItem key={index} className="basis-1/5 sm:basis-1/6 md:basis-1/7 lg:basis-1/8">
                         <Link href="#" className="block text-center group">
-                          <div className="relative w-24 h-24 mx-auto rounded-full border-2 border-destructive flex items-center justify-center hover:shadow-md transition-all duration-300 bg-background overflow-hidden">
+                          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-2 border-destructive">
                             <Image
                               src={brand.url}
                               alt={brand.alt}
                               width={80}
                               height={80}
-                              className="object-scale-down"
+                              className="object-scale-down rounded-full aspect-square"
                               data-ai-hint={brand.dataAiHint}
                             />
                           </div>
