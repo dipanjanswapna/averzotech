@@ -6,6 +6,8 @@ import {
   SheetContent,
   SheetTrigger,
   SheetClose,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button";
 import { Home, Menu, ShoppingCart, Heart, User, LogOut, MapPin, Gift } from 'lucide-react';
@@ -154,6 +156,9 @@ function MobileSidebar({ user }: { user: any }) {
             </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
+            </SheetHeader>
             <div className="p-4 border-b">
                  <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
