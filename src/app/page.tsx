@@ -309,9 +309,7 @@ export default function Home() {
             <h2 className="font-headline text-center text-xl font-bold uppercase tracking-wider md:text-3xl mb-6 md:mb-8 text-foreground">
               Our Sub Brands
             </h2>
-            {loading ? (
-                <div className="flex justify-center gap-4"><Skeleton className="w-32 h-32 rounded-full" /><Skeleton className="w-32 h-32 rounded-full" /><Skeleton className="w-32 h-32 rounded-full" /></div>
-            ) : (
+             <div className="w-full overflow-hidden">
                 <Carousel
                   opts={{
                     align: "start",
@@ -321,15 +319,15 @@ export default function Home() {
                 >
                   <CarouselContent>
                     {(content.brands || []).map((brand, index) => (
-                      <CarouselItem key={index} className="basis-1/5 sm:basis-1/6 md:basis-1/7 lg:basis-1/8">
+                      <CarouselItem key={index} className="basis-1/3 sm:basis-1/5 md:basis-1/7">
                         <Link href="#" className="block text-center group">
-                          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-2 border-destructive">
+                          <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
                             <Image
                               src={brand.url}
                               alt={brand.alt}
-                              width={80}
-                              height={80}
-                              className="object-scale-down rounded-full aspect-square"
+                              width={128}
+                              height={128}
+                              className="object-contain w-full h-full"
                               data-ai-hint={brand.dataAiHint}
                             />
                           </div>
@@ -338,10 +336,8 @@ export default function Home() {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="hidden md:flex" />
-                  <CarouselNext className="hidden md:flex" />
                 </Carousel>
-            )}
+            </div>
           </div>
         </section>
 
