@@ -321,15 +321,15 @@ export default function Home() {
                 >
                   <CarouselContent>
                     {(content.brands || []).map((brand, index) => (
-                      <CarouselItem key={index} className="basis-1/4 sm:basis-1/5 md:basis-1/6 lg:basis-1/7">
-                        <Link href="#" className="block text-center p-2 group">
-                          <div className="relative aspect-square w-full rounded-full border-2 border-destructive flex items-center justify-center hover:shadow-md transition-all duration-300 bg-background">
+                      <CarouselItem key={index} className="basis-1/5 sm:basis-1/6 md:basis-1/7 lg:basis-1/8">
+                        <Link href="#" className="block text-center group">
+                          <div className="relative aspect-square w-full rounded-full border-2 border-destructive flex items-center justify-center hover:shadow-md transition-all duration-300 bg-background overflow-hidden">
                             <Image
                               src={brand.url}
                               alt={brand.alt}
                               width={80}
                               height={80}
-                              className="object-scale-down rounded-full p-2"
+                              className="object-cover w-full h-full aspect-square"
                               data-ai-hint={brand.dataAiHint}
                             />
                           </div>
