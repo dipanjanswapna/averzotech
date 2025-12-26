@@ -134,7 +134,7 @@ export default function Home() {
                         brand: productData.brand,
                         price: productData.pricing.price,
                         originalPrice: productData.pricing.comparePrice,
-                        discount: `${'${productData.pricing.discount}'}% OFF`,
+                        discount: `${productData.pricing.discount}% OFF`,
                         image: productData.images[0],
                         dataAiHint: productData.name.toLowerCase(),
                     };
@@ -199,7 +199,7 @@ export default function Home() {
       <SiteHeader />
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full md:aspect-[16/5]" />
+            <Skeleton className="w-full md:aspect-[2.4/1]" />
           ) : (
             <Carousel
               className="w-full"
@@ -213,7 +213,7 @@ export default function Home() {
               <CarouselContent>
                 {(content.heroImages || []).map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="relative w-full aspect-[2/1] md:aspect-[16/5]">
+                    <div className="relative w-full aspect-[2/1] md:aspect-[2.4/1]">
                       <Image
                         src={image.url}
                         alt={image.alt}
@@ -256,7 +256,7 @@ export default function Home() {
                             <CarouselContent>
                             {flashSaleItems.map((deal, index) => (
                                 <CarouselItem key={index} className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/6">
-                                    <Link href={`/product/${'${deal.id}'}`} className="group block">
+                                    <Link href={`/product/${deal.id}`} className="group block">
                                         <div className="relative overflow-hidden rounded-lg">
                                             <Image
                                                 src={deal.images[0] || 'https://placehold.co/400x500.png'}
@@ -319,15 +319,15 @@ export default function Home() {
                 >
                   <CarouselContent>
                     {(content.brands || []).map((brand, index) => (
-                      <CarouselItem key={index} className="basis-1/4 md:basis-1/7">
+                      <CarouselItem key={index} className="basis-1/4 sm:basis-1/5 md:basis-1/7">
                         <Link href="#" className="block text-center group">
-                          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-2 border-destructive">
+                          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-2 border-destructive p-1">
                             <Image
                               src={brand.url}
                               alt={brand.alt}
                               width={128}
                               height={128}
-                              className="object-cover aspect-square rounded-full"
+                              className="object-scale-down"
                               data-ai-hint={brand.dataAiHint}
                             />
                           </div>
@@ -353,7 +353,7 @@ export default function Home() {
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
                         {deals.map((deal, index) => (
-                            <Link href={`/product/${'${deal.id}'}`} key={index} className="group block">
+                            <Link href={`/product/${deal.id}`} key={index} className="group block">
                                 <div className="relative overflow-hidden rounded-lg">
                                     <Image
                                         src={deal.image}
@@ -399,7 +399,7 @@ export default function Home() {
                         <CarouselContent>
                         {otherCampaigns.map((campaign) => (
                             <CarouselItem key={campaign.id} className="md:basis-1/2 lg:basis-1/3">
-                                <Link href={`/shop?campaign=${'${campaign.id}'}`} className="block group">
+                                <Link href={`/shop?campaign=${campaign.id}`} className="block group">
                                      <Image
                                         src={campaign.bannerUrl!}
                                         alt={campaign.name}

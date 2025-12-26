@@ -4,14 +4,8 @@ import { SiteHeader } from '@/components/site-header';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Clock, Filter, Bell, X } from 'lucide-react';
+import { Clock, Filter, Bell } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 import {
   Sheet,
   SheetContent,
@@ -95,7 +89,6 @@ const LoadingSkeleton = () => (
 
 
 export default function FlashSalePage() {
-  const [isFilterOpen, setIsFilterOpen] = React.useState(true);
   const [loading, setLoading] = useState(true);
   const [flashSale, setFlashSale] = useState<Campaign | null>(null);
   const [allFlashSaleItems, setAllFlashSaleItems] = useState<Product[]>([]);
@@ -254,16 +247,12 @@ export default function FlashSalePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="hidden md:block md:col-span-1">
-                 <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                    <CollapsibleTrigger className="flex justify-between items-center w-full font-semibold text-lg mb-4">
-                      Filters <Filter className="w-5 h-5" />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                       {filterControls}
-                    </CollapsibleContent>
-                </Collapsible>
-            </div>
+            <aside className="hidden md:block md:col-span-1">
+                 <div className="sticky top-24">
+                     <h2 className="text-xl font-semibold mb-4">Filters</h2>
+                     {filterControls}
+                 </div>
+            </aside>
 
             <div className="md:col-span-3">
               {displayedItems.length > 0 ? (
