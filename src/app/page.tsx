@@ -199,7 +199,7 @@ export default function Home() {
       <SiteHeader />
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full aspect-[2/1] md:aspect-[16/5]" />
+            <Skeleton className="w-full aspect-[2/1] md:aspect-[2.4/1]" />
           ) : (
             <Carousel
               className="w-full"
@@ -321,13 +321,13 @@ export default function Home() {
                     {(content.brands || []).map((brand, index) => (
                       <CarouselItem key={index} className="basis-1/4 sm:basis-1/5 md:basis-[calc(100%/7)]">
                         <Link href="#" className="block text-center group">
-                          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-2 border-destructive p-1 bg-background">
+                          <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-2 border-destructive bg-background">
                             <Image
                               src={brand.url}
                               alt={brand.alt}
                               width={128}
                               height={128}
-                              className="object-scale-down rounded-full aspect-square"
+                              className="object-scale-down p-2"
                               data-ai-hint={brand.dataAiHint}
                             />
                           </div>
@@ -520,4 +520,3 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
-
