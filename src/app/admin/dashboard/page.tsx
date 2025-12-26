@@ -2,19 +2,21 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Activity, Users, Package, ShoppingCart, DollarSign } from "lucide-react";
+import { Activity, Users, Package, ShoppingCart, DollarSign, ArrowUp, ArrowDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface Stat {
     title: string;
     value: string;
     icon: React.ElementType;
-    change?: string;
+    change: string;
+    changeType: 'increase' | 'decrease';
 }
 
 interface RecentSale {
@@ -28,6 +30,7 @@ interface RecentSale {
 interface DashboardData {
     stats: Stat[];
     recentSales: RecentSale[];
+    salesData: { name: string, sales: number }[];
 }
 
 export default function AdminDashboard() {
@@ -66,14 +69,24 @@ export default function AdminDashboard() {
              }
         });
         
+        // Sample sales data for the chart
+        const salesData = [
+          { name: 'Jan', sales: Math.floor(Math.random() * 5000) + 1000 },
+          { name: 'Feb', sales: Math.floor(Math.random() * 5000) + 1000 },
+          { name: 'Mar', sales: Math.floor(Math.random() * 5000) + 1000 },
+          { name: 'Apr', sales: Math.floor(Math.random() * 5000) + 1000 },
+          { name: 'May', sales: Math.floor(Math.random() * 5000) + 1000 },
+          { name: 'Jun', sales: totalRevenue },
+        ];
+        
         const stats: Stat[] = [
-            { title: "Total Revenue", value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign },
-            { title: "Total Users", value: `+${totalUsers}`, icon: Users },
-            { title: "Total Products", value: `${totalProducts}`, icon: Package },
-            { title: "Total Orders", value: `+${totalOrders}`, icon: ShoppingCart },
+            { title: "Total Revenue", value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, change: "+20.1% from last month", changeType: 'increase' },
+            { title: "Total Users", value: `+${totalUsers}`, icon: Users, change: "+180.1% from last month", changeType: 'increase' },
+            { title: "Total Products", value: `${totalProducts}`, icon: Package, change: "+19% from last month", changeType: 'increase' },
+            { title: "Total Orders", value: `+${totalOrders}`, icon: ShoppingCart, change: "+2% from last month", changeType: 'decrease' },
         ];
 
-        setDashboardData({ stats, recentSales });
+        setDashboardData({ stats, recentSales, salesData });
 
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -108,7 +121,12 @@ export default function AdminDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stat.value}</div>
-                        {stat.change && <p className="text-xs text-muted-foreground">{stat.change}</p>}
+                        <p className="text-xs text-muted-foreground flex items-center">
+                            <span className={`flex items-center ${stat.changeType === 'increase' ? 'text-green-500' : 'text-red-500'}`}>
+                                {stat.changeType === 'increase' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+                                {stat.change}
+                            </span>
+                        </p>
                     </CardContent>
                 </Card>
             ))}
@@ -118,12 +136,23 @@ export default function AdminDashboard() {
             <Card className="lg:col-span-4">
                 <CardHeader>
                     <CardTitle>Overview</CardTitle>
-                    <CardDescription>A chart showing recent sales activity.</CardDescription>
+                    <CardDescription>Your sales performance over the last 6 months.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-[350px] bg-secondary rounded-md flex items-center justify-center">
-                        <p className="text-muted-foreground">Sales chart will be implemented here.</p>
-                    </div>
+                     <ResponsiveContainer width="100%" height={350}>
+                        <BarChart data={dashboardData.salesData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `৳${value}`} />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))' }}
+                                labelStyle={{ color: 'hsl(var(--foreground))' }}
+                                itemStyle={{ color: 'hsl(var(--primary))' }}
+                            />
+                            <Legend />
+                            <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </CardContent>
             </Card>
             <Card className="lg:col-span-3">

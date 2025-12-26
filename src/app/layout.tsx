@@ -23,14 +23,8 @@ const ptSans = PT_Sans({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
-  title: {
-    default: 'AVERZO',
-    template: `%s | AVERZO`,
-  },
-  description: 'The ultimate destination for all your needs.',
-};
+import { defaultMetadata } from '@/config/metadata';
+export const metadata = defaultMetadata;
 
 export default function RootLayout({
   children,
