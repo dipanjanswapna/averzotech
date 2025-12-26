@@ -88,14 +88,30 @@
      @apply bg-primary;
 }
 
-@keyframes drive {
-    0% {
-        transform: translateX(-100%);
-    }
-    100% {
-        transform: translateX(150vw);
-    }
+@keyframes bounce-letter {
+  0%, 100% {
+    transform: translateY(0);
+    color: hsl(var(--primary));
+  }
+  50% {
+    transform: translateY(-20px);
+    color: hsl(var(--accent));
+  }
 }
+
+[class^="letter-"] {
+    font-size: 4rem;
+    font-weight: bold;
+    font-family: var(--font-headline);
+    animation: bounce-letter 1.8s ease-in-out infinite;
+}
+
+.letter-a { animation-delay: 0s; }
+.letter-v { animation-delay: 0.1s; }
+.letter-e { animation-delay: 0.2s; }
+.letter-r { animation-delay: 0.3s; }
+.letter-z { animation-delay: 0.4s; }
+.letter-o { animation-delay: 0.5s; }
 
 @keyframes spin {
     0% {
@@ -104,12 +120,4 @@
     100% {
         transform: rotate(360deg);
     }
-}
-
-.animate-drive {
-    animation: drive 3s ease-in-out infinite;
-}
-
-.animate-spin-wheel {
-    animation: spin 0.7s linear infinite;
 }
