@@ -199,7 +199,7 @@ export default function Home() {
       <SiteHeader />
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full aspect-[2/1] md:aspect-[2.4/1]" />
+            <Skeleton className="w-full aspect-[2/1] md:aspect-[16/5]" />
           ) : (
             <Carousel
               className="w-full"
@@ -213,7 +213,7 @@ export default function Home() {
               <CarouselContent>
                 {(content.heroImages || []).map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="relative w-full aspect-[2/1] md:aspect-[2.4/1]">
+                    <div className="relative w-full aspect-[2/1] md:aspect-[16/5]">
                       <Image
                         src={image.url}
                         alt={image.alt}
