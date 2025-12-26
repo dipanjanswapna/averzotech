@@ -309,7 +309,7 @@ export default function Home() {
               Our Sub Brands
             </h2>
             {loading ? (
-                <div className="flex justify-center gap-4"><Skeleton className="w-32 h-32 rounded-full" /><Skeleton className="w-32 h-32 rounded-full" /><Skeleton className="w-32 h-32 rounded-full" /></div>
+                <div className="flex justify-center gap-4"><Skeleton className="w-32 h-32 rounded-lg" /><Skeleton className="w-32 h-32 rounded-lg" /><Skeleton className="w-32 h-32 rounded-lg" /></div>
             ) : (
                 <Carousel
                   opts={{
@@ -320,17 +320,16 @@ export default function Home() {
                 >
                   <CarouselContent>
                     {(content.brands || []).map((brand, index) => (
-                      <CarouselItem key={index} className="basis-1/4 sm:basis-1/5 md:basis-1/8 lg:basis-1/10">
+                      <CarouselItem key={index} className="basis-1/3 sm:basis-1/4 md:basis-1/6 lg:basis-[calc(100%/7)]">
                         <Link href="#" className="block text-center">
                           <Image
                             src={brand.url}
                             alt={brand.alt}
-                            width={128}
-                            height={128}
-                            className="aspect-square h-auto w-full rounded-full object-cover border-2 border-red-500"
+                            width={100}
+                            height={100}
+                            className="aspect-square h-auto w-full object-contain"
                             data-ai-hint={brand.dataAiHint}
                           />
-                          <p className="mt-2 text-sm font-semibold text-foreground truncate">{brand.alt}</p>
                         </Link>
                       </CarouselItem>
                     ))}
