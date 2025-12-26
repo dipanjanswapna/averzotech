@@ -89,36 +89,38 @@
      @apply bg-primary;
 }
 
-@keyframes bounce-letter {
+.loader .dash {
+  animation: dash 2.5s ease-in-out infinite,
+             colors 5s linear infinite;
+  animation-delay: calc(var(--i) * 0.2s);
+}
+
+@keyframes dash {
+  0%, 20% {
+    opacity: 0;
+    transform: scale(0.8);
+    stroke-dasharray: 0 1;
+    stroke-dashoffset: 1;
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+    stroke-dasharray: 1 0;
+    stroke-dashoffset: 0;
+  }
+  80%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+    stroke-dasharray: 0 1;
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes colors {
   0%, 100% {
-    transform: translateY(0);
     color: hsl(var(--primary));
   }
   50% {
-    transform: translateY(-20px);
     color: hsl(var(--accent));
   }
-}
-
-[class^="letter-"] {
-    font-size: 4rem;
-    font-weight: bold;
-    font-family: var(--font-headline);
-    animation: bounce-letter 1.8s ease-in-out infinite;
-}
-
-.letter-a { animation-delay: 0s; }
-.letter-v { animation-delay: 0.1s; }
-.letter-e { animation-delay: 0.2s; }
-.letter-r { animation-delay: 0.3s; }
-.letter-z { animation-delay: 0.4s; }
-.letter-o { animation-delay: 0.5s; }
-
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
 }
