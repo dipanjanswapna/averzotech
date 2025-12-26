@@ -320,13 +320,13 @@ export default function Home() {
                 >
                   <CarouselContent>
                     {(content.brands || []).map((brand, index) => (
-                      <CarouselItem key={index} className="basis-1/3 sm:basis-1/4 md:basis-1/6 lg:basis-1/8">
+                      <CarouselItem key={index} className="basis-1/4 sm:basis-1/5 md:basis-1/8 lg:basis-1/10">
                         <Link href="#" className="block text-center">
                           <Image
                             src={brand.url}
                             alt={brand.alt}
-                            width={200}
-                            height={200}
+                            width={128}
+                            height={128}
                             className="aspect-square h-auto w-full rounded-full object-cover border-2 border-red-500"
                             data-ai-hint={brand.dataAiHint}
                           />
