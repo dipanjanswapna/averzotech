@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import Image from 'next/image';
@@ -25,7 +24,7 @@ import * as React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
@@ -37,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { LoadingSpinner } from './ui/loading-spinner';
 import { ArTryOn } from './ar-try-on';
+import { StockIndicator } from './stock-indicator';
 
 
 interface Product {
@@ -61,6 +61,7 @@ interface Product {
     inventory: {
         sku: string;
         stock: number;
+        initialStock?: number;
         availability: 'in-stock' | 'out-of-stock' | 'pre-order';
     };
     organization: {
@@ -136,43 +137,45 @@ export function ProductDetails() {
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
   React.useEffect(() => {
-    if (productId) {
-      const fetchProductData = async () => {
-        setLoading(true);
-        try {
-          const productRef = doc(db, 'products', productId);
-          const reviewsRef = collection(db, 'products', productId, 'reviews');
-          const qnaRef = collection(db, 'products', productId, 'qna');
-          
-          const productSnap = await getDoc(productRef);
+    if (!productId) return;
 
-          if (productSnap.exists()) {
-            const productData = { id: productSnap.id, ...productSnap.data() } as Product;
-            setProduct(productData);
-            if (productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
-            if (productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
+    setLoading(true);
 
-            const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'));
-            const reviewsSnap = await getDocs(reviewsQuery);
-            setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
-            
-            const qnaQuery = query(qnaRef, orderBy('questionCreatedAt', 'desc'));
-            const qnaSnap = await getDocs(qnaQuery);
-            setQna(qnaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnA)));
+    const productRef = doc(db, 'products', productId);
+    const reviewsRef = collection(db, 'products', productId, 'reviews');
+    const qnaRef = collection(db, 'products', productId, 'qna');
 
-          } else {
-            setError('Product not found.');
-          }
-        } catch (err) {
-          setError('Failed to fetch product data.');
-          console.error(err);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchProductData();
-    }
-  }, [productId]);
+    const unsubscribeProduct = onSnapshot(productRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const productData = { id: docSnap.id, ...docSnap.data() } as Product;
+        setProduct(productData);
+        if (!selectedSize && productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
+        if (!selectedColor && productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
+        setError(null);
+      } else {
+        setError('Product not found.');
+      }
+      setLoading(false);
+    }, (err) => {
+      console.error(err);
+      setError('Failed to fetch product data.');
+      setLoading(false);
+    });
+
+    const unsubscribeReviews = onSnapshot(query(reviewsRef, orderBy('createdAt', 'desc')), (snapshot) => {
+      setReviews(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
+    });
+
+    const unsubscribeQna = onSnapshot(query(qnaRef, orderBy('questionCreatedAt', 'desc')), (snapshot) => {
+      setQna(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnA)));
+    });
+
+    return () => {
+      unsubscribeProduct();
+      unsubscribeReviews();
+      unsubscribeQna();
+    };
+  }, [productId, selectedSize, selectedColor]);
   
   const handleAddToCart = (buyNow: boolean = false) => {
     if (!product) return;
@@ -203,7 +206,7 @@ export function ProductDetails() {
        const productForWishlist: WishlistItem = {
             id: product.id, name: product.name, brand: product.brand,
             pricing: product.pricing, images: product.images,
-            inventory: { availability: product.inventory.availability },
+            inventory: { availability: product.inventory.availability, stock: product.inventory.stock },
             variants: product.variants,
             shipping: product.shipping
        };
@@ -268,11 +271,6 @@ export function ProductDetails() {
               createdAt: serverTimestamp()
           });
 
-          // Refresh reviews
-          const reviewsQuery = query(reviewsRef, orderBy('createdAt', 'desc'));
-          const reviewsSnap = await getDocs(reviewsQuery);
-          setReviews(reviewsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
-
           toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
           setNewReviewTitle("");
           setNewReviewComment("");
@@ -303,9 +301,7 @@ export function ProductDetails() {
               questionCreatedAt: serverTimestamp(),
               answer: ""
           });
-          const qnaQuery = query(qnaRef, orderBy('questionCreatedAt', 'desc'));
-          const qnaSnap = await getDocs(qnaRef);
-          setQna(qnaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnA)));
+
           setNewQuestion("");
           toast({ title: "Question Submitted!", description: "Your question has been posted." });
 
@@ -344,6 +340,7 @@ export function ProductDetails() {
       return { star, count, percentage: reviews.length > 0 ? (count / reviews.length) * 100 : 0 };
   }).reverse();
   const safeVideoUrl = product.videoUrl ? product.videoUrl.replace("watch?v=", "embed/") : "";
+  const isOutOfStock = product.inventory.availability === 'out-of-stock' || product.inventory.stock <= 0;
   const isPreOrder = product.inventory.availability === 'pre-order';
   const isTryOnAvailable = product.organization.category === 'Accessories' && (product.organization.subcategory === 'Watches' || product.organization.subcategory === 'Sunglasses');
 
@@ -433,10 +430,14 @@ export function ProductDetails() {
              {product.giftWithPurchase?.enabled && (
                 <p className="text-sm text-pink-600 font-semibold mt-1">+ FREE GIFT: {product.giftWithPurchase.description}</p>
              )}
-            <Badge variant={isPreOrder ? "secondary" : "outline"} className={cn("mt-2", isPreOrder && "bg-blue-100 text-blue-800")}>
-              {product.inventory.availability.replace('-', ' ').toUpperCase()}
-            </Badge>
-            <p className="text-sm text-muted-foreground mt-1">SKU: {product.inventory.sku}</p>
+            
+            <div className="my-4">
+                <StockIndicator 
+                    stock={product.inventory.stock} 
+                    initialStock={product.inventory.initialStock || 50} 
+                    availability={product.inventory.availability}
+                />
+            </div>
 
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-foreground mb-2">COLOR</h3>
@@ -473,14 +474,14 @@ export function ProductDetails() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
-              <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleAddToCart(false)}>
-                <ShoppingBag className="mr-2 h-5 w-5" /> {isPreOrder ? 'PRE-ORDER NOW' : 'ADD TO CART'}
+              <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleAddToCart(false)} disabled={isOutOfStock}>
+                <ShoppingBag className="mr-2 h-5 w-5" /> {isPreOrder ? 'PRE-ORDER NOW' : (isOutOfStock ? 'OUT OF STOCK' : 'ADD TO CART')}
               </Button>
                {isTryOnAvailable ? (
                     <ArTryOn productName={product.name} productImage={product.images[0]} />
                 ) : (
-                    <Button size="lg" variant="secondary" className="flex-1" onClick={() => handleAddToCart(true)}>
-                        {isPreOrder ? 'PRE-ORDER & CHECKOUT' : 'BUY NOW'}
+                    <Button size="lg" variant="secondary" className="flex-1" onClick={() => handleAddToCart(true)} disabled={isOutOfStock}>
+                        {isPreOrder ? 'PRE-ORDER & CHECKOUT' : (isOutOfStock ? 'OUT OF STOCK' : 'BUY NOW')}
                     </Button>
                 )}
               <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>
