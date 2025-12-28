@@ -36,6 +36,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { LoadingSpinner } from './ui/loading-spinner';
+import { ArTryOn } from './ar-try-on';
 
 
 interface Product {
@@ -344,6 +345,8 @@ export function ProductDetails() {
   }).reverse();
   const safeVideoUrl = product.videoUrl ? product.videoUrl.replace("watch?v=", "embed/") : "";
   const isPreOrder = product.inventory.availability === 'pre-order';
+  const isTryOnAvailable = product.organization.category === 'Accessories' && (product.organization.subcategory === 'Watches' || product.organization.subcategory === 'Sunglasses');
+
 
   return (
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -473,9 +476,13 @@ export function ProductDetails() {
               <Button size="lg" className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleAddToCart(false)}>
                 <ShoppingBag className="mr-2 h-5 w-5" /> {isPreOrder ? 'PRE-ORDER NOW' : 'ADD TO CART'}
               </Button>
-              <Button size="lg" variant="secondary" className="flex-1" onClick={() => handleAddToCart(true)}>
-                 {isPreOrder ? 'PRE-ORDER & CHECKOUT' : 'BUY NOW'}
-              </Button>
+               {isTryOnAvailable ? (
+                    <ArTryOn productName={product.name} productImage={product.images[0]} />
+                ) : (
+                    <Button size="lg" variant="secondary" className="flex-1" onClick={() => handleAddToCart(true)}>
+                        {isPreOrder ? 'PRE-ORDER & CHECKOUT' : 'BUY NOW'}
+                    </Button>
+                )}
               <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>
                 <Heart className={`mr-2 h-5 w-5 ${isInWishlist ? "fill-current" : ""}`} /> WISHLIST
               </Button>
