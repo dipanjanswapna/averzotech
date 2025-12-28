@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -38,6 +39,7 @@ export function ArTryOn({ productImage, productName }: ArTryOnProps) {
 
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
+            videoRef.current.playsInline = true; // Add this for iOS Safari
           }
         } catch (error) {
           console.error('Error accessing camera:', error);
