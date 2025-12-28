@@ -199,7 +199,7 @@ export default function Home() {
       <SiteHeader />
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full aspect-[4/3] md:aspect-[16/5]" />
+            <Skeleton className="w-full aspect-[2/1] md:aspect-[2.4/1]" />
           ) : (
             <Carousel
               className="w-full"
@@ -213,12 +213,12 @@ export default function Home() {
               <CarouselContent>
                 {(content.heroImages || []).map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="relative w-full aspect-[4/3] md:aspect-[16/5]">
+                    <div className="relative w-full aspect-[2/1] md:aspect-[2.4/1]">
                       <Image
                         src={image.url}
                         alt={image.alt}
                         fill
-                        className="object-cover"
+                        className="object-contain"
                         data-ai-hint={image.dataAiHint}
                         priority={index === 0}
                       />
@@ -520,4 +520,5 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
+
 
