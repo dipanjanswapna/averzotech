@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import Image from 'next/image';
@@ -37,6 +38,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { LoadingSpinner } from './ui/loading-spinner';
 import { ArTryOn } from './ar-try-on';
 import { StockIndicator } from './stock-indicator';
+import { EstimatedDeliveryChecker } from './estimated-delivery-checker';
 
 
 interface Product {
@@ -494,15 +496,7 @@ export function ProductDetails() {
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3 >
                <p className="text-xs text-muted-foreground mt-1">Estimated Delivery: {product.shipping.estimatedDelivery}</p>
-                <div className="mt-2 text-sm space-y-1">
-                    {availableShippingMethods.length > 0 ? (
-                         availableShippingMethods.map(method => (
-                           <p key={method.name}>• {method.name}: <span className="font-semibold">৳{method.fee}</span></p>
-                        ))
-                    ) : (
-                        <p>Loading shipping options...</p>
-                    )}
-                </div>
+                <EstimatedDeliveryChecker />
             </div>
             
             <div className="mt-4 flex gap-4">
