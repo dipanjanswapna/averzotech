@@ -7,7 +7,11 @@ import { useToast } from './use-toast';
 import type { Product } from './use-cart'; // Import a more complete Product type
 
 export interface WishlistItem extends Omit<Product, 'quantity' | 'selectedColor' | 'selectedSize'> {
-    // Wishlist items don't have quantity or selected variants
+    inventory: {
+        stock: number;
+        initialStock?: number;
+        availability: 'in-stock' | 'out-of-stock' | 'pre-order';
+    };
 }
 
 
@@ -78,5 +82,3 @@ export const useWishlist = () => {
   }
   return context;
 };
-
-    

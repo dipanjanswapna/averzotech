@@ -1,3 +1,4 @@
+
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -55,6 +56,7 @@ export interface FlashSaleItem {
   dataAiHint: string;
   inventory: {
     stock: number;
+    initialStock?: number;
   };
 }
 

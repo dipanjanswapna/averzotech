@@ -316,6 +316,8 @@ export default function NewVendorProductPage() {
                 })
             );
 
+            const stockAmount = parseInt(stock, 10) || 0;
+
             const productData = {
                 name: productName,
                 description,
@@ -349,7 +351,8 @@ export default function NewVendorProductPage() {
                 },
                 inventory: {
                     sku,
-                    stock: parseInt(stock, 10) || 0,
+                    stock: stockAmount,
+                    initialStock: stockAmount, // Set initial stock
                     availability,
                 },
                 shipping: {

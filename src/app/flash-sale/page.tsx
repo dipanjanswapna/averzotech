@@ -1,3 +1,4 @@
+
 'use client';
 
 import { SiteHeader } from '@/components/site-header';
@@ -27,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, getDocs, query, where, Timestamp, getDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StockIndicator } from '@/components/stock-indicator';
 
 interface Product {
     id: string;
@@ -41,6 +43,8 @@ interface Product {
     dataAiHint: string;
     inventory: {
         stock: number;
+        initialStock?: number;
+        availability: 'in-stock' | 'out-of-stock' | 'pre-order';
     };
     organization: {
         category: string;
@@ -282,6 +286,13 @@ export default function FlashSalePage() {
                                     {deal.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{deal.pricing.comparePrice}</span> }
                                     {deal.pricing.discount && <span className="text-xs text-orange-400 font-bold">({deal.pricing.discount}% OFF)</span> }
                                 </p>
+                                <div className="mt-2">
+                                     <StockIndicator 
+                                        stock={deal.inventory.stock} 
+                                        initialStock={deal.inventory.initialStock}
+                                        availability={deal.inventory.availability}
+                                    />
+                                </div>
                             </div>
                         </Link>
                     ))}
@@ -376,10 +387,10 @@ interface FilterControlsProps {
     categories: string[];
     priceRange: number[];
     onPriceChange: (value: number[]) => void;
-    selectedCategory: string;
-    onCategoryChange: (value: string) => void;
     selectedBrand: string;
     onBrandChange: (value: string) => void;
+    selectedCategory: string;
+    onCategoryChange: (value: string) => void;
     onApply: () => void;
     onReset: () => void;
 }
@@ -389,10 +400,10 @@ function FilterControls({
     categories, 
     priceRange, 
     onPriceChange,
-    selectedCategory,
-    onCategoryChange,
     selectedBrand,
     onBrandChange,
+    selectedCategory,
+    onCategoryChange,
     onApply,
     onReset
 }: FilterControlsProps) {
