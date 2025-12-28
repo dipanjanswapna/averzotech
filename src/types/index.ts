@@ -90,3 +90,46 @@ export interface HomepageContent {
   deals: { id: string }[];
   categories: CategoryCard[];
 }
+
+// Order interface
+export interface Order {
+    id?: string;
+    userId: string;
+    customerName: string;
+    items: {
+        id: string;
+        name: string;
+        price: number;
+        quantity: number;
+        image: string;
+        sku: string;
+        dataAiHint: string;
+        giftDescription?: string;
+    }[];
+    shippingAddress: {
+        id: string;
+        name: string;
+        email: string;
+        phone: string;
+        fullAddress: string;
+        district: string;
+        division: string;
+        method: string;
+    };
+    payment: {
+        method: string;
+        subtotal: number;
+        shipping: number;
+        tax: number;
+        coupon?: {
+            code: string;
+            discountAmount: number;
+        } | null;
+        giftCard?: {
+            code: string;
+            usedAmount: number;
+        } | null;
+        total: number;
+    };
+}
+

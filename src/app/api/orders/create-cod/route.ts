@@ -1,11 +1,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, runTransaction, updateDoc } from 'firebase/firestore';
+import { createParcel } from '@/lib/redx';
+import { Order } from '@/types';
 
 export async function POST(req: NextRequest) {
     try {
-        const orderData = await req.json();
+        const orderData: Order = await req.json();
         
         if (!orderData || !orderData.userId || !orderData.items || orderData.items.length === 0) {
             return NextResponse.json({ error: 'Missing required order data.' }, { status: 400 });
@@ -30,17 +32,19 @@ export async function POST(req: NextRequest) {
         // Create a new document in the "orders" collection
         const newOrderRef = doc(collection(db, "orders"));
         
-        // Set the order data
-        batch.set(newOrderRef, {
+        const finalOrderData = {
             ...orderData,
-            status: 'Pending', // Initial status for COD orders to allow for admin verification
+            status: 'Pending',
             paymentDetails: {
                 status: 'Unpaid',
                 method: 'COD'
             },
             createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-        });
+            updatedAt: serverTimestamp(),
+            trackingId: '',
+        }
+
+        batch.set(newOrderRef, finalOrderData);
         
         // Decrement stock for each item in the order
         for (const item of orderData.items) {
@@ -48,10 +52,20 @@ export async function POST(req: NextRequest) {
             batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
         }
         
-        // Commit the batch
         await batch.commit();
 
-        // Return the new order ID
+        try {
+            const parcelResponse = await createParcel(finalOrderData, newOrderRef.id);
+            if (parcelResponse.tracking_id) {
+                await updateDoc(newOrderRef, { trackingId: parcelResponse.tracking_id });
+            } else {
+                 console.error("Failed to get tracking ID from RedX for COD order:", newOrderRef.id);
+            }
+        } catch (redxError) {
+             console.error("RedX parcel creation failed for COD order:", newOrderRef.id, redxError);
+             // Don't fail the whole order, just log the error. Admin can handle it manually.
+        }
+
         return NextResponse.json({ orderId: newOrderRef.id }, { status: 201 });
 
     } catch (error: any) {

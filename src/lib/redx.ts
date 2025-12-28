@@ -1,5 +1,6 @@
 
 'use server';
+import { Order } from '@/types';
 
 const redxConfig = {
     baseURL: process.env.REDX_IS_LIVE === 'true' ? 'https://openapi.redx.com.bd/v1.0.0-beta' : 'https://sandbox.redx.com.bd/v1.0.0-beta',
@@ -56,4 +57,28 @@ export async function getParcelDetails(trackingId: string) {
         throw new Error('Tracking ID is required.');
     }
     return redxApiRequest('GET', `/parcel/info/${trackingId}`);
+}
+
+export async function createParcel(order: Order, orderId: string) {
+    const { shippingAddress, payment } = order;
+    
+    // This is a placeholder. In a real app, you would have a more robust way
+    // to map your internal area names/IDs to RedX's area_id.
+    // For now, we'll hardcode a common Dhaka area ID for testing.
+    const delivery_area_id = 1; // Example: Mohammadpur(Dhaka)
+    const pickup_store_id = 1; // Assuming you have a default pickup store with ID 1
+
+    const parcelData = {
+        customer_name: shippingAddress.name,
+        customer_phone: shippingAddress.phone,
+        delivery_area: shippingAddress.district,
+        delivery_area_id: delivery_area_id,
+        customer_address: shippingAddress.fullAddress,
+        merchant_invoice_id: orderId,
+        cash_collection_amount: payment.method === 'cod' ? payment.total : 0,
+        parcel_weight: 500, // Default weight in grams, adjust as needed
+        value: payment.subtotal,
+    };
+
+    return redxApiRequest('POST', '/parcel', parcelData);
 }
