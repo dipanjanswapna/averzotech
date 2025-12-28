@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Gift, Facebook, Twitter, Link as LinkIcon } from 'lucide-react';
+import { Star, Tag, Truck, Heart, ShoppingBag, Share2, ThumbsUp, ThumbsDown, MessageCircle, Gift, Facebook, Twitter, Link as LinkIcon, Minus, Plus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
   Accordion,
@@ -25,7 +25,7 @@ import * as React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy, where, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy, where, onSnapshot, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
@@ -40,6 +40,8 @@ import { ArTryOn } from './ar-try-on';
 import { StockIndicator } from './stock-indicator';
 import { EstimatedDeliveryChecker } from './estimated-delivery-checker';
 import { StickyAddToCart } from './sticky-add-to-cart';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 
 interface Product {
@@ -118,6 +120,8 @@ export function ProductDetails() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [showStickyBar, setShowStickyBar] = React.useState(false);
+  const [comparableProducts, setComparableProducts] = React.useState<Product[]>([]);
+  const [productToCompare, setProductToCompare] = React.useState<Product | null>(null);
   
   // Product options state
   const [quantity, setQuantity] = React.useState(1);
@@ -149,13 +153,23 @@ export function ProductDetails() {
     const reviewsRef = collection(db, 'products', productId, 'reviews');
     const qnaRef = collection(db, 'products', productId, 'qna');
 
-    const unsubscribeProduct = onSnapshot(productRef, (docSnap) => {
+    const unsubscribeProduct = onSnapshot(productRef, async (docSnap) => {
       if (docSnap.exists()) {
         const productData = { id: docSnap.id, ...docSnap.data() } as Product;
         setProduct(productData);
         if (!selectedSize && productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
         if (!selectedColor && productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
         setError(null);
+
+        // Fetch comparable products
+        const productsRef = collection(db, 'products');
+        const q = query(productsRef, where('organization.category', '==', productData.organization.category), limit(10));
+        const comparableSnap = await getDocs(q);
+        const comparableList = comparableSnap.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Product))
+            .filter(p => p.id !== productId);
+        setComparableProducts(comparableList);
+
       } else {
         setError('Product not found.');
       }
@@ -327,6 +341,11 @@ export function ProductDetails() {
           setIsSubmittingQuestion(false);
       }
   }
+
+  const handleComparisonSelect = (id: string) => {
+    const selectedProd = comparableProducts.find(p => p.id === id);
+    setProductToCompare(selectedProd || null);
+  }
   
   if (loading) {
     return (
@@ -484,9 +503,9 @@ export function ProductDetails() {
             <div className="mt-6 flex items-center gap-4">
               <h3 className="text-sm font-semibold text-foreground">QUANTITY</h3>
               <div className="flex items-center border rounded-md">
-                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.max(1, q-1))}><span className='text-xl'>-</span></Button>
+                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.max(1, q-1))}><Minus className="w-4 h-4" /></Button>
                   <Input type="number" value={quantity} readOnly className="w-12 h-8 text-center border-none focus-visible:ring-0" />
-                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => q+1)}><span className='text-xl'>+</span></Button>
+                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => q+1)}><Plus className="w-4 h-4" /></Button>
               </div>
             </div>
 
@@ -576,6 +595,73 @@ export function ProductDetails() {
               </AccordionItem>
             </Accordion>
           </div>
+        </div>
+        
+         {/* Comparison Section */}
+        <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-4">Compare With Similar Products</h2>
+            <Select onValueChange={handleComparisonSelect}>
+                <SelectTrigger className="w-full md:w-1/2">
+                    <SelectValue placeholder="Select a product to compare..." />
+                </SelectTrigger>
+                <SelectContent>
+                    {comparableProducts.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+            {productToCompare && (
+                <div className="mt-6 animate-in fade-in-50 duration-500">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[150px]">Feature</TableHead>
+                                <TableHead className="bg-secondary/50">Current Product</TableHead>
+                                <TableHead>Comparison Product</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow>
+                                <TableCell className="font-semibold">Image</TableCell>
+                                <TableCell className="bg-secondary/50">
+                                    <Image src={product.images[0]} alt={product.name} width={80} height={80} className="rounded-md object-cover"/>
+                                </TableCell>
+                                <TableCell>
+                                     <Image src={productToCompare.images[0]} alt={productToCompare.name} width={80} height={80} className="rounded-md object-cover"/>
+                                </TableCell>
+                            </TableRow>
+                             <TableRow>
+                                <TableCell className="font-semibold">Name</TableCell>
+                                <TableCell className="bg-secondary/50 font-bold">{product.name}</TableCell>
+                                <TableCell>{productToCompare.name}</TableCell>
+                            </TableRow>
+                             <TableRow>
+                                <TableCell className="font-semibold">Price</TableCell>
+                                <TableCell className="bg-secondary/50 font-bold">৳{product.pricing.price}</TableCell>
+                                <TableCell>৳{productToCompare.pricing.price}</TableCell>
+                            </TableRow>
+                             <TableRow>
+                                <TableCell className="font-semibold">Brand</TableCell>
+                                <TableCell className="bg-secondary/50">{product.brand}</TableCell>
+                                <TableCell>{productToCompare.brand}</TableCell>
+                            </TableRow>
+                             <TableRow>
+                                <TableCell className="font-semibold">Rating</TableCell>
+                                <TableCell className="bg-secondary/50">{averageRating.toFixed(1)}/5.0 ({reviews.length} reviews)</TableCell>
+                                <TableCell>N/A</TableCell>
+                            </TableRow>
+                            {product.specifications.map((spec, index) => (
+                                <TableRow key={`spec-${index}`}>
+                                     <TableCell className="font-semibold">{spec.label}</TableCell>
+                                     <TableCell className="bg-secondary/50">{spec.value}</TableCell>
+                                     <TableCell>{productToCompare.specifications.find(s => s.label === spec.label)?.value || '-'}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
         </div>
 
         {/* Customer Reviews & Q&A */}
