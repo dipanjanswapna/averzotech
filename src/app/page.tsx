@@ -199,7 +199,7 @@ export default function Home() {
       <SiteHeader />
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full aspect-[2.4/1] md:aspect-[16/5]" />
+            <Skeleton className="w-full md:aspect-[16/5]" />
           ) : (
             <Carousel
               className="w-full"
@@ -213,7 +213,7 @@ export default function Home() {
               <CarouselContent>
                 {(content.heroImages || []).map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="relative w-full aspect-[2.4/1] md:aspect-[16/5]">
+                    <div className="relative w-full md:aspect-[16/5]">
                       <Image
                         src={image.url}
                         alt={image.alt}
@@ -319,7 +319,7 @@ export default function Home() {
                 >
                   <CarouselContent>
                     {(content.brands || []).map((brand, index) => (
-                      <CarouselItem key={index} className="basis-1/4 sm:basis-1/5 md:basis-[calc(100%/7)]">
+                      <CarouselItem key={index} className="basis-1/3 sm:basis-1/5 md:basis-[calc(100%/7)]">
                         <Link href="#" className="block text-center group">
                           <div className="relative w-24 h-24 mx-auto flex items-center justify-center rounded-full border-2 border-destructive bg-background">
                             <Image
