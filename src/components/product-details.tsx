@@ -208,7 +208,7 @@ export function ProductDetails() {
        const productForWishlist: WishlistItem = {
             id: product.id, name: product.name, brand: product.brand,
             pricing: product.pricing, images: product.images,
-            inventory: { availability: product.inventory.availability, stock: product.inventory.stock },
+            inventory: { availability: product.inventory.availability, stock: product.inventory.stock, initialStock: product.inventory.initialStock },
             variants: product.variants,
             shipping: product.shipping
        };
@@ -494,8 +494,8 @@ export function ProductDetails() {
             <Separator className="my-6" />
             
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2 uppercase">Delivery Options <Truck className="inline h-5 w-5" /></h3 >
-               <p className="text-xs text-muted-foreground mt-1">Estimated Delivery: {product.shipping.estimatedDelivery}</p>
+              <h3 className="text-sm font-semibold text-foreground mb-2 uppercase flex items-center gap-2"><Truck className="h-5 w-5" /> Delivery Options</h3>
+               <p className="text-xs text-muted-foreground mt-1">Default delivery in {product.shipping.estimatedDelivery}</p>
                 <EstimatedDeliveryChecker />
             </div>
             

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState } from 'react';
@@ -65,7 +66,7 @@ export function EstimatedDeliveryChecker() {
             const today = new Date();
             const deliveryDate = new Date(today.setDate(today.getDate() + deliveryDays));
             
-            setEstimatedDate(getBengaliDate(deliveryDate));
+            setEstimatedDate(`সম্ভাব্য ডেলিভারি: ${getBengaliDate(deliveryDate)}`);
             setIsLoading(false);
             setShowResult(true);
         }, 500);
@@ -93,7 +94,7 @@ export function EstimatedDeliveryChecker() {
                     ) : estimatedDate && (
                          <p className="font-semibold text-primary flex items-center gap-2">
                             <Truck className="h-4 w-4" />
-                            সম্ভাব্য ডেলিভারি: {estimatedDate}
+                            {estimatedDate}
                         </p>
                     )}
                 </div>
