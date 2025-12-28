@@ -17,7 +17,7 @@ import { OrderSummary } from '@/components/order-summary';
 import { useRouter } from 'next/navigation';
 
 export default function CartPage() {
-  const { cart, updateQuantity, removeFromCart, clearCart, subTotal, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard, shippingInfo } = useCart();
+  const { cart, updateQuantity, removeFromCart, clearCart, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard } = useCart();
   const { toast } = useToast();
   const router = useRouter();
   const [couponCode, setCouponCode] = React.useState('');

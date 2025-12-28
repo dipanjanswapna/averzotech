@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
@@ -25,6 +24,7 @@ export interface AppliedGiftCard {
 }
 
 export interface ShippingInfo {
+    id: string;
     name: string;
     email: string;
     phone: string;
