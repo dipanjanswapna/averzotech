@@ -35,7 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch, increment, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch, increment, query, orderBy, onSnapshot, getDocs, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -477,7 +477,7 @@ export default function OrderDetailsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="space-y-3 max-h-48 overflow-y-auto">
-                        {order.notes.map(note => (
+                        {order.notes?.map(note => (
                             <div key={note.id} className="text-xs">
                                 <p className="text-muted-foreground">{formatDate(note.date)} by <span className="font-semibold text-foreground">{note.author}</span></p>
                                 <p>{note.note}</p>

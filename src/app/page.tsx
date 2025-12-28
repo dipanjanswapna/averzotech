@@ -21,6 +21,7 @@ import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PreFooterCta } from '@/components/pre-footer-cta';
 import Autoplay from "embla-carousel-autoplay"
+import { StockIndicator } from '@/components/stock-indicator';
 
 interface HeroImage {
   url: string;
@@ -43,6 +44,11 @@ interface Deal {
     discount?: string;
     image: string;
     dataAiHint?: string;
+    inventory: {
+        stock: number;
+        initialStock?: number;
+        availability: 'in-stock' | 'out-of-stock' | 'pre-order';
+    };
 }
 
 interface CategoryCard {
@@ -66,6 +72,8 @@ interface FlashSaleItem {
     dataAiHint: string;
     inventory: {
         stock: number;
+        initialStock?: number;
+        availability: 'in-stock' | 'out-of-stock' | 'pre-order';
     };
 }
 
@@ -137,6 +145,7 @@ export default function Home() {
                         discount: `${productData.pricing.discount}% OFF`,
                         image: productData.images[0],
                         dataAiHint: productData.name.toLowerCase(),
+                        inventory: productData.inventory,
                     };
                 }
                 return null;
@@ -282,8 +291,11 @@ export default function Home() {
                                                 {deal.pricing.discount && <span className="text-xs text-orange-400 font-bold">({deal.pricing.discount}% OFF)</span>}
                                             </p>
                                             <div className='mt-2'>
-                                                <Progress value={(deal.inventory.stock > 0 ? (deal.inventory.stock - (deal.inventory.stock * 0.33)) / deal.inventory.stock * 100 : 0)} className="h-2" />
-                                                <p className="text-xs text-muted-foreground mt-1">Only a few left!</p>
+                                                 <StockIndicator 
+                                                    stock={deal.inventory.stock} 
+                                                    initialStock={deal.inventory.initialStock}
+                                                    availability={deal.inventory.availability}
+                                                />
                                             </div>
                                         </div>
                                     </Link>
@@ -378,6 +390,13 @@ export default function Home() {
                                         {' '}
                                         {deal.discount && <span className="text-xs text-orange-400 font-bold">({deal.discount})</span>}
                                     </p>
+                                    <div className="mt-2">
+                                        <StockIndicator 
+                                            stock={deal.inventory.stock} 
+                                            initialStock={deal.inventory.initialStock}
+                                            availability={deal.inventory.availability}
+                                        />
+                                    </div>
                                 </div>
                             </Link>
                         ))}
@@ -520,5 +539,3 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
-
-

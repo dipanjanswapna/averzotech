@@ -1,4 +1,5 @@
 
+
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -33,6 +34,11 @@ export interface Deal {
   discount?: string;
   image: string;
   dataAiHint?: string;
+  inventory: {
+    stock: number;
+    initialStock?: number;
+    availability: 'in-stock' | 'out-of-stock' | 'pre-order';
+  };
 }
 
 export interface CategoryCard {
@@ -57,6 +63,7 @@ export interface FlashSaleItem {
   inventory: {
     stock: number;
     initialStock?: number;
+    availability: 'in-stock' | 'out-of-stock' | 'pre-order';
   };
 }
 
