@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
@@ -31,6 +30,8 @@ export interface ShippingInfo {
     phone: string;
     fullAddress: string;
     method: string;
+    delivery_area: string;
+    delivery_area_id: number;
 }
 
 export interface ShippingMethod {
