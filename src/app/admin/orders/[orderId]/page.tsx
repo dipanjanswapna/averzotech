@@ -88,6 +88,12 @@ interface Order {
     trackingId?: string;
 }
 
+interface TrackingUpdate {
+  message_en: string;
+  message_bn: string;
+  time: string;
+}
+
 const orderSteps = [
     { label: 'Pending' },
     { label: 'Processing' },
@@ -110,6 +116,11 @@ export default function OrderDetailsPage() {
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [isRefunding, setIsRefunding] = useState(false);
+
+  // RedX Tracking state
+  const [trackingInfo, setTrackingInfo] = useState<TrackingUpdate[]>([]);
+  const [isTrackingLoading, setIsTrackingLoading] = useState(false);
+
 
   useEffect(() => {
     if (orderId) {
@@ -254,6 +265,29 @@ export default function OrderDetailsPage() {
         setIsRefunding(false);
     }
   }
+
+  const handleTrackPackage = async () => {
+    if (!trackingId) {
+        toast({ title: 'No Tracking ID', description: 'This order does not have a tracking ID yet.', variant: 'destructive'});
+        return;
+    }
+    setIsTrackingLoading(true);
+    setTrackingInfo([]);
+    try {
+        const response = await fetch(`/api/track/redx/${trackingId}`);
+        const data = await response.json();
+        if (response.ok) {
+            setTrackingInfo(data.tracking);
+        } else {
+             toast({ title: 'Tracking Failed', description: data.error || 'Could not fetch tracking information.', variant: 'destructive'});
+        }
+    } catch (error) {
+        console.error("Error fetching tracking info:", error);
+        toast({ title: 'Error', description: 'An error occurred while tracking the package.', variant: 'destructive'});
+    } finally {
+        setIsTrackingLoading(false);
+    }
+  };
   
   if (loading) return <p>Loading order details...</p>;
   if (!order) return <p>Order not found.</p>;
@@ -397,6 +431,43 @@ export default function OrderDetailsPage() {
                  </div>
              </CardContent>
           </Card>
+           {trackingId && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Shipment Tracking</CardTitle>
+                <CardDescription>
+                  Live tracking updates for your shipment.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={handleTrackPackage} disabled={isTrackingLoading}>
+                  {isTrackingLoading ? "Tracking..." : "Track Package"}
+                </Button>
+                {trackingInfo.length > 0 && (
+                  <div className="mt-4 space-y-4">
+                    {trackingInfo.map((update, index) => (
+                      <div key={index} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-primary/20">
+                            <Truck className="h-3 w-3 text-white" />
+                          </div>
+                          {index < trackingInfo.length - 1 && (
+                            <div className="w-px flex-1 bg-border" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold">{update.message_bn}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(update.time).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
         <div className="lg:col-span-1 space-y-8">
             <Card>
