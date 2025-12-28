@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -62,6 +63,12 @@ interface Order {
     trackingId?: string;
 }
 
+interface TrackingUpdate {
+  message_en: string;
+  message_bn: string;
+  time: string;
+}
+
 function ConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -72,6 +79,8 @@ function ConfirmationContent() {
 
     const [orderDetails, setOrderDetails] = React.useState<Order | null>(null);
     const [loading, setLoading] = React.useState(true);
+    const [trackingInfo, setTrackingInfo] = React.useState<TrackingUpdate[]>([]);
+    const [isTrackingLoading, setIsTrackingLoading] = React.useState(false);
     
     React.useEffect(() => {
         const fetchOrder = async () => {
@@ -134,6 +143,29 @@ function ConfirmationContent() {
     const handlePrint = () => {
         window.print();
     };
+
+    const handleTrackPackage = async (trackingId: string) => {
+        if (!trackingId) {
+            toast({ title: 'No Tracking ID', description: 'This order does not have a tracking ID yet.', variant: 'destructive'});
+            return;
+        }
+        setIsTrackingLoading(true);
+        setTrackingInfo([]);
+        try {
+            const response = await fetch(`/api/track/redx/${trackingId}`);
+            const data = await response.json();
+            if (response.ok) {
+                setTrackingInfo(data.tracking);
+            } else {
+                toast({ title: 'Tracking Failed', description: data.error || 'Could not fetch tracking information.', variant: 'destructive'});
+            }
+        } catch (error) {
+            console.error("Error fetching tracking info:", error);
+            toast({ title: 'Error', description: 'An error occurred while tracking the package.', variant: 'destructive'});
+        } finally {
+            setIsTrackingLoading(false);
+        }
+    };
     
     if (loading) {
         return <div className="flex justify-center items-center min-h-screen">Loading order confirmation...</div>
@@ -194,20 +226,41 @@ function ConfirmationContent() {
                                 <h3 className="font-semibold mb-2">Payment Method</h3>
                                 <p className="text-muted-foreground text-sm">{paymentMethodDisplay}</p>
                             </div>
-                             <div className="md:col-span-2 lg:col-span-2">
-                                <h3 className="font-semibold mb-2 flex items-center"><Truck className="mr-2 h-5 w-5 text-primary"/>Order Tracking</h3>
-                                <p className="text-muted-foreground text-sm">
-                                    Your tracking ID is: <span className="font-medium text-foreground">{orderDetails.trackingId || 'Pending'}</span>.
-                                    {orderDetails.trackingId && <Link href="#" className="text-primary hover:underline ml-1">Track your shipment here</Link>}
-                                </p>
-                            </div>
-                            <div className="lg:col-span-1">
-                                <h3 className="font-semibold mb-2 flex items-center"><ShieldCheck className="mr-2 h-5 w-5 text-primary"/>Refund Policy</h3>
-                                <p className="text-muted-foreground text-sm">
-                                    We offer a 7-day return policy. <Link href="/returns-policy" className="text-primary hover:underline">Learn More</Link>
-                                </p>
-                            </div>
                         </div>
+
+                         {orderDetails.trackingId && (
+                            <div className="my-8">
+                                <h3 className="font-semibold mb-2 flex items-center"><Truck className="mr-2 h-5 w-5 text-primary"/>Order Tracking</h3>
+                                <p className="text-muted-foreground text-sm mb-4">
+                                    Your tracking ID is: <span className="font-medium text-foreground">{orderDetails.trackingId}</span>.
+                                </p>
+                                <Button onClick={() => handleTrackPackage(orderDetails.trackingId!)} disabled={isTrackingLoading}>
+                                  {isTrackingLoading ? "Tracking..." : "Track Package"}
+                                </Button>
+                                {trackingInfo.length > 0 && (
+                                <div className="mt-4 space-y-4">
+                                    {trackingInfo.map((update, index) => (
+                                    <div key={index} className="flex gap-4">
+                                        <div className="flex flex-col items-center">
+                                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center ring-4 ring-primary/20">
+                                            <Truck className="h-3 w-3 text-white" />
+                                        </div>
+                                        {index < trackingInfo.length - 1 && (
+                                            <div className="w-px flex-1 bg-border" />
+                                        )}
+                                        </div>
+                                        <div>
+                                        <p className="font-semibold">{update.message_bn}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {new Date(update.time).toLocaleString()}
+                                        </p>
+                                        </div>
+                                    </div>
+                                    ))}
+                                </div>
+                                )}
+                            </div>
+                        )}
 
                         <h3 className="font-semibold mb-4 text-lg">Order Summary</h3>
                         <div className="border rounded-lg overflow-hidden">
@@ -282,9 +335,8 @@ function ConfirmationContent() {
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                             <p className="text-sm text-muted-foreground text-center sm:text-left">Need help? Contact our <Link href="/contact-us" className="text-primary hover:underline">Customer Support</Link>.</p>
                             <div className="flex gap-2">
-                                <Button variant="outline" onClick={handlePrint}>
-                                    <Printer className="mr-2 h-4 w-4" />
-                                    Print / Download PDF
+                                <Button variant="outline" asChild>
+                                   <Link href={`/invoice/${orderDetails.id}`} target='_blank'><Printer className="mr-2 h-4 w-4" /> Invoice</Link>
                                 </Button>
                                 <Button onClick={() => router.push('/')}>
                                     <ShoppingBag className="mr-2 h-4 w-4" />
