@@ -39,7 +39,7 @@ export function ArTryOn({ productImage, productName }: ArTryOnProps) {
 
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
-            videoRef.current.playsInline = true; // Add this for iOS Safari
+            videoRef.current.playsInline = true;
           }
         } catch (error) {
           console.error('Error accessing camera:', error);
@@ -72,7 +72,7 @@ export function ArTryOn({ productImage, productName }: ArTryOnProps) {
           AR Try On
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl h-[80vh] p-0 flex flex-col">
+      <DialogContent className="max-w-md h-[70vh] p-0 flex flex-col">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>Virtual Try-On: {productName}</DialogTitle>
         </DialogHeader>
