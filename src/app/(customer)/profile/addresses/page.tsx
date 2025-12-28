@@ -31,6 +31,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { divisions } from '@/lib/bangladesh-geo';
 import { Textarea } from '@/components/ui/textarea';
+import { getAreasByDistrict, RedXArea } from '@/lib/redx';
 
 interface Address {
     id: string;
@@ -40,6 +41,8 @@ interface Address {
     division: string;
     district: string;
     upazila: string;
+    delivery_area: string;
+    delivery_area_id: number;
     phone: string;
     isDefault: boolean;
 }
@@ -60,19 +63,23 @@ export default function AddressesPage() {
         division: '',
         district: '',
         upazila: '',
+        delivery_area: '',
+        delivery_area_id: 0,
         phone: '',
         isDefault: false,
     });
     
     // Dependent dropdown options
     const [districts, setDistricts] = useState<string[]>([]);
-    const [upazilas, setUpazilas] = useState<string[]>([]);
+    const [upazilas, setUpazilas] = useState<RedXArea[]>([]);
+    const [isUpazilaLoading, setIsUpazilaLoading] = useState(false);
+
 
     useEffect(() => {
         if(formData.division) {
             const divisionData = divisions.find(d => d.name === formData.division);
             setDistricts(divisionData ? divisionData.districts.map(dist => dist.name) : []);
-            setFormData(prev => ({ ...prev, district: '', upazila: '' }));
+            setFormData(prev => ({ ...prev, district: '', upazila: '', delivery_area_id: 0 }));
         } else {
             setDistricts([]);
             setUpazilas([]);
@@ -80,15 +87,25 @@ export default function AddressesPage() {
     }, [formData.division]);
 
     useEffect(() => {
-        if(formData.district) {
-            const divisionData = divisions.find(d => d.name === formData.division);
-            const districtData = divisionData?.districts.find(d => d.name === formData.district);
-            setUpazilas(districtData ? districtData.upazilas : []);
-             setFormData(prev => ({ ...prev, upazila: '' }));
-        } else {
-            setUpazilas([]);
-        }
-    }, [formData.district, formData.division]);
+        const fetchUpazilas = async () => {
+            if (formData.district) {
+                setIsUpazilaLoading(true);
+                try {
+                    const redxAreas = await getAreasByDistrict(formData.district);
+                    setUpazilas(redxAreas);
+                } catch (error) {
+                    toast({ title: "Error", description: "Could not fetch areas for this district.", variant: "destructive" });
+                    setUpazilas([]);
+                } finally {
+                    setIsUpazilaLoading(false);
+                }
+                setFormData(prev => ({ ...prev, upazila: '', delivery_area_id: 0 }));
+            } else {
+                setUpazilas([]);
+            }
+        };
+        fetchUpazilas();
+    }, [formData.district, toast]);
 
 
     const fetchAddresses = async () => {
@@ -121,7 +138,9 @@ export default function AddressesPage() {
                 streetAddress: editingAddress.streetAddress,
                 division: editingAddress.division,
                 district: editingAddress.district,
-                upazila: editingAddress.upazila,
+                upazila: String(editingAddress.delivery_area_id),
+                delivery_area: editingAddress.delivery_area,
+                delivery_area_id: editingAddress.delivery_area_id,
                 phone: editingAddress.phone,
                 isDefault: editingAddress.isDefault,
             });
@@ -138,6 +157,8 @@ export default function AddressesPage() {
             division: '',
             district: '',
             upazila: '',
+            delivery_area: '',
+            delivery_area_id: 0,
             phone: '',
             isDefault: false,
         });
@@ -150,6 +171,18 @@ export default function AddressesPage() {
     
     const handleSelectChange = (field: keyof typeof formData) => (value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleUpazilaChange = (value: string) => {
+        const selectedUpazila = upazilas.find(u => String(u.id) === value);
+        if (selectedUpazila) {
+            setFormData(prev => ({
+                ...prev,
+                upazila: value,
+                delivery_area: selectedUpazila.name,
+                delivery_area_id: selectedUpazila.id
+            }));
+        }
     };
 
     const handleSetDefault = async (addressId: string) => {
@@ -182,6 +215,11 @@ export default function AddressesPage() {
             toast({ title: "Incomplete Address", description: "Please fill all required address fields including phone number.", variant: "destructive" });
             return;
         }
+        
+        const dataToSave = {
+            ...formData,
+            upazila: formData.delivery_area, // Save area name instead of ID
+        };
 
         const addressesCol = collection(db, 'users', user.uid, 'addresses');
         
@@ -199,10 +237,10 @@ export default function AddressesPage() {
 
             if (editingAddress) {
                 const docRef = doc(db, 'users', user.uid, 'addresses', editingAddress.id);
-                await updateDoc(docRef, formData);
+                await updateDoc(docRef, dataToSave);
                 toast({ title: "Address Updated" });
             } else {
-                await addDoc(addressesCol, formData);
+                await addDoc(addressesCol, dataToSave);
                 toast({ title: "Address Added" });
             }
             fetchAddresses();
@@ -322,10 +360,10 @@ export default function AddressesPage() {
                                 {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                        <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
-                            <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
+                        <Select value={formData.upazila} onValueChange={handleUpazilaChange} disabled={!formData.district || isUpazilaLoading}>
+                            <SelectTrigger><SelectValue placeholder={isUpazilaLoading ? "Loading..." : "Select Area"} /></SelectTrigger>
                             <SelectContent>
-                                {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                {upazilas.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>

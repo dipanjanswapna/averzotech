@@ -9,6 +9,14 @@ const redxConfig = {
         : process.env.REDX_SANDBOX_TOKEN,
 };
 
+export interface RedXArea {
+    id: number;
+    name: string;
+    post_code: number;
+    division_name: string;
+    zone_id: number;
+}
+
 export async function redxApiRequest(method: 'GET' | 'POST' | 'PATCH', endpoint: string, body?: object) {
     if (!redxConfig.token) {
         throw new Error('RedX API token is not configured.');
@@ -59,20 +67,19 @@ export async function getParcelDetails(trackingId: string) {
     return redxApiRequest('GET', `/parcel/info/${trackingId}`);
 }
 
+export async function getAreasByDistrict(district: string): Promise<RedXArea[]> {
+    const response = await redxApiRequest('GET', `/areas?district_name=${district}`);
+    return response.areas || [];
+}
+
 export async function createParcel(order: Order, orderId: string) {
     const { shippingAddress, payment } = order;
     
-    // This is a placeholder. In a real app, you would have a more robust way
-    // to map your internal area names/IDs to RedX's area_id.
-    // For now, we'll hardcode a common Dhaka area ID for testing.
-    const delivery_area_id = 1; // Example: Mohammadpur(Dhaka)
-    const pickup_store_id = 1; // Assuming you have a default pickup store with ID 1
-
     const parcelData = {
         customer_name: shippingAddress.name,
         customer_phone: shippingAddress.phone,
-        delivery_area: shippingAddress.district,
-        delivery_area_id: delivery_area_id,
+        delivery_area: (shippingAddress as any).delivery_area,
+        delivery_area_id: (shippingAddress as any).delivery_area_id,
         customer_address: shippingAddress.fullAddress,
         merchant_invoice_id: orderId,
         cash_collection_amount: payment.method === 'cod' ? payment.total : 0,

@@ -114,6 +114,8 @@ export interface Order {
         fullAddress: string;
         district: string;
         division: string;
+        delivery_area: string;
+        delivery_area_id: number;
         method: string;
     };
     payment: {
@@ -132,4 +134,3 @@ export interface Order {
         total: number;
     };
 }
-
