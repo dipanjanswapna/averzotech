@@ -39,6 +39,7 @@ import { LoadingSpinner } from './ui/loading-spinner';
 import { ArTryOn } from './ar-try-on';
 import { StockIndicator } from './stock-indicator';
 import { EstimatedDeliveryChecker } from './estimated-delivery-checker';
+import { StickyAddToCart } from './sticky-add-to-cart';
 
 
 interface Product {
@@ -116,6 +117,7 @@ export function ProductDetails() {
   const [qna, setQna] = React.useState<QnA[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [showStickyBar, setShowStickyBar] = React.useState(false);
   
   // Product options state
   const [quantity, setQuantity] = React.useState(1);
@@ -171,11 +173,23 @@ export function ProductDetails() {
     const unsubscribeQna = onSnapshot(query(qnaRef, orderBy('questionCreatedAt', 'desc')), (snapshot) => {
       setQna(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as QnA)));
     });
+    
+    const handleScroll = () => {
+        if (window.scrollY > 400) {
+            setShowStickyBar(true);
+        } else {
+            setShowStickyBar(false);
+        }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
 
     return () => {
       unsubscribeProduct();
       unsubscribeReviews();
       unsubscribeQna();
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [productId, selectedSize, selectedColor]);
   
@@ -348,6 +362,7 @@ export function ProductDetails() {
 
 
   return (
+      <>
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-sm text-muted-foreground mb-4">
           <Link href="/">Home</Link> / <Link href={`/shop?category=${product.organization.category}`}>{product.organization.category}</Link> / <span className="text-foreground">{product.name}</span>
@@ -658,5 +673,14 @@ export function ProductDetails() {
         )}
 
       </main>
+      {showStickyBar && product && (
+        <StickyAddToCart 
+            product={product} 
+            onAddToCart={() => handleAddToCart(false)}
+            onBuyNow={() => handleAddToCart(true)}
+            isOutOfStock={isOutOfStock}
+        />
+      )}
+      </>
       );
 }
