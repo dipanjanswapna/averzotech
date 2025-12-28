@@ -25,7 +25,7 @@ interface StickyAddToCartProps {
 
 export function StickyAddToCart({ product, onAddToCart, onBuyNow, isOutOfStock }: StickyAddToCartProps) {
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-40 animate-slide-up">
+        <div className="fixed md:bottom-0 bottom-16 left-0 right-0 z-40 animate-slide-up">
             <div className="container mx-auto px-4 py-2">
                  <div className="rounded-lg border bg-background/95 p-4 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/60">
                     <div className="flex items-center justify-between gap-4">
