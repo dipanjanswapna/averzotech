@@ -235,6 +235,8 @@ export default function NewProductPage() {
                 })
             );
 
+            const stockAmount = parseInt(stock, 10) || 0;
+
             // 2. Prepare product data object
             const productData = {
                 name: productName,
@@ -269,7 +271,8 @@ export default function NewProductPage() {
                 },
                 inventory: {
                     sku,
-                    stock: parseInt(stock, 10) || 0,
+                    stock: stockAmount,
+                    initialStock: stockAmount,
                     availability,
                 },
                 shipping: {

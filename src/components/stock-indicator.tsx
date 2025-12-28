@@ -47,7 +47,7 @@ export function StockIndicator({ stock, initialStock = 50, availability }: Stock
           {text}
         </p>
       </div>
-      <Progress value={stockPercentage} className="h-2 [&>div]:bg-green-500" />
+      <Progress value={stockPercentage} className="h-2" progressClassName={progressColor} />
     </div>
   );
 }

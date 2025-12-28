@@ -98,6 +98,7 @@ export default function EditProductPage() {
     const [tax, setTax] = useState('');
     const [sku, setSku] = useState('');
     const [stock, setStock] = useState('');
+    const [initialStock, setInitialStock] = useState<number | undefined>(undefined);
     const [availability, setAvailability] = useState('in-stock');
 
     // Shipping
@@ -143,6 +144,7 @@ export default function EditProductPage() {
                     setTax(String(data.pricing?.tax || ''));
                     setSku(data.inventory?.sku || '');
                     setStock(String(data.inventory?.stock || ''));
+                    setInitialStock(data.inventory?.initialStock);
                     setAvailability(data.inventory?.availability || 'in-stock');
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
@@ -289,6 +291,11 @@ export default function EditProductPage() {
                     return imageObj.url;
                 })
             );
+            
+            const currentStock = parseInt(stock, 10) || 0;
+            const newInitialStock = initialStock === undefined || currentStock > initialStock
+              ? currentStock
+              : initialStock;
 
             const productData = {
                 name: productName,
@@ -323,7 +330,8 @@ export default function EditProductPage() {
                 },
                 inventory: {
                     sku,
-                    stock: parseInt(stock, 10) || 0,
+                    stock: currentStock,
+                    initialStock: newInitialStock,
                     availability,
                 },
                 shipping: {
