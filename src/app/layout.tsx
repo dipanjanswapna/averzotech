@@ -9,6 +9,7 @@ import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { SiteFooter } from '@/components/site-footer';
 import { Roboto } from 'next/font/google';
 import { DynamicComponents } from '@/components/dynamic-components';
+import { CartSheet } from '@/components/cart-sheet';
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -35,6 +36,7 @@ export default function RootLayout({
                 <main className="flex-grow">
                   {children}
                 </main>
+                <CartSheet />
                 <DynamicComponents />
                 <SiteFooter />
               </div>

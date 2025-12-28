@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
@@ -93,6 +94,8 @@ interface CartContextType {
   shippingFee: number;
   taxes: number;
   availableShippingMethods: ShippingMethod[];
+  isCartOpen: boolean;
+  setIsCartOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Create the context
@@ -105,6 +108,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   const [shippingInfo, setShippingInfoState] = useState<ShippingInfo | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
   // Hardcoded shipping settings
   const shippingSettings = { standardFee: 60, expressFee: 120 };
@@ -173,6 +177,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return [...prevCart, { ...product, quantity }];
       }
     });
+    setIsCartOpen(true);
   };
 
   const removeFromCart = (productId: string, size: string, color: string) => {
@@ -289,7 +294,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         taxes,
         shippingInfo,
         setShippingInfo,
-        availableShippingMethods
+        availableShippingMethods,
+        isCartOpen,
+        setIsCartOpen
     }}>
       {children}
     </CartContext.Provider>
