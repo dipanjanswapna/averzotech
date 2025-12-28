@@ -199,7 +199,7 @@ export default function Home() {
       <SiteHeader />
         <section className="relative w-full">
            {loading ? (
-            <Skeleton className="w-full md:aspect-[16/5]" />
+            <Skeleton className="w-full aspect-[4/3] md:aspect-[16/5]" />
           ) : (
             <Carousel
               className="w-full"
@@ -213,7 +213,7 @@ export default function Home() {
               <CarouselContent>
                 {(content.heroImages || []).map((image, index) => (
                   <CarouselItem key={index}>
-                    <div className="relative w-full md:aspect-[16/5]">
+                    <div className="relative w-full aspect-[4/3] md:aspect-[16/5]">
                       <Image
                         src={image.url}
                         alt={image.alt}
@@ -226,8 +226,8 @@ export default function Home() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
-              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 hidden sm:flex" />
+              <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex" />
+              <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex" />
             </Carousel>
           )}
         </section>
@@ -327,7 +327,7 @@ export default function Home() {
                               alt={brand.alt}
                               width={128}
                               height={128}
-                              className="object-scale-down rounded-full"
+                              className="object-cover rounded-full aspect-square"
                               data-ai-hint={brand.dataAiHint}
                             />
                           </div>
@@ -520,3 +520,4 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
+
