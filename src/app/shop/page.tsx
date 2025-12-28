@@ -373,8 +373,8 @@ function ShopPageContent() {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex-grow container py-8">
-        <div className="flex justify-between items-center mb-4">
-            <div>
+        <div className="md:flex justify-between items-center mb-4">
+            <div className="mb-4 md:mb-0">
               <h1 className="text-3xl font-headline font-bold">Shop</h1>
               {activeCampaign && <p className="text-muted-foreground">{activeCampaign.name}</p>}
             </div>
@@ -382,7 +382,7 @@ function ShopPageContent() {
                  <div className="md:hidden">
                     <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
                       <SheetTrigger asChild>
-                         <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
+                         <Button variant="outline" size="sm"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
                       </SheetTrigger>
                       <SheetContent className="w-[300px] p-0">
                         <SheetHeader className="p-4 border-b">
