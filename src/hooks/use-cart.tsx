@@ -227,7 +227,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const calculateShippingFee = useCallback(async () => {
     if (!shippingInfo || !shippingInfo.delivery_area_id) {
-        // Use a sensible default if no area is selected yet
         setShippingFee(60); 
         return;
     }
@@ -237,7 +236,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const discount = appliedCoupon?.discountAmount || 0;
     const codAmount = isCod ? Math.max(0, subTotal - discount) : 0;
     const weight = cart.reduce((totalWeight, item) => totalWeight + (item.quantity * 500), 0) || 500;
-
 
     try {
         const response = await fetch('/api/shipping/calculate-charge', {
@@ -257,7 +255,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     } catch (error) {
         console.error("Shipping calculation error:", error);
-        // Fallback to a default fee
         setShippingFee(60);
     }
   }, [shippingInfo, cart, appliedCoupon]);
