@@ -220,14 +220,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   const availableShippingMethods: ShippingMethod[] = useMemo(() => {
     return [
-      { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: 60 },
-      { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: 120 }
+      { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: shippingFee },
+      { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: shippingFee + 60 } // Example surcharge
     ];
-  }, []);
+  }, [shippingFee]);
 
   const calculateShippingFee = useCallback(async () => {
     if (!shippingInfo || !shippingInfo.delivery_area_id) {
-        setShippingFee(availableShippingMethods[0]?.fee || 60); // Default fee
+        // Use a sensible default if no area is selected yet
+        setShippingFee(60); 
         return;
     }
     
@@ -235,6 +236,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
     const discount = appliedCoupon?.discountAmount || 0;
     const codAmount = isCod ? Math.max(0, subTotal - discount) : 0;
+    const weight = cart.reduce((totalWeight, item) => totalWeight + (item.quantity * 500), 0) || 500;
+
 
     try {
         const response = await fetch('/api/shipping/calculate-charge', {
@@ -243,20 +246,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             body: JSON.stringify({
                 delivery_area_id: shippingInfo.delivery_area_id,
                 cash_collection_amount: codAmount,
-                weight: cart.reduce((totalWeight, item) => totalWeight + (item.quantity * 500), 0)
+                weight: weight
             })
         });
 
         if (!response.ok) throw new Error('Failed to calculate shipping');
 
         const data = await response.json();
-        setShippingFee(data.deliveryCharge || availableShippingMethods[0].fee);
+        setShippingFee(data.deliveryCharge || 60);
 
     } catch (error) {
         console.error("Shipping calculation error:", error);
-        setShippingFee(availableShippingMethods.find(m => m.name === shippingInfo.method)?.fee || availableShippingMethods[0]?.fee || 60);
+        // Fallback to a default fee
+        setShippingFee(60);
     }
-  }, [shippingInfo, cart, availableShippingMethods, appliedCoupon]);
+  }, [shippingInfo, cart, appliedCoupon]);
 
   useEffect(() => {
     if(shippingInfo){
@@ -285,7 +289,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
   
   const taxes = subTotal * 0.05; // 5% tax on subtotal
-  const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + shippingFee + taxes);
+  const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + (shippingInfo ? shippingFee : 0) + taxes);
 
   return (
     <CartContext.Provider value={{ 
@@ -303,7 +307,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeGiftCard,
         subTotal,
         total,
-        shippingFee,
+        shippingFee: shippingInfo ? shippingFee : 0,
         taxes,
         shippingInfo,
         setShippingInfo,

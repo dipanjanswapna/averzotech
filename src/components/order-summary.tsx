@@ -8,6 +8,9 @@ import { Separator } from "./ui/separator";
 export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMethod }) => {
     const { subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total, shippingInfo } = useCart();
 
+    const giftCardDiscount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) : 0;
+
+
     return (
         <Card>
             <CardHeader>
@@ -28,7 +31,7 @@ export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMe
                     {appliedGiftCard && (
                         <div className="flex justify-between text-green-600">
                             <p>Gift Card ({appliedGiftCard.code.substring(0,9)}...)</p>
-                            <p className="font-semibold">- ৳{Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)).toFixed(2)}</p>
+                            <p className="font-semibold">- ৳{giftCardDiscount.toFixed(2)}</p>
                         </div>
                     )}
                     <div className="flex justify-between">

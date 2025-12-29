@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react"
@@ -29,6 +30,8 @@ interface Address {
     upazila: string;
     phone: string;
     isDefault: boolean;
+    delivery_area: string;
+    delivery_area_id: number;
 }
 
 export default function ShippingPage() {
@@ -90,12 +93,13 @@ export default function ShippingPage() {
                 phone: selectedAddress.phone,
                 fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.upazila}, ${selectedAddress.district}, ${selectedAddress.division}`,
                 method: selectedShippingMethod,
+                delivery_area: selectedAddress.delivery_area,
+                delivery_area_id: selectedAddress.delivery_area_id,
             };
              if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
                 setShippingInfo(newShippingInfo);
             }
-        } else if (shippingInfo && !selectedShippingMethod) {
-            // Clear shipping info if no method or address is selected, but keep address if available
+        } else if (shippingInfo && (!selectedShippingMethod || !selectedAddress)) {
              setShippingInfo(null);
         }
     }, [selectedAddress, selectedShippingMethod, user, setShippingInfo, shippingInfo]);
@@ -184,7 +188,7 @@ export default function ShippingPage() {
                                                         <p className="font-semibold">{method.name}</p>
                                                         <p className="text-sm text-muted-foreground">{method.estimatedDelivery}</p>
                                                     </div>
-                                                    <p className="font-semibold">৳{method.fee}</p>
+                                                    <p className="font-semibold">৳{method.fee.toFixed(2)}</p>
                                                     <RadioGroupItem value={method.name} id={method.name} className="ml-4"/>
                                                 </Label>
                                             ))}

@@ -46,6 +46,9 @@ export default function PaymentPage() {
         }
 
         setLoading(true);
+        const subTotalAfterCoupon = subTotal - (appliedCoupon?.discountAmount || 0);
+        const giftCardUsedAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
+
 
          const itemsForOrder = cart.map(item => ({
             id: item.id,
@@ -70,7 +73,7 @@ export default function PaymentPage() {
                 shipping: shippingFee,
                 tax: taxes,
                 coupon: appliedCoupon ? { code: appliedCoupon.code, discountAmount: appliedCoupon.discountAmount } : null,
-                giftCard: appliedGiftCard ? { code: appliedGiftCard.code, usedAmount: Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) } : null,
+                giftCard: appliedGiftCard ? { code: appliedGiftCard.code, usedAmount: giftCardUsedAmount } : null,
                 total: total,
             },
         };
