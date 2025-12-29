@@ -176,7 +176,7 @@ function ConfirmationContent() {
     }
     
     const orderDate = orderDetails.createdAt ? new Date(orderDetails.createdAt.seconds * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A';
-    const paymentMethodDisplay = orderDetails.payment.method === 'cod' ? 'Cash on Delivery' : orderDetails.payment.method;
+    const paymentMethodDisplay = orderDetails.payment.method === 'cod' ? 'Cash on Delivery' : 'Online Payment';
 
     return (
         <div className="flex min-h-screen flex-col bg-background">
