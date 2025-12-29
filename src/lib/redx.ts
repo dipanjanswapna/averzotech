@@ -1,4 +1,3 @@
-
 'use server';
 import { Order } from '@/types';
 
@@ -78,8 +77,8 @@ export async function createParcel(order: Order, orderId: string) {
     const parcelData = {
         customer_name: shippingAddress.name,
         customer_phone: shippingAddress.phone,
-        delivery_area: (shippingAddress as any).delivery_area,
-        delivery_area_id: (shippingAddress as any).delivery_area_id,
+        delivery_area: shippingAddress.delivery_area,
+        delivery_area_id: shippingAddress.delivery_area_id,
         customer_address: shippingAddress.fullAddress,
         merchant_invoice_id: orderId,
         cash_collection_amount: payment.method === 'cod' ? payment.total : 0,
@@ -88,4 +87,19 @@ export async function createParcel(order: Order, orderId: string) {
     };
 
     return redxApiRequest('POST', '/parcel', parcelData);
+}
+
+export async function calculateCharge({
+    delivery_area_id,
+    pickup_area_id = 1, // Default pickup area ID
+    cash_collection_amount = 0,
+    weight = 500
+}: {
+    delivery_area_id: number;
+    pickup_area_id?: number;
+    cash_collection_amount?: number;
+    weight?: number;
+}) {
+    const endpoint = `/charge/charge_calculator?delivery_area_id=${delivery_area_id}&pickup_area_id=${pickup_area_id}&cash_collection_amount=${cash_collection_amount}&weight=${weight}`;
+    return redxApiRequest('GET', endpoint);
 }

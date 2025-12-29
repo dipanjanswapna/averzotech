@@ -1,7 +1,6 @@
+'use client';
 
-"use client";
-
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 
@@ -108,13 +107,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   const [shippingInfo, setShippingInfoState] = useState<ShippingInfo | null>(null);
+  const [shippingFee, setShippingFee] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
-  // Hardcoded shipping settings
-  const shippingSettings = { standardFee: 60, expressFee: 120 };
-
-
   // Load cart from localStorage on initial render
   useEffect(() => {
     try {
@@ -131,7 +127,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (savedShippingInfo) setShippingInfoState(JSON.parse(savedShippingInfo));
     } catch (error) {
         console.error("Failed to parse data from localStorage, clearing corrupted data.", error);
-        // Clear corrupted data
         localStorage.removeItem('shoppingCart');
         localStorage.removeItem('appliedCoupon');
         localStorage.removeItem('appliedGiftCard');
@@ -169,12 +164,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       );
 
       if (existingProductIndex > -1) {
-        // Update quantity if product with same variant already exists
         const updatedCart = [...prevCart];
         updatedCart[existingProductIndex].quantity += quantity;
         return updatedCart;
       } else {
-        // Add new product to cart
         return [...prevCart, { ...product, quantity }];
       }
     });
@@ -225,14 +218,51 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const availableShippingMethods: ShippingMethod[] = useMemo(() => {
-    if (cart.length === 0) return [];
-    
     return [
-      { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: shippingSettings.standardFee },
-      { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: shippingSettings.expressFee }
+      { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: 60 },
+      { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: 120 }
     ];
+  }, []);
 
-  }, [cart.length, shippingSettings]);
+  const calculateShippingFee = useCallback(async () => {
+    if (!shippingInfo || !shippingInfo.delivery_area_id) {
+        setShippingFee(availableShippingMethods[0]?.fee || 60); // Default fee
+        return;
+    }
+    
+    // For COD, amount is subtotal after discounts. For others, it's 0.
+    const isCod = shippingInfo.method === 'cod'; 
+    const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
+    const discount = appliedCoupon?.discountAmount || 0;
+    const codAmount = isCod ? Math.max(0, subTotal - discount) : 0;
+
+    try {
+        const response = await fetch('/api/shipping/calculate-charge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                delivery_area_id: shippingInfo.delivery_area_id,
+                cash_collection_amount: codAmount,
+                // A simple weight estimation, 500g per item
+                weight: cart.length * 500 
+            })
+        });
+
+        if (!response.ok) throw new Error('Failed to calculate shipping');
+
+        const data = await response.json();
+        setShippingFee(data.deliveryCharge || availableShippingMethods[0].fee);
+
+    } catch (error) {
+        console.error("Shipping calculation error:", error);
+        // Fallback to default if API fails
+        setShippingFee(availableShippingMethods.find(m => m.name === shippingInfo.method)?.fee || availableShippingMethods[0]?.fee || 60);
+    }
+  }, [shippingInfo, cart, availableShippingMethods, appliedCoupon]);
+
+  useEffect(() => {
+    calculateShippingFee();
+  }, [calculateShippingFee]);
 
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
@@ -240,38 +270,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
   const discountAmount = useMemo(() => {
     if (!appliedCoupon || cart.length === 0) return 0;
-
     const applicableItems = appliedCoupon.applicability?.type === 'products'
         ? cart.filter(item => appliedCoupon.applicability.ids.includes(item.id))
         : cart;
-    
-    if (applicableItems.length === 0) return 0; // No applicable items
-
+    if (applicableItems.length === 0) return 0;
     const applicableSubtotal = applicableItems.reduce((acc, item) => acc + item.pricing.price * item.quantity, 0);
-    
-    // Ensure minPurchase is met on the applicable subtotal
-    if (appliedCoupon.minPurchase && applicableSubtotal < appliedCoupon.minPurchase) {
-      return 0;
-    }
-
-    if(appliedCoupon.type === 'fixed') {
-        return Math.min(appliedCoupon.value, applicableSubtotal);
-    }
-    if(appliedCoupon.type === 'percentage') {
-        return applicableSubtotal * (appliedCoupon.value / 100);
-    }
+    if (appliedCoupon.minPurchase && applicableSubtotal < appliedCoupon.minPurchase) return 0;
+    if(appliedCoupon.type === 'fixed') return Math.min(appliedCoupon.value, applicableSubtotal);
+    if(appliedCoupon.type === 'percentage') return applicableSubtotal * (appliedCoupon.value / 100);
     return 0;
   }, [appliedCoupon, cart]);
   
   const subTotalAfterCoupon = subTotal - discountAmount;
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
   
-  const shippingFee = useMemo(() => {
-    if (!shippingInfo?.method) return 0;
-    const selectedMethod = availableShippingMethods.find(m => m.name === shippingInfo.method);
-    return selectedMethod?.fee || 0;
-  }, [shippingInfo?.method, availableShippingMethods]);
-
   const taxes = subTotal * 0.05; // 5% tax on subtotal
   const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + shippingFee + taxes);
 
@@ -304,7 +316,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Create a custom hook to use the cart context
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
