@@ -18,6 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
+import { Store } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SettingsPage() {
     const { toast } = useToast();
@@ -47,6 +49,27 @@ export default function SettingsPage() {
                 <CardFooter>
                      <Button disabled={loading}>Save Changes</Button>
                 </CardFooter>
+            </Card>
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle>Shipping</CardTitle>
+                    <CardDescription>Manage your shipping and pickup locations.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between rounded-lg border p-4">
+                         <div className="flex items-center gap-4">
+                            <Store className="h-6 w-6 text-muted-foreground" />
+                            <div>
+                                <p className="font-medium">Pickup Stores</p>
+                                <p className="text-sm text-muted-foreground">Manage your warehouse and pickup locations for RedX.</p>
+                            </div>
+                        </div>
+                        <Button asChild>
+                            <Link href="/admin/settings/shipping">Manage</Link>
+                        </Button>
+                    </div>
+                </CardContent>
             </Card>
 
             <Card>

@@ -1,3 +1,4 @@
+
 'use server';
 import { Order } from '@/types';
 
@@ -71,8 +72,30 @@ export async function getAreasByDistrict(district: string): Promise<RedXArea[]> 
     return response.areas || [];
 }
 
+export async function getPickupStores() {
+    return redxApiRequest('GET', '/pickup/stores');
+}
+
+export async function createPickupStore(name: string, phone: string, address: string, area_id: number) {
+    const body = {
+        name,
+        phone,
+        address,
+        area_id
+    };
+    return redxApiRequest('POST', '/pickup/store', body);
+}
+
 export async function createParcel(order: Order, orderId: string) {
-    const { shippingAddress, payment } = order;
+    const { shippingAddress, payment, items } = order;
+    
+    const allStores = await getPickupStores();
+    // Use the first store as default, or implement logic to select one.
+    const defaultPickupStoreId = allStores.pickup_stores?.[0]?.id;
+
+    if (!defaultPickupStoreId) {
+        throw new Error("No pickup store is configured. Please add a pickup store in admin settings.");
+    }
     
     const parcelData = {
         customer_name: shippingAddress.name,
@@ -84,6 +107,12 @@ export async function createParcel(order: Order, orderId: string) {
         cash_collection_amount: payment.method === 'cod' ? payment.total : 0,
         parcel_weight: 500, // Default weight in grams, adjust as needed
         value: payment.subtotal,
+        pickup_store_id: defaultPickupStoreId,
+        parcel_details_json: items.map(item => ({
+            name: item.name,
+            category: 'product',
+            value: item.price
+        }))
     };
 
     return redxApiRequest('POST', '/parcel', parcelData);

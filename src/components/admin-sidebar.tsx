@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -63,8 +63,11 @@ export function AdminSidebar({ user }: { user: any }) {
     { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
     { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
     { href: '/admin/gift-cards', label: 'Gift Cards', icon: Gift },
-    { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
+
+  const shippingItems = [
+      { href: '/admin/settings/shipping', label: 'Pickup Stores', icon: Store }
+  ]
 
   const siteManagementItems = [
       { href: '/admin/site-management/home', label: 'Home Page', icon: Home },
@@ -107,7 +110,31 @@ export function AdminSidebar({ user }: { user: any }) {
                 </Link>
             </SidebarMenuItem>
           ))}
-          <Accordion type="single" collapsible className="w-full group-data-[state=collapsed]:hidden">
+          <Accordion type="single" collapsible className="w-full group-data-[state=collapsed]:hidden" defaultValue='site-management'>
+             <AccordionItem value="shipping" className="border-none">
+                <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
+                    <ShoppingCart />
+                    <span>Shipping</span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-0 pl-5">
+                    <SidebarMenu>
+                       {shippingItems.map((item) => (
+                            <SidebarMenuItem key={item.label}>
+                                <Link href={item.href}>
+                                    <SidebarMenuButton 
+                                        isActive={pathname.startsWith(item.href)}
+                                        tooltip={{ children: item.label }}
+                                        size="sm"
+                                    >
+                                        <item.icon />
+                                        <span>{item.label}</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </AccordionContent>
+            </AccordionItem>
             <AccordionItem value="site-management" className="border-none">
                 <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
                     <LayoutDashboard />
@@ -145,6 +172,17 @@ export function AdminSidebar({ user }: { user: any }) {
                     </Link>
                  </SidebarMenuItem>
             </div>
+             <SidebarMenuItem>
+                <Link href="/admin/settings">
+                    <SidebarMenuButton 
+                        isActive={pathname.startsWith('/admin/settings')}
+                        tooltip={{ children: 'Settings' }}
+                    >
+                        <Settings />
+                        <span className="group-data-[state=expanded]:inline-block hidden">Settings</span>
+                    </SidebarMenuButton>
+                </Link>
+            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
 
