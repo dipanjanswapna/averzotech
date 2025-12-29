@@ -12,6 +12,10 @@ export interface WishlistItem extends Omit<Product, 'quantity' | 'selectedColor'
         initialStock?: number;
         availability: 'in-stock' | 'out-of-stock' | 'pre-order';
     };
+    dataAiHint?: string;
+    shipping: {
+        estimatedDelivery: string;
+    }
 }
 
 

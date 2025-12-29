@@ -5,18 +5,17 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Trash2, ShoppingCart, Star, Home } from 'lucide-react';
+import { Trash2, ShoppingCart, Home } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from "@/hooks/use-toast";
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
-import { Product } from '@/hooks/use-cart';
+import type { Product } from '@/hooks/use-cart';
+import { StockIndicator } from '@/components/stock-indicator';
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, clearWishlist } = useWishlist();
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const { toast } = useToast();
 
   const handleRemoveItem = (id: string) => {
@@ -41,15 +40,10 @@ export default function WishlistPage() {
         ...item,
         selectedSize: item.variants?.sizes?.[0] || 'M', // Default or fetch available
         selectedColor: item.variants?.colors?.[0]?.name || 'Default', // Default or fetch available
-        shipping: item.shipping || { estimatedDelivery: '3-5 days' }, // Default or fetch
-        inventory: item.inventory || { sku: 'DEFAULT-SKU', availability: 'in-stock' }
     };
 
     addToCart(productToAdd as any);
-    toast({
-      title: "Added to Cart",
-      description: `${item.name} has been successfully added to your cart.`,
-    });
+    setIsCartOpen(true);
   };
   
   const handleClearWishlist = () => {
@@ -70,7 +64,7 @@ export default function WishlistPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
               {wishlist.map(item => (
                 <div key={item.id} className="group block">
-                    <div className="relative overflow-hidden rounded-lg bg-background shadow-sm">
+                    <div className="relative overflow-hidden rounded-lg bg-background shadow-sm border">
                         <Link href={`/product/${item.id}`}>
                             <Image
                                 src={item.images[0] || 'https://placehold.co/400x500.png'}
@@ -78,35 +72,38 @@ export default function WishlistPage() {
                                 width={400}
                                 height={500}
                                 className="h-auto w-full object-cover aspect-[4/5] transition-transform duration-300 group-hover:scale-105"
-                                data-ai-hint="product image"
+                                data-ai-hint={item.dataAiHint || 'product image'}
                             />
                         </Link>
-                         <Badge variant={item.inventory?.availability === 'in-stock' ? "default" : "destructive"} className={`absolute top-2 left-2 ${item.inventory?.availability === 'in-stock' ? 'bg-green-600/90 text-white' : 'bg-red-600/90 text-white'}`}>
-                            {item.inventory?.availability === 'in-stock' ? 'In Stock' : 'Out of Stock'}
-                        </Badge>
-                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-2">
-                           <Button 
-                                variant="secondary" 
-                                size="sm" 
-                                className="w-full text-xs" 
-                                onClick={() => handleAddToCart(item)}
-                                disabled={item.inventory?.availability !== 'in-stock'}
-                            >
-                                <ShoppingCart className="mr-1 h-3 w-3" /> Add to Cart
-                           </Button>
-                           <Button variant="destructive" size="icon" onClick={() => handleRemoveItem(item.id)} className="h-8 w-8 flex-shrink-0">
-                                <Trash2 className="h-4 w-4" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent flex justify-end">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/80 hover:bg-white" onClick={() => handleRemoveItem(item.id)}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                         </div>
                     </div>
-                    <div className="pt-2">
-                        <h3 className="text-sm font-bold text-foreground">{item.name}</h3>
+                    <div className="pt-2 px-1">
+                        <h3 className="text-sm font-bold text-foreground truncate">{item.name}</h3>
                         <p className="text-xs text-muted-foreground truncate">{item.brand}</p>
+                         <div className="mt-2">
+                             <StockIndicator 
+                                stock={item.inventory.stock} 
+                                initialStock={item.inventory.initialStock}
+                                availability={item.inventory.availability}
+                            />
+                         </div>
                         <p className="text-sm font-semibold mt-1 text-foreground">
                             ৳{item.pricing.price}{' '}
                             {item.pricing.comparePrice && <span className="text-xs text-muted-foreground line-through">৳{item.pricing.comparePrice}</span> }
-                            {item.pricing.discount && <span className="text-xs text-orange-400 font-bold">({item.pricing.discount}% OFF)</span>}
                         </p>
+                        <Button 
+                           variant="outline" 
+                           size="sm" 
+                           className="w-full mt-2"
+                           onClick={() => handleAddToCart(item)}
+                           disabled={item.inventory?.availability !== 'in-stock'}
+                        >
+                            <ShoppingCart className="mr-2 h-4 w-4" /> Move to Cart
+                        </Button>
                     </div>
                 </div>
               ))}
