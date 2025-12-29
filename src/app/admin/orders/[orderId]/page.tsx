@@ -40,6 +40,7 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
+import { updateParcelStatus } from '@/lib/redx';
 
 
 interface Order {
@@ -167,11 +168,21 @@ export default function OrderDetailsPage() {
           const newNoteRef = doc(notesCollectionRef);
           batch.set(newNoteRef, { note: noteContent, author: 'System', date: serverTimestamp() });
 
-          // If order is cancelled, restock products
-          if (newStatus === 'Cancelled' && order.status !== 'Cancelled') {
-              for (const item of order.items) {
-                  const productRef = doc(db, 'products', item.id);
-                  batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+          if (newStatus === 'Cancelled') {
+              if (order.status !== 'Cancelled') {
+                for (const item of order.items) {
+                    const productRef = doc(db, 'products', item.id);
+                    batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                }
+              }
+
+              if (order.trackingId) {
+                  try {
+                      await updateParcelStatus(order.trackingId, 'cancelled', 'Order cancelled by merchant');
+                       toast({ title: "Parcel Update", description: "Cancellation request sent to RedX." });
+                  } catch (redxError: any) {
+                       toast({ title: "RedX Error", description: `Could not cancel parcel on RedX: ${redxError.message}`, variant: "destructive" });
+                  }
               }
           }
 

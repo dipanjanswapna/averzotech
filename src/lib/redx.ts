@@ -103,3 +103,18 @@ export async function calculateCharge({
     const endpoint = `/charge/charge_calculator?delivery_area_id=${delivery_area_id}&pickup_area_id=${pickup_area_id}&cash_collection_amount=${cash_collection_amount}&weight=${weight}`;
     return redxApiRequest('GET', endpoint);
 }
+
+export async function updateParcelStatus(trackingId: string, newStatus: 'cancelled' | 'on-hold', reason?: string) {
+    const updateDetails = {
+        property_name: 'status',
+        new_value: newStatus,
+        ...(reason && { reason }),
+    };
+
+    const body = {
+        entity_type: 'parcel-tracking-id',
+        entity_id: trackingId,
+        update_details: updateDetails,
+    };
+    return redxApiRequest('PATCH', '/parcels', body);
+}
