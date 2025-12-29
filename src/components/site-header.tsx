@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth, AppUser } from '@/hooks/use-auth';
 import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
+import { useCart } from '@/hooks/use-cart';
 
 const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
@@ -41,6 +42,7 @@ export function SiteHeader() {
   const auth = getAuth(app);
   const { toast } = useToast();
   const router = useRouter();
+  const { cartCount, setIsCartOpen } = useCart();
   
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -138,7 +140,7 @@ export function SiteHeader() {
                                 <>
                                     <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
                                     <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
-                                    <Link href="/cart" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><ShoppingCart className="mr-2 h-5 w-5" />Cart</Link>
+                                    <div className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary cursor-pointer" onClick={() => { setIsCartOpen(true); setIsSheetOpen(false); }}><ShoppingCart className="mr-2 h-5 w-5" />Cart</div>
                                     <Separator className="my-2" />
                                     <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
                                         <LogOut className="mr-2 h-5 w-5" /> Logout
@@ -187,10 +189,13 @@ export function SiteHeader() {
                         <Heart className="h-5 w-5" />
                     </Link>
                 </Button>
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/cart">
-                        <ShoppingCart className="h-5 w-5" />
-                    </Link>
+                <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(true)} className="relative">
+                    <ShoppingCart className="h-5 w-5" />
+                     {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                            {cartCount}
+                        </span>
+                    )}
                 </Button>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -257,11 +262,14 @@ export function SiteHeader() {
                   <span className="sr-only">Wishlist</span>
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" asChild>
-                <Link href="/cart">
+              <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(true)} className="relative">
                   <ShoppingCart className="h-5 w-5" />
                   <span className="sr-only">Cart</span>
-                </Link>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {cartCount}
+                    </span>
+                  )}
               </Button>
                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
