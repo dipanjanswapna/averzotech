@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
@@ -230,7 +231,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return;
     }
     
-    // For COD, amount is subtotal after discounts. For others, it's 0.
     const isCod = shippingInfo.method === 'cod'; 
     const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
     const discount = appliedCoupon?.discountAmount || 0;
@@ -243,8 +243,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             body: JSON.stringify({
                 delivery_area_id: shippingInfo.delivery_area_id,
                 cash_collection_amount: codAmount,
-                // A simple weight estimation, 500g per item
-                weight: cart.length * 500 
+                weight: cart.reduce((totalWeight, item) => totalWeight + (item.quantity * 500), 0)
             })
         });
 
@@ -255,14 +254,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
     } catch (error) {
         console.error("Shipping calculation error:", error);
-        // Fallback to default if API fails
         setShippingFee(availableShippingMethods.find(m => m.name === shippingInfo.method)?.fee || availableShippingMethods[0]?.fee || 60);
     }
   }, [shippingInfo, cart, availableShippingMethods, appliedCoupon]);
 
   useEffect(() => {
-    calculateShippingFee();
-  }, [calculateShippingFee]);
+    if(shippingInfo){
+      calculateShippingFee();
+    }
+  }, [calculateShippingFee, shippingInfo]);
 
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);

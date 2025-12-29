@@ -114,6 +114,7 @@ export interface Order {
         fullAddress: string;
         district: string;
         division: string;
+        upazila: string;
         delivery_area: string;
         delivery_area_id: number;
         method: string;

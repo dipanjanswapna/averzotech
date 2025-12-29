@@ -79,7 +79,7 @@ export default function AddressesPage() {
         if(formData.division) {
             const divisionData = divisions.find(d => d.name === formData.division);
             setDistricts(divisionData ? divisionData.districts.map(dist => dist.name) : []);
-            setFormData(prev => ({ ...prev, district: '', upazila: '', delivery_area_id: 0 }));
+            setFormData(prev => ({ ...prev, district: '', upazila: '', delivery_area_id: 0, delivery_area: '' }));
         } else {
             setDistricts([]);
             setUpazilas([]);
@@ -99,7 +99,7 @@ export default function AddressesPage() {
                 } finally {
                     setIsUpazilaLoading(false);
                 }
-                setFormData(prev => ({ ...prev, upazila: '', delivery_area_id: 0 }));
+                setFormData(prev => ({ ...prev, upazila: '', delivery_area_id: 0, delivery_area: '' }));
             } else {
                 setUpazilas([]);
             }
@@ -138,7 +138,7 @@ export default function AddressesPage() {
                 streetAddress: editingAddress.streetAddress,
                 division: editingAddress.division,
                 district: editingAddress.district,
-                upazila: String(editingAddress.delivery_area_id),
+                upazila: String(editingAddress.delivery_area_id), // upazila in form state is area id
                 delivery_area: editingAddress.delivery_area,
                 delivery_area_id: editingAddress.delivery_area_id,
                 phone: editingAddress.phone,
@@ -156,8 +156,8 @@ export default function AddressesPage() {
             streetAddress: '',
             division: '',
             district: '',
-            upazila: '',
-            delivery_area: '',
+            upazila: '', // Represents delivery_area_id in the form
+            delivery_area: '', // Represents delivery_area_name in the form
             delivery_area_id: 0,
             phone: '',
             isDefault: false,
@@ -178,7 +178,7 @@ export default function AddressesPage() {
         if (selectedUpazila) {
             setFormData(prev => ({
                 ...prev,
-                upazila: value,
+                upazila: value, // This is the delivery_area_id
                 delivery_area: selectedUpazila.name,
                 delivery_area_id: selectedUpazila.id
             }));
@@ -217,8 +217,16 @@ export default function AddressesPage() {
         }
         
         const dataToSave = {
-            ...formData,
-            upazila: formData.delivery_area, // Save area name instead of ID
+            type: formData.type,
+            name: formData.name,
+            streetAddress: formData.streetAddress,
+            division: formData.division,
+            district: formData.district,
+            upazila: formData.delivery_area, // Save area name as upazila for display
+            delivery_area: formData.delivery_area,
+            delivery_area_id: formData.delivery_area_id,
+            phone: formData.phone,
+            isDefault: formData.isDefault,
         };
 
         const addressesCol = collection(db, 'users', user.uid, 'addresses');
