@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -32,6 +33,7 @@ const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
     if (user.role === 'admin') return '/admin/dashboard';
     if (user.role === 'vendor') return '/vendor/dashboard';
+    if (user.role === 'delivery') return '/delivery/dashboard';
     return '/profile';
 }
 
