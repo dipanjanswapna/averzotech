@@ -291,7 +291,7 @@ export default function EditReturnDetailsPage() {
                         <CardHeader><CardTitle>Customer Details</CardTitle></CardHeader>
                         <CardContent>
                             <p className="font-semibold">{request.userName}</p>
-                            <p className="text-sm text-muted-foreground">{request.userId}</p>
+                            <p className="text-sm text-muted-foreground break-all">{request.userId}</p>
                         </CardContent>
                     </Card>
                     <Card>
