@@ -17,9 +17,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, User } from 'lucide-react';
+import { ChevronLeft, User, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -40,7 +51,7 @@ import { useAuth } from '@/hooks/use-auth';
 interface Order {
     id: string;
     createdAt: any;
-    status: 'Pending' | 'Processing' | 'Shipped' | 'Fulfilled' | 'Cancelled' | 'In-house Delivery';
+    status: 'Pending' | 'Processing' | 'Shipped' | 'Fulfilled' | 'Cancelled' | 'In-house Delivery' | 'Returning to Warehouse' | 'Delivery Failed';
     total: number;
     shippingAddress: {
         name: string;
@@ -74,6 +85,7 @@ export default function DeliveryOrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [confirmationOtp, setConfirmationOtp] = useState('');
   
   useEffect(() => {
     if (orderId) {
@@ -93,6 +105,17 @@ export default function DeliveryOrderDetailsPage() {
         fetchOrder();
     }
   }, [orderId, toast, router, db]);
+
+  const handleStatusChange = (status: string) => {
+    if (status === 'Fulfilled') {
+        const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+        setConfirmationOtp(generatedOtp);
+        // The AlertDialog will be triggered from the JSX, we just set the status for now.
+        setNewStatus(status);
+    } else {
+        setNewStatus(status);
+    }
+  }
 
   const handleUpdateStatus = async () => {
       if (!order || !newStatus || newStatus === order.status) return;
@@ -200,12 +223,12 @@ export default function DeliveryOrderDetailsPage() {
                      <Badge variant={paymentMethodDisplay === 'Prepaid' ? 'default' : 'destructive'}>{paymentMethodDisplay}</Badge>
                 </CardContent>
             </Card>
-            <Card>
+             <Card>
                  <CardHeader>
                     <CardTitle>Update Status</CardTitle>
                 </CardHeader>
                 <CardContent>
-                     <Select value={newStatus} onValueChange={setNewStatus}>
+                     <Select value={newStatus} onValueChange={handleStatusChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
@@ -218,9 +241,48 @@ export default function DeliveryOrderDetailsPage() {
                     </Select>
                 </CardContent>
                  <CardFooter>
-                    <Button className="w-full" onClick={handleUpdateStatus} disabled={isUpdating}>
-                        {isUpdating ? 'Updating...' : 'Update Order Status'}
-                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                             <Button className="w-full" disabled={isUpdating || newStatus === order.status}>
+                                {isUpdating ? 'Updating...' : 'Update Order Status'}
+                            </Button>
+                        </AlertDialogTrigger>
+                         {newStatus === 'Fulfilled' ? (
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck className="h-6 w-6 text-green-500" />Confirm Delivery</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        To confirm delivery, please ask the customer for the 4-digit verification code.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="my-4 text-center">
+                                    <p className="text-sm text-muted-foreground">Verification Code</p>
+                                    <p className="text-4xl font-bold tracking-widest">{confirmationOtp}</p>
+                                </div>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleUpdateStatus} className="bg-green-600 hover:bg-green-700">
+                                        Mark as Delivered
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                         ) : (
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will update the order status to <span className="font-bold">{newStatus}</span>. This action can be reversed later if needed.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleUpdateStatus}>
+                                    Yes, Update
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                         )}
+                    </AlertDialog>
                 </CardFooter>
             </Card>
         </div>
