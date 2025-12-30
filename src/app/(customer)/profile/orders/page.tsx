@@ -106,12 +106,12 @@ export default function MyOrdersPage() {
 
         const batch = writeBatch(db);
         const orderRef = doc(db, 'orders', order.id);
-        const notesRef = collection(db, 'orders', order.id, 'notes');
         
         try {
-             batch.update(orderRef, { status: 'Cancelled' });
+             batch.update(orderRef, { status: 'Cancelled', updatedAt: serverTimestamp() });
              
-             const newNoteRef = doc(notesRef);
+             const notesCollectionRef = collection(db, 'orders', order.id, 'notes');
+             const newNoteRef = doc(notesCollectionRef);
              batch.set(newNoteRef, {
                  note: `Order cancelled by customer. Reason: ${cancellationReason}`,
                  author: user?.fullName || 'Customer',
