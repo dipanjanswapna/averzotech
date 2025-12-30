@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -319,9 +320,7 @@ export function SiteHeader() {
             <ScrollArea className="md:hidden -mx-4">
               <nav className="flex items-center gap-6 text-sm font-medium px-4">
                  {categories.map((category) => (
-                    <SheetClose asChild key={category.name}>
-                        <Link href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
-                    </SheetClose>
+                    <Link href={category.href} key={category.name} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
                 ))}
               </nav>
               <ScrollBar orientation="horizontal" className="invisible" />
