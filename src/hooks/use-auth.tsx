@@ -2,10 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged, getAuth } from 'firebase/auth';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useFirebase } from '@/firebase';
+import { useFirebaseApp } from '@/firebase';
 
 export interface AppUser {
   uid: string;
@@ -28,16 +28,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const { auth, db } = useFirebase();
+  const app = useFirebaseApp();
 
   useEffect(() => {
-    if (!auth || !db) {
-        // Firebase might not be initialized yet, especially on first load.
-        // We'll wait for the auth object to be available.
-        if (!loading) setLoading(true); // Ensure loading is true until firebase is ready
+    if (!app) {
+        if (!loading) setLoading(true);
         return;
     }
     
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -70,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [auth, db, loading]);
+  }, [app, loading]);
 
   const isAdmin = user?.role === 'admin';
 

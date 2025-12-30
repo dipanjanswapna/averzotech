@@ -12,19 +12,21 @@ import { useRouter } from 'next/navigation';
 import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { Chrome } from 'lucide-react';
 import { AppUser } from '@/hooks/use-auth';
-import { useFirebase } from '@/firebase';
+import { useFirebaseApp } from '@/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { auth, firestore: db } = useFirebase();
+  const app = useFirebaseApp();
   const router = useRouter();
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!auth || !db) return;
+    if (!app) return;
+    const auth = getAuth(app);
+    const db = getFirestore(app);
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -101,7 +103,9 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    if (!auth || !db) return;
+    if (!app) return;
+    const auth = getAuth(app);
+    const db = getFirestore(app);
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
