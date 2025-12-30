@@ -49,7 +49,11 @@ export async function POST(req: NextRequest) {
                  });
             }
 
-            return NextResponse.json(refundResponse, { status: 200 });
+            return NextResponse.json({ 
+                ...refundResponse, 
+                refundAmount: amount, 
+                refundTrxId: refundResponse.trxID 
+            }, { status: 200 });
         } else {
              return NextResponse.json({ 
                 error: 'Refund failed at bKash.', 

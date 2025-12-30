@@ -97,18 +97,8 @@ export default function MyOrdersPage() {
     }, [user]);
 
     const handleCancelOrder = async (order: Order) => {
-        if (order.status !== 'Pending') {
+        if (!canCancel(order)) {
             toast({ title: "Cancellation Failed", description: "This order can no longer be cancelled.", variant: "destructive" });
-            return;
-        }
-
-        const orderTime = order.createdAt.toDate();
-        const now = new Date();
-        const timeDiff = now.getTime() - orderTime.getTime();
-        const hoursDiff = timeDiff / (1000 * 60 * 60);
-
-        if (hoursDiff > 1) {
-            toast({ title: "Cancellation Window Closed", description: "You can only cancel an order within 1 hour of placing it.", variant: "destructive" });
             return;
         }
 
@@ -180,11 +170,12 @@ export default function MyOrdersPage() {
 
     const canCancel = (order: Order) => {
         if (order.status !== 'Pending') return false;
-        const orderTime = order.createdAt.toDate();
+        if (!order.createdAt?.seconds) return false;
+        const orderTime = new Date(order.createdAt.seconds * 1000);
         const now = new Date();
         const timeDiff = now.getTime() - orderTime.getTime();
         const hoursDiff = timeDiff / (1000 * 60 * 60);
-        return hoursDiff <= 1;
+        return hoursDiff <= 1; // Allow cancellation within 1 hour
     }
 
     if (loading) {
