@@ -1,4 +1,5 @@
 
+
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -133,4 +134,23 @@ export interface Order {
         } | null;
         total: number;
     };
+}
+
+// Vendor Invoice
+export interface VendorInvoiceItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+export interface VendorInvoice {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  items: VendorInvoiceItem[];
+  total: number;
+  status: 'Draft' | 'Sent' | 'Processing' | 'Paid' | 'Cancelled';
+  createdAt: any;
 }

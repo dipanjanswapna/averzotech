@@ -30,17 +30,11 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, getFirestore } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
+import { VendorInvoice } from '@/types';
 
-interface Invoice {
-  id: string;
-  vendorName: string;
-  createdAt: any;
-  status: 'Draft' | 'Sent' | 'Processing' | 'Paid' | 'Cancelled';
-  total: number;
-}
 
 export default function VendorInvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<VendorInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const db = getFirestore(app);
 
@@ -54,7 +48,7 @@ export default function VendorInvoicesPage() {
         const invoiceList = invoiceSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        } as Invoice));
+        } as VendorInvoice));
         setInvoices(invoiceList);
       } catch (error) {
         console.error("Error fetching invoices: ", error);

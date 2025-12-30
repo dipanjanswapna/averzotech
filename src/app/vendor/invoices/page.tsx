@@ -31,17 +31,10 @@ import { collection, getDocs, query, orderBy, where, getFirestore } from 'fireba
 import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
-
-interface Invoice {
-  id: string;
-  vendorName: string;
-  createdAt: any;
-  status: 'Draft' | 'Sent' | 'Paid' | 'Cancelled';
-  total: number;
-}
+import { VendorInvoice } from '@/types';
 
 export default function VendorInvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoices, setInvoices] = useState<VendorInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const db = getFirestore(app);
@@ -57,7 +50,7 @@ export default function VendorInvoicesPage() {
         const invoiceList = invoiceSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
-        } as Invoice));
+        } as VendorInvoice));
         setInvoices(invoiceList);
       } catch (error) {
         console.error("Error fetching invoices: ", error);
@@ -159,7 +152,7 @@ export default function VendorInvoicesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                           <Link href={`/vendor/invoices/${invoice.id}`}>View Details</Link>
+                           <Link href={`/admin/vendor-invoices/${invoice.id}`}>View Details</Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

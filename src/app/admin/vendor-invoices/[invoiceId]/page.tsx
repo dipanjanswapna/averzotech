@@ -21,23 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-interface InvoiceItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
-
-interface Invoice {
-  id: string;
-  vendorName: string;
-  items: InvoiceItem[];
-  total: number;
-  status: 'Draft' | 'Sent' | 'Processing' | 'Paid' | 'Cancelled';
-  createdAt: any;
-}
+import { VendorInvoice } from '@/types';
 
 export default function VendorInvoiceDetailsPage() {
   const params = useParams();
@@ -46,7 +30,7 @@ export default function VendorInvoiceDetailsPage() {
   const { toast } = useToast();
   const db = getFirestore(app);
 
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [invoice, setInvoice] = useState<VendorInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -57,7 +41,7 @@ export default function VendorInvoiceDetailsPage() {
             const invoiceRef = doc(db, 'vendorInvoices', invoiceId);
             const docSnap = await getDoc(invoiceRef);
             if (docSnap.exists()) {
-                setInvoice({ id: docSnap.id, ...docSnap.data() } as Invoice);
+                setInvoice({ id: docSnap.id, ...docSnap.data() } as VendorInvoice);
             } else {
                 toast({ title: "Error", description: "Invoice not found.", variant: "destructive" });
                 router.push('/admin/vendor-invoices');
