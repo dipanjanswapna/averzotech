@@ -251,7 +251,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (!response.ok) throw new Error('Failed to calculate shipping');
 
         const data = await response.json();
-        setShippingFee(data.deliveryCharge || 60);
+        setShippingFee(data.delivery_charge || 60);
 
     } catch (error) {
         console.error("Shipping calculation error:", error);
