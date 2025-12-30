@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -70,7 +71,7 @@ export default function VendorApplyPage() {
             return;
         }
         
-        if (!user) {
+        if (!user || !db) {
             toast({ title: 'Authentication Error', description: 'You must be logged in to apply.', variant: 'destructive' });
             return;
         }
@@ -115,7 +116,7 @@ export default function VendorApplyPage() {
                 duration: 5000,
             });
 
-            router.push('/');
+            router.push('/vendor/dashboard');
 
         } catch (error: any) {
             console.error('Error submitting application:', error);
