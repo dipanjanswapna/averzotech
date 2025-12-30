@@ -19,6 +19,7 @@ export interface AppUser {
 interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
+  isAdmin: boolean;
   setUser: React.Dispatch<React.SetStateAction<AppUser | null>>;
 }
 
@@ -65,12 +66,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, [auth, db]);
 
+  const isAdmin = user?.role === 'admin';
+
   if (loading) {
       return <LoadingSpinner />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, setUser }}>
       {children}
     </AuthContext.Provider>
   );

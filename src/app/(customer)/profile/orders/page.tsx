@@ -33,7 +33,7 @@ import {
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, serverTimestamp, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -46,6 +46,7 @@ interface Order {
     status: 'Fulfilled' | 'Processing' | 'Cancelled' | 'Pending';
     total: number;
     items: { id: string, name: string, image: string, quantity: number }[];
+    returnId?: string;
 }
 
 export default function MyOrdersPage() {
@@ -55,6 +56,16 @@ export default function MyOrdersPage() {
     const [loading, setLoading] = useState(true);
     const [cancellationReason, setCancellationReason] = useState('');
 
+    const findReturnForOrder = async (orderId: string): Promise<string | undefined> => {
+        const returnsRef = collection(db, 'returns');
+        const q = query(returnsRef, where("orderId", "==", orderId), limit(1));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            return querySnapshot.docs[0].id;
+        }
+        return undefined;
+    };
+
     const fetchOrders = async () => {
         if (!user) return;
         setLoading(true);
@@ -62,10 +73,13 @@ export default function MyOrdersPage() {
             const ordersCollection = collection(db, 'orders');
             const q = query(ordersCollection, where("userId", "==", user.uid));
             const orderSnapshot = await getDocs(q);
-            const orderList = orderSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as Order));
+            const orderListPromises = orderSnapshot.docs.map(async (doc) => {
+                const orderData = { id: doc.id, ...doc.data() } as Omit<Order, 'returnId'>;
+                const returnId = await findReturnForOrder(doc.id);
+                return { ...orderData, returnId };
+            });
+
+            let orderList = await Promise.all(orderListPromises);
             
             orderList.sort((a, b) => {
                 const dateA = a.createdAt?.seconds || 0;
@@ -216,9 +230,15 @@ export default function MyOrdersPage() {
                             <Link href={`/order-confirmation?orderId=${order.id}`}>View Details</Link>
                         </Button>
                         {order.status === 'Fulfilled' && (
-                             <Button variant="secondary" size="sm" asChild>
-                                <Link href={`/returns/new?orderId=${order.id}`}>Return/Exchange</Link>
-                            </Button>
+                            order.returnId ? (
+                                <Button variant="secondary" size="sm" asChild>
+                                   <Link href={`/profile/returns/${order.returnId}`}>View Return Status</Link>
+                               </Button>
+                            ) : (
+                                <Button variant="secondary" size="sm" asChild>
+                                   <Link href={`/returns/new?orderId=${order.id}`}>Return/Exchange</Link>
+                               </Button>
+                            )
                         )}
                          {canCancel(order) && (
                             <AlertDialog>
