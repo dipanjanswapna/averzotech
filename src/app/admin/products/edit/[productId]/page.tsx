@@ -286,13 +286,13 @@ export default function EditProductPage() {
     const availableGroups = useMemo(() => {
         if (!selectedCategory) return [];
         const category = filterCategories.find(c => c.name === selectedCategory);
-        return category ? category.groups : [];
+        return category ? category.subCategories : [];
     }, [selectedCategory, filterCategories]);
 
     const availableSubcategories = useMemo(() => {
         if (!selectedGroup) return [];
-        const group: any = availableGroups.find((g: any) => g.name === selectedGroup);
-        return group ? group.subcategories : [];
+        const group: any = availableGroups.find((g: any) => g.group === selectedGroup);
+        return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
 
     const handleUpdateProduct = async () => {
@@ -652,7 +652,7 @@ export default function EditProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map((g: any) => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
+                          {availableGroups.map((g: any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
