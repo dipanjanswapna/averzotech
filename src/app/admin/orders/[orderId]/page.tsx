@@ -39,7 +39,6 @@ import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth';
 import { useFirebase } from '@/firebase';
 
 
@@ -106,8 +105,7 @@ export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { db } = useFirebase();
+  const { user, db } = useFirebase();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);

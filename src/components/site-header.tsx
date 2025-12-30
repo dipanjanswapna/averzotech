@@ -22,11 +22,10 @@ import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useAuth, AppUser } from '@/hooks/use-auth';
+import { AppUser, useFirebase } from '@/firebase';
 import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
 import { useCart } from '@/hooks/use-cart';
-import { useFirebase } from '@/firebase';
 
 const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
@@ -37,8 +36,7 @@ const getDashboardLink = (user: AppUser | null) => {
 }
 
 export function SiteHeader() {
-  const { user } = useAuth();
-  const { auth } = useFirebase();
+  const { user, auth } = useFirebase();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { toast } = useToast();

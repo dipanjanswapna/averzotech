@@ -12,15 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth, AppUser } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
-import { useFirebase } from '@/firebase';
 
 export default function MyProfilePage() {
-    const { user, setUser } = useAuth();
+    const { user, setUser } = useFirebase();
     const { toast } = useToast();
     const { db, auth } = useFirebase();
 

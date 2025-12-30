@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button";
 import { Home, Menu, ShoppingCart, Heart, User, LogOut, MapPin, Gift, Undo2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -20,14 +20,13 @@ import { getAuth, signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useFirebase } from "@/firebase";
 
 export default function ProfileLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useFirebase();
   const router = useRouter();
 
   if (loading) {

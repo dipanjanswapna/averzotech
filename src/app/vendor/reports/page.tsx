@@ -26,8 +26,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/hooks/use-auth';
-import { useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 interface OrderItem {
     id: string;
@@ -59,8 +58,7 @@ const LoadingSkeleton = () => (
 );
 
 export default function VendorReportsPage() {
-    const { user } = useAuth();
-    const { db } = useFirebase();
+    const { user, db } = useFirebase();
     const [vendorProducts, setVendorProducts] = useState<string[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);

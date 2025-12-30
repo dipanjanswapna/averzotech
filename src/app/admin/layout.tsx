@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { AdminSidebar } from '@/components/admin-sidebar';
 import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function AdminLayout({
@@ -14,7 +14,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useFirebase();
   const router = useRouter();
 
   useEffect(() => {

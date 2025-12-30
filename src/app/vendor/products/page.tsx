@@ -31,7 +31,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, getFirestore, doc, deleteDoc, orderBy } from 'firebase/firestore';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -66,9 +65,8 @@ interface Product {
 export default function VendorProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, db } = useFirebase();
   const { toast } = useToast();
-  const { db } = useFirebase();
 
   const fetchProducts = async () => {
     if (!user?.fullName || !db) return;

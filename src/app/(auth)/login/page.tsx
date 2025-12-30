@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -11,15 +12,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { Chrome } from 'lucide-react';
-import { AppUser } from '@/hooks/use-auth';
-import { useFirebaseApp } from '@/firebase';
+import { AppUser } from '@/firebase/provider';
+import { useFirebase } from '@/firebase/provider';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const app = useFirebaseApp();
+  const { app } = useFirebase();
   const router = useRouter();
 
   const handleLogin = async (e?: React.FormEvent) => {

@@ -36,78 +36,30 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { app, db } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
-import { useAuth } from '@/hooks/use-auth';
+import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
-
-const initialFilterCategories = [
-    { 
-      name: 'Men',
-      groups: [
-        { name: 'Topwear', subcategories: ['T-Shirts', 'Casual Shirts', 'Formal Shirts', 'Sweatshirts', 'Jackets'] },
-        { name: 'Bottomwear', subcategories: ['Jeans', 'Casual Trousers', 'Formal Trousers', 'Shorts', 'Track Pants'] },
-        { name: 'Footwear', subcategories: ['Casual Shoes', 'Sports Shoes', 'Formal Shoes', 'Sneakers', 'Sandals'] },
-        { name: 'Accessories', subcategories: ['Watches', 'Wallets', 'Belts', 'Sunglasses', 'Bags'] }
-      ]
-    },
-    { 
-      name: 'Women', 
-      groups: [
-        { name: 'Indian & Fusion Wear', subcategories: ['Kurtas & Suits', 'Sarees', 'Lehengas', 'Ethnic Gowns'] },
-        { name: 'Western Wear', subcategories: ['Dresses', 'Tops', 'T-Shirts', 'Jeans', 'Skirts'] },
-        { name: 'Footwear', subcategories: ['Flats', 'Heels', 'Boots', 'Sports Shoes'] },
-        { name: 'Jewellery & Accessories', subcategories: ['Earrings', 'Necklaces', 'Handbags', 'Watches'] }
-      ]
-    },
-    { name: 'Kids', groups: [
-        { name: 'Boys Clothing', subcategories: ['T-Shirts', 'Shirts', 'Jeans', 'Shorts'] },
-        { name: 'Girls Clothing', subcategories: ['Dresses', 'Tops', 'Skirts', 'T-shirts'] },
-        { name: 'Infants', subcategories: ['Rompers', 'Bodysuits', 'Sleepwear'] },
-        { name: 'Toys & Games', subcategories: ['Action Figures', 'Dolls', 'Board Games', 'Puzzles'] }
-    ]},
-    { name: 'Home & Living', groups: [
-        { name: 'Bed & Bath', subcategories: ['Bedsheets', 'Pillows', 'Towels', 'Bathrobes'] },
-        { name: 'Decor', subcategories: ['Vases', 'Photo Frames', 'Wall Art', 'Candles'] },
-        { name: 'Kitchen & Dining', subcategories: ['Dinnerware', 'Cookware', 'Storage', 'Cutlery'] }
-    ]},
-    { name: 'Beauty', groups: [
-        { name: 'Makeup', subcategories: ['Lipstick', 'Foundation', 'Mascara', 'Eyeshadow'] },
-        { name: 'Skincare', subcategories: ['Moisturizer', 'Cleanser', 'Sunscreen', 'Face Masks'] },
-        { name: 'Fragrance', subcategories: ['Perfumes', 'Deodorants', 'Body Mists'] },
-        { name: 'Haircare', subcategories: ['Shampoo', 'Conditioner', 'Hair Oil', 'Styling Tools'] }
-    ]},
-    { name: 'Electronics', groups: [
-        { name: 'Mobiles & Wearables', subcategories: ['Smartphones', 'Smartwatches', 'Headphones', 'Speakers']},
-        { name: 'Laptops & Computers', subcategories: ['Laptops', 'Desktops', 'Monitors', 'Keyboards', 'Mouse']},
-        { name: 'Cameras & Drones', subcategories: ['DSLRs', 'Mirrorless Cameras', 'Drones', 'Action Cameras']},
-    ]},
-    { name: 'Sports', groups: [
-        { name: 'Cricket', subcategories: ['Bats', 'Balls', 'Pads', 'Gloves']},
-        { name: 'Football', subcategories: ['Footballs', 'Jerseys', 'Boots', 'Shin Guards']},
-        { name: 'Fitness', subcategories: ['Dumbbells', 'Yoga Mats', 'Resistance Bands', 'Trackers']},
-    ]},
-    { name: 'Books', groups: [
-        { name: 'Fiction', subcategories: ['Mystery', 'Thriller', 'Sci-Fi', 'Fantasy', 'Romance']},
-        { name: 'Non-Fiction', subcategories: ['Biography', 'History', 'Self-Help', 'Business']},
-        { name: "Children's Books", subcategories: ['Picture Books', 'Story Books', 'Young Adult']},
-    ]},
-];
+import { useFirebase } from '@/firebase';
 
 interface ImageObject {
     file?: File;
     url: string;
 }
 
+interface Vendor {
+    uid: string;
+    fullName: string;
+}
+
 export default function NewVendorProductPage() {
+    const { app, db, user } = useFirebase();
     const storage = getStorage(app);
     const { toast } = useToast();
     const router = useRouter();
-    const { user } = useAuth();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -303,8 +255,10 @@ export default function NewVendorProductPage() {
     };
 
     const handleSaveProduct = async () => {
+        if (!db) return;
         setIsLoading(true);
         try {
+            // 1. Upload images to Firebase Storage if they are files
             const imageUrls = await Promise.all(
                 images.map(async (imageObj) => {
                     if (imageObj.file) {
@@ -318,6 +272,7 @@ export default function NewVendorProductPage() {
 
             const stockAmount = parseInt(stock, 10) || 0;
 
+            // 2. Prepare product data object
             const productData = {
                 name: productName,
                 description,
@@ -362,6 +317,7 @@ export default function NewVendorProductPage() {
                 updatedAt: serverTimestamp(),
             };
 
+            // 3. Save product data to Firestore
             await addDoc(collection(db, 'products'), productData);
 
             toast({

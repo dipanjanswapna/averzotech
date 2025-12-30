@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 interface ReturnItem {
     id: string;

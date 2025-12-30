@@ -41,7 +41,6 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
-import { useAuth } from '@/hooks/use-auth';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
 import { useFirebase } from '@/firebase';
@@ -52,13 +51,12 @@ interface ImageObject {
 }
 
 export default function EditVendorProductPage() {
-  const { app, db } = useFirebase();
+  const { app, db, user } = useFirebase();
     const storage = getStorage(app!);
     const { toast } = useToast();
     const router = useRouter();
     const params = useParams();
     const productId = params.productId as string;
-    const { user } = useAuth();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);

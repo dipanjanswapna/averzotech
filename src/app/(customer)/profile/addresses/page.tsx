@@ -23,7 +23,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
 import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
@@ -48,8 +47,7 @@ interface Address {
 }
 
 export default function AddressesPage() {
-    const { user } = useAuth();
-    const { db } = useFirebase();
+    const { user, db } = useFirebase();
     const { toast } = useToast();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
@@ -129,7 +127,7 @@ export default function AddressesPage() {
         if(user) {
             fetchAddresses();
         }
-    }, [user]);
+    }, [user, db]);
 
     useEffect(() => {
         if (editingAddress) {

@@ -11,16 +11,16 @@ import { SiteHeader } from "@/components/site-header"
 import { Card, CardContent } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
-import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { OrderSummary } from "@/components/order-summary"
 import Image from "next/image"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { useFirebase } from "@/firebase"
 
 export default function PaymentPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user } = useFirebase();
     const { cart, subTotal, total, appliedCoupon, appliedGiftCard, shippingInfo, setShippingInfo, shippingFee, taxes } = useCart();
     const { toast } = useToast();
     const [paymentMethod, setPaymentMethod] = React.useState('card');

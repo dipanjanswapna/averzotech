@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { DollarSign, Package, ShoppingCart } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase/provider';
 
 interface Stat {
     title: string;
@@ -29,7 +29,7 @@ interface DashboardData {
 }
 
 export default function VendorDashboard() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useFirebase();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 

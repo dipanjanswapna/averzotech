@@ -45,8 +45,7 @@ import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/hooks/use-auth';
-import { useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 interface Order {
     id: string;
@@ -78,8 +77,7 @@ export default function DeliveryOrderDetailsPage() {
   const router = useRouter();
   const orderId = params.orderId as string;
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { db } = useFirebase();
+  const { user, db } = useFirebase();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);

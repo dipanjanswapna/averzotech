@@ -24,12 +24,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, writeBatch, increment } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 interface ReturnItem {
     id: string;
@@ -70,8 +69,7 @@ export default function EditReturnDetailsPage() {
     const router = useRouter();
     const returnId = params.returnId as string;
     const { toast } = useToast();
-    const { user } = useAuth();
-    const { db } = useFirebase();
+    const { user, db } = useFirebase();
     
     const [request, setRequest] = useState<ReturnRequest | null>(null);
     const [originalOrder, setOriginalOrder] = useState<Order | null>(null);

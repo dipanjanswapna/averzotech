@@ -5,23 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth, signOut } from 'firebase/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DeliverySidebar } from '@/components/delivery-sidebar';
-import { useFirebase } from '@/firebase';
 
 export default function DeliveryLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, app } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
-  const { app } = useFirebase();
-  const auth = getAuth(app!);
   
   useEffect(() => {
     if (loading) {
@@ -44,6 +41,7 @@ export default function DeliveryLayout({
     }
     
     if (user.role === 'delivery' && user.status !== 'active') {
+        const auth = getAuth(app!);
         signOut(auth).then(() => {
            toast({
               title: "Account Not Active",
@@ -54,7 +52,7 @@ export default function DeliveryLayout({
            router.push('/login');
         });
     }
-  }, [user, loading, router, toast, auth]);
+  }, [user, loading, router, toast, app]);
 
 
   if (loading || !user || (user.role !== 'delivery' && user.role !== 'admin')) {

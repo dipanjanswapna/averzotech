@@ -28,8 +28,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where, getFirestore } from 'firebase/firestore';
-import { useAuth } from '@/hooks/use-auth';
-import { useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 interface Order {
     id: string;
@@ -43,8 +42,7 @@ interface Order {
 export default function VendorOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
-    const { db } = useFirebase();
+    const { user, db } = useFirebase();
 
     useEffect(() => {
         const fetchVendorOrders = async () => {

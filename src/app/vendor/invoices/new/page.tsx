@@ -23,13 +23,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { app, db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -49,7 +48,7 @@ interface InvoiceItem extends Product {
 export default function NewVendorInvoicePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, db } = useFirebase();
     
     const [isLoading, setIsLoading] = useState(false);
     const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
@@ -60,7 +59,7 @@ export default function NewVendorInvoicePage() {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            if (!user?.fullName) return;
+            if (!user?.fullName || !db) return;
             try {
                 const productsRef = collection(db, 'products');
                 const q = query(productsRef, where("vendor", "==", user.fullName));
@@ -74,7 +73,7 @@ export default function NewVendorInvoicePage() {
         if(user) {
             fetchProducts();
         }
-    }, [user]);
+    }, [user, db]);
 
     const filteredProducts = useMemo(() => {
         return vendorProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -108,7 +107,7 @@ export default function NewVendorInvoicePage() {
             toast({ title: "No items added", description: "Please add at least one product to the invoice.", variant: "destructive" });
             return;
         }
-        if (!user) return;
+        if (!user || !db) return;
         
         setIsLoading(true);
         try {

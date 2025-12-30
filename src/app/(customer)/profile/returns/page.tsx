@@ -21,11 +21,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Undo2 } from 'lucide-react';
-import { useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 interface ReturnRequest {
   id: string;
@@ -36,9 +35,8 @@ interface ReturnRequest {
 }
 
 export default function MyReturnsPage() {
-  const { user } = useAuth();
+  const { user, db } = useFirebase();
   const { toast } = useToast();
-  const { db } = useFirebase();
   const [requests, setRequests] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
 

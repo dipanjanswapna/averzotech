@@ -34,11 +34,10 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, serverTimestamp, limit } from 'firebase/firestore';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useFirebase } from '@/firebase';
+import { useFirebase } from '@/firebase/provider';
 
 interface Order {
     id: string;
@@ -50,9 +49,8 @@ interface Order {
 }
 
 export default function MyOrdersPage() {
-    const { user } = useAuth();
+    const { user, db } = useFirebase();
     const { toast } = useToast();
-    const { db } = useFirebase();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [cancellationReason, setCancellationReason] = useState('');

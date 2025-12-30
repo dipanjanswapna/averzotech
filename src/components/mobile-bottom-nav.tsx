@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { Home, LayoutGrid, User, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/hooks/use-cart";
-import { useAuth } from "@/hooks/use-auth";
+import { useFirebase } from "@/firebase";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const navItems = [
@@ -19,7 +19,7 @@ const navItems = [
 export function MobileBottomNav() {
     const pathname = usePathname();
     const { cartCount } = useCart();
-    const { user } = useAuth();
+    const { user } = useFirebase();
 
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-background border-t z-50">

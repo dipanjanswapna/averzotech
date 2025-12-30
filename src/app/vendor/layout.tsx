@@ -6,10 +6,9 @@ import { useEffect } from 'react';
 import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { VendorSidebar } from '@/components/vendor-sidebar';
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getAuth, signOut } from 'firebase/auth';
-import { app } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function VendorLayout({
@@ -17,10 +16,9 @@ export default function VendorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, auth } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
-  const auth = getAuth(app);
   
   useEffect(() => {
     if (loading) {
