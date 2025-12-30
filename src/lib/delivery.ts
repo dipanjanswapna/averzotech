@@ -41,6 +41,6 @@ async function loadDeliveryData(): Promise<DeliveryData[]> {
 
 export async function getDeliveryInfoByPincode(pincode: string): Promise<DeliveryData | null> {
     const deliveryData = await loadDeliveryData();
-    const info = deliveryData.find(item => item.pincode === pincode);
+    const info = deliveryData.find(item => item.pincode === pincode.trim());
     return info || null;
 }
