@@ -143,7 +143,7 @@ export async function updateParcelStatus(trackingId: string, newStatus: 'cancell
     const body = {
         entity_type: 'parcel-tracking-id',
         entity_id: trackingId,
-        update_details: updateDetails,
+        update_details: [updateDetails], // Changed to be an array
     };
     return redxApiRequest('PATCH', '/parcels', body);
 }

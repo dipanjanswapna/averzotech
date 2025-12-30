@@ -20,6 +20,7 @@ import { getAuth, signOut } from "firebase/auth";
 import { app } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function ProfileLayout({
   children,
@@ -30,7 +31,7 @@ export default function ProfileLayout({
   const router = useRouter();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   if (!user) {

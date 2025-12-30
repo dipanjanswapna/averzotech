@@ -7,6 +7,7 @@ import { AdminSidebar } from '@/components/admin-sidebar';
 import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from '@/hooks/use-auth';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function AdminLayout({
   children,
@@ -27,11 +28,7 @@ export default function AdminLayout({
   }, [user, loading, router]);
 
   if (loading || !user || user.role !== 'admin') {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

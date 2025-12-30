@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         
         const refundResponse = await bkashPaymentRequest('refund', refundBody);
 
-        if (refundResponse.refundTransactionStatus === 'Completed') {
+        if (refundResponse.transactionStatus === 'Completed') { // Corrected from refundTransactionStatus
             // Find the order associated with this transaction
             const ordersRef = collection(db, 'orders');
             const q = query(ordersRef, where("paymentDetails.trxID", "==", trxId));
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
                 const orderDoc = querySnapshot.docs[0];
                 const notesCollection = collection(db, 'orders', orderDoc.id, 'notes');
                 await addDoc(notesCollection, {
-                    note: `Refund of ৳${amount} processed. Refund TrxID: ${refundResponse.refundTrxId}. Reason: ${reason}`,
+                    note: `Refund of ৳${amount} processed. Refund TrxID: ${refundResponse.trxID}. Reason: ${reason}`,
                     author: 'System (bKash Refund)',
                     date: serverTimestamp()
                 });

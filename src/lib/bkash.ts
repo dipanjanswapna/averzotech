@@ -83,7 +83,7 @@ export async function bkashPaymentRequest(endpoint: 'create' | 'execute' | 'quer
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`, // Corrected: Added 'Bearer ' prefix
+            'Authorization': token, // Corrected: removed 'Bearer ' prefix as bKash doesn't need it
             'X-App-Key': bKashConfig.app_key,
         },
         body: JSON.stringify(body),
