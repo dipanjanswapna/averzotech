@@ -57,7 +57,7 @@ interface Vendor {
 
 export default function NewVendorProductPage() {
     const { app, db, user } = useFirebase();
-    const storage = getStorage(app);
+    const storage = app ? getStorage(app) : null;
     const { toast } = useToast();
     const router = useRouter();
 
