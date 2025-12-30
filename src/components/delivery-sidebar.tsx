@@ -55,7 +55,7 @@ export function DeliverySidebar({ user }: { user: any }) {
 
   const navItems = [
     { href: '/delivery/dashboard', label: 'Dashboard', icon: Home },
-    { href: '/delivery/history', label: 'Delivery History', icon: PackageCheck },
+    // { href: '/delivery/history', label: 'Delivery History', icon: PackageCheck },
   ];
 
   return (
