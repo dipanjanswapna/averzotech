@@ -49,10 +49,10 @@ interface HomeLivingPageContent {
 }
 
 export default function HomeLivingPage() {
+    const { db } = useFirebase();
     const [content, setContent] = useState<Partial<HomeLivingPageContent>>({});
     const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const { db } = useFirebase();
 
      useEffect(() => {
         if (!db) return;

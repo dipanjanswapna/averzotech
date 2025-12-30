@@ -28,12 +28,12 @@ import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { collection, getDocs, query, where, getDoc, or } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -116,6 +116,7 @@ function SearchPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { db } = useFirebase();
 
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
@@ -141,6 +142,7 @@ function SearchPageContent() {
   const [sortOption, setSortOption] = React.useState<string>(searchParams.get('sort') || 'relevance');
 
   React.useEffect(() => {
+    if (!db) return;
     const fetchProducts = async () => {
       if (!searchQuery) {
           setAllProducts([]);
@@ -170,7 +172,7 @@ function SearchPageContent() {
       }
     };
     fetchProducts();
-  }, [searchQuery, toast]);
+  }, [searchQuery, toast, db]);
 
   React.useEffect(() => {
     const fetchRecommendations = async () => {
@@ -378,7 +380,7 @@ function SearchPageContent() {
                  <div className="md:hidden">
                     <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
                       <SheetTrigger asChild>
-                         <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
+                         <Button variant="outline" size="sm"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
                       </SheetTrigger>
                       <SheetContent className="w-[300px] p-0">
                         <SheetHeader className="p-4 border-b">

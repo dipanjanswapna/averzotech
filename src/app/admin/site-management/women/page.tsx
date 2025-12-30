@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -47,7 +48,7 @@ interface TrendingProduct {
 
 export default function WomenPageManager() {
   const { toast } = useToast();
-  const { db, app } = useFirebase();
+  const { app, db } = useFirebase();
   const storage = app ? getStorage(app) : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -402,3 +403,5 @@ export default function WomenPageManager() {
     </div>
   );
 }
+
+    

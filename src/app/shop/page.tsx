@@ -28,12 +28,12 @@ import { Card } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { collection, getDocs, query, where, getDoc, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -114,6 +114,7 @@ function ShopPageContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { db } = useFirebase();
 
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
@@ -138,6 +139,7 @@ function ShopPageContent() {
   const [sortOption, setSortOption] = React.useState<string>(searchParams.get('sort') || 'featured');
 
   React.useEffect(() => {
+    if (!db) return;
     const fetchProducts = async () => {
       setLoading(true);
       try {
@@ -176,7 +178,7 @@ function ShopPageContent() {
       }
     };
     fetchProducts();
-  }, [searchParams]);
+  }, [searchParams, db]);
 
   React.useEffect(() => {
     const fetchRecommendations = async () => {

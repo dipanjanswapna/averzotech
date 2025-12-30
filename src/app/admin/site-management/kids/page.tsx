@@ -15,10 +15,10 @@ import { Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useFirebase } from '@/firebase';
 
 interface ContentItem {
   id?: string;
@@ -48,7 +48,8 @@ interface TrendingProduct {
 
 export default function KidsPageManager() {
   const { toast } = useToast();
-  const storage = getStorage(app);
+  const { app, db } = useFirebase();
+  const storage = app ? getStorage(app) : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
@@ -62,6 +63,7 @@ export default function KidsPageManager() {
 
   // Fetch content from Firestore
   useEffect(() => {
+    if (!db) return;
     const fetchKidsPageContent = async () => {
       setIsFetching(true);
       const docRef = doc(db, 'site_content', 'kids_page');
@@ -96,7 +98,7 @@ export default function KidsPageManager() {
 
     fetchKidsPageContent();
     fetchProducts();
-  }, []);
+  }, [db]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
     if (e.target.files && e.target.files[0]) {
@@ -171,6 +173,7 @@ export default function KidsPageManager() {
   };
 
   const handleSaveChanges = async () => {
+    if (!storage || !db) return;
     setIsLoading(true);
     try {
       const uploadImage = async (item: any, path: string) => {
@@ -400,3 +403,5 @@ export default function KidsPageManager() {
     </div>
   );
 }
+
+    

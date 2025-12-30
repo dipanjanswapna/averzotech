@@ -49,7 +49,7 @@ interface TrendingProduct {
 export default function HomeLivingPageManager() {
   const { toast } = useToast();
   const { app, db } = useFirebase();
-  const storage = getStorage(app!);
+  const storage = app ? getStorage(app) : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
@@ -173,7 +173,7 @@ export default function HomeLivingPageManager() {
   };
 
   const handleSaveChanges = async () => {
-    if (!db) return;
+    if (!db || !storage) return;
     setIsLoading(true);
     try {
       const uploadImage = async (item: any, path: string) => {
@@ -403,3 +403,5 @@ export default function HomeLivingPageManager() {
     </div>
   );
 }
+
+    

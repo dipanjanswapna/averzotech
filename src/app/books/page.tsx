@@ -16,8 +16,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFirebase } from '@/firebase';
 
 interface ContentItem {
   url: string;
@@ -49,11 +49,13 @@ interface BooksPageContent {
 }
 
 export default function BooksPage() {
+    const { db } = useFirebase();
     const [content, setContent] = useState<Partial<BooksPageContent>>({});
     const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
      useEffect(() => {
+        if (!db) return;
         const fetchBooksPageContent = async () => {
             setLoading(true);
             const docRef = doc(db, 'site_content', 'books_page');
@@ -77,7 +79,7 @@ export default function BooksPage() {
             setLoading(false);
         };
         fetchBooksPageContent();
-    }, []);
+    }, [db]);
 
     if (loading) {
         return (

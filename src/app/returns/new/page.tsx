@@ -27,7 +27,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -63,7 +62,7 @@ function NewReturnRequestContent() {
     const router = useRouter();
     const orderId = searchParams.get('orderId');
     const { toast } = useToast();
-    const { user } = useFirebase();
+    const { user, db, app } = useFirebase();
 
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
@@ -72,7 +71,7 @@ function NewReturnRequestContent() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (orderId) {
+        if (orderId && db) {
             const fetchOrder = async () => {
                 setLoading(true);
                 const orderRef = doc(db, 'orders', orderId);
@@ -87,7 +86,7 @@ function NewReturnRequestContent() {
             }
             fetchOrder();
         }
-    }, [orderId, toast, router]);
+    }, [orderId, toast, router, db]);
 
     const handleItemSelect = (itemId: string, checked: boolean) => {
         setSelectedItems(prev => ({...prev, [itemId]: checked}));
@@ -118,7 +117,7 @@ function NewReturnRequestContent() {
     }
 
     const handleSubmitRequest = async () => {
-        if (!user || !order) return;
+        if (!user || !order || !app) return;
         
         const itemsToReturn = Object.keys(selectedItems).filter(id => selectedItems[id]);
         if (itemsToReturn.length === 0) {
@@ -278,3 +277,5 @@ export default function NewReturnRequestPage() {
         </div>
     )
 }
+
+    
