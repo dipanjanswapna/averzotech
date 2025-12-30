@@ -112,6 +112,16 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["vendorId", "vendorName", "items", "total", "status"]
+    },
+    "VendorApplication": {
+      "title": "Vendor Application",
+      "description": "Represents a vendor's application to join the platform.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected", "Update Requested"] }
+      },
+      "required": ["userId", "status"]
     }
   },
   "auth": {
@@ -137,6 +147,10 @@
     "/vendorInvoices/{invoiceId}": {
       "schema": { "$ref": "#/entities/VendorInvoice" },
       "description": "Stores invoices from vendors for stock supply."
+    },
+    "/vendorApplications/{applicationId}": {
+      "schema": { "$ref": "#/entities/VendorApplication" },
+      "description": "Stores applications from potential vendors."
     }
   }
 }
