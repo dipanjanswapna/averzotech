@@ -60,6 +60,7 @@ interface Product {
     stock: number;
   };
   images: string[];
+  createdAt: any;
 }
 
 export default function VendorProductsPage() {
@@ -73,12 +74,20 @@ export default function VendorProductsPage() {
     setLoading(true);
     try {
       const productsCollection = collection(db, 'products');
-      const q = query(productsCollection, where("vendor", "==", user.fullName), orderBy('createdAt', 'desc'));
+      const q = query(productsCollection, where("vendor", "==", user.fullName));
       const productSnapshot = await getDocs(q);
       const productList = productSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as Product));
+
+      // Sort by creation date on the client side
+      productList.sort((a, b) => {
+        const dateA = a.createdAt?.seconds || 0;
+        const dateB = b.createdAt?.seconds || 0;
+        return dateB - dateA;
+      });
+
       setProducts(productList);
     } catch (error) {
       console.error("Error fetching products: ", error);
