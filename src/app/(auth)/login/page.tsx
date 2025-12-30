@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -92,9 +93,13 @@ export default function LoginPage() {
 
     } catch (error: any) {
       console.error("Login Error:", error);
+      let description = "An unknown error occurred. Please try again.";
+      if (error.code === 'auth/invalid-credential') {
+          description = "Invalid email or password. Please try again.";
+      }
       toast({
         title: "Login Failed",
-        description: error.message,
+        description: description,
         variant: "destructive",
       });
     } finally {
@@ -242,3 +247,5 @@ export default function LoginPage() {
     </Card>
   );
 }
+
+    

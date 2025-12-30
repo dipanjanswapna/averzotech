@@ -47,7 +47,6 @@ export default function RegisterPage() {
       });
 
       if (role === 'vendor') {
-        // Don't sign out, just redirect to application form
         toast({
           title: "Account Created!",
           description: "Please complete your vendor application to start selling.",
@@ -71,9 +70,13 @@ export default function RegisterPage() {
 
     } catch (error: any) {
       console.error("Registration Error:", error);
+      let description = "An unknown error occurred. Please try again.";
+      if (error.code === 'auth/email-already-in-use') {
+        description = "This email address is already in use. Please try logging in.";
+      }
       toast({
         title: "Registration Failed",
-        description: error.message,
+        description: description,
         variant: "destructive",
       });
     } finally {
@@ -227,3 +230,5 @@ export default function RegisterPage() {
     </Card>
   );
 }
+
+    
