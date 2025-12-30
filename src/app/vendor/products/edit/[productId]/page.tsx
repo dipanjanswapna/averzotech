@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -614,6 +615,10 @@ export default function EditVendorProductPage() {
                   <CardTitle>Organization</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                   <div className="space-y-2">
+                    <Label>Approval Status</Label>
+                    <Input value={status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')} disabled />
+                  </div>
                    <div className="space-y-2">
                     <Label>Category</Label>
                     <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); setSelectedSubcategory(''); }} value={selectedCategory} disabled={isLoading}>

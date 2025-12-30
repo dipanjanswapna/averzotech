@@ -23,7 +23,7 @@ import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift } 
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,7 +38,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { app, db } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
@@ -47,6 +47,11 @@ import { filterCategories as initialFilterCategories } from '@/lib/categories';
 interface ImageObject {
     file?: File;
     url: string;
+}
+
+interface Vendor {
+    uid: string;
+    fullName: string;
 }
 
 export default function NewProductPage() {
@@ -104,6 +109,25 @@ export default function NewProductPage() {
     const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
     const [newGroupName, setNewGroupName] = React.useState('');
     const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
+    
+    // Vendors
+    const [vendors, setVendors] = useState<Vendor[]>([]);
+
+     useEffect(() => {
+        const fetchVendors = async () => {
+            try {
+                const vendorsCollection = collection(db, 'users');
+                const vendorSnapshot = await getDocs(vendorsCollection);
+                const vendorList = vendorSnapshot.docs
+                    .filter(doc => doc.data().role === 'vendor')
+                    .map(doc => ({ uid: doc.id, fullName: doc.data().fullName } as Vendor));
+                setVendors(vendorList);
+            } catch (error) {
+                console.error("Error fetching vendors: ", error);
+            }
+        };
+        fetchVendors();
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -337,7 +361,14 @@ export default function NewProductPage() {
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
-                <Input id="product-vendor" placeholder="e.g. RetailNet" value={vendor} onChange={e => setVendor(e.target.value)} disabled={isLoading} />
+                 <Select value={vendor} onValueChange={setVendor} disabled={isLoading}>
+                    <SelectTrigger id="product-vendor"><SelectValue placeholder="Select a vendor" /></SelectTrigger>
+                    <SelectContent>
+                        {vendors.map(v => (
+                            <SelectItem key={v.uid} value={v.fullName}>{v.fullName}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
