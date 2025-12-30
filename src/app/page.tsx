@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import Image from 'next/image';
@@ -15,7 +13,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Heart, Clock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { Progress } from '@/components/ui/progress';
 import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PreFooterCta } from '@/components/pre-footer-cta';

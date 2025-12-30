@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -17,10 +16,10 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
 import Image from 'next/image';
 import { UploadCloud } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useFirebase } from '@/firebase';
 
 interface PopupContent {
   enabled: boolean;
@@ -36,7 +35,8 @@ interface ImageFile {
 
 export default function PopupManager() {
   const { toast } = useToast();
-  const storage = getStorage(app);
+  const { db, app } = useFirebase();
+  const storage = app ? getStorage(app) : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -46,6 +46,7 @@ export default function PopupManager() {
   const [image, setImage] = useState<ImageFile | null>(null);
 
   useEffect(() => {
+    if (!db) return;
     const fetchPopupContent = async () => {
       setIsFetching(true);
       const docRef = doc(db, 'site_content', 'promotional_popup');
@@ -63,7 +64,7 @@ export default function PopupManager() {
     };
 
     fetchPopupContent();
-  }, []);
+  }, [db]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -83,10 +84,11 @@ export default function PopupManager() {
   }
 
   const handleSaveChanges = async () => {
+    if (!db) return;
     setIsLoading(true);
     try {
       let imageUrl = image?.preview || '';
-      if (image?.file) {
+      if (image?.file && storage) {
         const storageRef = ref(storage, `site_content/popup/${Date.now()}_${image.file.name}`);
         await uploadBytes(storageRef, image.file);
         imageUrl = await getDownloadURL(storageRef);

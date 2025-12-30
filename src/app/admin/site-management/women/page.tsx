@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -15,10 +14,10 @@ import { Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useFirebase } from '@/firebase';
 
 interface ContentItem {
   id?: string;
@@ -48,7 +47,8 @@ interface TrendingProduct {
 
 export default function WomenPageManager() {
   const { toast } = useToast();
-  const storage = getStorage(app);
+  const { db, app } = useFirebase();
+  const storage = app ? getStorage(app) : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
@@ -62,6 +62,7 @@ export default function WomenPageManager() {
 
   // Fetch content from Firestore
   useEffect(() => {
+    if (!db) return;
     const fetchWomenPageContent = async () => {
       setIsFetching(true);
       const docRef = doc(db, 'site_content', 'women_page');
@@ -96,7 +97,7 @@ export default function WomenPageManager() {
 
     fetchWomenPageContent();
     fetchProducts();
-  }, []);
+  }, [db]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, stateSetter: React.Dispatch<React.SetStateAction<any[]>>, stateArray: any[]) => {
     if (e.target.files && e.target.files[0]) {
@@ -171,6 +172,7 @@ export default function WomenPageManager() {
   };
 
   const handleSaveChanges = async () => {
+    if (!storage || !db) return;
     setIsLoading(true);
     try {
       const uploadImage = async (item: any, path: string) => {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -16,7 +15,6 @@ import { Trash2, GripVertical, PlusCircle, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
 import Image from 'next/image';
 import {
   Dialog,
@@ -28,6 +26,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useFirebase } from '@/firebase';
 
 interface ContentItem {
   id?: string;
@@ -66,7 +65,8 @@ interface CarouselSettings {
 
 export default function HomePageManager() {
   const { toast } = useToast();
-  const storage = getStorage(app);
+  const { db, app } = useFirebase();
+  const storage = app ? getStorage(app) : null;
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
@@ -83,6 +83,7 @@ export default function HomePageManager() {
   
   // Fetch all content from Firestore
   useEffect(() => {
+    if (!db) return;
     const fetchHomepageContent = async () => {
       setIsFetching(true);
       const docRef = doc(db, 'site_content', 'homepage');
@@ -116,7 +117,7 @@ export default function HomePageManager() {
 
     fetchHomepageContent();
     fetchProducts();
-  }, []);
+  }, [db]);
 
   const filteredProducts = useMemo(() => {
     return allProducts.filter(product => 
@@ -170,6 +171,7 @@ export default function HomePageManager() {
   };
 
   const handleSaveChanges = async () => {
+    if (!storage || !db) return;
     setIsLoading(true);
     try {
       const uploadImage = async (item: ContentItem, path: string) => {
