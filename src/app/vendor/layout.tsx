@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth, signOut } from 'firebase/auth';
 import { app } from '@/lib/firebase';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function VendorLayout({
   children,
@@ -59,11 +60,7 @@ export default function VendorLayout({
 
 
   if (loading || !user || user.role !== 'vendor' || user.status !== 'active') {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <p>Verifying vendor access...</p>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

@@ -1,10 +1,11 @@
 
-"use client";
+'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export interface AppUser {
   uid: string;
@@ -63,6 +64,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, [auth, db]);
+
+  if (loading) {
+      return <LoadingSpinner />;
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, setUser }}>
