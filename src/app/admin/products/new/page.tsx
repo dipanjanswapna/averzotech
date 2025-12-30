@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
+import { generateProductDescription } from '@/ai/flows/generate-product-description';
 
 interface ImageObject {
     file?: File;
@@ -60,10 +61,12 @@ export default function NewProductPage() {
     const router = useRouter();
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Product Details
     const [productName, setProductName] = useState('');
     const [description, setDescription] = useState('');
+    const [descriptionKeywords, setDescriptionKeywords] = useState('');
     const [brand, setBrand] = useState('');
     const [vendor, setVendor] = useState('');
     
@@ -86,7 +89,7 @@ export default function NewProductPage() {
     const [giftDescription, setGiftDescription] = useState('');
 
     // Organization
-    const [status, setStatus] = useState('draft');
+    const [status, setStatus] = useState('active');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [selectedGroup, setSelectedGroup] = useState('');
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
@@ -244,6 +247,28 @@ export default function NewProductPage() {
         return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
 
+    const handleGenerateDescription = async () => {
+        if (!productName || !brand) {
+            toast({
+                title: 'Missing Information',
+                description: 'Please enter a product name and brand before generating a description.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        setIsGenerating(true);
+        try {
+            const keywords = descriptionKeywords.split(',').map(k => k.trim()).filter(Boolean);
+            const generatedDesc = await generateProductDescription({ productName, brand, keywords });
+            setDescription(generatedDesc);
+        } catch (error) {
+            console.error("AI Description generation failed:", error);
+            toast({ title: "Generation Failed", description: "Could not generate a description at this time.", variant: 'destructive' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const handleSaveProduct = async () => {
         setIsLoading(true);
         try {
@@ -350,6 +375,15 @@ export default function NewProductPage() {
               <div className="space-y-2">
                 <Label htmlFor="product-name">Product Name</Label>
                 <Input id="product-name" placeholder="e.g. Stylish T-Shirt" value={productName} onChange={e => setProductName(e.target.value)} disabled={isLoading} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description-keywords">AI Generate Description</Label>
+                <div className="flex gap-2">
+                   <Input id="description-keywords" placeholder="Keywords (e.g. summer, cotton, casual)" value={descriptionKeywords} onChange={e => setDescriptionKeywords(e.target.value)} disabled={isGenerating || isLoading} />
+                   <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
+                     <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate'}
+                   </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-description">Description</Label>
@@ -554,7 +588,7 @@ export default function NewProductPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="product-status">Status</Label>
-                    <Select defaultValue="draft" onValueChange={setStatus} value={status} disabled={isLoading}>
+                    <Select defaultValue="active" onValueChange={setStatus} value={status} disabled={isLoading}>
                       <SelectTrigger id="product-status"><SelectValue placeholder="Select status" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
@@ -598,7 +632,7 @@ export default function NewProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map((g:any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
+                          {availableGroups.map((g:any) => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
