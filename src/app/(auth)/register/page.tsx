@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -46,12 +45,18 @@ export default function RegisterPage() {
         createdAt: new Date(),
       });
 
-      if (role === 'vendor' || role === 'delivery') {
-        await signOut(auth);
-        const accountType = role.charAt(0).toUpperCase() + role.slice(1);
+      if (role === 'vendor') {
+        // Don't sign out, just redirect to application form
         toast({
-          title: `${accountType} Account Submitted`,
-          description: `Your ${accountType} account is pending admin approval. You will be notified upon activation.`,
+          title: "Account Created!",
+          description: "Please complete your vendor application to start selling.",
+        });
+        router.push('/vendor/apply');
+      } else if (role === 'delivery') {
+        await signOut(auth);
+        toast({
+          title: `Delivery Account Submitted`,
+          description: `Your Delivery account is pending admin approval. You will be notified upon activation.`,
           duration: 5000,
         });
          router.push('/login');
