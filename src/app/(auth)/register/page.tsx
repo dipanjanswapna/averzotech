@@ -244,7 +244,8 @@ export default function RegisterPage() {
                     </DialogHeader>
                     <VendorApplicationForm 
                       user={{fullName}} 
-                      onSubmit={handleVendorFormSubmit} 
+                      onSubmit={handleVendorFormSubmit}
+                      isLoading={isLoading} 
                     />
                 </DialogContent>
             </Dialog>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -72,7 +73,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
     const [nidUrl, setNidUrl] = useState('');
     const [tinUrl, setTinUrl] = useState('');
     
-    const [paymentMethod, setPaymentMethod] = useState('bank');
+    const [paymentMethod, setPaymentMethod] = useState<'bank' | 'mobile'>('bank');
     const [bankName, setBankName] = useState('');
     const [accountName, setAccountName] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
@@ -112,7 +113,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                 tinUrl,
             },
             paymentInfo: {
-                method: paymentMethod as 'bank' | 'mobile',
+                method: paymentMethod,
                 bankName: paymentMethod === 'bank' ? bankName : '',
                 accountName: paymentMethod === 'bank' ? accountName : '',
                 accountNumber: paymentMethod === 'bank' ? accountNumber : '',
@@ -194,7 +195,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                         <CardDescription>How would you like to receive payments?</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="mb-4">
+                        <RadioGroup value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'bank' | 'mobile')} className="mb-4">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="bank" id="bank" />
                                 <Label htmlFor="bank">Bank Transfer</Label>
