@@ -59,7 +59,7 @@ export function SiteFooter() {
                     <p>&copy; {new Date().getFullYear()} Averzo. All Rights Reserved.</p>
                      <div className="flex gap-4 mt-4 md:mt-0">
                         <Link href="/privacy-policy" className="hover:text-primary">Privacy Policy</Link>
-                        <Link href="/terms-and-conditions" className="hover:text-primary">Terms & Conditions</Link>
+                        <Link href="/terms-and-conditions" className="hover:text-primary">Terms &amp; Conditions</Link>
                         <Link href="/site-map" className="hover:text-primary">Site Map</Link>
                     </div>
                 </div>
