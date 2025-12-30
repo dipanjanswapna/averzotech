@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from './ui/skeleton';
+import { useFirebase } from '@/firebase';
 
 interface CtaItem {
     url: string;
@@ -20,8 +20,10 @@ interface CtaItem {
 export function PreFooterCta() {
     const [ctaItems, setCtaItems] = useState<CtaItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const { db } = useFirebase();
 
     useEffect(() => {
+        if (!db) return;
         const fetchCtaContent = async () => {
             setLoading(true);
             try {
@@ -37,7 +39,7 @@ export function PreFooterCta() {
             }
         };
         fetchCtaContent();
-    }, []);
+    }, [db]);
 
     if (loading) {
         return (
