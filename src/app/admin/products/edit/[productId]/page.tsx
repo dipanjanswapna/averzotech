@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -100,6 +99,7 @@ export default function EditProductPage() {
     // Pricing & Inventory
     const [price, setPrice] = useState('');
     const [comparePrice, setComparePrice] = useState('');
+    const [wholesalePrice, setWholesalePrice] = useState('');
     const [discount, setDiscount] = useState('');
     const [tax, setTax] = useState('');
     const [sku, setSku] = useState('');
@@ -157,6 +157,7 @@ export default function EditProductPage() {
                     setTags(data.organization?.tags || []);
                     setPrice(String(data.pricing?.price || ''));
                     setComparePrice(String(data.pricing?.comparePrice || ''));
+                    setWholesalePrice(String(data.pricing?.wholesalePrice || ''));
                     setDiscount(String(data.pricing?.discount || ''));
                     setTax(String(data.pricing?.tax || ''));
                     setSku(data.inventory?.sku || '');
@@ -285,8 +286,7 @@ export default function EditProductPage() {
 
     const availableGroups = useMemo(() => {
         if (!selectedCategory) return [];
-        const category = filterCategories.find(c => c.name === selectedCategory);
-        return category ? category.subCategories : [];
+        return filterCategories.find(c => c.name === selectedCategory)?.subCategories || [];
     }, [selectedCategory, filterCategories]);
 
     const availableSubcategories = useMemo(() => {
@@ -343,6 +343,7 @@ export default function EditProductPage() {
                 pricing: {
                     price: parseFloat(price) || 0,
                     comparePrice: parseFloat(comparePrice) || 0,
+                    wholesalePrice: parseFloat(wholesalePrice) || 0,
                     discount: parseFloat(discount) || 0,
                     tax: parseFloat(tax) || 0,
                 },
@@ -710,10 +711,17 @@ export default function EditProductPage() {
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader><CardTitle>Pricing & Inventory</CardTitle></CardHeader>
+                <CardHeader>
+                    <CardTitle>Pricing & Inventory</CardTitle>
+                    <CardDescription>Set the retail price based on the wholesale price.</CardDescription>
+                </CardHeader>
                 <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="wholesale-price">Wholesale Price (৳)</Label>
+                        <Input id="wholesale-price" type="number" placeholder="800" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} disabled={isLoading}/>
+                    </div>
                     <div className="space-y-2">
-                        <Label htmlFor="product-price">Price (৳)</Label>
+                        <Label htmlFor="product-price">Retail Price (৳)</Label>
                         <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">

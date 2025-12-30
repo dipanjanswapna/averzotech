@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -37,7 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
@@ -48,11 +47,6 @@ import { useFirebase } from '@/firebase';
 interface ImageObject {
     file?: File;
     url: string;
-}
-
-interface Vendor {
-    uid: string;
-    fullName: string;
 }
 
 export default function NewVendorProductPage() {
@@ -69,7 +63,6 @@ export default function NewVendorProductPage() {
     const [description, setDescription] = useState('');
     const [descriptionKeywords, setDescriptionKeywords] = useState('');
     const [brand, setBrand] = useState('');
-    const [vendor, setVendor] = useState('');
     
     // Media
     const [images, setImages] = useState<ImageObject[]>([]);
@@ -97,10 +90,7 @@ export default function NewVendorProductPage() {
     const [currentTag, setCurrentTag] = useState('');
 
     // Pricing & Inventory
-    const [price, setPrice] = useState('');
-    const [comparePrice, setComparePrice] = useState('');
-    const [discount, setDiscount] = useState('');
-    const [tax, setTax] = useState('');
+    const [wholesalePrice, setWholesalePrice] = useState('');
     const [sku, setSku] = useState('');
     const [stock, setStock] = useState('');
     const [availability, setAvailability] = useState('in-stock');
@@ -112,11 +102,6 @@ export default function NewVendorProductPage() {
     const [newGroupName, setNewGroupName] = React.useState('');
     const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
 
-    useEffect(() => {
-        if(user) {
-            setVendor(user.fullName);
-        }
-    }, [user]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -256,7 +241,7 @@ export default function NewVendorProductPage() {
     };
 
     const handleSaveProduct = async () => {
-        if (!db || !storage) return;
+        if (!db || !storage || !user) return;
         setIsLoading(true);
         try {
             // 1. Upload images to Firebase Storage if they are files
@@ -278,7 +263,7 @@ export default function NewVendorProductPage() {
                 name: productName,
                 description,
                 brand,
-                vendor,
+                vendor: user.fullName,
                 images: imageUrls,
                 videoUrl,
                 variants: {
@@ -300,15 +285,16 @@ export default function NewVendorProductPage() {
                     tags,
                 },
                 pricing: {
-                    price: parseFloat(price) || 0,
-                    comparePrice: parseFloat(comparePrice) || 0,
-                    discount: parseFloat(discount) || 0,
-                    tax: parseFloat(tax) || 0,
+                    price: 0, // Admin will set this
+                    comparePrice: 0,
+                    discount: 0,
+                    tax: 0,
+                    wholesalePrice: parseFloat(wholesalePrice) || 0
                 },
                 inventory: {
                     sku,
                     stock: stockAmount,
-                    initialStock: stockAmount, // Set initial stock
+                    initialStock: stockAmount,
                     availability,
                 },
                 shipping: {
@@ -382,7 +368,7 @@ export default function NewVendorProductPage() {
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
-                <Input id="product-vendor" value={vendor} disabled />
+                <Input id="product-vendor" value={user?.fullName || ''} disabled />
               </div>
             </CardContent>
           </Card>
@@ -659,26 +645,17 @@ export default function NewVendorProductPage() {
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader><CardTitle>Pricing & Inventory</CardTitle></CardHeader>
+                <CardHeader>
+                    <CardTitle>Wholesale Price & Inventory</CardTitle>
+                    <CardDescription>Admin will set the final price.</CardDescription>
+                </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="product-price">Price (৳)</Label>
-                        <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
+                        <Label htmlFor="wholesale-price">Your Wholesale Price (৳)</Label>
+                        <Input id="wholesale-price" type="number" placeholder="800" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="product-compare-price">Compare-at Price (MRP ৳)</Label>
-                        <Input id="product-compare-price" type="number" placeholder="1999" value={comparePrice} onChange={e => setComparePrice(e.target.value)} disabled={isLoading}/>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="product-discount">Discount (%)</Label>
-                        <Input id="product-discount" type="number" placeholder="10" value={discount} onChange={e => setDiscount(e.target.value)} disabled={isLoading}/>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="product-tax">Taxes (%)</Label>
-                        <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-sku">SKU</Label>
+                        <Label htmlFor="product-sku">SKU (Stock Keeping Unit)</Label>
                         <Input id="product-sku" placeholder="TSHIRT-BLK-L" value={sku} onChange={e => setSku(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
@@ -692,7 +669,6 @@ export default function NewVendorProductPage() {
                             <SelectContent>
                                 <SelectItem value="in-stock">In Stock</SelectItem>
                                 <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                                <SelectItem value="pre-order">Pre-order</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
