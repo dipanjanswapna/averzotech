@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { updateParcelStatus } from '@/lib/redx';
+import { useAuth } from '@/hooks/use-auth';
 
 
 interface Order {
@@ -106,6 +107,7 @@ export default function OrderDetailsPage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -166,7 +168,7 @@ export default function OrderDetailsPage() {
           
           const notesCollectionRef = collection(db, 'orders', order.id, 'notes');
           const newNoteRef = doc(notesCollectionRef);
-          batch.set(newNoteRef, { note: noteContent, author: 'System', date: serverTimestamp() });
+          batch.set(newNoteRef, { note: noteContent, author: user?.fullName || 'System', date: serverTimestamp() });
 
           if (newStatus === 'Cancelled') {
               if (order.status !== 'Cancelled') {
@@ -204,7 +206,7 @@ export default function OrderDetailsPage() {
       try {
           await updateDoc(orderRef, { trackingId: trackingId });
           const noteContent = `Tracking ID updated to ${trackingId}.`;
-          await handleAddNote(noteContent, 'System');
+          await handleAddNote(noteContent, user?.fullName || 'Admin');
           toast({
               title: "Tracking Updated",
               description: `The tracking ID has been saved.`
@@ -215,7 +217,7 @@ export default function OrderDetailsPage() {
       }
   };
   
-  const handleAddNote = async (noteContent: string, author = 'Admin') => {
+  const handleAddNote = async (noteContent: string, author: string) => {
     if (!order || !noteContent.trim()) return;
     const notesCollection = collection(db, 'orders', order.id, 'notes');
     try {
@@ -567,7 +569,7 @@ export default function OrderDetailsPage() {
                         ))}
                      </div>
                      <Textarea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
-                     <Button size="sm" onClick={() => handleAddNote(newNote)}>Add Note</Button>
+                     <Button size="sm" onClick={() => handleAddNote(newNote, user?.fullName || 'Admin')}>Add Note</Button>
                 </CardContent>
             </Card>
             <Card>

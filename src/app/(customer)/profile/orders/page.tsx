@@ -116,7 +116,7 @@ export default function MyOrdersPage() {
              const newNoteRef = doc(notesRef);
              batch.set(newNoteRef, {
                  note: `Order cancelled by customer. Reason: ${cancellationReason}`,
-                 author: 'Customer',
+                 author: user?.fullName || 'Customer',
                  date: serverTimestamp()
              });
 
