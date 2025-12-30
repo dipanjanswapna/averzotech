@@ -311,7 +311,7 @@ export default function OrderDetailsPage() {
     if (!timestamp || !timestamp.seconds) return new Date().toLocaleString();
     return new Date(timestamp.seconds * 1000).toLocaleString();
   };
-  const paymentMethodDisplay = order.payment.method === 'cod' ? 'Cash on Delivery' : order.payment.method;
+  const paymentMethodDisplay = order.payment.method === 'cod' ? 'Cash on Delivery' : 'Online Payment';
 
   const isRefundable = order.payment.method === 'bkash' && (order.status === 'Processing' || order.status === 'Fulfilled' || order.status === 'Cancelled') && order.paymentDetails?.trxID;
 

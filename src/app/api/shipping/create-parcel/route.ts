@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
             await updateDoc(orderRef, { trackingId: parcelResponse.tracking_id });
             return NextResponse.json({ trackingId: parcelResponse.tracking_id }, { status: 200 });
         } else {
-            console.error("Failed to get tracking ID from RedX for order:", orderId);
-            throw new Error("Parcel created but no tracking ID received from RedX.");
+            console.error("Failed to get tracking ID from RedX for order:", orderId, "Response:", parcelResponse);
+            throw new Error(parcelResponse.message || "Parcel created but no tracking ID received from RedX.");
         }
 
     } catch (error: any) {

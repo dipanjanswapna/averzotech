@@ -9,7 +9,7 @@ import { Order } from '@/types';
 
 
 async function finalizeOrder(paymentDetails: any) {
-    const orderId = paymentDetails.orderId;
+    const orderId = paymentDetails.merchantInvoiceNumber;
     const pendingOrderRef = doc(db, 'pending_orders', orderId);
     const pendingOrderSnap = await getDoc(pendingOrderRef);
     
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     try {
         const executeData = await executePayment(paymentID);
 
-        if (executeData.status === 'success' && executeData.transactionStatus === 'Completed') {
+        if (executeData.statusCode === '0000' && executeData.transactionStatus === 'Completed') {
             const newOrderId = await finalizeOrder(executeData);
             if (newOrderId) {
                 return NextResponse.redirect(new URL(`/order-confirmation?orderId=${newOrderId}`, appUrl), { status: 302 });
