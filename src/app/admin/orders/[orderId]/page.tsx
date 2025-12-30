@@ -582,7 +582,7 @@ export default function OrderDetailsPage() {
                             <FileText className="mr-2 h-4 w-4"/> Invoice
                         </Link>
                     </Button>
-                    <Button variant="outline"><Truck className="mr-2 h-4 w-4"/> Track</Button>
+                    <Button variant="outline" onClick={() => handleTrackPackage()} disabled={isTrackingLoading || !trackingId}><Truck className="mr-2 h-4 w-4"/> Track</Button>
                 </CardContent>
             </Card>
         </div>

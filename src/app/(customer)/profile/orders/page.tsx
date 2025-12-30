@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, FileText, XCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,10 +39,9 @@ import {
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, getFirestore, addDoc, serverTimestamp } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
-import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -62,7 +60,6 @@ export default function MyOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [cancellationReason, setCancellationReason] = useState('');
-    const db = getFirestore(app);
 
     const fetchOrders = async () => {
         if (!user) return;

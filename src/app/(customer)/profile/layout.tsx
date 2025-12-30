@@ -31,7 +31,7 @@ export default function ProfileLayout({
   const router = useRouter();
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>;
   }
 
   if (!user) {

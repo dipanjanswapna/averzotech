@@ -60,6 +60,7 @@ export default function OrdersPage() {
     const { toast } = useToast();
 
     const fetchOrders = async () => {
+        setLoading(true);
         try {
             const ordersCollection = collection(db, 'orders');
             const q = query(ordersCollection, orderBy('createdAt', 'desc'));
