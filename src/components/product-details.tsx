@@ -138,7 +138,7 @@ export function ProductDetails() {
   const [newQuestion, setNewQuestion] = React.useState("");
   const [isSubmittingQuestion, setIsSubmittingQuestion] = React.useState(false);
   
-  const { addToCart, availableShippingMethods } = useCart();
+  const { addToCart } = useCart();
   const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { toast } = useToast();
 
