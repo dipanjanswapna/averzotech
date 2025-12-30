@@ -215,6 +215,11 @@ export default function MyOrdersPage() {
                          <Button variant="outline" size="sm" asChild>
                             <Link href={`/order-confirmation?orderId=${order.id}`}>View Details</Link>
                         </Button>
+                        {order.status === 'Fulfilled' && (
+                             <Button variant="secondary" size="sm" asChild>
+                                <Link href={`/returns/new?orderId=${order.id}`}>Return/Exchange</Link>
+                            </Button>
+                        )}
                          {canCancel(order) && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
