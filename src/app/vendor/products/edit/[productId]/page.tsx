@@ -653,7 +653,7 @@ export default function EditVendorProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map((g: any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
+                          {availableGroups.map((g:any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -684,7 +684,7 @@ export default function EditVendorProductPage() {
                       <Select onValueChange={setSelectedSubcategory} value={selectedSubcategory} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select sub-category" /></SelectTrigger>
                         <SelectContent>
-                          {availableSubcategories.map((s:any) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          {availableSubcategories.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
