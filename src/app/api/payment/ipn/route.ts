@@ -1,7 +1,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/firebase-server';
+import { initializeFirebase } from '@/firebase';
+
+const { firestore: db } = initializeFirebase();
 
 export async function POST(req: NextRequest) {
     try {

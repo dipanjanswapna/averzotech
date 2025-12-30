@@ -5,7 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { createParcel } from '@/lib/redx';
 import { Order } from '@/types';
-import { db } from '@/firebase-server';
+import { initializeFirebase } from '@/firebase';
+
+const { firestore: db } = initializeFirebase();
 
 export async function POST(req: NextRequest) {
     try {

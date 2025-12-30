@@ -2,7 +2,10 @@
 'use server';
 
 import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '@/firebase-server';
+import { initializeFirebase } from '@/firebase';
+
+const { firestore: db } = initializeFirebase();
+
 
 const bKashConfig = {
     baseURL: process.env.BKASH_IS_LIVE === 'true' ? 'https://checkout.pay.bka.sh/v1.2.0-beta' : 'https://checkout.sandbox.bka.sh/v1.2.0-beta',

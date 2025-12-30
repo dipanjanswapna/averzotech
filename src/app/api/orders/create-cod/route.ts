@@ -2,7 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc } from 'firebase/firestore';
 import { Order } from '@/types';
-import { db } from '@/firebase-server';
+import { initializeFirebase } from '@/firebase';
+
+const { firestore: db } = initializeFirebase();
 
 export async function POST(req: NextRequest) {
     try {
@@ -41,7 +43,7 @@ export async function POST(req: NextRequest) {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             trackingId: '', // Initialize trackingId as empty
-        }
+        };
 
         batch.set(newOrderRef, finalOrderData);
         

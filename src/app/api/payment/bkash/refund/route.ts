@@ -3,8 +3,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { bkashPaymentRequest } from '@/lib/bkash';
-import { db } from '@/firebase-server';
+import { initializeFirebase } from '@/firebase';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+
+const { firestore: db } = initializeFirebase();
 
 // A simple in-memory check for admin role would be insecure.
 // In a real app, use Firebase Auth tokens and custom claims to verify admin status.

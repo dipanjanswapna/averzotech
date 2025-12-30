@@ -5,8 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, deleteDoc, writeBatch, increment, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { executePayment } from '@/lib/bkash';
 import { Order } from '@/types';
-import { db } from '@/firebase-server';
+import { initializeFirebase } from '@/firebase';
 
+const { firestore: db } = initializeFirebase();
 
 async function finalizeOrder(paymentDetails: any) {
     const orderId = paymentDetails.merchantInvoiceNumber;
