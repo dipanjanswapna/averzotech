@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -11,7 +10,7 @@ export interface AppUser {
   uid: string;
   email: string | null;
   fullName: string;
-  role: 'customer' | 'vendor' | 'admin';
+  role: 'customer' | 'vendor' | 'admin' | 'delivery';
   status: 'active' | 'pending' | 'suspended';
   photoURL?: string | null;
 }
