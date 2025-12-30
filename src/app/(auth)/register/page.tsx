@@ -19,7 +19,7 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'customer' | 'vendor'>('customer');
+  const [role, setRole] = useState<'customer' | 'vendor' | 'delivery'>('customer');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const auth = getAuth(app);
@@ -46,11 +46,12 @@ export default function RegisterPage() {
         createdAt: new Date(),
       });
 
-      if (role === 'vendor') {
+      if (role === 'vendor' || role === 'delivery') {
         await signOut(auth);
+        const accountType = role.charAt(0).toUpperCase() + role.slice(1);
         toast({
-          title: "Vendor Account Submitted",
-          description: "Your vendor account is pending admin approval. You will be notified upon activation.",
+          title: `${accountType} Account Submitted`,
+          description: `Your ${accountType} account is pending admin approval. You will be notified upon activation.`,
           duration: 5000,
         });
          router.push('/login');
@@ -109,7 +110,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-md">
       <CardHeader className="text-center space-y-2">
         <CardTitle className="font-headline text-2xl">Create an Account</CardTitle>
         <CardDescription>Join AVERZO today!</CardDescription>
@@ -155,9 +156,9 @@ export default function RegisterPage() {
             <Label>I am a</Label>
             <RadioGroup 
                 defaultValue="customer" 
-                className="grid grid-cols-2 gap-4"
+                className="grid grid-cols-3 gap-4"
                 value={role}
-                onValueChange={(value) => setRole(value as 'customer' | 'vendor')}
+                onValueChange={(value) => setRole(value as 'customer' | 'vendor' | 'delivery')}
                 disabled={isLoading}
             >
                 <div>
@@ -176,6 +177,15 @@ export default function RegisterPage() {
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                     >
                     Vendor
+                    </Label>
+                </div>
+                 <div>
+                    <RadioGroupItem value="delivery" id="delivery" className="peer sr-only" />
+                    <Label
+                    htmlFor="delivery"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                    Delivery
                     </Label>
                 </div>
             </RadioGroup>

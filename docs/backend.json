@@ -50,7 +50,7 @@
         "properties": {
             "fullName": { "type": "string" },
             "email": { "type": "string", "format": "email" },
-            "role": { "type": "string", "enum": ["customer", "vendor", "admin"] },
+            "role": { "type": "string", "enum": ["customer", "vendor", "admin", "delivery"] },
             "status": { "type": "string", "enum": ["active", "pending", "suspended"] },
             "createdAt": { "type": "string", "format": "date-time" }
         },
