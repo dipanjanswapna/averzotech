@@ -1,4 +1,5 @@
 
+'use server';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -25,7 +26,7 @@ async function loadDeliveryData(): Promise<DeliveryData[]> {
             return {
                 pincode: pincode?.trim(),
                 area: area?.trim(),
-                time: time?.trim()
+                time: time?.trim().replace(/\r$/, '')
             };
         }).filter(item => item.pincode && item.area && item.time);
         
