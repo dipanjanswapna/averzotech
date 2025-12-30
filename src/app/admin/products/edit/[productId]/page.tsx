@@ -38,7 +38,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { app, db } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
@@ -47,6 +47,11 @@ import { filterCategories as initialFilterCategories } from '@/lib/categories';
 interface ImageObject {
     file?: File;
     url: string;
+}
+
+interface Vendor {
+    uid: string;
+    fullName: string;
 }
 
 export default function EditProductPage() {
@@ -108,13 +113,25 @@ export default function EditProductPage() {
     const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
     const [newGroupName, setNewGroupName] = React.useState('');
     const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
+
+    // Vendors
+    const [vendors, setVendors] = useState<Vendor[]>([]);
     
     useEffect(() => {
         if (!productId) return;
 
-        const fetchProduct = async () => {
+        const fetchProductAndVendors = async () => {
             setIsFetching(true);
             try {
+                // Fetch Vendors
+                const vendorsCollection = collection(db, 'users');
+                const vendorSnapshot = await getDocs(vendorsCollection);
+                const vendorList = vendorSnapshot.docs
+                    .filter(doc => doc.data().role === 'vendor')
+                    .map(doc => ({ uid: doc.id, fullName: doc.data().fullName } as Vendor));
+                setVendors(vendorList);
+
+                // Fetch product data
                 const productRef = doc(db, 'products', productId);
                 const productSnap = await getDoc(productRef);
 
@@ -152,14 +169,14 @@ export default function EditProductPage() {
                     router.push('/admin/products');
                 }
             } catch (error) {
-                console.error("Error fetching product:", error);
+                console.error("Error fetching data:", error);
                 toast({ title: "Error", description: "Failed to fetch product details.", variant: "destructive" });
             } finally {
                 setIsFetching(false);
             }
         };
 
-        fetchProduct();
+        fetchProductAndVendors();
     }, [productId, router, toast]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -395,7 +412,14 @@ export default function EditProductPage() {
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
-                <Input id="product-vendor" placeholder="e.g. RetailNet" value={vendor} onChange={e => setVendor(e.target.value)} disabled={isLoading} />
+                <Select value={vendor} onValueChange={setVendor} disabled={isLoading || isFetching}>
+                    <SelectTrigger id="product-vendor"><SelectValue placeholder="Select a vendor" /></SelectTrigger>
+                    <SelectContent>
+                        {vendors.map(v => (
+                            <SelectItem key={v.uid} value={v.fullName}>{v.fullName}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
