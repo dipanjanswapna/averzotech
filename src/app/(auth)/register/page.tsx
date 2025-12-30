@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -9,11 +8,13 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useState } from 'react';
 import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Chrome } from 'lucide-react';
+import { Chrome, CheckCircle } from 'lucide-react';
 import { useFirebase } from '@/firebase';
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { VendorApplicationForm, VendorApplicationData } from '@/components/vendor-application-form';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -21,9 +22,14 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'customer' | 'vendor' | 'delivery'>('customer');
   const [isLoading, setIsLoading] = useState(false);
+  const [vendorApplicationData, setVendorApplicationData] = useState<VendorApplicationData | null>(null);
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+
   const { toast } = useToast();
   const { auth, db } = useFirebase();
   const router = useRouter();
+
+  const isVendorAndFormIncomplete = role === 'vendor' && !vendorApplicationData;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +41,7 @@ export default function RegisterPage() {
 
       await updateProfile(user, { displayName: fullName });
       
-      const userStatus = role === 'vendor' ? 'pending' : 'active';
+      const userStatus = (role === 'vendor' || role === 'delivery') ? 'pending' : 'active';
 
       await setDoc(doc(db, "users", user.uid), {
         fullName: fullName,
@@ -45,13 +51,26 @@ export default function RegisterPage() {
         status: userStatus,
         createdAt: new Date(),
       });
-
-      if (role === 'vendor') {
+      
+      if (role === 'vendor' && vendorApplicationData) {
+        const applicationData = {
+          ...vendorApplicationData,
+          userId: user.uid,
+          status: 'Pending',
+          contactInfo: {
+              ...vendorApplicationData.contactInfo,
+              email: user.email,
+          },
+          createdAt: serverTimestamp(),
+        };
+        await addDoc(collection(db, 'vendorApplications'), applicationData);
         toast({
-          title: "Account Created!",
-          description: "Please complete your vendor application to start selling.",
+          title: "Application Submitted!",
+          description: "Your application is pending review. You will be notified upon approval.",
+          duration: 5000,
         });
-        router.push('/vendor/apply');
+        await signOut(auth);
+        router.push('/login');
       } else if (role === 'delivery') {
         await signOut(auth);
         toast({
@@ -117,6 +136,15 @@ export default function RegisterPage() {
     } finally {
         setIsLoading(false);
     }
+  }
+
+  const handleVendorFormSubmit = (data: VendorApplicationData) => {
+    setVendorApplicationData(data);
+    setIsVendorModalOpen(false);
+    toast({
+        title: "Application Details Saved",
+        description: "You can now create your vendor account.",
+    });
   }
 
   return (
@@ -200,7 +228,28 @@ export default function RegisterPage() {
                 </div>
             </RadioGroup>
           </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          
+          {role === 'vendor' && (
+            <Dialog open={isVendorModalOpen} onOpenChange={setIsVendorModalOpen}>
+                <DialogTrigger asChild>
+                     <Button variant={vendorApplicationData ? 'secondary' : 'default'} className="w-full">
+                        {vendorApplicationData ? <><CheckCircle className="mr-2 h-4 w-4" /> Application Completed</> : 'Complete Vendor Application'}
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                     <DialogHeader>
+                        <DialogTitle>Vendor Application</DialogTitle>
+                        <DialogDescription>Fill in your business details to become a vendor.</DialogDescription>
+                    </DialogHeader>
+                    <VendorApplicationForm 
+                      user={{fullName}} 
+                      onSubmit={handleVendorFormSubmit} 
+                    />
+                </DialogContent>
+            </Dialog>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isLoading || isVendorAndFormIncomplete}>
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
@@ -230,5 +279,3 @@ export default function RegisterPage() {
     </Card>
   );
 }
-
-    
