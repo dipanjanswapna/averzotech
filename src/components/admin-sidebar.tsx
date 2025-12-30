@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store, Truck } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -113,7 +113,7 @@ export function AdminSidebar({ user }: { user: any }) {
           <Accordion type="single" collapsible className="w-full group-data-[state=collapsed]:hidden" defaultValue='site-management'>
              <AccordionItem value="shipping" className="border-none">
                 <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
-                    <ShoppingCart />
+                    <Truck />
                     <span>Shipping</span>
                 </AccordionTrigger>
                 <AccordionContent className="pb-0 pl-5">
