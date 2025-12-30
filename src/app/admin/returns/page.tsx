@@ -143,7 +143,7 @@ export default function ReturnsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                            <DropdownMenuItem asChild>
-                                <Link href={`/admin/returns/${req.id}`}>View Details</Link>
+                                <Link href={`/admin/returns/edit/${req.id}`}>Edit</Link>
                            </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

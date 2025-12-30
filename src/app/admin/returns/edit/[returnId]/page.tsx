@@ -22,7 +22,7 @@ import Image from 'next/image';
 import { ChevronLeft, Camera } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, writeBatch, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
@@ -36,9 +36,22 @@ interface ReturnItem {
     name: string;
     image: string;
     quantity: number;
+    price: number;
     reason: string;
     comment: string;
     photoUrl?: string;
+}
+
+interface Order {
+    id: string;
+    payment: {
+        method: string;
+        total: number;
+    };
+    paymentDetails?: {
+        paymentID?: string;
+        trxID?: string;
+    };
 }
 
 interface ReturnRequest {
@@ -52,7 +65,7 @@ interface ReturnRequest {
     notes?: { author: string; note: string; date: any }[];
 }
 
-export default function ReturnDetailsPage() {
+export default function EditReturnDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const returnId = params.returnId as string;
@@ -60,9 +73,11 @@ export default function ReturnDetailsPage() {
     const { user } = useAuth();
     
     const [request, setRequest] = useState<ReturnRequest | null>(null);
+    const [originalOrder, setOriginalOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
     const [newStatus, setNewStatus] = useState('');
     const [newNote, setNewNote] = useState('');
+    const [isUpdating, setIsUpdating] = useState(false);
 
     useEffect(() => {
         if (returnId) {
@@ -70,11 +85,20 @@ export default function ReturnDetailsPage() {
             const notesRef = collection(db, 'returns', returnId, 'notes');
             const qNotes = query(notesRef, orderBy('date', 'asc'));
 
-            const unsubscribeReturn = onSnapshot(returnRef, (docSnap) => {
+            const unsubscribeReturn = onSnapshot(returnRef, async (docSnap) => {
                 if (docSnap.exists()) {
                     const data = { id: docSnap.id, ...docSnap.data() } as ReturnRequest;
                     setRequest(prev => ({...prev, ...data}));
                     setNewStatus(data.status);
+                    
+                    if (!originalOrder && data.orderId) {
+                        const orderRef = doc(db, 'orders', data.orderId);
+                        const orderSnap = await getDoc(orderRef);
+                        if (orderSnap.exists()) {
+                            setOriginalOrder({id: orderSnap.id, ...orderSnap.data()} as Order);
+                        }
+                    }
+
                 } else {
                     toast({ title: "Error", description: "Return request not found.", variant: "destructive" });
                     router.push('/admin/returns');
@@ -92,20 +116,75 @@ export default function ReturnDetailsPage() {
                 unsubscribeNotes();
             };
         }
-    }, [returnId, toast, router]);
+    }, [returnId, toast, router, originalOrder]);
 
+     const handleRefund = async (batch: any) => {
+        if (!request || !originalOrder) return;
+        
+        const totalRefundAmount = request.items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+        if (originalOrder.payment.method === 'bkash' && originalOrder.paymentDetails?.paymentID) {
+            try {
+                const response = await fetch('/api/payment/bkash/refund', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paymentId: originalOrder.paymentDetails.paymentID,
+                        trxId: originalOrder.paymentDetails.trxID,
+                        amount: totalRefundAmount.toFixed(2),
+                        reason: `Return for order ${request.orderId}`,
+                        sku: `return-${request.id}`
+                    })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    toast({ title: "Refund Successful", description: `Refund of ৳${result.refundAmount} processed via bKash.` });
+                    const noteContent = `Refund of ৳${totalRefundAmount.toFixed(2)} processed via bKash. RefundTrxID: ${result.refundTrxId}.`;
+                    const notesCollectionRef = collection(db, 'returns', returnId, 'notes');
+                    const newNoteRef = doc(notesCollectionRef);
+                    batch.set(newNoteRef, { note: noteContent, author: 'System (bKash)', date: serverTimestamp() });
+                } else {
+                     throw new Error(result.errorMessage || "bKash refund failed.");
+                }
+            } catch (error: any) {
+                toast({ title: "Refund Failed", description: error.message, variant: "destructive" });
+                throw error;
+            }
+        }
+    }
+    
     const handleUpdateStatus = async () => {
         if (!request || !newStatus || newStatus === request.status) return;
 
+        setIsUpdating(true);
+        const batch = writeBatch(db);
         const returnRef = doc(db, 'returns', returnId);
+
         try {
-            await updateDoc(returnRef, { status: newStatus, updatedAt: serverTimestamp() });
+            batch.update(returnRef, { status: newStatus, updatedAt: serverTimestamp() });
+            
             const noteContent = `Status changed from ${request.status} to ${newStatus}.`;
-            await handleAddNote(noteContent, user?.fullName || 'Admin');
+            const notesCollectionRef = collection(db, 'returns', returnId, 'notes');
+            const newNoteRef = doc(notesCollectionRef);
+            batch.set(newNoteRef, { note: noteContent, author: user?.fullName || 'Admin', date: serverTimestamp() });
+
+            if (newStatus === 'Completed') {
+                for (const item of request.items) {
+                    const productRef = doc(db, 'products', item.id);
+                    batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                }
+                
+                await handleRefund(batch);
+            }
+            
+            await batch.commit();
             toast({ title: "Status Updated", description: "The return request status has been updated." });
+
         } catch (error) {
             console.error("Error updating status:", error);
-            toast({ title: "Error", description: "Failed to update status.", variant: "destructive" });
+            toast({ title: "Error", description: `Failed to update status: ${error}`, variant: "destructive" });
+        } finally {
+             setIsUpdating(false);
         }
     };
     
@@ -230,7 +309,9 @@ export default function ReturnDetailsPage() {
                             </Select>
                         </CardContent>
                         <CardFooter>
-                            <Button className="w-full" onClick={handleUpdateStatus}>Update Status</Button>
+                            <Button className="w-full" onClick={handleUpdateStatus} disabled={isUpdating}>
+                                {isUpdating ? "Updating..." : "Update Status"}
+                            </Button>
                         </CardFooter>
                     </Card>
                 </div>
