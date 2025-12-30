@@ -2,10 +2,10 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged, getAuth } from 'firebase/auth';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { onAuthStateChanged, getAuth, Auth } from 'firebase/auth';
+import { doc, getDoc, getFirestore, Firestore } from 'firebase/firestore';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useFirebaseApp } from '@/firebase';
+import { useFirebase } from '@/firebase';
 
 export interface AppUser {
   uid: string;
@@ -28,21 +28,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const app = useFirebaseApp();
+  const { app, auth, firestore } = useFirebase();
 
   useEffect(() => {
-    if (!app) {
-        if (!loading) setLoading(true);
+    if (!app || !auth || !firestore) {
+        // Firebase services are not available yet.
+        // The loading state is true by default, so we just wait.
         return;
     }
-    
-    const auth = getAuth(app);
-    const db = getFirestore(app);
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-            const userDocRef = doc(db, "users", firebaseUser.uid);
+            const userDocRef = doc(firestore, "users", firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
               const userData = userDoc.data();
@@ -71,17 +69,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [app, loading]);
+  }, [app, auth, firestore]);
 
   const isAdmin = user?.role === 'admin';
 
-  if (loading) {
-      return <LoadingSpinner />;
-  }
-
   return (
     <AuthContext.Provider value={{ user, loading, isAdmin, setUser }}>
-      {children}
+      {loading ? <LoadingSpinner /> : children}
     </AuthContext.Provider>
   );
 };
