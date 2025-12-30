@@ -34,7 +34,6 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import {
   BarChart,
@@ -46,6 +45,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { useFirebase } from '@/firebase';
 
 interface Stat {
   title: string;
@@ -70,12 +70,14 @@ interface DashboardData {
 }
 
 export default function AdminDashboard() {
+  const { db } = useFirebase();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(
     null
   );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!db) return;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -164,7 +166,7 @@ export default function AdminDashboard() {
     };
 
     fetchData();
-  }, []);
+  }, [db]);
 
   if (loading) {
     return <LoadingSpinner />;

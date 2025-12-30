@@ -4,8 +4,7 @@
 import Link from 'next/link';
 import { Menu, Search, ShoppingCart, User, Heart, LogOut, Phone, Facebook, Instagram, Youtube, Twitter } from 'lucide-react';
 import React, { useState } from 'react';
-import { getAuth, signOut } from 'firebase/auth';
-import { app } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,8 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Logo } from '@/components/logo';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Logo } from './logo';
 import { Input } from './ui/input';
 import { MegaMenu } from './mega-menu';
 import { ScrollArea, ScrollBar } from './ui/scroll-area';
@@ -27,22 +26,24 @@ import { useAuth, AppUser } from '@/hooks/use-auth';
 import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
 import { useCart } from '@/hooks/use-cart';
+import { useFirebase } from '@/firebase';
 
 const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
     if (user.role === 'admin') return '/admin/dashboard';
     if (user.role === 'vendor') return '/vendor/dashboard';
+    if (user.role === 'delivery') return '/delivery/dashboard';
     return '/profile';
 }
 
 export function SiteHeader() {
   const { user } = useAuth();
+  const { auth } = useFirebase();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const auth = getAuth(app);
   const { toast } = useToast();
   const router = useRouter();
-  const { setIsCartOpen } = useCart();
+  const { cartCount, setIsCartOpen } = useCart();
   
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,6 +56,7 @@ export function SiteHeader() {
   }
 
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       toast({
@@ -138,8 +140,12 @@ export function SiteHeader() {
                             <nav className="flex flex-col space-y-2">
                               {user ? (
                                 <>
-                                    <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
-                                    <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                                    <SheetClose asChild>
+                                      <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary"><User className="mr-2 h-5 w-5" />Profile</Link>
+                                    </SheetClose>
+                                    <SheetClose asChild>
+                                      <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary"><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                                    </SheetClose>
                                     <div className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary cursor-pointer" onClick={() => { setIsCartOpen(true); setIsSheetOpen(false); }}><ShoppingCart className="mr-2 h-5 w-5" />Cart</div>
                                     <Separator className="my-2" />
                                     <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
@@ -189,8 +195,13 @@ export function SiteHeader() {
                         <Heart className="h-5 w-5" />
                     </Link>
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(true)}>
+                <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(true)} className="relative">
                     <ShoppingCart className="h-5 w-5" />
+                     {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                            {cartCount}
+                        </span>
+                    )}
                 </Button>
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -257,9 +268,14 @@ export function SiteHeader() {
                   <span className="sr-only">Wishlist</span>
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(true)}>
+              <Button variant="ghost" size="icon" onClick={() => setIsCartOpen(true)} className="relative">
                   <ShoppingCart className="h-5 w-5" />
                   <span className="sr-only">Cart</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        {cartCount}
+                    </span>
+                  )}
               </Button>
                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -310,7 +326,9 @@ export function SiteHeader() {
             <ScrollArea className="md:hidden -mx-4">
               <nav className="flex items-center gap-6 text-sm font-medium px-4">
                  {categories.map((category) => (
-                    <Link key={category.name} href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
+                    <SheetClose asChild key={category.name}>
+                        <Link href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
+                    </SheetClose>
                 ))}
               </nav>
               <ScrollBar orientation="horizontal" className="invisible" />

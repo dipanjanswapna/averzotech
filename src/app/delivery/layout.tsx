@@ -8,9 +8,9 @@ import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getAuth, signOut } from 'firebase/auth';
-import { app } from '@/lib/firebase';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DeliverySidebar } from '@/components/delivery-sidebar';
+import { useFirebase } from '@/firebase';
 
 export default function DeliveryLayout({
   children,
@@ -20,7 +20,8 @@ export default function DeliveryLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const auth = getAuth(app);
+  const { app } = useFirebase();
+  const auth = getAuth(app!);
   
   useEffect(() => {
     if (loading) {

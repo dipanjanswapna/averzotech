@@ -34,11 +34,11 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, serverTimestamp, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useFirebase } from '@/firebase';
 
 interface Order {
     id: string;
@@ -52,11 +52,13 @@ interface Order {
 export default function MyOrdersPage() {
     const { user } = useAuth();
     const { toast } = useToast();
+    const { db } = useFirebase();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [cancellationReason, setCancellationReason] = useState('');
 
     const findReturnForOrder = async (orderId: string): Promise<string | undefined> => {
+        if (!db) return undefined;
         const returnsRef = collection(db, 'returns');
         const q = query(returnsRef, where("orderId", "==", orderId), limit(1));
         const querySnapshot = await getDocs(q);
@@ -67,7 +69,7 @@ export default function MyOrdersPage() {
     };
 
     const fetchOrders = async () => {
-        if (!user) return;
+        if (!user || !db) return;
         setLoading(true);
         try {
             const ordersCollection = collection(db, 'orders');
@@ -99,7 +101,7 @@ export default function MyOrdersPage() {
         if (user) {
             fetchOrders();
         }
-    }, [user]);
+    }, [user, db]);
 
     const handleCancelOrder = async (order: Order) => {
         if (!canCancel(order)) {
@@ -111,7 +113,7 @@ export default function MyOrdersPage() {
             toast({ title: "Reason Required", description: "Please select a reason for cancellation.", variant: "destructive" });
             return;
         }
-
+        if (!db) return;
         const batch = writeBatch(db);
         const orderRef = doc(db, 'orders', order.id);
         

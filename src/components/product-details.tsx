@@ -26,7 +26,6 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy, where, onSnapshot, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +41,7 @@ import { EstimatedDeliveryChecker } from './estimated-delivery-checker';
 import { StickyAddToCart } from './sticky-add-to-cart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { useFirebase } from '@/firebase';
 
 
 interface Product {
@@ -112,6 +112,7 @@ interface QnA {
 export function ProductDetails() {
   const params = useParams();
   const router = useRouter();
+  const { db } = useFirebase();
   const productId = params.productId as string;
   const { user } = useAuth();
   const [product, setProduct] = React.useState<Product | null>(null);
@@ -145,7 +146,7 @@ export function ProductDetails() {
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
 
   React.useEffect(() => {
-    if (!productId) return;
+    if (!productId || !db) return;
 
     setLoading(true);
 
@@ -205,7 +206,7 @@ export function ProductDetails() {
       unsubscribeQna();
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [productId, selectedSize, selectedColor]);
+  }, [productId, selectedSize, selectedColor, db]);
   
   const handleAddToCart = (buyNow: boolean = false) => {
     if (!product) return;
@@ -250,7 +251,7 @@ export function ProductDetails() {
   }
 
   const hasPurchasedProduct = async (userId: string, productId: string): Promise<boolean> => {
-    if (!userId || !productId) return false;
+    if (!userId || !productId || !db) return false;
     const ordersRef = collection(db, "orders");
     const q = query(
       ordersRef,
@@ -277,6 +278,7 @@ export function ProductDetails() {
           toast({ title: "Incomplete Review", description: "Please provide a title and a comment.", variant: "destructive" });
           return;
       }
+      if (!db) return;
       
       setIsSubmittingReview(true);
       try {
@@ -321,6 +323,7 @@ export function ProductDetails() {
           toast({ title: "Question Required", description: "Please type your question.", variant: "destructive" });
           return;
       }
+      if (!db) return;
       setIsSubmittingQuestion(true);
       try {
           const qnaRef = collection(db, 'products', productId, 'qna');

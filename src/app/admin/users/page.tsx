@@ -2,8 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, getFirestore, doc, deleteDoc } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
+import { collection, getDocs, doc, deleteDoc } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +30,7 @@ import { MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useFirebase } from '@/firebase';
 
 
 interface User {
@@ -46,10 +46,11 @@ interface User {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const db = getFirestore(app);
+  const { db } = useFirebase();
   const { toast } = useToast();
 
   const fetchUsers = async () => {
+    if (!db) return;
     setLoading(true);
     try {
         const usersCollection = collection(db, 'users');
@@ -66,9 +67,10 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [db]);
 
   const handleDeleteUser = async (userId: string) => {
+    if(!db) return;
     try {
         await deleteDoc(doc(db, "users", userId));
         toast({

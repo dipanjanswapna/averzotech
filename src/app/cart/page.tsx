@@ -12,14 +12,15 @@ import { SiteHeader } from '@/components/site-header';
 import { useToast } from '@/hooks/use-toast';
 import { useCart, AppliedCoupon } from '@/hooks/use-cart';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { OrderSummary } from '@/components/order-summary';
 import { useRouter } from 'next/navigation';
+import { useFirebase } from '@/firebase';
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, appliedCoupon, applyCoupon, removeCoupon, appliedGiftCard, applyGiftCard, removeGiftCard } = useCart();
   const { toast } = useToast();
   const router = useRouter();
+  const { db } = useFirebase();
   const [couponCode, setCouponCode] = React.useState('');
   const [giftCardCode, setGiftCardCode] = React.useState('');
   const [isCheckingCoupon, setIsCheckingCoupon] = React.useState(false);
@@ -38,6 +39,7 @@ export default function CartPage() {
         toast({ title: "Coupon Code Required", description: "Please enter a coupon code.", variant: "destructive" });
         return;
     }
+    if (!db) return;
     setIsCheckingCoupon(true);
     try {
         const couponsRef = collection(db, 'coupons');
@@ -127,6 +129,7 @@ export default function CartPage() {
         toast({ title: "Gift Card Code Required", description: "Please enter a gift card code.", variant: "destructive" });
         return;
     }
+    if (!db) return;
     setIsCheckingGiftCard(true);
     try {
         const giftCardsRef = collection(db, 'giftCards');

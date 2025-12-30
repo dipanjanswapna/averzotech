@@ -26,9 +26,9 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { collection, getDocs, query, where, Timestamp, getDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StockIndicator } from '@/components/stock-indicator';
+import { useFirebase } from '@/firebase';
 
 interface Product {
     id: string;
@@ -99,12 +99,14 @@ export default function FlashSalePage() {
   const [displayedItems, setDisplayedItems] = React.useState<Product[]>([]);
   const [sortOption, setSortOption] = React.useState("featured");
   const { toast } = useToast();
+  const { db } = useFirebase();
   
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedBrand, setSelectedBrand] = React.useState("all");
   const [priceRange, setPriceRange] = React.useState([0, 120000]);
 
   useEffect(() => {
+    if (!db) return;
     const fetchFlashSaleData = async () => {
         setLoading(true);
         try {
@@ -133,7 +135,7 @@ export default function FlashSalePage() {
         }
     };
     fetchFlashSaleData();
-  }, [toast]);
+  }, [toast, db]);
 
   const brands = [...new Set(allFlashSaleItems.map(item => item.brand))];
   const categories = [...new Set(allFlashSaleItems.map(item => item.organization.category))];

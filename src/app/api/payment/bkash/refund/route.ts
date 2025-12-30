@@ -3,9 +3,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { bkashPaymentRequest } from '@/lib/bkash';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase-server';
-
 
 // A simple in-memory check for admin role would be insecure.
 // In a real app, use Firebase Auth tokens and custom claims to verify admin status.
@@ -37,22 +36,17 @@ export async function POST(req: NextRequest) {
             
             if (!querySnapshot.empty) {
                 const orderDoc = querySnapshot.docs[0];
-                const batch = writeBatch(db);
-                
                 const notesCollection = collection(db, 'orders', orderDoc.id, 'notes');
-                const newNoteRef = doc(notesCollection);
-                batch.set(newNoteRef, {
+                await addDoc(notesCollection, {
                     note: `Refund of ৳${amount} processed. Refund TrxID: ${refundResponse.trxID}. Reason: ${reason}`,
                     author: 'System (bKash Refund)',
                     date: serverTimestamp()
                 });
 
-                 batch.update(orderDoc.ref, {
+                 await updateDoc(orderDoc.ref, {
                     status: 'Cancelled', // Or a new status like 'Refunded'
                     updatedAt: serverTimestamp(),
                  });
-
-                 await batch.commit();
             }
 
             return NextResponse.json({ 

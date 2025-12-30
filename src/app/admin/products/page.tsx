@@ -43,8 +43,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, doc, deleteDoc, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -67,8 +67,10 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { db } = useFirebase();
 
   const fetchProducts = async () => {
+      if(!db) return;
       setLoading(true);
       try {
         const productsCollection = collection(db, 'products');
@@ -88,9 +90,10 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [db]);
 
   const handleDeleteProduct = async (productId: string) => {
+    if(!db) return;
     try {
         await deleteDoc(doc(db, "products", productId));
         toast({

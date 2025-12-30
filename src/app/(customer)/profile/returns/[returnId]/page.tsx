@@ -15,12 +15,12 @@ import { ChevronLeft, Camera } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, onSnapshot, collection, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { useFirebase } from '@/firebase';
 
 interface ReturnItem {
     id: string;
@@ -47,12 +47,13 @@ export default function ReturnDetailsPage() {
     const router = useRouter();
     const returnId = params.returnId as string;
     const { toast } = useToast();
+    const { db } = useFirebase();
     
     const [request, setRequest] = useState<ReturnRequest | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (returnId) {
+        if (returnId && db) {
             const returnRef = doc(db, 'returns', returnId);
             const notesRef = collection(db, 'returns', returnId, 'notes');
             const qNotes = query(notesRef, orderBy('date', 'asc'));
@@ -77,7 +78,7 @@ export default function ReturnDetailsPage() {
                 unsubscribeNotes();
             };
         }
-    }, [returnId, toast, router]);
+    }, [returnId, toast, router, db]);
 
     if (loading) return <p>Loading return request details...</p>;
     if (!request) return null;

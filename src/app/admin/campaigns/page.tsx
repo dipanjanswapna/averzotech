@@ -40,8 +40,8 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, orderBy, query, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebase } from '@/firebase';
 
 interface Campaign {
   id: string;
@@ -57,8 +57,10 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { db } = useFirebase();
 
   const fetchCampaigns = async () => {
+    if (!db) return;
     setLoading(true);
     try {
       const campaignsCollection = collection(db, 'campaigns');
@@ -80,9 +82,10 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     fetchCampaigns();
-  }, [toast]);
+  }, [db]);
 
   const handleDeleteCampaign = async (campaignId: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "campaigns", campaignId));
         toast({

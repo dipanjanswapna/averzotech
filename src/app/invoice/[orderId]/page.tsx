@@ -23,9 +23,9 @@ import { Printer } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/logo';
+import { useFirebase } from '@/firebase';
 
 interface Order {
     id: string;
@@ -66,12 +66,13 @@ export default function InvoicePage() {
   const params = useParams();
   const orderId = params.orderId as string;
   const { toast } = useToast();
+  const { db } = useFirebase();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    if (orderId) {
+    if (orderId && db) {
         const fetchOrder = async () => {
             setLoading(true);
             const orderRef = doc(db, 'orders', orderId);
@@ -85,7 +86,7 @@ export default function InvoicePage() {
         }
         fetchOrder();
     }
-  }, [orderId, toast]);
+  }, [orderId, toast, db]);
 
   const handlePrint = () => {
     window.print();

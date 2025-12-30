@@ -21,11 +21,11 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Undo2 } from 'lucide-react';
+import { useFirebase } from '@/firebase';
 
 interface ReturnRequest {
   id: string;
@@ -38,11 +38,12 @@ interface ReturnRequest {
 export default function MyReturnsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { db } = useFirebase();
   const [requests, setRequests] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || !db) return;
 
     const fetchReturnRequests = async () => {
       setLoading(true);
@@ -64,7 +65,7 @@ export default function MyReturnsPage() {
     };
 
     fetchReturnRequests();
-  }, [user, toast]);
+  }, [user, toast, db]);
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {

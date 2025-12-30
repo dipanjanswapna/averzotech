@@ -36,11 +36,11 @@ import { Input } from '@/components/ui/input';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, writeBatch, increment, query, orderBy, onSnapshot, getDocs, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 
 
 interface Order {
@@ -107,6 +107,7 @@ export default function OrderDetailsPage() {
   const orderId = params.orderId as string;
   const { toast } = useToast();
   const { user } = useAuth();
+  const { db } = useFirebase();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -127,7 +128,7 @@ export default function OrderDetailsPage() {
 
 
   useEffect(() => {
-    if (orderId) {
+    if (orderId && db) {
         const orderRef = doc(db, 'orders', orderId);
         const notesRef = collection(db, 'orders', orderId, 'notes');
         const qNotes = query(notesRef, orderBy('date', 'asc'));
@@ -155,10 +156,10 @@ export default function OrderDetailsPage() {
             unsubscribeNotes();
         }
     }
-  }, [orderId, toast]);
+  }, [orderId, toast, db]);
 
   const handleUpdateStatus = async () => {
-      if (!order || !newStatus || newStatus === order.status) return;
+      if (!order || !newStatus || newStatus === order.status || !db) return;
 
       const batch = writeBatch(db);
       const orderRef = doc(db, 'orders', order.id);
@@ -216,7 +217,7 @@ export default function OrderDetailsPage() {
   };
   
   const handleAddNote = async (noteContent: string, author: string) => {
-    if (!order || !noteContent.trim()) return;
+    if (!order || !noteContent.trim() || !db) return;
     const notesCollection = collection(db, 'orders', order.id, 'notes');
     try {
         const newNoteDoc = {

@@ -15,15 +15,16 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
 import { Store } from 'lucide-react';
 import Link from 'next/link';
+import { useFirebase } from '@/firebase';
 
 export default function SettingsPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
+    const { db } = useFirebase();
 
   return (
     <div className="space-y-8">

@@ -43,10 +43,10 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, serverTimestamp, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 
 interface Order {
     id: string;
@@ -79,7 +79,7 @@ export default function DeliveryOrderDetailsPage() {
   const orderId = params.orderId as string;
   const { toast } = useToast();
   const { user } = useAuth();
-  const db = getFirestore(app);
+  const { db } = useFirebase();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,7 +88,7 @@ export default function DeliveryOrderDetailsPage() {
   const [confirmationOtp, setConfirmationOtp] = useState('');
   
   useEffect(() => {
-    if (orderId) {
+    if (orderId && db) {
         const fetchOrder = async () => {
             const orderRef = doc(db, 'orders', orderId);
             const docSnap = await getDoc(orderRef);
@@ -118,7 +118,7 @@ export default function DeliveryOrderDetailsPage() {
   }
 
   const handleUpdateStatus = async () => {
-      if (!order || !newStatus || newStatus === order.status) return;
+      if (!order || !newStatus || newStatus === order.status || !db) return;
       setIsUpdating(true);
       const orderRef = doc(db, 'orders', order.id);
       try {

@@ -28,9 +28,9 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useFirebase } from '@/firebase';
 
 interface ReturnRequest {
   id: string;
@@ -45,8 +45,10 @@ export default function ReturnsPage() {
   const [requests, setRequests] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { db } = useFirebase();
 
   useEffect(() => {
+    if (!db) return;
     const fetchReturnRequests = async () => {
       setLoading(true);
       try {
@@ -66,7 +68,7 @@ export default function ReturnsPage() {
       }
     };
     fetchReturnRequests();
-  }, [toast]);
+  }, [toast, db]);
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {

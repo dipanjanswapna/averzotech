@@ -31,7 +31,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, getFirestore, doc, deleteDoc, orderBy } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -45,6 +44,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -68,10 +68,10 @@ export default function VendorProductsPage() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
-  const db = getFirestore(app);
+  const { db } = useFirebase();
 
   const fetchProducts = async () => {
-    if (!user?.fullName) return;
+    if (!user?.fullName || !db) return;
     setLoading(true);
     try {
       const productsCollection = collection(db, 'products');
@@ -90,12 +90,13 @@ export default function VendorProductsPage() {
   };
 
   useEffect(() => {
-    if(user) {
+    if(user && db) {
       fetchProducts();
     }
-  }, [user]);
+  }, [user, db]);
   
   const handleDeleteProduct = async (productId: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "products", productId));
         toast({

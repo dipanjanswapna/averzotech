@@ -27,12 +27,12 @@ import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check, UploadCloud } fr
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, getDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -50,7 +50,8 @@ export default function EditCampaignPage() {
   const params = useParams();
   const { toast } = useToast();
   const campaignId = params.campaignId as string;
-  const storage = getStorage(app);
+  const { app, db } = useFirebase();
+  const storage = getStorage(app!);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -69,7 +70,7 @@ export default function EditCampaignPage() {
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
 
   useEffect(() => {
-    if (!campaignId) return;
+    if (!campaignId || !db) return;
 
     const fetchCampaignAndProducts = async () => {
       setIsFetching(true);
@@ -116,7 +117,7 @@ export default function EditCampaignPage() {
     };
 
     fetchCampaignAndProducts();
-  }, [campaignId, router, toast]);
+  }, [campaignId, router, toast, db]);
 
     const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files[0]) {
@@ -140,7 +141,7 @@ export default function EditCampaignPage() {
   }
 
   const handleUpdateCampaign = async () => {
-    if (!name || !type || !status || !startDate || !endDate) {
+    if (!name || !type || !status || !startDate || !endDate || !db) {
       toast({ title: 'Missing Fields', description: 'Please fill in all required fields.', variant: 'destructive' });
       return;
     }

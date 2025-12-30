@@ -27,12 +27,12 @@ import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check, UploadCloud } fr
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
-import { db, app } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -48,7 +48,8 @@ interface BannerImage {
 export default function NewCampaignPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const storage = getStorage(app);
+  const { app, db } = useFirebase();
+  const storage = getStorage(app!);
   const [isLoading, setIsLoading] = useState(false);
 
   // Campaign fields
@@ -65,6 +66,7 @@ export default function NewCampaignPage() {
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
 
   useEffect(() => {
+    if (!db) return;
     const fetchProducts = async () => {
       try {
         const productsCollection = collection(db, 'products');
@@ -79,7 +81,7 @@ export default function NewCampaignPage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [db]);
   
   const handleToggleProduct = (product: Product) => {
     setSelectedProducts(prevSelected => {
@@ -103,7 +105,7 @@ export default function NewCampaignPage() {
     };
 
   const handleSaveCampaign = async () => {
-    if (!name || !type || !status || !startDate || !endDate) {
+    if (!name || !type || !status || !startDate || !endDate || !db) {
       toast({ title: 'Missing Fields', description: 'Please fill in all required fields.', variant: 'destructive' });
       return;
     }

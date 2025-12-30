@@ -40,10 +40,10 @@ import {
 import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import { useFirebase } from '@/firebase';
 
 interface Order {
     id: string;
@@ -58,8 +58,10 @@ export default function OrdersPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const { toast } = useToast();
+    const { db } = useFirebase();
 
     const fetchOrders = async () => {
+        if(!db) return;
         setLoading(true);
         try {
             const ordersCollection = collection(db, 'orders');
@@ -79,9 +81,10 @@ export default function OrdersPage() {
 
     useEffect(() => {
         fetchOrders();
-    }, []);
+    }, [db]);
 
     const handleDeleteOrder = async (orderId: string, orderName: string) => {
+        if(!db) return;
         try {
             await deleteDoc(doc(db, "orders", orderId));
             toast({

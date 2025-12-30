@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { app } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 
 type UploadProgress = {
   progress: number;
@@ -14,6 +15,7 @@ export const useUploadMedia = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const { app } = useFirebase();
 
   const uploadFile = async (
     file: File,
@@ -22,6 +24,13 @@ export const useUploadMedia = () => {
     setIsUploading(true);
     setError(null);
     
+    if (!app) {
+      const err = new Error("Firebase app is not initialized.");
+      setError(err.message);
+      setIsUploading(false);
+      throw err;
+    }
+
     try {
       const storage = getStorage(app);
       const timestamp = Date.now();

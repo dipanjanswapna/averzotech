@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from './ui/button';
@@ -21,8 +20,10 @@ export function PromotionalPopup() {
   const [config, setConfig] = useState<PopupContent | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { db } = useFirebase();
   
   useEffect(() => {
+    if (!db) return;
     const fetchPopupConfig = async () => {
       const docRef = doc(db, 'site_content', 'promotional_popup');
       const docSnap = await getDoc(docRef);
@@ -33,7 +34,7 @@ export function PromotionalPopup() {
       setIsLoading(false);
     };
     fetchPopupConfig();
-  }, []);
+  }, [db]);
   
   useEffect(() => {
     if (isLoading || !config || !config.enabled || !config.imageUrl) {

@@ -16,9 +16,9 @@ import { OrderSummary } from "@/components/order-summary"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { db } from "@/lib/firebase"
 import { collection, getDocs } from "firebase/firestore"
 import { Badge } from "@/components/ui/badge"
+import { useFirebase } from "@/firebase"
 
 interface Address {
     id: string;
@@ -39,6 +39,7 @@ export default function ShippingPage() {
     const { user } = useAuth();
     const { cart, setShippingInfo, shippingInfo, availableShippingMethods } = useCart();
     const { toast } = useToast();
+    const { db } = useFirebase();
 
     const [addresses, setAddresses] = React.useState<Address[]>([]);
     const [loadingAddresses, setLoadingAddresses] = React.useState(true);
@@ -57,6 +58,7 @@ export default function ShippingPage() {
         }
 
         const fetchAddresses = async () => {
+            if(!db) return;
             setLoadingAddresses(true);
             const addressesCol = collection(db, 'users', user.uid, 'addresses');
             const addressSnapshot = await getDocs(addressesCol);
@@ -71,7 +73,7 @@ export default function ShippingPage() {
             setLoadingAddresses(false);
         };
         fetchAddresses();
-    }, [user, router, cart.length, toast]);
+    }, [user, router, cart.length, toast, db]);
     
     React.useEffect(() => {
         if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {

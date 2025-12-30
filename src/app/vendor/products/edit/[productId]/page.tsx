@@ -36,7 +36,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { app, db } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +44,7 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/use-auth';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
+import { useFirebase } from '@/firebase';
 
 interface ImageObject {
     file?: File;
@@ -52,7 +52,8 @@ interface ImageObject {
 }
 
 export default function EditVendorProductPage() {
-    const storage = getStorage(app);
+  const { app, db } = useFirebase();
+    const storage = getStorage(app!);
     const { toast } = useToast();
     const router = useRouter();
     const params = useParams();
@@ -114,7 +115,7 @@ export default function EditVendorProductPage() {
     const [newSubcategoryName, setNewSubcategoryName] = React.useState('');
     
     useEffect(() => {
-        if (!productId || !user) return;
+        if (!productId || !user || !db) return;
 
         const fetchProduct = async () => {
             setIsFetching(true);
@@ -171,7 +172,7 @@ export default function EditVendorProductPage() {
         };
 
         fetchProduct();
-    }, [productId, router, toast, user]);
+    }, [productId, router, toast, user, db]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -311,7 +312,7 @@ export default function EditVendorProductPage() {
     };
 
     const handleUpdateProduct = async () => {
-        if (!productId) return;
+        if (!productId || !db) return;
         setIsLoading(true);
         try {
             const imageUrls = await Promise.all(

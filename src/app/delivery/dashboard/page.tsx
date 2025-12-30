@@ -22,8 +22,8 @@ import { MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 
 interface Order {
   id: string;
@@ -38,11 +38,11 @@ export default function DeliveryDashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const db = getFirestore(app);
+  const { db } = useFirebase();
 
   useEffect(() => {
+    if (!user || !db) return;
     const fetchAssignedOrders = async () => {
-      if (!user) return;
       setLoading(true);
       try {
         const ordersRef = collection(db, 'orders');

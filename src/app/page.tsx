@@ -17,11 +17,11 @@ import { Heart, Clock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PreFooterCta } from '@/components/pre-footer-cta';
 import Autoplay from "embla-carousel-autoplay"
 import { StockIndicator } from '@/components/stock-indicator';
+import { useFirebase } from '@/firebase';
 
 interface HeroImage {
   url: string;
@@ -110,12 +110,14 @@ export default function Home() {
   const [flashSaleItems, setFlashSaleItems] = useState<FlashSaleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
+  const { db } = useFirebase();
 
   const autoplayPlugin = React.useRef(
     Autoplay({ delay: content.carouselSettings?.autoplaySpeed || 4000, stopOnInteraction: true })
   );
 
    useEffect(() => {
+    if(!db) return;
     const fetchHomepageContent = async () => {
       setLoading(true);
       const docRef = doc(db, 'site_content', 'homepage');
@@ -201,7 +203,7 @@ export default function Home() {
 
     fetchHomepageContent();
     fetchCampaigns();
-  }, []);
+  }, [db]);
 
   return (
     <>
