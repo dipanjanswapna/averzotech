@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check, UploadCloud } from 'lucide-react';
+import { ChevronLeft, CalendarIcon, PlusCircle, XCircle, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, getDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
@@ -51,7 +50,7 @@ export default function EditCampaignPage() {
   const { toast } = useToast();
   const campaignId = params.campaignId as string;
   const { app, db } = useFirebase();
-  const storage = getStorage(app!);
+  const storage = app ? getStorage(app) : null;
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -141,7 +140,7 @@ export default function EditCampaignPage() {
   }
 
   const handleUpdateCampaign = async () => {
-    if (!name || !type || !status || !startDate || !endDate || !db) {
+    if (!name || !type || !status || !startDate || !endDate || !db || !storage) {
       toast({ title: 'Missing Fields', description: 'Please fill in all required fields.', variant: 'destructive' });
       return;
     }
@@ -270,7 +269,7 @@ export default function EditCampaignPage() {
                                     return (
                                         <div key={product.id} className={`flex items-center justify-between p-2 rounded-md cursor-pointer ${isSelected ? 'bg-secondary' : ''}`} onClick={() => handleToggleProduct(product)}>
                                             <div className="flex items-center gap-4">
-                                                <Image src={product.images[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
+                                                <Image src={product.images?.[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={40} height={40} className="rounded-md object-cover" />
                                                 <span className="font-medium">{product.name}</span>
                                             </div>
                                             {isSelected && <Check className="h-5 w-5 text-primary" />}
@@ -289,7 +288,7 @@ export default function EditCampaignPage() {
                             {selectedProducts.map(p => (
                                 <div key={p.id} className="flex items-center justify-between text-sm bg-secondary p-1.5 rounded-md">
                                     <div className="flex items-center gap-2">
-                                        <Image src={p.images[0] || 'https://placehold.co/32x32.png'} alt={p.name} width={24} height={24} className="rounded-sm object-cover" />
+                                        <Image src={p.images?.[0] || 'https://placehold.co/32x32.png'} alt={p.name} width={24} height={24} className="rounded-sm object-cover" />
                                         <span>{p.name}</span>
                                     </div>
                                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleProduct(p)}><XCircle className="h-4 w-4 text-destructive" /></Button>
