@@ -116,7 +116,7 @@ export default function PickupStoresPage() {
   };
 
   const handleAddStore = async () => {
-    if (!newStoreData.name || !newStoreData.phone || !newStoreData.address || !newStoreData.area_id) {
+    if (!newStoreData.name || !newStoreData.phone || !newStoreData.address || !newStoreData.district || !newStoreData.area_id) {
         toast({ title: "Missing fields", description: "Please fill all fields to add a store.", variant: "destructive" });
         return;
     }

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
+import { app } from '@/firebase';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export interface AppUser {

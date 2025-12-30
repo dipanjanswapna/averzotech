@@ -27,19 +27,15 @@ export default function GiftCardsPage() {
                     <h2 className="text-3xl font-bold mb-4">Why Choose an Averzo Gift Card?</h2>
                     <ul className="space-y-4 text-muted-foreground">
                         <li className="flex items-start gap-3">
-                            <CheckCircle className="h-6 w-6 text-green-500 mt-1 shrink-0" />
                             <span><span className="font-semibold text-foreground">Instant Delivery:</span> Sent directly to the recipient's email, perfect for last-minute gifts.</span>
                         </li>
                          <li className="flex items-start gap-3">
-                            <CheckCircle className="h-6 w-6 text-green-500 mt-1 shrink-0" />
                             <span><span className="font-semibold text-foreground">Endless Choices:</span> Redeemable on thousands of products across all categories on Averzo.</span>
                         </li>
                          <li className="flex items-start gap-3">
-                            <CheckCircle className="h-6 w-6 text-green-500 mt-1 shrink-0" />
                             <span><span className="font-semibold text-foreground">Personalized Message:</span> Add a custom message to make your gift extra special.</span>
                         </li>
                          <li className="flex items-start gap-3">
-                            <CheckCircle className="h-6 w-6 text-green-500 mt-1 shrink-0" />
                             <span><span className="font-semibold text-foreground">No Hidden Fees:</span> The full value of the card is available for shopping. No expiry dates.</span>
                         </li>
                     </ul>
@@ -57,6 +53,3 @@ export default function GiftCardsPage() {
     </div>
   );
 }
-
-// Dummy CheckCircle component for type-checking. It won't be used as lucide-react has it.
-const CheckCircle = (props: any) => <svg {...props} />;
