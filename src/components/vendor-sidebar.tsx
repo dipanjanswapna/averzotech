@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, ShoppingCart, Settings, LogOut, FileText } from 'lucide-react';
+import { Home, Package, ShoppingCart, Settings, LogOut, FileText, BarChart3 } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -59,6 +59,7 @@ export function VendorSidebar({ user }: { user: any }) {
     { href: '/vendor/products', label: 'Products', icon: Package },
     { href: '/vendor/orders', label: 'Orders', icon: ShoppingCart },
     { href: '/vendor/invoices', label: 'Invoices', icon: FileText },
+    { href: '/vendor/reports', label: 'Reports', icon: BarChart3 },
   ];
 
   return (
