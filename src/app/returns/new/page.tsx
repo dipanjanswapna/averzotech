@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -28,10 +29,10 @@ import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/fires
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useFirebase } from '@/firebase';
 
 interface OrderItem {
     id: string;
@@ -62,7 +63,7 @@ function NewReturnRequestContent() {
     const router = useRouter();
     const orderId = searchParams.get('orderId');
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user } = useFirebase();
 
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);

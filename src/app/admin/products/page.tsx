@@ -41,10 +41,11 @@ import {
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, doc, deleteDoc, orderBy, query } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Product {
   id: string;
@@ -111,28 +112,14 @@ export default function ProductsPage() {
     }
   }
 
-  const getStatusBadgeVariant = (status: Product['organization']['status']) => {
-    switch(status) {
-        case 'active': return 'default';
-        case 'pending-approval': return 'secondary';
-        case 'rejected': return 'destructive';
-        case 'draft': return 'outline';
-        default: return 'outline';
-    }
-  }
-
-   const getStatusBadgeClass = (status: Product['organization']['status']) => {
-      switch (status) {
-          case 'active':
-              return 'bg-green-100 text-green-800';
-          case 'pending-approval':
-              return 'bg-yellow-100 text-yellow-800';
-          case 'rejected':
-              return 'bg-red-100 text-red-800';
-          default:
-              return '';
+  const filteredProducts = useMemo(() => {
+      return {
+          all: products,
+          pending: products.filter(p => p.organization?.status === 'pending-approval'),
+          active: products.filter(p => p.organization?.status === 'active'),
+          rejected: products.filter(p => p.organization?.status === 'rejected'),
       }
-  };
+  }, [products]);
 
 
   return (
@@ -151,120 +138,164 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Products</CardTitle>
-          <CardDescription>
-            A list of all products in your store.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-             <div className="flex justify-center items-center h-48">
-              <p>Loading products...</p>
-            </div>
-          ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="hidden w-[100px] sm:table-cell">
-                  <span className="sr-only">Image</span>
-                </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Stock
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="hidden sm:table-cell">
-                    <Image
-                      alt={product.name}
-                      className="aspect-square rounded-md object-cover"
-                      height="64"
-                      src={product.images[0] || 'https://placehold.co/64x64.png'}
-                      width="64"
-                      data-ai-hint="product image"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={getStatusBadgeVariant(product.organization?.status)}
-                      className={`${getStatusBadgeClass(product.organization?.status)} capitalize`}
-                    >
-                      {product.organization?.status?.replace('-', ' ') || 'N/A'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>৳{product.pricing?.price.toLocaleString() || 'N/A'}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {product.inventory?.stock ?? 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    <AlertDialog>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                           <DropdownMenuItem asChild>
-                             <Link href={`/product/${product.id}`} target='_blank'>
-                                  <Eye className="mr-2 h-4 w-4"/> View on Site
-                              </Link>
-                           </DropdownMenuItem>
-                           <DropdownMenuItem asChild>
-                             <Link href={`/admin/products/edit/${product.id}`}>
-                                  <Pencil className="mr-2 h-4 w-4"/> Edit
-                              </Link>
-                           </DropdownMenuItem>
-                           <DropdownMenuSeparator />
-                           <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </DropdownMenuItem>
-                           </AlertDialogTrigger>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the product
-                                  <span className="font-bold"> {product.name}</span>.
-                              </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteProduct(product.id)} className="bg-destructive hover:bg-destructive/90">
-                                  Continue
-                              </AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          )}
-        </CardContent>
-      </Card>
+       <Tabs defaultValue="all">
+            <TabsList>
+                <TabsTrigger value="all">All ({filteredProducts.all.length})</TabsTrigger>
+                <TabsTrigger value="pending">Pending Approval ({filteredProducts.pending.length})</TabsTrigger>
+                <TabsTrigger value="active">Active ({filteredProducts.active.length})</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected ({filteredProducts.rejected.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="all">
+                <ProductTable products={filteredProducts.all} loading={loading} onDelete={handleDeleteProduct} />
+            </TabsContent>
+             <TabsContent value="pending">
+                <ProductTable products={filteredProducts.pending} loading={loading} onDelete={handleDeleteProduct} />
+            </TabsContent>
+            <TabsContent value="active">
+                <ProductTable products={filteredProducts.active} loading={loading} onDelete={handleDeleteProduct} />
+            </TabsContent>
+            <TabsContent value="rejected">
+                <ProductTable products={filteredProducts.rejected} loading={loading} onDelete={handleDeleteProduct} />
+            </TabsContent>
+       </Tabs>
     </div>
   );
+}
+
+
+function ProductTable({ products, loading, onDelete }: { products: Product[], loading: boolean, onDelete: (id: string) => void }) {
+    
+    const getStatusBadgeVariant = (status: Product['organization']['status']) => {
+        switch(status) {
+            case 'active': return 'default';
+            case 'pending-approval': return 'secondary';
+            case 'rejected': return 'destructive';
+            case 'draft': return 'outline';
+            default: return 'outline';
+        }
+    }
+
+    const getStatusBadgeClass = (status: Product['organization']['status']) => {
+        switch (status) {
+            case 'active':
+                return 'bg-green-100 text-green-800';
+            case 'pending-approval':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'rejected':
+                return 'bg-red-100 text-red-800';
+            default:
+                return '';
+        }
+    };
+
+    return (
+        <Card>
+            <CardContent className="pt-6">
+            {loading ? (
+                <div className="flex justify-center items-center h-48">
+                <p>Loading products...</p>
+                </div>
+            ) : (
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead className="hidden w-[100px] sm:table-cell">
+                    <span className="sr-only">Image</span>
+                    </TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead className="hidden md:table-cell">
+                    Stock
+                    </TableHead>
+                    <TableHead>
+                    <span className="sr-only">Actions</span>
+                    </TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                {products.map((product) => (
+                    <TableRow key={product.id}>
+                    <TableCell className="hidden sm:table-cell">
+                        <Image
+                        alt={product.name}
+                        className="aspect-square rounded-md object-cover"
+                        height="64"
+                        src={product.images[0] || 'https://placehold.co/64x64.png'}
+                        width="64"
+                        data-ai-hint="product image"
+                        />
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>
+                        <Badge
+                        variant={getStatusBadgeVariant(product.organization?.status)}
+                        className={`${getStatusBadgeClass(product.organization?.status)} capitalize`}
+                        >
+                        {product.organization?.status?.replace('-', ' ') || 'N/A'}
+                        </Badge>
+                    </TableCell>
+                    <TableCell>৳{product.pricing?.price.toLocaleString() || 'N/A'}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                        {product.inventory?.stock ?? 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                        <AlertDialog>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button
+                                aria-haspopup="true"
+                                size="icon"
+                                variant="ghost"
+                            >
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                                <Link href={`/product/${product.id}`} target='_blank'>
+                                    <Eye className="mr-2 h-4 w-4"/> View on Site
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href={`/admin/products/edit/${product.id}`}>
+                                    <Pencil className="mr-2 h-4 w-4"/> Edit
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the product
+                                    <span className="font-bold"> {product.name}</span>.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(product.id)} className="bg-destructive hover:bg-destructive/90">
+                                    Continue
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                        </AlertDialog>
+                    </TableCell>
+                    </TableRow>
+                ))}
+                </TableBody>
+            </Table>
+            )}
+            </CardContent>
+        </Card>
+    )
 }

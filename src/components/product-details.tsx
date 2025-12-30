@@ -31,7 +31,6 @@ import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useWishlist, WishlistItem } from '@/hooks/use-wishlist';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { LoadingSpinner } from './ui/loading-spinner';
@@ -112,9 +111,8 @@ interface QnA {
 export function ProductDetails() {
   const params = useParams();
   const router = useRouter();
-  const { db } = useFirebase();
+  const { db, user } = useFirebase();
   const productId = params.productId as string;
-  const { user } = useAuth();
   const [product, setProduct] = React.useState<Product | null>(null);
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [qna, setQna] = React.useState<QnA[]>([]);
