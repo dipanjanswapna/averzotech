@@ -1,9 +1,8 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store, Truck, Undo2 } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store, Truck, Undo2, FileText as VendorInvoiceIcon } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -61,6 +60,7 @@ export function AdminSidebar({ user }: { user: any }) {
     { href: '/admin/products', label: 'Products', icon: Package },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
     { href: '/admin/returns', label: 'Returns', icon: Undo2 },
+    { href: '/admin/vendor-invoices', label: 'Vendor Invoices', icon: VendorInvoiceIcon },
     { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
     { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
     { href: '/admin/gift-cards', label: 'Gift Cards', icon: Gift },
