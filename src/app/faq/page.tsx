@@ -10,6 +10,12 @@ import {
 } from "@/components/ui/accordion"
 import { Mail, Phone } from 'lucide-react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'FAQ | AVERZO',
+  description: 'Find answers to frequently asked questions about orders, payments, shipping, and returns on AVERZO.',
+};
 
 const faqData = [
     {
