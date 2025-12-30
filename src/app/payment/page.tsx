@@ -9,12 +9,14 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useCart, ShippingInfo } from "@/hooks/use-cart"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/hooks/use-toast"
 import { OrderSummary } from "@/components/order-summary"
 import Image from "next/image"
+import { Label } from "@/components/ui/label"
+import { cn } from "@/lib/utils"
 
 export default function PaymentPage() {
     const router = useRouter();
@@ -190,52 +192,41 @@ export default function PaymentPage() {
                         </Card>
 
 
-                        <div className="space-y-8">
-                             <h2 className="text-2xl font-headline mb-4">Payment</h2>
-                             <p className="text-muted-foreground">All transactions are secure and encrypted.</p>
-                             <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
-                                <TabsList className="grid w-full grid-cols-4">
-                                    <TabsTrigger value="card"><CreditCard className="w-4 h-4 mr-2"/> Card</TabsTrigger>
-                                    <TabsTrigger value="mobile-banking"> <Landmark className="w-4 h-4 mr-2" />Mobile Banking</TabsTrigger>
-                                     <TabsTrigger value="bkash">
-                                         <Image src="/bkash.png" alt="bKash" width={20} height={20} className="mr-2" /> bKash
-                                    </TabsTrigger>
-                                    <TabsTrigger value="cod"><Truck className="w-4 h-4 mr-2"/>COD</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="card">
-                                    <Card>
-                                        <CardContent className="p-6 space-y-4">
-                                           <div className="text-center p-4 bg-secondary rounded-lg">
-                                                <p>You will be redirected to SSLCommerz's secure gateway to complete your card payment.</p>
-                                           </div>
-                                        </CardContent>
-                                    </Card>
-                                </TabsContent>
-                                <TabsContent value="mobile-banking">
-                                     <Card>
-                                        <CardContent className="p-6 text-center">
-                                            <p className="text-muted-foreground mb-4">You will be redirected to SSLCommerz's secure gateway to complete your payment with your selected provider.</p>
-                                        </CardContent>
-                                     </Card>
-                                </TabsContent>
-                                <TabsContent value="bkash">
-                                     <Card>
-                                        <CardContent className="p-6 text-center">
-                                            <Image src="/bkash.png" alt="bKash Logo" width={80} height={80} className="mx-auto mb-4" />
-                                            <p className="text-muted-foreground mt-2">You will be redirected to bKash to complete your payment securely.</p>
-                                        </CardContent>
-                                     </Card>
-                                </TabsContent>
-                                 <TabsContent value="cod">
-                                     <Card>
-                                        <CardContent className="p-6 text-center">
-                                            <Truck className="w-12 h-12 mx-auto text-muted-foreground mb-4"/>
-                                            <h3 className="text-lg font-semibold">Cash on Delivery</h3>
-                                            <p className="text-muted-foreground mt-2">You can pay in cash to our courier when you receive the goods at your doorstep.</p>
-                                        </CardContent>
-                                     </Card>
-                                </TabsContent>
-                            </Tabs>
+                        <div className="space-y-4">
+                            <h2 className="text-2xl font-headline mb-4">Payment</h2>
+                            <p className="text-muted-foreground">All transactions are secure and encrypted.</p>
+                             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-4">
+                                <Label htmlFor="online-payment" className={cn("flex items-start gap-4 border p-4 rounded-lg cursor-pointer", {"border-primary ring-1 ring-primary": paymentMethod === 'card'})}>
+                                    <RadioGroupItem value="card" id="online-payment" className="mt-1"/>
+                                    <div className="flex-1">
+                                        <div className="font-semibold flex items-center gap-2">
+                                            <CreditCard className="w-5 h-5"/>
+                                            <span>Credit/Debit Card, Mobile Banking</span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-2">You will be redirected to our secure payment gateway to complete your purchase using Card or other available Mobile Banking options.</p>
+                                    </div>
+                                </Label>
+
+                                <Label htmlFor="bkash-payment" className={cn("flex items-start gap-4 border p-4 rounded-lg cursor-pointer", {"border-primary ring-1 ring-primary": paymentMethod === 'bkash'})}>
+                                     <RadioGroupItem value="bkash" id="bkash-payment" className="mt-1"/>
+                                     <div className="flex-1">
+                                        <div className="font-semibold flex items-center gap-2">
+                                             <Image src="/bkash.png" alt="bKash" width={20} height={20} /> bKash
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-2">You will be redirected to bKash to complete your payment securely.</p>
+                                     </div>
+                                </Label>
+
+                                <Label htmlFor="cod-payment" className={cn("flex items-start gap-4 border p-4 rounded-lg cursor-pointer", {"border-primary ring-1 ring-primary": paymentMethod === 'cod'})}>
+                                     <RadioGroupItem value="cod" id="cod-payment" className="mt-1"/>
+                                     <div className="flex-1">
+                                        <div className="font-semibold flex items-center gap-2">
+                                             <Truck className="w-5 h-5"/> Cash on Delivery
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-2">Pay with cash upon delivery.</p>
+                                     </div>
+                                </Label>
+                             </RadioGroup>
                         </div>
                          <div className="mt-8 flex justify-between items-center">
                             <Button variant="outline" asChild>

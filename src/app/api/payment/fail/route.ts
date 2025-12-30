@@ -1,7 +1,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { doc, getDoc, deleteDoc, getFirestore } from 'firebase/firestore';
+import { app } from '@/lib/firebase';
+
+const db = getFirestore(app);
 
 export async function POST(req: NextRequest) {
     const body = await req.formData();
@@ -25,5 +27,5 @@ export async function POST(req: NextRequest) {
     
     const reason = failedreason ? encodeURIComponent(failedreason as string) : 'Unknown reason';
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, appUrl), 302);
+    return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, appUrl), { status: 302 });
 }

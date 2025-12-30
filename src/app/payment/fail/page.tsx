@@ -11,6 +11,11 @@ function FailContent() {
     const searchParams = useSearchParams();
     const reason = searchParams.get('reason');
 
+    let displayReason = "An unknown error occurred.";
+    if (reason) {
+        displayReason = reason.replace(/_/g, ' ');
+    }
+
     return (
          <div className="flex items-center justify-center min-h-screen bg-secondary">
             <Card className="w-full max-w-md text-center">
@@ -19,7 +24,7 @@ function FailContent() {
                     <CardTitle className="mt-4">Payment Failed</CardTitle>
                     <CardDescription>
                          Unfortunately, we were unable to process your payment.
-                         {reason && <span className="block mt-2 font-semibold">Reason: {reason.replace(/_/g, ' ')}</span>}
+                         {displayReason && <span className="block mt-2 font-semibold">Reason: {displayReason}</span>}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
