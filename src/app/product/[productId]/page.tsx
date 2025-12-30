@@ -6,7 +6,6 @@ import { db } from '@/lib/firebase';
 import type { Metadata } from 'next';
 import { ProductDetails } from '@/components/product-details';
 import React from 'react';
-import { StickyAddToCart } from '@/components/sticky-add-to-cart';
 
 
 export async function generateMetadata({ params }: { params: { productId: string } }): Promise<Metadata> {

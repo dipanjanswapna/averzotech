@@ -517,7 +517,7 @@ export function ProductDetails() {
                     <ArTryOn productName={product.name} productImage={product.images[0]} />
                 ) : (
                     <Button size="lg" variant="secondary" className="flex-1" onClick={() => handleAddToCart(true)} disabled={isOutOfStock}>
-                        {isPreOrder ? 'PRE-ORDER & CHECKOUT' : (isOutOfStock ? 'OUT OF STOCK' : 'BUY NOW')}
+                        {isPreOrder ? 'PRE-ORDER & CHECKOUT' : (isOutOfStock ? 'BUY NOW' : 'BUY NOW')}
                     </Button>
                 )}
               <Button size="lg" variant={isInWishlist ? "default" : "outline"} className="flex-1" onClick={handleWishlistToggle}>
@@ -580,17 +580,6 @@ export function ProductDetails() {
                   <AccordionTrigger className="font-semibold uppercase text-sm">Return Policy</AccordionTrigger>
                   <AccordionContent>
                       <p className="text-sm">{product.returnPolicy}</p>
-                  </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="item-4">
-                  <AccordionTrigger className="font-semibold uppercase text-sm">Sold By</AccordionTrigger>
-                  <AccordionContent>
-                      <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="font-bold text-primary">{product.vendor}</h4>
-                        </div>
-                        <Link href="#" className="text-primary font-semibold text-sm">View Store</Link>
-                      </div>
                   </AccordionContent>
               </AccordionItem>
             </Accordion>
