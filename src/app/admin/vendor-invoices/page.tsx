@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, getFirestore } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { VendorInvoice } from '@/types';
 import { useFirebase } from '@/firebase';

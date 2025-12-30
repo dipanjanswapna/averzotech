@@ -15,7 +15,7 @@ import { ChevronLeft, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, writeBatch, increment, getFirestore } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, writeBatch, increment } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';

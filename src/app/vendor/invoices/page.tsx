@@ -27,18 +27,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, where, getFirestore } from 'firebase/firestore';
-import { useAuth } from '@/hooks/use-auth';
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { VendorInvoice } from '@/types';
-import { useFirebase } from '@/firebase';
 
 
 export default function VendorInvoicesPage() {
   const [invoices, setInvoices] = useState<VendorInvoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const { db } = useFirebase();
+  const { user, db } = useFirebase();
 
   useEffect(() => {
     const fetchInvoices = async () => {
