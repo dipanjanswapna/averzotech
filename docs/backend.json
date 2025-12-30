@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Represents a product in the e-commerce store.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "category": { "type": "string" },
+        "brand": { "type": "string" },
+        "stock": { "type": "number" },
+        "sku": { "type": "string" }
+      },
+      "required": ["name", "price", "images", "category", "stock"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Represents a customer's order.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/entities/OrderItem" } },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Processing", "Shipped", "Fulfilled", "Cancelled"] },
+        "shippingAddress": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "items", "total", "status"]
+    },
+    "OrderItem": {
+      "title": "Order Item",
+      "description": "Represents an item within an order.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" }
+      },
+      "required": ["productId", "name", "quantity", "price"]
+    },
+    "User": {
+        "title": "User",
+        "description": "Represents a user account.",
+        "type": "object",
+        "properties": {
+            "fullName": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "role": { "type": "string", "enum": ["customer", "vendor", "admin"] },
+            "status": { "type": "string", "enum": ["active", "pending", "suspended"] },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["fullName", "email", "role", "status"]
+    },
+    "ReturnItem": {
+      "title": "Return Item",
+      "description": "Represents an item within a return request.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "image": { "type": "string", "format": "uri" },
+        "quantity": { "type": "number" },
+        "reason": { "type": "string" },
+        "comment": { "type": "string" },
+        "photoUrl": { "type": "string", "format": "uri" }
+      },
+      "required": ["id", "name", "image", "quantity", "reason"]
+    },
+    "ReturnRequest": {
+      "title": "Return Request",
+      "description": "Represents a customer's request to return items from an order.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/entities/ReturnItem" } },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected", "Processing", "Completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "userId", "items", "status"]
+    }
+  },
+  "auth": {
+    "providers": ["Email", "Google"]
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Stores individual product details."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profile information."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Stores customer order information."
+    },
+    "/returns/{returnId}": {
+      "schema": { "$ref": "#/entities/ReturnRequest" },
+      "description": "Stores customer return requests."
+    }
+  }
+}
