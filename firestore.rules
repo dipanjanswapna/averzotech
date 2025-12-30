@@ -147,5 +147,13 @@ service cloud.firestore {
         allow get: if isVendor() && resource.data.vendorId == request.auth.uid;
         allow list: if isVendor() && resource.data.vendorId == request.auth.uid;
     }
+
+    // VENDOR_APPLICATIONS collection
+    match /vendorApplications/{applicationId} {
+      // Logged-in users can create their own application
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Admins can read and update applications
+      allow read, update: if isAdmin();
+    }
   }
 }

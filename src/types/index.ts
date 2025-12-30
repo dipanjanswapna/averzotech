@@ -154,3 +154,54 @@ export interface VendorInvoice {
   status: 'Draft' | 'Sent' | 'Processing' | 'Paid' | 'Cancelled';
   createdAt: any;
 }
+
+
+// Vendor Application
+export interface VendorApplication {
+    id: string;
+    userId: string;
+    status: 'Pending' | 'Approved' | 'Rejected' | 'Update Requested';
+    shopInfo: {
+        shopName: string;
+        address: string;
+        category: string;
+    };
+    contactInfo: {
+        name: string;
+        phone: string;
+        email: string;
+    };
+    documents: {
+        tradeLicenseUrl: string;
+        nidUrl: string;
+        tinUrl: string;
+    };
+    paymentInfo: {
+        method: 'bank' | 'mobile';
+        bankName?: string;
+        accountName?: string;
+        accountNumber?: string;
+        branchName?: string;
+        mobileNumber?: string;
+    };
+    rejectionReason?: string;
+    createdAt: any;
+}
+
+export interface Vendor {
+    id: string;
+    userId: string;
+    shopName: string;
+    category: string;
+    contact: {
+        name: string;
+        phone: string;
+        email: string;
+    };
+    payment: any;
+    trustScore: number;
+    sla: {
+        deliveryCommitment: number; // in hours
+    };
+    status: 'Active' | 'Suspended';
+}
