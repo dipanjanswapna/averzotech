@@ -56,10 +56,10 @@ interface Vendor {
 }
 
 export default function NewProductPage() {
-    const storage = getStorage();
+    const { app, db } = useFirebase();
+    const storage = app ? getStorage(app) : null;
     const { toast } = useToast();
     const router = useRouter();
-    const { db } = useFirebase();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -272,7 +272,7 @@ export default function NewProductPage() {
     };
 
     const handleSaveProduct = async () => {
-        if (!db) return;
+        if (!db || !storage) return;
         setIsLoading(true);
         try {
             // 1. Upload images to Firebase Storage if they are files

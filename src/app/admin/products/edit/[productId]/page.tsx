@@ -56,7 +56,7 @@ interface Vendor {
 
 export default function EditProductPage() {
     const { app, db } = useFirebase();
-    const storage = getStorage(app!);
+    const storage = app ? getStorage(app) : null;
     const { toast } = useToast();
     const router = useRouter();
     const params = useParams();
@@ -126,9 +126,8 @@ export default function EditProductPage() {
             try {
                 // Fetch Vendors
                 const vendorsCollection = collection(db, 'users');
-                const vendorSnapshot = await getDocs(vendorsCollection);
+                const vendorSnapshot = await getDocs(query(vendorsCollection, where('role', '==', 'vendor')));
                 const vendorList = vendorSnapshot.docs
-                    .filter(doc => doc.data().role === 'vendor')
                     .map(doc => ({ uid: doc.id, fullName: doc.data().fullName } as Vendor));
                 setVendors(vendorList);
 
@@ -296,7 +295,7 @@ export default function EditProductPage() {
     }, [selectedGroup, availableGroups]);
 
     const handleUpdateProduct = async () => {
-        if (!productId || !db) return;
+        if (!productId || !db || !storage) return;
         setIsLoading(true);
         try {
             const imageUrls = await Promise.all(
