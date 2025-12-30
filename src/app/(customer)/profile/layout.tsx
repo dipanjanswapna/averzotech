@@ -10,7 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button";
-import { Home, Menu, ShoppingCart, Heart, User, LogOut, MapPin, Gift } from 'lucide-react';
+import { Home, Menu, ShoppingCart, Heart, User, LogOut, MapPin, Gift, Undo2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from "next/link";
@@ -69,6 +69,7 @@ export default function ProfileLayout({
 
 const navItems = [
     { href: '/profile/orders', label: 'My Orders', icon: ShoppingCart },
+    { href: '/profile/returns', label: 'My Returns', icon: Undo2 },
     { href: '/profile', label: 'My Profile', icon: User },
     { href: '/profile/addresses', label: 'Addresses', icon: MapPin },
     { href: '/profile/gift-cards', label: 'My Gift Cards', icon: Gift },
