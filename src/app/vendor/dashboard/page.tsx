@@ -3,7 +3,6 @@
 
 import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { app } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DollarSign, Package, ShoppingCart } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -29,17 +28,16 @@ interface DashboardData {
 }
 
 export default function VendorDashboard() {
-  const { user, loading: authLoading } = useFirebase();
+  const { user, loading: authLoading, db } = useFirebase();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authLoading || !user?.fullName) return;
+    if (authLoading || !user?.fullName || !db) return;
 
     const fetchData = async () => {
       setLoading(true);
       try {
-        const db = getFirestore(app);
         // 1. Get all product IDs for the current vendor
         const productsRef = collection(db, 'products');
         const qProducts = query(productsRef, where("vendor", "==", user.fullName));
@@ -98,7 +96,7 @@ export default function VendorDashboard() {
     };
 
     fetchData();
-  }, [user, authLoading]);
+  }, [user, authLoading, db]);
 
   if (authLoading || loading) {
     return (
