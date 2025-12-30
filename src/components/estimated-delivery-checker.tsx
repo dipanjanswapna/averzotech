@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState } from 'react';
@@ -7,69 +6,61 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const bengaliDays: { [key: string]: string } = {
-  Sunday: 'রবিবার',
-  Monday: 'সোমবার',
-  Tuesday: 'মঙ্গলবার',
-  Wednesday: 'বুধবার',
-  Thursday: 'বৃহস্পতিবার',
-  Friday: 'শুক্রবার',
-  Saturday: 'শনিবার',
-};
-
-const bengaliMonths: { [key: string]: string } = {
-  January: 'জানুয়ারী',
-  February: 'ফেব্রুয়ারী',
-  March: 'মার্চ',
-  April: 'এপ্রিল',
-  May: 'মে',
-  June: 'জুন',
-  July: 'জুলাই',
-  August: 'আগস্ট',
-  September: 'সেপ্টেম্বর',
-  October: 'অক্টোবর',
-  November: 'নভেম্বর',
-  December: 'ডিসেম্বর',
-};
-
-const getBengaliDate = (date: Date): string => {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const monthName = date.toLocaleDateString('en-US', { month: 'long' });
-    const day = date.getDate();
-
-    return `${bengaliDays[dayName]}, ${day} ${bengaliMonths[monthName]}`;
-};
-
+import { useToast } from '@/hooks/use-toast';
 
 export function EstimatedDeliveryChecker() {
     const [pincode, setPincode] = useState('');
     const [estimatedDate, setEstimatedDate] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showResult, setShowResult] = useState(false);
+    const { toast } = useToast();
 
-    const handleCheckDelivery = () => {
+    const handleCheckDelivery = async () => {
         if (!/^\d{4}$/.test(pincode)) {
             setError('Please enter a valid 4-digit pin code.');
             setEstimatedDate(null);
-            setShowResult(true);
             return;
         }
 
         setIsLoading(true);
         setError(null);
-        setShowResult(false);
+        setEstimatedDate(null);
 
-        setTimeout(() => {
-            const deliveryDays = (parseInt(pincode) >= 1200 && parseInt(pincode) <= 1399) ? 2 : 4;
+        try {
+            const response = await fetch('/api/delivery-check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pincode })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Could not fetch delivery information.');
+            }
+            
+            const data = await response.json();
+            
+            const deliveryDays = parseInt(data.time, 10);
             const today = new Date();
             const deliveryDate = new Date(today.setDate(today.getDate() + deliveryDays));
             
-            setEstimatedDate(`সম্ভাব্য ডেলিভারি: ${getBengaliDate(deliveryDate)}`);
+            const formattedDate = deliveryDate.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+            });
+
+            setEstimatedDate(`Estimated Delivery: ${formattedDate} (${data.area})`);
+
+        } catch (err: any) {
+            setError(err.message);
+            toast({
+                title: "Delivery Check Failed",
+                description: err.message,
+                variant: "destructive",
+            });
+        } finally {
             setIsLoading(false);
-            setShowResult(true);
-        }, 500);
+        }
     };
 
     return (
@@ -87,8 +78,8 @@ export function EstimatedDeliveryChecker() {
                     {isLoading ? 'Checking...' : 'Check'}
                 </Button>
             </div>
-            {showResult && (
-                 <div className={cn("mt-2 text-sm transition-opacity duration-500", showResult ? "opacity-100" : "opacity-0")}>
+            { (error || estimatedDate) && (
+                 <div className={cn("mt-2 text-sm transition-opacity duration-500 opacity-100")}>
                     {error ? (
                         <p className="text-destructive font-semibold">{error}</p>
                     ) : estimatedDate && (
