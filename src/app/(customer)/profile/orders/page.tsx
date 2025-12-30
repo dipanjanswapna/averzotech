@@ -101,6 +101,17 @@ export default function MyOrdersPage() {
             toast({ title: "Cancellation Failed", description: "This order can no longer be cancelled.", variant: "destructive" });
             return;
         }
+
+        const orderTime = order.createdAt.toDate();
+        const now = new Date();
+        const timeDiff = now.getTime() - orderTime.getTime();
+        const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+        if (hoursDiff > 1) {
+            toast({ title: "Cancellation Window Closed", description: "You can only cancel an order within 1 hour of placing it.", variant: "destructive" });
+            return;
+        }
+
         if (!cancellationReason) {
             toast({ title: "Reason Required", description: "Please select a reason for cancellation.", variant: "destructive" });
             return;
@@ -167,6 +178,15 @@ export default function MyOrdersPage() {
         return new Date(timestamp.seconds * 1000).toLocaleDateString();
     };
 
+    const canCancel = (order: Order) => {
+        if (order.status !== 'Pending') return false;
+        const orderTime = order.createdAt.toDate();
+        const now = new Date();
+        const timeDiff = now.getTime() - orderTime.getTime();
+        const hoursDiff = timeDiff / (1000 * 60 * 60);
+        return hoursDiff <= 1;
+    }
+
     if (loading) {
         return <p>Loading your orders...</p>
     }
@@ -213,7 +233,7 @@ export default function MyOrdersPage() {
                          <Button variant="outline" size="sm" asChild>
                             <Link href={`/order-confirmation?orderId=${order.id}`}>View Details</Link>
                         </Button>
-                         {order.status === 'Pending' && (
+                         {canCancel(order) && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive" size="sm">Cancel</Button>
