@@ -1,13 +1,14 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { doc, getDoc } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { X } from 'lucide-react';
+import { useFirebase } from '@/firebase';
 
 interface PopupContent {
   enabled: boolean;

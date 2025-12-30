@@ -36,13 +36,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { app, db } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, getDoc, updateDoc, getDocs, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
+import { useFirebase } from '@/firebase';
 
 interface ImageObject {
     file?: File;
@@ -55,7 +55,8 @@ interface Vendor {
 }
 
 export default function EditProductPage() {
-    const storage = getStorage(app);
+    const { app, db } = useFirebase();
+    const storage = getStorage(app!);
     const { toast } = useToast();
     const router = useRouter();
     const params = useParams();
@@ -118,7 +119,7 @@ export default function EditProductPage() {
     const [vendors, setVendors] = useState<Vendor[]>([]);
     
     useEffect(() => {
-        if (!productId) return;
+        if (!productId || !db) return;
 
         const fetchProductAndVendors = async () => {
             setIsFetching(true);
@@ -177,7 +178,7 @@ export default function EditProductPage() {
         };
 
         fetchProductAndVendors();
-    }, [productId, router, toast]);
+    }, [productId, router, toast, db]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -295,7 +296,7 @@ export default function EditProductPage() {
     }, [selectedGroup, availableGroups]);
 
     const handleUpdateProduct = async () => {
-        if (!productId) return;
+        if (!productId || !db) return;
         setIsLoading(true);
         try {
             const imageUrls = await Promise.all(

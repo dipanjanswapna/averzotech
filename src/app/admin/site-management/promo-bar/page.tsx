@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 
 interface PromoBarContent {
   enabled: boolean;
@@ -30,6 +30,7 @@ export default function PromoBarManager() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const { db } = useFirebase();
 
   const [enabled, setEnabled] = useState(false);
   const [text, setText] = useState('');
@@ -38,6 +39,7 @@ export default function PromoBarManager() {
   const [bgColorEnd, setBgColorEnd] = useState('#ffc371');
 
   useEffect(() => {
+    if (!db) return;
     const fetchPromoBarContent = async () => {
       setIsFetching(true);
       const docRef = doc(db, 'site_content', 'promo_bar');
@@ -54,9 +56,10 @@ export default function PromoBarManager() {
     };
 
     fetchPromoBarContent();
-  }, []);
+  }, [db]);
 
   const handleSaveChanges = async () => {
+    if (!db) return;
     setIsLoading(true);
     try {
       const promoBarContent: PromoBarContent = {

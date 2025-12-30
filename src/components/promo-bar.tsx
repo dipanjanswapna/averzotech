@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import Link from 'next/link';
+import { useFirebase } from '@/firebase';
 
 interface PromoBarContent {
   enabled: boolean;
@@ -17,8 +17,10 @@ interface PromoBarContent {
 export function PromoBar() {
   const [content, setContent] = useState<PromoBarContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { db } = useFirebase();
 
   useEffect(() => {
+    if (!db) return;
     const fetchPromoBarContent = async () => {
       const docRef = doc(db, 'site_content', 'promo_bar');
       const docSnap = await getDoc(docRef);
@@ -29,7 +31,7 @@ export function PromoBar() {
     };
 
     fetchPromoBarContent();
-  }, []);
+  }, [db]);
 
   if (isLoading || !content || !content.enabled) {
     return null;

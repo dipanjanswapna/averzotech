@@ -25,9 +25,9 @@ import {
 import { ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFirebase } from '@/firebase';
 
 interface User {
   uid: string;
@@ -43,6 +43,7 @@ export default function EditUserPage() {
   const params = useParams();
   const { toast } = useToast();
   const userId = params.userId as string;
+  const { db } = useFirebase();
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +55,7 @@ export default function EditUserPage() {
   const [status, setStatus] = useState<'active' | 'pending' | 'suspended'>('active');
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !db) return;
 
     const fetchUser = async () => {
       setIsFetching(true);
@@ -81,10 +82,10 @@ export default function EditUserPage() {
     };
 
     fetchUser();
-  }, [userId, router, toast]);
+  }, [userId, router, toast, db]);
 
   const handleUpdateUser = async () => {
-    if (!user) return;
+    if (!user || !db) return;
     setIsLoading(true);
     try {
       const userRef = doc(db, 'users', userId);
