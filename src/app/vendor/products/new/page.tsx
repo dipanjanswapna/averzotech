@@ -188,8 +188,8 @@ export default function NewVendorProductPage() {
           setFilterCategories(prevCategories => {
             return prevCategories.map(cat => {
               if (cat.name === selectedCategory) {
-                if (cat.groups.some(g => g.name.toLowerCase() === newGroupName.toLowerCase())) return cat;
-                return { ...cat, groups: [...cat.groups, { name: newGroupName, subcategories: [] }] };
+                if (cat.subCategories.some((g:any) => g.group.toLowerCase() === newGroupName.toLowerCase())) return cat;
+                return { ...cat, subCategories: [...cat.subCategories, { group: newGroupName, items: [] }] };
               }
               return cat;
             });
@@ -206,10 +206,10 @@ export default function NewVendorProductPage() {
               if (cat.name === selectedCategory) {
                 return {
                   ...cat,
-                  groups: cat.groups.map(group => {
-                    if (group.name === selectedGroup) {
-                       if (group.subcategories.some(s => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
-                      return { ...group, subcategories: [...group.subcategories, newSubcategoryName] };
+                  subCategories: cat.subCategories.map((group:any) => {
+                    if (group.group === selectedGroup) {
+                       if (group.items.some((s:any) => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
+                      return { ...group, items: [...group.items, newSubcategoryName] };
                     }
                     return group;
                   })
@@ -224,12 +224,13 @@ export default function NewVendorProductPage() {
 
     const availableGroups = useMemo(() => {
         if (!selectedCategory) return [];
-        return filterCategories.find(c => c.name === selectedCategory)?.groups || [];
+        return filterCategories.find(c => c.name === selectedCategory)?.subCategories || [];
     }, [selectedCategory, filterCategories]);
 
     const availableSubcategories = useMemo(() => {
         if (!selectedGroup) return [];
-        return availableGroups.find(g => g.name === selectedGroup)?.subcategories || [];
+        const group:any = availableGroups.find((g:any) => g.group === selectedGroup);
+        return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
 
     const handleGenerateDescription = async () => {
@@ -255,7 +256,7 @@ export default function NewVendorProductPage() {
     };
 
     const handleSaveProduct = async () => {
-        if (!db) return;
+        if (!db || !storage) return;
         setIsLoading(true);
         try {
             // 1. Upload images to Firebase Storage if they are files
@@ -600,7 +601,7 @@ export default function NewVendorProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map((g:any) => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
+                          {availableGroups.map((g:any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>

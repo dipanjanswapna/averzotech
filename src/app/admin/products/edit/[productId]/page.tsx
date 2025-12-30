@@ -285,7 +285,8 @@ export default function EditProductPage() {
 
     const availableGroups = useMemo(() => {
         if (!selectedCategory) return [];
-        return filterCategories.find(c => c.name === selectedCategory)?.groups || [];
+        const category = filterCategories.find(c => c.name === selectedCategory);
+        return category ? category.groups : [];
     }, [selectedCategory, filterCategories]);
 
     const availableSubcategories = useMemo(() => {
