@@ -163,7 +163,7 @@ export default function OrderDetailsPage() {
       const orderRef = doc(db, 'orders', order.id);
 
       try {
-          batch.update(orderRef, { status: newStatus });
+          batch.update(orderRef, { status: newStatus, updatedAt: serverTimestamp() });
           const noteContent = `Order status changed from ${order.status} to ${newStatus}.`;
           
           const notesCollectionRef = collection(db, 'orders', order.id, 'notes');

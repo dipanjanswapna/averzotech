@@ -17,6 +17,7 @@ import {
 import { Button } from './ui/button';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
+import { SheetClose } from './ui/sheet';
 
 export function MegaMenu({ category, isMobile = false }: { category: any, isMobile?: boolean }) {
   const [open, setOpen] = React.useState(false);
@@ -39,7 +40,9 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
   if (isMobile) {
     if (!category.subCategories || category.subCategories.length === 0) {
         return (
-             <Link href={category.href} className='flex-1 text-left py-2.5 font-semibold text-base'>{category.name}</Link>
+             <SheetClose asChild>
+                <Link href={category.href} className='flex-1 text-left py-2.5 font-semibold text-base'>{category.name}</Link>
+            </SheetClose>
         )
     }
 
@@ -54,16 +57,20 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
                 {category.subCategories.map((group: any) => (
                     <AccordionItem value={group.group} key={group.group} className="border-none">
                         <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:no-underline">
-                            <Link href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}`}>
-                                {group.group}
-                            </Link>
+                            <SheetClose asChild>
+                                <Link href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}`}>
+                                    {group.group}
+                                </Link>
+                            </SheetClose>
                         </AccordionTrigger>
                          <AccordionContent className="pl-4">
                             <div className="flex flex-col space-y-2">
                             {group.items.map((sub: string) => (
-                                <Link key={sub} href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}&subcategory=${encodeURIComponent(sub)}`} className="text-muted-foreground hover:text-foreground text-sm py-1.5">
-                                  {sub}
-                                </Link>
+                                <SheetClose asChild key={sub}>
+                                    <Link href={`/shop?category=${encodeURIComponent(category.name)}&group=${encodeURIComponent(group.group)}&subcategory=${encodeURIComponent(sub)}`} className="text-muted-foreground hover:text-foreground text-sm py-1.5">
+                                    {sub}
+                                    </Link>
+                                </SheetClose>
                               ))}
                             </div>
                         </AccordionContent>
