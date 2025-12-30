@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bkashPaymentRequest } from '@/lib/bkash';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 
 // A simple in-memory check for admin role would be insecure.
 // In a real app, use Firebase Auth tokens and custom claims to verify admin status.
@@ -29,11 +29,11 @@ export async function POST(req: NextRequest) {
         const refundResponse = await bkashPaymentRequest('refund', refundBody);
 
         if (refundResponse.refundTransactionStatus === 'Completed') {
-            // Optionally, log the refund event in Firestore.
-            // For example, add a note to the order.
+            // Find the order associated with this transaction
             const ordersRef = collection(db, 'orders');
             const q = query(ordersRef, where("paymentDetails.trxID", "==", trxId));
             const querySnapshot = await getDocs(q);
+            
             if (!querySnapshot.empty) {
                 const orderDoc = querySnapshot.docs[0];
                 const notesCollection = collection(db, 'orders', orderDoc.id, 'notes');
@@ -42,6 +42,11 @@ export async function POST(req: NextRequest) {
                     author: 'System (bKash Refund)',
                     date: serverTimestamp()
                 });
+
+                 await updateDoc(orderDoc.ref, {
+                    status: 'Cancelled', // Or a new status like 'Refunded'
+                    updatedAt: serverTimestamp(),
+                 });
             }
 
             return NextResponse.json(refundResponse, { status: 200 });

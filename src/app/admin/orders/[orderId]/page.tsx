@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -265,7 +264,7 @@ export default function OrderDetailsPage() {
         const result = await response.json();
         if (response.ok) {
             toast({ title: "Refund Successful", description: `Refund of ৳${result.refundAmount} processed. TrxID: ${result.refundTrxId}` });
-            await handleAddNote(`Refund of ৳${result.refundAmount} processed. TrxID: ${result.refundTrxId}`, 'System');
+            // The API now automatically adds a note, so we don't need to do it here.
             setRefundAmount('');
             setRefundReason('');
         } else {
@@ -316,7 +315,7 @@ export default function OrderDetailsPage() {
   };
   const paymentMethodDisplay = order.payment.method === 'cod' ? 'Cash on Delivery' : order.payment.method;
 
-  const isRefundable = order.payment.method === 'bkash' && (order.status === 'Processing' || order.status === 'Fulfilled') && order.paymentDetails?.trxID;
+  const isRefundable = order.payment.method === 'bkash' && (order.status === 'Processing' || order.status === 'Fulfilled' || order.status === 'Cancelled') && order.paymentDetails?.trxID;
 
   return (
     <div className="space-y-8">
