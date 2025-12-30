@@ -1,8 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, runTransaction, updateDoc } from 'firebase/firestore';
-import { createParcel } from '@/lib/redx';
+import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc } from 'firebase/firestore';
 import { Order } from '@/types';
 
 export async function POST(req: NextRequest) {
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
             },
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-            trackingId: '',
+            trackingId: '', // Initialize trackingId as empty
         }
 
         batch.set(newOrderRef, finalOrderData);
@@ -53,18 +52,6 @@ export async function POST(req: NextRequest) {
         }
         
         await batch.commit();
-
-        try {
-            const parcelResponse = await createParcel(finalOrderData, newOrderRef.id);
-            if (parcelResponse.tracking_id) {
-                await updateDoc(newOrderRef, { trackingId: parcelResponse.tracking_id });
-            } else {
-                 console.error("Failed to get tracking ID from RedX for COD order:", newOrderRef.id);
-            }
-        } catch (redxError) {
-             console.error("RedX parcel creation failed for COD order:", newOrderRef.id, redxError);
-             // Don't fail the whole order, just log the error. Admin can handle it manually.
-        }
 
         return NextResponse.json({ orderId: newOrderRef.id }, { status: 201 });
 

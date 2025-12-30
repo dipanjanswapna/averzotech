@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, deleteDoc, writeBatch, increment, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { executePayment } from '@/lib/bkash';
-import { createParcel } from '@/lib/redx';
 import { Order } from '@/types';
 
 
@@ -41,17 +40,6 @@ async function finalizeOrder(paymentDetails: any) {
     
     batch.delete(pendingOrderRef);
     await batch.commit();
-
-    try {
-        const parcelResponse = await createParcel(finalOrderData, newOrderRef.id);
-        if (parcelResponse.tracking_id) {
-            await updateDoc(newOrderRef, { trackingId: parcelResponse.tracking_id });
-        } else {
-            console.error("Failed to get tracking ID from RedX for bKash order:", newOrderRef.id);
-        }
-    } catch (redxError) {
-        console.error("RedX parcel creation failed for bKash order:", newOrderRef.id, redxError);
-    }
     
     return newOrderRef.id;
 }

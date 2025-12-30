@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc, query, where, getDocs, limit, updateDoc } from 'firebase/firestore';
-import { createParcel } from '@/lib/redx';
 import { Order } from '@/types';
 
 async function findOrder(tran_id: string): Promise<string | null> {
@@ -72,17 +71,6 @@ export async function POST(req: NextRequest) {
         batch.delete(pendingOrderRef);
 
         await batch.commit();
-
-        try {
-            const parcelResponse = await createParcel(finalOrderData, newOrderRef.id);
-            if (parcelResponse.tracking_id) {
-                await updateDoc(newOrderRef, { trackingId: parcelResponse.tracking_id });
-            } else {
-                 console.error("Failed to get tracking ID from RedX for SSLCommerz order:", newOrderRef.id);
-            }
-        } catch (redxError) {
-             console.error("RedX parcel creation failed for SSLCommerz order:", newOrderRef.id, redxError);
-        }
 
         return NextResponse.redirect(new URL(`/order-confirmation?orderId=${newOrderRef.id}`, appUrl), { status: 302 });
 

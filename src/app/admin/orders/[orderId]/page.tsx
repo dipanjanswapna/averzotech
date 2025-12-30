@@ -40,7 +40,6 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
-import { updateParcelStatus } from '@/lib/redx';
 import { useAuth } from '@/hooks/use-auth';
 
 
@@ -114,6 +113,8 @@ export default function OrderDetailsPage() {
   const [newStatus, setNewStatus] = useState('');
   const [newNote, setNewNote] = useState('');
   const [trackingId, setTrackingId] = useState('');
+  const [isCreatingParcel, setIsCreatingParcel] = useState(false);
+
 
   // Refund state
   const [refundAmount, setRefundAmount] = useState('');
@@ -177,15 +178,6 @@ export default function OrderDetailsPage() {
                     batch.update(productRef, { "inventory.stock": increment(item.quantity) });
                 }
               }
-
-              if (order.trackingId) {
-                  try {
-                      await updateParcelStatus(order.trackingId, 'cancelled', 'Order cancelled by merchant');
-                       toast({ title: "Parcel Update", description: "Cancellation request sent to RedX." });
-                  } catch (redxError: any) {
-                       toast({ title: "RedX Error", description: `Could not cancel parcel on RedX: ${redxError.message}`, variant: "destructive" });
-                  }
-              }
           }
 
           await batch.commit();
@@ -200,20 +192,26 @@ export default function OrderDetailsPage() {
       }
   };
 
-  const handleUpdateTracking = async () => {
+  const handleCreateParcel = async () => {
       if (!order) return;
-      const orderRef = doc(db, 'orders', order.id);
+      setIsCreatingParcel(true);
       try {
-          await updateDoc(orderRef, { trackingId: trackingId });
-          const noteContent = `Tracking ID updated to ${trackingId}.`;
-          await handleAddNote(noteContent, user?.fullName || 'Admin');
-          toast({
-              title: "Tracking Updated",
-              description: `The tracking ID has been saved.`
+          const response = await fetch('/api/shipping/create-parcel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderId: order.id }),
           });
-      } catch (error) {
-          console.error("Error updating tracking ID: ", error);
-          toast({ title: "Error", description: "Failed to save tracking ID.", variant: "destructive" });
+          const result = await response.json();
+          if (response.ok) {
+              setTrackingId(result.trackingId);
+              toast({ title: "Parcel Created", description: `RedX parcel created with Tracking ID: ${result.trackingId}` });
+          } else {
+              throw new Error(result.error || "Failed to create parcel.");
+          }
+      } catch (error: any) {
+          toast({ title: "Parcel Creation Failed", description: error.message, variant: "destructive" });
+      } finally {
+          setIsCreatingParcel(false);
       }
   };
   
@@ -523,14 +521,18 @@ export default function OrderDetailsPage() {
             </Card>
              <Card>
                  <CardHeader>
-                    <CardTitle>Tracking Information</CardTitle>
+                    <CardTitle>Shipping Management</CardTitle>
+                    <CardDescription>Create parcel for shipping and track it.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <Input placeholder="Enter tracking ID" value={trackingId} onChange={e => setTrackingId(e.target.value)} />
+                <CardContent className="space-y-4">
+                    <div>
+                        <Label htmlFor='tracking-id'>Tracking ID</Label>
+                        <Input id="tracking-id" placeholder="Tracking ID will appear here" value={trackingId} readOnly />
+                    </div>
+                     <Button className="w-full" variant="secondary" onClick={handleCreateParcel} disabled={!!trackingId || isCreatingParcel}>
+                         <Truck className="mr-2 h-4 w-4"/> {isCreatingParcel ? "Creating..." : "Create RedX Parcel"}
+                    </Button>
                 </CardContent>
-                 <CardFooter>
-                    <Button className="w-full" variant="secondary" onClick={handleUpdateTracking}>Save Tracking ID</Button>
-                </CardFooter>
             </Card>
              {isRefundable && (
                  <Card>
@@ -570,19 +572,6 @@ export default function OrderDetailsPage() {
                      </div>
                      <Textarea placeholder="Add a note..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
                      <Button size="sm" onClick={() => handleAddNote(newNote, user?.fullName || 'Admin')}>Add Note</Button>
-                </CardContent>
-            </Card>
-            <Card>
-                 <CardHeader>
-                    <CardTitle>Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" asChild>
-                        <Link href={`/invoice/${orderId}`} target="_blank">
-                            <FileText className="mr-2 h-4 w-4"/> Invoice
-                        </Link>
-                    </Button>
-                    <Button variant="outline" onClick={() => handleTrackPackage()} disabled={isTrackingLoading || !trackingId}><Truck className="mr-2 h-4 w-4"/> Track</Button>
                 </CardContent>
             </Card>
         </div>
