@@ -23,13 +23,13 @@ import { ChevronLeft, Camera } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, writeBatch, increment } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { useFirebase } from '@/firebase';
 
 interface ReturnItem {
     id: string;
@@ -71,6 +71,7 @@ export default function EditReturnDetailsPage() {
     const returnId = params.returnId as string;
     const { toast } = useToast();
     const { user } = useAuth();
+    const { db } = useFirebase();
     
     const [request, setRequest] = useState<ReturnRequest | null>(null);
     const [originalOrder, setOriginalOrder] = useState<Order | null>(null);
@@ -80,7 +81,7 @@ export default function EditReturnDetailsPage() {
     const [isUpdating, setIsUpdating] = useState(false);
 
     useEffect(() => {
-        if (returnId) {
+        if (returnId && db) {
             const returnRef = doc(db, 'returns', returnId);
             const notesRef = collection(db, 'returns', returnId, 'notes');
             const qNotes = query(notesRef, orderBy('date', 'asc'));
@@ -116,7 +117,7 @@ export default function EditReturnDetailsPage() {
                 unsubscribeNotes();
             };
         }
-    }, [returnId, toast, router, originalOrder]);
+    }, [returnId, toast, router, originalOrder, db]);
 
      const handleRefund = async (batch: any) => {
         if (!request || !originalOrder) return;
@@ -154,7 +155,7 @@ export default function EditReturnDetailsPage() {
     }
     
     const handleUpdateStatus = async () => {
-        if (!request || !newStatus || newStatus === request.status) return;
+        if (!request || !newStatus || newStatus === request.status || !db) return;
 
         setIsUpdating(true);
         const batch = writeBatch(db);
@@ -189,7 +190,7 @@ export default function EditReturnDetailsPage() {
     };
     
     const handleAddNote = async (noteContent: string, author: string) => {
-        if (!request || !noteContent.trim()) return;
+        if (!request || !noteContent.trim() || !db) return;
         const notesCollection = collection(db, 'returns', request.id, 'notes');
         try {
             await addDoc(notesCollection, { note: noteContent, author: author, date: serverTimestamp() });

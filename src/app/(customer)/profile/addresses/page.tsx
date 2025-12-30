@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -23,7 +24,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
@@ -31,6 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { divisions } from '@/lib/bangladesh-geo';
 import { Textarea } from '@/components/ui/textarea';
 import { getAreasByDistrict, RedXArea } from '@/lib/redx';
+import { useFirebase } from '@/firebase';
 
 interface Address {
     id: string;
@@ -48,6 +49,7 @@ interface Address {
 
 export default function AddressesPage() {
     const { user } = useAuth();
+    const { db } = useFirebase();
     const { toast } = useToast();
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [loading, setLoading] = useState(true);
@@ -108,7 +110,7 @@ export default function AddressesPage() {
 
 
     const fetchAddresses = async () => {
-        if (!user) return;
+        if (!user || !db) return;
         setLoading(true);
         try {
             const addressesCol = collection(db, 'users', user.uid, 'addresses');
@@ -185,7 +187,7 @@ export default function AddressesPage() {
     };
 
     const handleSetDefault = async (addressId: string) => {
-        if(!user) return;
+        if(!user || !db) return;
         const batch = writeBatch(db);
         
         addresses.forEach(addr => {
@@ -209,7 +211,7 @@ export default function AddressesPage() {
     };
 
     const handleSubmit = async () => {
-        if (!user) return;
+        if (!user || !db) return;
         if (!formData.division || !formData.district || !formData.upazila || !formData.streetAddress || !formData.phone.trim()) {
             toast({ title: "Incomplete Address", description: "Please fill all required address fields including phone number.", variant: "destructive" });
             return;
@@ -260,7 +262,7 @@ export default function AddressesPage() {
     };
     
     const handleDelete = async (addressId: string) => {
-        if(!user) return;
+        if(!user || !db) return;
         const docRef = doc(db, 'users', user.uid, 'addresses', addressId);
         try {
             await deleteDoc(docRef);

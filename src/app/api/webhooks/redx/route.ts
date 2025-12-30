@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/firebase-server';
 
 const REDX_STATUS_MAP: { [key: string]: string } = {
     'ready-for-delivery': 'Shipped',

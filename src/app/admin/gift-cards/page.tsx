@@ -42,7 +42,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 
 interface GiftCard {
   id: string;
@@ -58,8 +58,10 @@ export default function GiftCardsPage() {
   const { toast } = useToast();
   const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const { db } = useFirebase();
 
   const fetchGiftCards = async () => {
+    if (!db) return;
     setLoading(true);
     try {
       const giftCardsCollection = collection(db, 'giftCards');
@@ -97,7 +99,7 @@ export default function GiftCardsPage() {
 
   useEffect(() => {
     fetchGiftCards();
-  }, []);
+  }, [db]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -108,6 +110,7 @@ export default function GiftCardsPage() {
   };
 
   const handleDeleteCard = async (cardId: string) => {
+    if (!db) return;
     try {
       await deleteDoc(doc(db, "giftCards", cardId));
       toast({
@@ -122,6 +125,7 @@ export default function GiftCardsPage() {
   };
 
   const handleToggleStatus = async (card: GiftCard) => {
+      if (!db) return;
       const newStatus = card.status === 'Disabled' ? 'Active' : 'Disabled';
       const cardRef = doc(db, 'giftCards', card.id);
       try {

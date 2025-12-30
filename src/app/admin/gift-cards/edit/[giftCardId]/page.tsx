@@ -22,7 +22,6 @@ import { ChevronLeft, CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -31,12 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useFirebase } from '@/firebase';
 
 export default function EditGiftCardPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
   const giftCardId = params.giftCardId as string;
+  const { db } = useFirebase();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -52,7 +53,7 @@ export default function EditGiftCardPage() {
 
 
   useEffect(() => {
-    if (!giftCardId) return;
+    if (!giftCardId || !db) return;
 
     const fetchGiftCard = async () => {
       setIsFetching(true);
@@ -81,10 +82,10 @@ export default function EditGiftCardPage() {
       }
     };
     fetchGiftCard();
-  }, [giftCardId, router, toast]);
+  }, [giftCardId, router, toast, db]);
 
   const handleUpdateCard = async () => {
-    if (!recipientEmail || !initialValue || !expiryDate) {
+    if (!recipientEmail || !initialValue || !expiryDate || !db) {
       toast({
         title: 'Missing Fields',
         description: 'Please fill in all required fields.',

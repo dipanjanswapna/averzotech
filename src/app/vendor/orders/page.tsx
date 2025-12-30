@@ -28,8 +28,8 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 
 interface Order {
     id: string;
@@ -44,11 +44,11 @@ export default function VendorOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
-    const db = getFirestore(app);
+    const { db } = useFirebase();
 
     useEffect(() => {
         const fetchVendorOrders = async () => {
-            if (!user?.fullName) return;
+            if (!user?.fullName || !db) return;
             setLoading(true);
             try {
                 // 1. Get all product IDs for the current vendor

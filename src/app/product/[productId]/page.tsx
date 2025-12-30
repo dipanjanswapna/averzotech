@@ -1,7 +1,7 @@
 
 
 import { SiteHeader } from '@/components/site-header';
-import { doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Metadata } from 'next';
 import { ProductDetails } from '@/components/product-details';
@@ -67,13 +67,42 @@ export async function generateMetadata({ params }: { params: { productId: string
   };
 }
 
-export default function ProductDetailsPage() {
+export default async function ProductDetailsPage({ params }: { params: { productId: string } }) {
+    let initialProductData = null;
+    let error = null;
+
+    try {
+        const productRef = doc(db, 'products', params.productId);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+            initialProductData = { id: productSnap.id, ...productSnap.data() };
+
+            const productsRef = collection(db, "products");
+            const q = query(productsRef, where('organization.category', '==', initialProductData.organization.category), limit(10));
+            const comparableSnap = await getDocs(q);
+            const comparableList = comparableSnap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter((p: any) => p.id !== params.productId);
+            initialProductData.comparableProducts = comparableList;
+        } else {
+            error = 'Product not found.';
+        }
+    } catch (e) {
+        console.error("Failed to fetch initial product data:", e);
+        error = 'Failed to load product details.';
+    }
+    
+
     return (
         <React.Suspense fallback={<div className="flex h-screen items-center justify-center">Loading product details...</div>}>
             <div className="flex min-h-screen flex-col bg-background">
                 <SiteHeader />
-                <ProductDetails />
+                <ProductDetails 
+                  initialProductData={initialProductData} 
+                  error={error} 
+                />
             </div>
         </React.Suspense>
     )
 }
+

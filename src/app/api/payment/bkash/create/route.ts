@@ -2,10 +2,10 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 import { createPayment } from '@/lib/bkash';
+import { db } from '@/firebase-server';
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
@@ -28,13 +28,13 @@ export async function POST(req: NextRequest) {
             `${appUrl}/api/payment/bkash/callback`
         );
 
-        if (createPaymentData.status === 'success' && createPaymentData.bkashURL) {
+        if (createPaymentData.bkashURL) {
             return NextResponse.json({ paymentUrl: createPaymentData.bkashURL });
         } else {
             console.error("bKash create payment failed:", createPaymentData);
             return NextResponse.json({
                 error: 'Failed to create bKash payment session.',
-                statusMessage: createPaymentData.statusMessage
+                statusMessage: createPaymentData.statusMessage || createPaymentData.errorMessage
             }, { status: 500 });
         }
 

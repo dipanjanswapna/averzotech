@@ -16,26 +16,26 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { doc, getDoc, updateDoc, writeBatch, increment, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { VendorInvoice } from '@/types';
+import { useFirebase } from '@/firebase';
 
 export default function VendorInvoiceDetailsPage() {
   const params = useParams();
   const invoiceId = params.invoiceId as string;
   const router = useRouter();
   const { toast } = useToast();
-  const db = getFirestore(app);
+  const { db } = useFirebase();
 
   const [invoice, setInvoice] = useState<VendorInvoice | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    if (invoiceId) {
+    if (invoiceId && db) {
         const fetchInvoice = async () => {
             setLoading(true);
             const invoiceRef = doc(db, 'vendorInvoices', invoiceId);
@@ -53,7 +53,7 @@ export default function VendorInvoiceDetailsPage() {
   }, [invoiceId, toast, router, db]);
 
   const handleStockUpdate = async () => {
-      if (!invoice) return;
+      if (!invoice || !db) return;
       setIsUpdating(true);
       const batch = writeBatch(db);
 

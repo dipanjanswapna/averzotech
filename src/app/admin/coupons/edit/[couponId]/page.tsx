@@ -27,13 +27,13 @@ import { ChevronLeft, CalendarIcon, Info, PlusCircle, XCircle, Check } from 'luc
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, getDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -46,6 +46,7 @@ export default function EditCouponPage() {
   const params = useParams();
   const { toast } = useToast();
   const couponId = params.couponId as string;
+  const { db } = useFirebase();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -67,7 +68,7 @@ export default function EditCouponPage() {
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
 
   useEffect(() => {
-    if (!couponId) return;
+    if (!couponId || !db) return;
 
     const fetchCouponAndProducts = async () => {
       setIsFetching(true);
@@ -115,7 +116,7 @@ export default function EditCouponPage() {
     };
 
     fetchCouponAndProducts();
-  }, [couponId, router, toast]);
+  }, [couponId, router, toast, db]);
 
   const handleToggleProduct = (product: Product) => {
     setSelectedProducts(prevSelected => {
@@ -129,7 +130,7 @@ export default function EditCouponPage() {
   }
 
   const handleUpdateCoupon = async () => {
-    if (!code || !value || !startDate || !endDate) {
+    if (!code || !value || !startDate || !endDate || !db) {
       toast({ title: 'Missing Fields', description: 'Please fill in all required fields.', variant: 'destructive' });
       return;
     }

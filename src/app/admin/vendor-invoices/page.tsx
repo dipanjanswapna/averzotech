@@ -28,17 +28,18 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { VendorInvoice } from '@/types';
+import { useFirebase } from '@/firebase';
 
 
 export default function VendorInvoicesPage() {
   const [invoices, setInvoices] = useState<VendorInvoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const db = getFirestore(app);
+  const { db } = useFirebase();
 
   useEffect(() => {
+    if (!db) return;
     const fetchInvoices = async () => {
       setLoading(true);
       try {

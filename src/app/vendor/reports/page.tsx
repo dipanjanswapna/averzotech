@@ -25,9 +25,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 
 interface OrderItem {
     id: string;
@@ -60,6 +60,7 @@ const LoadingSkeleton = () => (
 
 export default function VendorReportsPage() {
     const { user } = useAuth();
+    const { db } = useFirebase();
     const [vendorProducts, setVendorProducts] = useState<string[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
@@ -69,8 +70,9 @@ export default function VendorReportsPage() {
     });
 
     useEffect(() => {
+        if (!user?.fullName || !db) return;
         const fetchData = async () => {
-            if (!user?.fullName) return;
+            
             setLoading(true);
             try {
                 // 1. Get all product IDs for the current vendor
@@ -110,7 +112,7 @@ export default function VendorReportsPage() {
         if(user) {
             fetchData();
         }
-    }, [user]);
+    }, [user, db]);
 
     const filteredOrders = useMemo(() => {
         if (!date?.from || !date?.to) return orders;

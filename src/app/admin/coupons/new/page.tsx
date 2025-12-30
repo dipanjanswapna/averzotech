@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -23,17 +23,17 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { ChevronLeft, CalendarIcon, Info, PlusCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, CalendarIcon, Info, PlusCircle, XCircle, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
+import { useFirebase } from '@/firebase';
 
 interface Product {
   id: string;
@@ -44,6 +44,7 @@ interface Product {
 export default function NewCouponPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { db } = useFirebase();
 
   const [code, setCode] = useState('');
   const [description, setDescription] = useState('');
@@ -61,7 +62,8 @@ export default function NewCouponPage() {
   const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
 
 
-  useState(() => {
+  useEffect(() => {
+    if (!db) return;
     const fetchProducts = async () => {
       try {
         const productsCollection = collection(db, 'products');
@@ -76,7 +78,7 @@ export default function NewCouponPage() {
       }
     };
     fetchProducts();
-  });
+  },[db]);
 
   const generateRandomCode = () => {
     const randomString = Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -95,7 +97,7 @@ export default function NewCouponPage() {
   }
 
   const handleSaveCoupon = async () => {
-    if (!code || !value || !startDate || !endDate) {
+    if (!code || !value || !startDate || !endDate || !db) {
       toast({
         title: 'Missing Fields',
         description: 'Please fill in all required fields.',

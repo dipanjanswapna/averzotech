@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -231,7 +232,7 @@ export default function VendorProductsPage() {
                            </DropdownMenuItem>
                            <DropdownMenuSeparator />
                              <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-600 focus:text-red-600 focus:bg-red-50" disabled={product.organization.status === 'active'}>
                                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </DropdownMenuItem>
                            </AlertDialogTrigger>

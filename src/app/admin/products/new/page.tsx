@@ -36,14 +36,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { app, db } from '@/lib/firebase';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
+import { useFirebase } from '@/firebase';
 
 interface ImageObject {
     file?: File;
@@ -56,9 +56,10 @@ interface Vendor {
 }
 
 export default function NewProductPage() {
-    const storage = getStorage(app);
+    const storage = getStorage();
     const { toast } = useToast();
     const router = useRouter();
+    const { db } = useFirebase();
 
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -117,12 +118,13 @@ export default function NewProductPage() {
     const [vendors, setVendors] = useState<Vendor[]>([]);
 
      useEffect(() => {
+        if (!db) return;
         const fetchVendors = async () => {
             try {
                 const vendorsCollection = collection(db, 'users');
-                const vendorSnapshot = await getDocs(vendorsCollection);
+                const q = query(vendorsCollection, where("role", "==", "vendor"));
+                const vendorSnapshot = await getDocs(q);
                 const vendorList = vendorSnapshot.docs
-                    .filter(doc => doc.data().role === 'vendor')
                     .map(doc => ({ uid: doc.id, fullName: doc.data().fullName } as Vendor));
                 setVendors(vendorList);
             } catch (error) {
@@ -130,7 +132,7 @@ export default function NewProductPage() {
             }
         };
         fetchVendors();
-    }, []);
+    }, [db]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -270,6 +272,7 @@ export default function NewProductPage() {
     };
 
     const handleSaveProduct = async () => {
+        if (!db) return;
         setIsLoading(true);
         try {
             // 1. Upload images to Firebase Storage if they are files
@@ -632,7 +635,7 @@ export default function NewProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map((g:any) => <SelectItem key={g.name} value={g.name}>{g.name}</SelectItem>)}
+                          {availableGroups.map((g:any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>

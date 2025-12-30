@@ -14,10 +14,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Logo } from "@/components/logo"
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
-import { db } from "@/lib/firebase"
 import { useCart } from "@/hooks/use-cart"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useFirebase } from "@/firebase"
 
 interface Order {
     id: string;
@@ -72,6 +72,7 @@ interface TrackingUpdate {
 function ConfirmationContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { db } = useFirebase();
     const orderId = searchParams.get('orderId');
     const transactionId = searchParams.get('tran_id');
     const { clearCart, cart } = useCart();
@@ -83,6 +84,7 @@ function ConfirmationContent() {
     const [isTrackingLoading, setIsTrackingLoading] = React.useState(false);
     
     React.useEffect(() => {
+        if (!db) return;
         const fetchOrder = async () => {
             setLoading(true);
             let orderData: Order | null = null;
@@ -137,7 +139,7 @@ function ConfirmationContent() {
         } else {
             router.push('/');
         }
-    }, [orderId, transactionId, router, toast, clearCart, cart.length]);
+    }, [orderId, transactionId, router, toast, clearCart, cart.length, db]);
 
 
     const handlePrint = () => {

@@ -2,10 +2,10 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
 import { doc, getDoc, deleteDoc, writeBatch, increment, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { executePayment } from '@/lib/bkash';
 import { Order } from '@/types';
+import { db } from '@/firebase-server';
 
 
 async function finalizeOrder(paymentDetails: any) {

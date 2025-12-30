@@ -28,20 +28,21 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import { VendorInvoice } from '@/types';
+import { useFirebase } from '@/firebase';
+
 
 export default function VendorInvoicesPage() {
   const [invoices, setInvoices] = useState<VendorInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const db = getFirestore(app);
+  const { db } = useFirebase();
 
   useEffect(() => {
     const fetchInvoices = async () => {
-      if (!user?.fullName) return;
+      if (!user?.fullName || !db) return;
       setLoading(true);
       try {
         const invoicesCollection = collection(db, 'vendorInvoices');

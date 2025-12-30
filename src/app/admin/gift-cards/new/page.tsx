@@ -22,14 +22,15 @@ import { ChevronLeft, CalendarIcon, Gift } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { nanoid } from 'nanoid';
+import { useFirebase } from '@/firebase';
 
 
 export default function NewGiftCardPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { db } = useFirebase();
 
   const [recipientEmail, setRecipientEmail] = useState('');
   const [initialValue, setInitialValue] = useState('');
@@ -38,7 +39,7 @@ export default function NewGiftCardPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleIssueCard = async () => {
-    if (!recipientEmail || !initialValue || !expiryDate) {
+    if (!recipientEmail || !initialValue || !expiryDate || !db) {
       toast({
         title: 'Missing Fields',
         description: 'Please fill in all required fields.',

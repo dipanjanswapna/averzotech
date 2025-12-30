@@ -10,10 +10,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useState } from 'react';
 import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile, signOut } from "firebase/auth";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
-import { app } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Chrome } from 'lucide-react';
+import { useFirebase } from '@/firebase';
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
@@ -22,12 +22,12 @@ export default function RegisterPage() {
   const [role, setRole] = useState<'customer' | 'vendor' | 'delivery'>('customer');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  const { auth, db } = useFirebase();
   const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth || !db) return;
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -76,6 +76,7 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignUp = async () => {
+    if (!auth || !db) return;
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {

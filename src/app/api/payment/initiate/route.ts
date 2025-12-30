@@ -1,8 +1,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
+import { db } from '@/firebase-server';
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();

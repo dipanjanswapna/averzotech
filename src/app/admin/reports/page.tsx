@@ -25,8 +25,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFirebase } from '@/firebase';
 
 interface Order {
     id: string;
@@ -69,8 +69,10 @@ export default function ReportsPage() {
         from: addDays(new Date(), -29),
         to: new Date(),
     });
+    const { db } = useFirebase();
 
     useEffect(() => {
+        if (!db) return;
         const fetchOrders = async () => {
             setLoading(true);
             try {
@@ -86,7 +88,7 @@ export default function ReportsPage() {
             }
         };
         fetchOrders();
-    }, []);
+    }, [db]);
 
     const filteredOrders = useMemo(() => {
         if (!date?.from || !date?.to) return orders;

@@ -10,6 +10,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { Roboto } from 'next/font/google';
 import { DynamicComponents } from '@/components/dynamic-components';
 import { CartSheet } from '@/components/cart-sheet';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const roboto = Roboto({
   subsets: ['latin'],
@@ -29,22 +30,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${roboto.variable}`}>
       <body className="font-sans antialiased">
-        <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <div className="flex flex-col min-h-screen">
-                <main className="flex-grow">
-                  {children}
-                </main>
-                <CartSheet />
-                <DynamicComponents />
-                <SiteFooter />
-              </div>
-              <MobileBottomNav />
-              <Toaster />
-            </WishlistProvider>
-          </CartProvider>
-        </AuthProvider>
+        <FirebaseClientProvider>
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <div className="flex flex-col min-h-screen">
+                  <main className="flex-grow">
+                    {children}
+                  </main>
+                  <CartSheet />
+                  <DynamicComponents />
+                  <SiteFooter />
+                </div>
+                <MobileBottomNav />
+                <Toaster />
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

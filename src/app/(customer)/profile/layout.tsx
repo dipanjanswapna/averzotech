@@ -17,10 +17,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAuth, signOut } from "firebase/auth";
-import { app } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useFirebase } from "@/firebase";
 
 export default function ProfileLayout({
   children,
@@ -78,11 +78,12 @@ const navItems = [
 
 function Sidebar({ user }: { user: any }) {
     const pathname = usePathname();
-    const auth = getAuth(app);
+    const { auth } = useFirebase();
     const { toast } = useToast();
     const router = useRouter();
 
     const handleLogout = async () => {
+        if (!auth) return;
         await signOut(auth);
         toast({ title: "Logged Out" });
         router.push('/');
@@ -135,11 +136,12 @@ function Sidebar({ user }: { user: any }) {
 
 function MobileSidebar({ user }: { user: any }) {
      const pathname = usePathname();
-     const auth = getAuth(app);
+     const { auth } = useFirebase();
      const { toast } = useToast();
      const router = useRouter();
 
      const handleLogout = async () => {
+        if (!auth) return;
         await signOut(auth);
         toast({ title: "Logged Out" });
         router.push('/');

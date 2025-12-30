@@ -1,12 +1,10 @@
 
-
 'use client';
 
 import Link from 'next/link';
 import { Menu, Search, ShoppingCart, User, Heart, LogOut, Phone, Facebook, Instagram, Youtube, Twitter } from 'lucide-react';
 import React, { useState } from 'react';
-import { getAuth, signOut } from 'firebase/auth';
-import { app } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -28,6 +26,7 @@ import { useAuth, AppUser } from '@/hooks/use-auth';
 import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
 import { useCart } from '@/hooks/use-cart';
+import { useFirebase } from '@/firebase';
 
 const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
@@ -39,9 +38,9 @@ const getDashboardLink = (user: AppUser | null) => {
 
 export function SiteHeader() {
   const { user } = useAuth();
+  const { auth } = useFirebase();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const auth = getAuth(app);
   const { toast } = useToast();
   const router = useRouter();
   const { cartCount, setIsCartOpen } = useCart();
@@ -57,6 +56,7 @@ export function SiteHeader() {
   }
 
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       toast({

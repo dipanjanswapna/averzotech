@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getAuth, signOut } from 'firebase/auth';
-import { app } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import {
@@ -30,14 +29,16 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { useFirebase } from '@/firebase';
 
 export function AdminSidebar({ user }: { user: any }) {
   const pathname = usePathname();
-  const auth = getAuth(app);
+  const { auth } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
 
   const handleLogout = async () => {
+    if (!auth) return;
     try {
       await signOut(auth);
       toast({

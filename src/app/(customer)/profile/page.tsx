@@ -15,15 +15,14 @@ import { Label } from '@/components/ui/label';
 import { useAuth, AppUser } from '@/hooks/use-auth';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { doc, updateDoc, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
-import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { useFirebase } from '@/firebase';
 
 export default function MyProfilePage() {
     const { user, setUser } = useAuth();
     const { toast } = useToast();
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    const { db, auth } = useFirebase();
 
     const [fullName, setFullName] = useState(user?.fullName || '');
     const [currentPassword, setCurrentPassword] = useState('');
@@ -40,7 +39,7 @@ export default function MyProfilePage() {
     }, [user]);
 
     const handleUpdateDetails = async () => {
-        if (!user || !fullName.trim()) {
+        if (!user || !fullName.trim() || !db) {
             toast({ title: "Name cannot be empty", variant: "destructive" });
             return;
         }
@@ -60,7 +59,7 @@ export default function MyProfilePage() {
     
     const handleUpdatePassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user?.email || !auth.currentUser) return;
+        if (!user?.email || !auth?.currentUser) return;
         if (newPassword !== confirmPassword) {
             toast({ title: "Passwords do not match", variant: "destructive" });
             return;

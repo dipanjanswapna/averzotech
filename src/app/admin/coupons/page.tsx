@@ -41,7 +41,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 
 interface Coupon {
   id: string;
@@ -63,8 +63,10 @@ export default function CouponsPage() {
   const { toast } = useToast();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
+  const { db } = useFirebase();
 
   const fetchCoupons = async () => {
+    if (!db) return;
     setLoading(true);
     try {
       const couponsCollection = collection(db, 'coupons');
@@ -113,7 +115,7 @@ export default function CouponsPage() {
 
   useEffect(() => {
     fetchCoupons();
-  }, []);
+  }, [db]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -124,6 +126,7 @@ export default function CouponsPage() {
   };
   
   const handleDeleteCoupon = async (couponId: string) => {
+    if (!db) return;
     try {
         await deleteDoc(doc(db, "coupons", couponId));
         toast({
@@ -142,6 +145,7 @@ export default function CouponsPage() {
   }
 
   const handleToggleStatus = async (coupon: Coupon) => {
+    if (!db) return;
     const newStatus = coupon.status === 'Disabled' ? 'Active' : 'Disabled'; // This logic might need adjustment based on other statuses
     const couponRef = doc(db, 'coupons', coupon.id);
     try {
@@ -189,7 +193,7 @@ export default function CouponsPage() {
         }
     };
 
-    const getApplicabilityText = (applicability: Coupon['applicability']) => {
+    const getApplicabilityText = (applicability?: Coupon['applicability']) => {
         if (!applicability || applicability.type === 'all') {
             return "All Products";
         }
