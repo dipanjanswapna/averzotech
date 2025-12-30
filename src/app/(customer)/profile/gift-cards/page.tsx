@@ -11,7 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Gift, Copy } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
@@ -29,7 +28,7 @@ interface GiftCard {
 }
 
 export default function MyGiftCardsPage() {
-    const { user } = useAuth();
+    const { user } = useFirebase();
     const { db } = useFirebase();
     const { toast } = useToast();
     const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
