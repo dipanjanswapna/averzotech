@@ -40,11 +40,13 @@ import {
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, getFirestore } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, getFirestore, addDoc, serverTimestamp } from 'firebase/firestore';
 import { app } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface Order {
     id: string;
@@ -59,6 +61,7 @@ export default function MyOrdersPage() {
     const { toast } = useToast();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [cancellationReason, setCancellationReason] = useState('');
     const db = getFirestore(app);
 
     const fetchOrders = async () => {
@@ -73,7 +76,6 @@ export default function MyOrdersPage() {
                 ...doc.data()
             } as Order));
             
-            // Sort orders by creation date on the client side
             orderList.sort((a, b) => {
                 const dateA = a.createdAt?.seconds || 0;
                 const dateB = b.createdAt?.seconds || 0;
@@ -99,14 +101,25 @@ export default function MyOrdersPage() {
             toast({ title: "Cancellation Failed", description: "This order can no longer be cancelled.", variant: "destructive" });
             return;
         }
+        if (!cancellationReason) {
+            toast({ title: "Reason Required", description: "Please select a reason for cancellation.", variant: "destructive" });
+            return;
+        }
 
         const batch = writeBatch(db);
         const orderRef = doc(db, 'orders', order.id);
+        const notesRef = collection(db, 'orders', order.id, 'notes');
         
         try {
              batch.update(orderRef, { status: 'Cancelled' });
+             
+             const newNoteRef = doc(notesRef);
+             batch.set(newNoteRef, {
+                 note: `Order cancelled by customer. Reason: ${cancellationReason}`,
+                 author: 'Customer',
+                 date: serverTimestamp()
+             });
 
-            // Restock products
             for (const item of order.items) {
                 const productRef = doc(db, 'products', item.id);
                 batch.update(productRef, { "inventory.stock": increment(item.quantity) });
@@ -114,7 +127,7 @@ export default function MyOrdersPage() {
 
             await batch.commit();
             toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
-            fetchOrders(); // Refresh orders
+            fetchOrders(); 
         } catch (error) {
              console.error("Error cancelling order: ", error);
              toast({ title: "Error", description: "Failed to cancel the order.", variant: "destructive" });
@@ -209,12 +222,29 @@ export default function MyOrdersPage() {
                                     <AlertDialogHeader>
                                     <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently cancel your order.
+                                        Please select a reason for cancellation. This action cannot be undone.
                                     </AlertDialogDescription>
                                     </AlertDialogHeader>
+                                    <div className="my-4">
+                                        <Label htmlFor="cancellation-reason">Reason for Cancellation</Label>
+                                        <Select onValueChange={setCancellationReason} defaultValue="">
+                                            <SelectTrigger id="cancellation-reason" className="w-full">
+                                                <SelectValue placeholder="Select a reason..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="Ordered by mistake">Ordered by mistake</SelectItem>
+                                                <SelectItem value="Found a better price">Found a better price</SelectItem>
+                                                <SelectItem value="Delivery time is too long">Delivery time is too long</SelectItem>
+                                                <SelectItem value="Changed my mind">Changed my mind</SelectItem>
+                                                <SelectItem value="Other">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <AlertDialogFooter>
                                     <AlertDialogCancel>No</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleCancelOrder(order)}>Yes, Cancel Order</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleCancelOrder(order)} disabled={!cancellationReason}>
+                                        Yes, Cancel Order
+                                    </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
