@@ -25,6 +25,7 @@ import React, { useState } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
+import { Checkbox } from './ui/checkbox';
 
 export interface VendorApplicationData {
     shopInfo: {
@@ -80,6 +81,8 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
     const [branchName, setBranchName] = useState('');
     const [mobileNumber, setMobileNumber] = useState('');
 
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
+
 
     const handleSubmit = () => {
         if (!shopName || !shopAddress || !category || !contactName || !contactPhone || !tradeLicenseUrl || !nidUrl) {
@@ -94,6 +97,11 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
 
         if(paymentMethod === 'mobile' && !mobileNumber) {
             toast({ title: 'Missing Mobile Number', description: 'Please provide mobile banking number.', variant: 'destructive' });
+            return;
+        }
+
+        if (!agreedToTerms) {
+            toast({ title: 'Agreement Required', description: 'You must agree to the terms and conditions to proceed.', variant: 'destructive' });
             return;
         }
         
@@ -223,8 +231,35 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                         )}
                     </CardContent>
                 </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>5. Digital Agreement</CardTitle>
+                        <CardDescription>Please read and agree to our terms of service.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-48 border rounded-md p-4 overflow-y-auto text-xs text-muted-foreground bg-secondary/50">
+                           <p className="font-bold">Averzo Marketplace Vendor Agreement</p>
+                           <p>This agreement is made between Averzo Marketplace ("Averzo") and the vendor ("Vendor"). By signing up, the Vendor agrees to the following terms:</p>
+                           <br />
+                           <p><strong>1. Product Listing:</strong> Vendor agrees to provide accurate and complete information for all products listed. All products must comply with Averzo's quality standards and legal requirements in Bangladesh.</p>
+                           <p><strong>2. Pricing & Payment:</strong> Vendor will supply products at the agreed wholesale price. Averzo will determine the final retail price. Payments for sold goods will be made to the Vendor within 15-30 business days after the sale, as per the selected payment method.</p>
+                           <p><strong>3. Inventory & Fulfillment:</strong> Vendor is responsible for maintaining accurate stock levels. Averzo will handle all customer-facing logistics, including shipping and returns.</p>
+                           <p><strong>4. Quality Control:</strong> Averzo reserves the right to reject any product that does not meet its quality standards. Rejected products will be returned at the Vendor's expense.</p>
+                            <p><strong>5. Termination:</strong> Either party may terminate this agreement with 30 days' written notice. Averzo reserves the right to suspend or terminate a Vendor's account for any breach of these terms.</p>
+                       </div>
+                       <div className="flex items-center space-x-2 mt-4">
+                            <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)} />
+                            <label
+                                htmlFor="terms"
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                                I have read and agree to the terms and conditions.
+                            </label>
+                        </div>
+                    </CardContent>
+                </Card>
                 <div className="flex justify-end">
-                    <Button size="lg" onClick={handleSubmit} disabled={isLoading}>
+                    <Button size="lg" onClick={handleSubmit} disabled={isLoading || !agreedToTerms}>
                         {isLoading ? 'Submitting...' : 'Submit Application'}
                     </Button>
                 </div>
