@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Pencil, Eye, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Eye, Trash2, Upload } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -131,11 +132,26 @@ export default function ProductsPage() {
             Manage all the products in your store.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/products/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Product
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                        Bulk Actions
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => toast({title: "Coming Soon!", description: "Bulk product upload will be available soon."})}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Bulk Upload
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <Button asChild>
+                <Link href="/admin/products/new">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Product
+                </Link>
+            </Button>
+        </div>
       </div>
 
        <Tabs defaultValue="all">
