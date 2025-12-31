@@ -231,7 +231,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                         )}
                     </CardContent>
                 </Card>
-                 <Card>
+                <Card>
                     <CardHeader>
                         <CardTitle>5. Digital Agreement</CardTitle>
                         <CardDescription>Please read and agree to our terms of service.</CardDescription>
