@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -36,7 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
@@ -477,7 +478,7 @@ export default function NewVendorProductPage() {
               </div>
             </CardContent>
           </Card>
-          
+
            <Card>
                 <CardHeader>
                     <CardTitle>Variants & Pricing</CardTitle>
@@ -730,7 +731,7 @@ export default function NewVendorProductPage() {
                   </div>
                 </CardContent>
             </Card>
-           
+
             <Card>
                 <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
