@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -538,3 +539,4 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
+
