@@ -103,6 +103,42 @@ service cloud.firestore {
         allow read, write: if isAdmin() || isOwner(get(/databases/$(database)/documents/returns/$(returnId)).data.userId);
       }
     }
+
+    // COUPONS collection
+    match /coupons/{couponId} {
+      // Admins can manage coupons
+      allow read, write, delete, create: if isAdmin();
+      // Customers can read coupon details
+      allow get, list: if isCustomer();
+    }
+    
+    // CAMPAIGNS collection
+    match /campaigns/{campaignId} {
+        // Anyone can read active campaigns
+        allow get, list: if true;
+        // Admins can manage campaigns
+        allow create, update, delete: if isAdmin();
+    }
+    
+    // SITE_CONTENT collection
+    match /site_content/{docId} {
+        // Public can read site content
+        allow get, list: if true;
+        // Admins can update site content
+        allow write: if isAdmin();
+    }
+
+    // PENDING_ORDERS collection (temporary orders before payment confirmation)
+    match /pending_orders/{orderId} {
+      // Server-side logic handles this, restrict client access
+      allow read, write: if false;
+    }
+    
+    // BKASH_TOKENS collection
+    match /bkash_tokens/{tokenId} {
+        // Only backend can access this
+        allow read, write: if false;
+    }
     
     // VENDOR_INVOICES collection
     match /vendorInvoices/{invoiceId} {
@@ -118,6 +154,14 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       // Admins can read and update applications
       allow read, update: if isAdmin();
+    }
+
+    // VENDORS collection
+    match /vendors/{vendorId} {
+      // Admins can manage vendor profiles
+      allow read, write: if isAdmin();
+      // Vendors can read their own profile
+      allow get: if isVendor() && isOwner(get(/databases/$(database)/documents/vendors/$(vendorId)).data.userId);
     }
   }
 }
