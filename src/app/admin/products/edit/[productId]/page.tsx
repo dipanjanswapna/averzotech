@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { useFirebase } from '@/firebase';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ImageObject {
     file?: File;
@@ -52,6 +53,14 @@ interface ImageObject {
 interface Vendor {
     uid: string;
     fullName: string;
+}
+
+interface Variant {
+    sku: string;
+    wholesalePrice: number;
+    stock: number;
+    color: string;
+    size: string;
 }
 
 export default function EditProductPage() {
@@ -79,6 +88,7 @@ export default function EditProductPage() {
     // Variants
     const [colors, setColors] = useState([{ name: '', hex: '#000000' }]);
     const [sizes, setSizes] = useState(['']);
+    const [variants, setVariants] = useState<Variant[]>([]);
 
     // Specifications
     const [specifications, setSpecifications] = useState([{ label: '', value: '' }]);
@@ -100,14 +110,8 @@ export default function EditProductPage() {
     // Pricing & Inventory
     const [price, setPrice] = useState('');
     const [comparePrice, setComparePrice] = useState('');
-    const [wholesalePrice, setWholesalePrice] = useState('');
-    const [discount, setDiscount] = useState('');
     const [tax, setTax] = useState('');
-    const [sku, setSku] = useState('');
-    const [stock, setStock] = useState('');
-    const [initialStock, setInitialStock] = useState<number | undefined>(undefined);
-    const [availability, setAvailability] = useState('in-stock');
-
+    
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
 
@@ -144,8 +148,16 @@ export default function EditProductPage() {
                     setVendor(data.vendor || '');
                     setImages((data.images || []).map((url: string) => ({ url })));
                     setVideoUrl(data.videoUrl || '');
-                    setColors(data.variants?.colors || [{ name: '', hex: '#000000' }]);
-                    setSizes(data.variants?.sizes || ['']);
+                    
+                    const savedColors = data.variants?.map((v: Variant) => v.color) || [];
+                    const uniqueColors = [...new Set(savedColors)];
+                    setColors(uniqueColors.map(c => ({ name: c, hex: '#000000' }))); // hex is placeholder
+                    
+                    const savedSizes = data.variants?.map((v: Variant) => v.size) || [];
+                    setSizes([...new Set(savedSizes)]);
+
+                    setVariants(data.variants || []);
+                    
                     setSpecifications(data.specifications || [{ label: '', value: '' }]);
                     setOffers(data.offers || '');
                     setReturnPolicy(data.returnPolicy || '');
@@ -158,13 +170,7 @@ export default function EditProductPage() {
                     setTags(data.organization?.tags || []);
                     setPrice(String(data.pricing?.price || ''));
                     setComparePrice(String(data.pricing?.comparePrice || ''));
-                    setWholesalePrice(String(data.pricing?.wholesalePrice || ''));
-                    setDiscount(String(data.pricing?.discount || ''));
                     setTax(String(data.pricing?.tax || ''));
-                    setSku(data.inventory?.sku || '');
-                    setStock(String(data.inventory?.stock || ''));
-                    setInitialStock(data.inventory?.initialStock);
-                    setAvailability(data.inventory?.availability || 'in-stock');
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
                     toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -180,6 +186,28 @@ export default function EditProductPage() {
 
         fetchProductAndVendors();
     }, [productId, router, toast, db]);
+    
+     useEffect(() => {
+        const hasDefinedVariants = colors.length > 0 && sizes.length > 0 && (colors[0]?.name || '') !== '' && (sizes[0] || '') !== '';
+        if (hasDefinedVariants) {
+            const newVariants: Variant[] = [];
+            colors.forEach(color => {
+                if (!color.name) return;
+                sizes.forEach(size => {
+                    if (!size) return;
+                    const existingVariant = variants.find(v => v.color === color.name && v.size === size);
+                    newVariants.push(existingVariant || {
+                        color: color.name,
+                        size: size,
+                        sku: '',
+                        wholesalePrice: 0,
+                        stock: 0,
+                    });
+                });
+            });
+            setVariants(newVariants);
+        }
+    }, [colors, sizes]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -295,9 +323,39 @@ export default function EditProductPage() {
         const group: any = availableGroups.find((g: any) => g.group === selectedGroup);
         return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
+    
+     const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
+        const newVariants = [...variants];
+        (newVariants[index] as any)[field] = value;
+        setVariants(newVariants);
+    };
+
+    const generateAllSKUs = () => {
+        const skuBase = productName.substring(0, 5).toUpperCase().replace(/\s/g, '');
+        const updatedVariants = variants.map(v => {
+             const colorCode = v.color.substring(0, 3).toUpperCase();
+             const sizeCode = v.size.replace(/\s/g, '').toUpperCase();
+             return {
+                 ...v,
+                 sku: v.sku || `${skuBase}-${colorCode}-${sizeCode}`
+             }
+        });
+        setVariants(updatedVariants);
+    }
+
 
     const handleUpdateProduct = async () => {
         if (!productId || !db || !storage) return;
+        
+        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
+            toast({
+                title: "Incomplete Variant Information",
+                description: "Please fill out SKU, Wholesale Price (>0), and Stock for all variants.",
+                variant: 'destructive'
+            });
+            return;
+        }
+
         setIsLoading(true);
         try {
             const imageUrls = await Promise.all(
@@ -310,11 +368,6 @@ export default function EditProductPage() {
                     return imageObj.url;
                 })
             );
-            
-            const currentStock = parseInt(stock, 10) || 0;
-            const newInitialStock = initialStock === undefined || currentStock > initialStock
-              ? currentStock
-              : initialStock;
 
             const productData = {
                 name: productName,
@@ -323,10 +376,7 @@ export default function EditProductPage() {
                 vendor,
                 images: imageUrls,
                 videoUrl,
-                variants: {
-                    colors: colors.filter(c => c.name),
-                    sizes: sizes.filter(s => s),
-                },
+                variants,
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
@@ -344,15 +394,7 @@ export default function EditProductPage() {
                 pricing: {
                     price: parseFloat(price) || 0,
                     comparePrice: parseFloat(comparePrice) || 0,
-                    wholesalePrice: parseFloat(wholesalePrice) || 0,
-                    discount: parseFloat(discount) || 0,
                     tax: parseFloat(tax) || 0,
-                },
-                inventory: {
-                    sku,
-                    stock: currentStock,
-                    initialStock: newInitialStock,
-                    availability,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -483,59 +525,97 @@ export default function EditProductPage() {
               </div>
             </CardContent>
           </Card>
-
+          
            <Card>
-            <CardHeader>
-              <CardTitle>Variants</CardTitle>
-              <CardDescription>Add product variants like colors and sizes.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div>
-                    <Label className="font-semibold">Colors</Label>
-                    <div className="space-y-4 mt-2">
-                        {colors.map((color, index) => (
-                            <div key={index} className="flex items-end gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Label htmlFor={`color-name-${index}`} className="text-xs">Color Name</Label>
-                                    <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} disabled={isLoading} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor={`color-hex-${index}`} className="text-xs">Hex</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} disabled={isLoading} />
-                                        <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" disabled={isLoading} />
+                <CardHeader>
+                    <CardTitle>Variants & Pricing</CardTitle>
+                    <CardDescription>Define product variations and set their inventory and pricing details.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div>
+                        <Label className="font-semibold">Colors</Label>
+                        <div className="space-y-4 mt-2">
+                            {colors.map((color, index) => (
+                                <div key={index} className="flex items-end gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`color-name-${index}`} className="text-xs">Color Name</Label>
+                                        <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} disabled={isLoading} />
                                     </div>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)} disabled={isLoading}>
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor} disabled={isLoading}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Color
-                    </Button>
-                </div>
-                <div className="border-t pt-6">
-                     <Label className="font-semibold">Sizes</Label>
-                     <div className="space-y-4 mt-2">
-                        {sizes.map((size, index) => (
-                            <div key={index} className="flex items-end gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Label htmlFor={`size-value-${index}`} className="text-xs">Size</Label>
-                                    <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} disabled={isLoading}/>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)} disabled={isLoading}>
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`color-hex-${index}`} className="text-xs">Hex</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} disabled={isLoading} />
+                                            <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" disabled={isLoading} />
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)} disabled={isLoading}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor} disabled={isLoading}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Color
+                        </Button>
                     </div>
-                     <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize} disabled={isLoading}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Size
-                    </Button>
-                </div>
-            </CardContent>
+                    <div className="border-t pt-6">
+                        <Label className="font-semibold">Sizes</Label>
+                        <div className="space-y-4 mt-2">
+                            {sizes.map((size, index) => (
+                                <div key={index} className="flex items-end gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`size-value-${index}`} className="text-xs">Size</Label>
+                                        <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} disabled={isLoading}/>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)} disabled={isLoading}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize} disabled={isLoading}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Size
+                        </Button>
+                    </div>
+
+                    {variants.length > 0 && (
+                        <div className="border-t pt-6">
+                            <div className="flex justify-between items-center mb-4">
+                               <Label className="font-semibold">Variant Pricing & Inventory</Label>
+                               <Button size="sm" variant="secondary" onClick={generateAllSKUs}><RefreshCw className="w-4 h-4 mr-2"/>Generate SKUs</Button>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Color</TableHead>
+                                        <TableHead>Size</TableHead>
+                                        <TableHead>SKU</TableHead>
+                                        <TableHead>Wholesale Price (৳)</TableHead>
+                                        <TableHead>Stock</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {variants.map((variant, index) => (
+                                        <TableRow key={`${variant.color}-${variant.size}`}>
+                                            <TableCell>{variant.color}</TableCell>
+                                            <TableCell>{variant.size}</TableCell>
+                                            <TableCell>
+                                                <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} className="h-8"/>
+                                            </TableCell>
+                                            <TableCell>
+                                                 <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} className="h-8"/>
+                                            </TableCell>
+                                            <TableCell>
+                                                 <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} className="h-8"/>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+
+                </CardContent>
           </Card>
 
 
@@ -713,14 +793,9 @@ export default function EditProductPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Pricing & Inventory</CardTitle>
-                    <CardDescription>Set the retail price based on the wholesale price.</CardDescription>
+                    <CardTitle>Pricing</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="wholesale-price">Wholesale Price (৳)</Label>
-                        <Input id="wholesale-price" type="number" placeholder="800" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} disabled={isLoading}/>
-                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-price">Retail Price (৳)</Label>
                         <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
@@ -730,36 +805,13 @@ export default function EditProductPage() {
                         <Input id="product-compare-price" type="number" placeholder="1999" value={comparePrice} onChange={e => setComparePrice(e.target.value)} disabled={isLoading}/>
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="product-discount">Discount (%)</Label>
-                        <Input id="product-discount" type="number" placeholder="10" value={discount} onChange={e => setDiscount(e.target.value)} disabled={isLoading}/>
-                    </div>
-                     <div className="space-y-2">
                         <Label htmlFor="product-tax">Taxes (%)</Label>
                         <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-sku">SKU</Label>
-                        <Input id="product-sku" placeholder="TSHIRT-BLK-L" value={sku} onChange={e => setSku(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-stock">Stock Quantity</Label>
-                        <Input id="product-stock" type="number" placeholder="100" value={stock} onChange={e => setStock(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-availability">Availability</Label>
-                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
-                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="in-stock">In Stock</SelectItem>
-                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                                <SelectItem value="pre-order">Pre-order</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </CardContent>
             </Card>
-
-             <Card>
+            
+            <Card>
                 <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">

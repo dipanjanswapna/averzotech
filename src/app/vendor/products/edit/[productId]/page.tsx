@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2 } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -43,15 +43,24 @@ import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
 import { useFirebase } from '@/firebase';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ImageObject {
     file?: File;
     url: string;
 }
 
+interface Variant {
+    sku: string;
+    wholesalePrice: number;
+    stock: number;
+    color: string;
+    size: string;
+}
+
 export default function EditVendorProductPage() {
-  const { app, db, user } = useFirebase();
-    const storage = getStorage(app!);
+    const { app, db, user } = useFirebase();
+    const storage = app ? getStorage(app) : null;
     const { toast } = useToast();
     const router = useRouter();
     const params = useParams();
@@ -76,6 +85,7 @@ export default function EditVendorProductPage() {
     // Variants
     const [colors, setColors] = useState([{ name: '', hex: '#000000' }]);
     const [sizes, setSizes] = useState(['']);
+    const [variants, setVariants] = useState<Variant[]>([]);
 
     // Specifications
     const [specifications, setSpecifications] = useState([{ label: '', value: '' }]);
@@ -93,14 +103,7 @@ export default function EditVendorProductPage() {
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
-
-    // Pricing & Inventory
-    const [wholesalePrice, setWholesalePrice] = useState('');
-    const [sku, setSku] = useState('');
-    const [stock, setStock] = useState('');
-    const [availability, setAvailability] = useState('in-stock');
-
-    // Shipping
+    
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
     
     // Dynamic Categories
@@ -120,7 +123,6 @@ export default function EditVendorProductPage() {
                 if (productSnap.exists()) {
                     const data = productSnap.data();
                     
-                    // Security check: ensure the logged-in vendor owns this product
                     if (user && data.vendor !== user.fullName) {
                          toast({ title: "Access Denied", description: "You do not have permission to edit this product.", variant: "destructive" });
                          router.push('/vendor/products');
@@ -133,8 +135,16 @@ export default function EditVendorProductPage() {
                     setVendor(data.vendor || '');
                     setImages((data.images || []).map((url: string) => ({ url })));
                     setVideoUrl(data.videoUrl || '');
-                    setColors(data.variants?.colors || [{ name: '', hex: '#000000' }]);
-                    setSizes(data.variants?.sizes || ['']);
+                    
+                    const savedColors = data.variants?.map((v: Variant) => v.color) || [];
+                    const uniqueColors = [...new Set(savedColors)];
+                    setColors(uniqueColors.map(c => ({ name: c, hex: '#000000' }))); // hex is placeholder
+                    
+                    const savedSizes = data.variants?.map((v: Variant) => v.size) || [];
+                    setSizes([...new Set(savedSizes)]);
+
+                    setVariants(data.variants || []);
+                    
                     setSpecifications(data.specifications || [{ label: '', value: '' }]);
                     setOffers(data.offers || '');
                     setReturnPolicy(data.returnPolicy || '');
@@ -145,10 +155,6 @@ export default function EditVendorProductPage() {
                     setSelectedGroup(data.organization?.group || '');
                     setSelectedSubcategory(data.organization?.subcategory || '');
                     setTags(data.organization?.tags || []);
-                    setWholesalePrice(String(data.pricing?.wholesalePrice || ''));
-                    setSku(data.inventory?.sku || '');
-                    setStock(String(data.inventory?.stock || ''));
-                    setAvailability(data.inventory?.availability || 'in-stock');
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
                     toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -164,6 +170,30 @@ export default function EditVendorProductPage() {
 
         fetchProduct();
     }, [productId, router, toast, user, db]);
+    
+     useEffect(() => {
+        const hasDefinedVariants = colors.length > 0 && sizes.length > 0 && (colors[0]?.name || '') !== '' && (sizes[0] || '') !== '';
+        if (hasDefinedVariants) {
+            const newVariants: Variant[] = [];
+            colors.forEach(color => {
+                if (!color.name) return;
+                sizes.forEach(size => {
+                    if (!size) return;
+                    const existingVariant = variants.find(v => v.color === color.name && v.size === size);
+                    newVariants.push(existingVariant || {
+                        color: color.name,
+                        size: size,
+                        sku: '',
+                        wholesalePrice: 0,
+                        stock: 0,
+                    });
+                });
+            });
+            setVariants(newVariants);
+        } else {
+             // If colors or sizes are cleared, respect the loaded variants
+        }
+    }, [colors, sizes]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -301,9 +331,38 @@ export default function EditVendorProductPage() {
             setIsGenerating(false);
         }
     };
+    
+    const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
+        const newVariants = [...variants];
+        (newVariants[index] as any)[field] = value;
+        setVariants(newVariants);
+    };
+
+    const generateAllSKUs = () => {
+        const skuBase = productName.substring(0, 5).toUpperCase().replace(/\s/g, '');
+        const updatedVariants = variants.map(v => {
+             const colorCode = v.color.substring(0, 3).toUpperCase();
+             const sizeCode = v.size.replace(/\s/g, '').toUpperCase();
+             return {
+                 ...v,
+                 sku: v.sku || `${skuBase}-${colorCode}-${sizeCode}`
+             }
+        });
+        setVariants(updatedVariants);
+    }
 
     const handleUpdateProduct = async () => {
         if (!productId || !db) return;
+        
+        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
+            toast({
+                title: "Incomplete Variant Information",
+                description: "Please fill out SKU, Wholesale Price (>0), and Stock for all variants.",
+                variant: 'destructive'
+            });
+            return;
+        }
+
         setIsLoading(true);
         try {
             const imageUrls = await Promise.all(
@@ -324,10 +383,7 @@ export default function EditVendorProductPage() {
                 vendor,
                 images: imageUrls,
                 videoUrl,
-                variants: {
-                    colors: colors.filter(c => c.name),
-                    sizes: sizes.filter(s => s),
-                },
+                variants,
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
@@ -341,18 +397,6 @@ export default function EditVendorProductPage() {
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
                     tags,
-                },
-                pricing: {
-                    price: 0,
-                    comparePrice: 0,
-                    discount: 0,
-                    tax: 0,
-                    wholesalePrice: parseFloat(wholesalePrice) || 0,
-                },
-                inventory: {
-                    sku,
-                    stock: parseInt(stock, 10) || 0,
-                    availability,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -487,57 +531,95 @@ export default function EditVendorProductPage() {
           </Card>
 
            <Card>
-            <CardHeader>
-              <CardTitle>Variants</CardTitle>
-              <CardDescription>Add product variants like colors and sizes.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div>
-                    <Label className="font-semibold">Colors</Label>
-                    <div className="space-y-4 mt-2">
-                        {colors.map((color, index) => (
-                            <div key={index} className="flex items-end gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Label htmlFor={`color-name-${index}`} className="text-xs">Color Name</Label>
-                                    <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} disabled={isLoading} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor={`color-hex-${index}`} className="text-xs">Hex</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} disabled={isLoading} />
-                                        <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" disabled={isLoading} />
+                <CardHeader>
+                    <CardTitle>Variants & Pricing</CardTitle>
+                    <CardDescription>Define product variations and set their inventory and pricing details.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div>
+                        <Label className="font-semibold">Colors</Label>
+                        <div className="space-y-4 mt-2">
+                            {colors.map((color, index) => (
+                                <div key={index} className="flex items-end gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`color-name-${index}`} className="text-xs">Color Name</Label>
+                                        <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} disabled={isLoading} />
                                     </div>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)} disabled={isLoading}>
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor} disabled={isLoading}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Color
-                    </Button>
-                </div>
-                <div className="border-t pt-6">
-                     <Label className="font-semibold">Sizes</Label>
-                     <div className="space-y-4 mt-2">
-                        {sizes.map((size, index) => (
-                            <div key={index} className="flex items-end gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Label htmlFor={`size-value-${index}`} className="text-xs">Size</Label>
-                                    <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} disabled={isLoading}/>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)} disabled={isLoading}>
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`color-hex-${index}`} className="text-xs">Hex</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} disabled={isLoading} />
+                                            <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" disabled={isLoading} />
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)} disabled={isLoading}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor} disabled={isLoading}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Color
+                        </Button>
                     </div>
-                     <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize} disabled={isLoading}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Size
-                    </Button>
-                </div>
-            </CardContent>
+                    <div className="border-t pt-6">
+                        <Label className="font-semibold">Sizes</Label>
+                        <div className="space-y-4 mt-2">
+                            {sizes.map((size, index) => (
+                                <div key={index} className="flex items-end gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`size-value-${index}`} className="text-xs">Size</Label>
+                                        <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} disabled={isLoading}/>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)} disabled={isLoading}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize} disabled={isLoading}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Size
+                        </Button>
+                    </div>
+
+                    {variants.length > 0 && (
+                        <div className="border-t pt-6">
+                            <div className="flex justify-between items-center mb-4">
+                               <Label className="font-semibold">Variant Pricing & Inventory</Label>
+                               <Button size="sm" variant="secondary" onClick={generateAllSKUs}><RefreshCw className="w-4 h-4 mr-2"/>Generate SKUs</Button>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Color</TableHead>
+                                        <TableHead>Size</TableHead>
+                                        <TableHead>SKU</TableHead>
+                                        <TableHead>Wholesale Price (৳)</TableHead>
+                                        <TableHead>Stock</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {variants.map((variant, index) => (
+                                        <TableRow key={`${variant.color}-${variant.size}`}>
+                                            <TableCell>{variant.color}</TableCell>
+                                            <TableCell>{variant.size}</TableCell>
+                                            <TableCell>
+                                                <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} className="h-8"/>
+                                            </TableCell>
+                                            <TableCell>
+                                                 <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} className="h-8"/>
+                                            </TableCell>
+                                            <TableCell>
+                                                 <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} className="h-8"/>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+
+                </CardContent>
           </Card>
 
 
@@ -702,36 +784,6 @@ export default function EditVendorProductPage() {
                           ))}
                       </div>
                   </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Wholesale Price & Inventory</CardTitle>
-                     <CardDescription>Admin will set the final price.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="wholesale-price">Your Wholesale Price (৳)</Label>
-                        <Input id="wholesale-price" type="number" placeholder="800" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-sku">SKU</Label>
-                        <Input id="product-sku" placeholder="TSHIRT-BLK-L" value={sku} onChange={e => setSku(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-stock">Stock Quantity</Label>
-                        <Input id="product-stock" type="number" placeholder="100" value={stock} onChange={e => setStock(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-availability">Availability</Label>
-                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
-                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="in-stock">In Stock</SelectItem>
-                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </CardContent>
             </Card>
 
