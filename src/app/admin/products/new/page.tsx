@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2 } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +44,7 @@ import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
 import { useFirebase } from '@/firebase';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ImageObject {
     file?: File;
@@ -53,6 +54,14 @@ interface ImageObject {
 interface Vendor {
     uid: string;
     fullName: string;
+}
+
+interface Variant {
+    sku: string;
+    wholesalePrice: number;
+    stock: number;
+    color: string;
+    size: string;
 }
 
 export default function NewProductPage() {
@@ -79,6 +88,7 @@ export default function NewProductPage() {
     // Variants
     const [colors, setColors] = useState([{ name: '', hex: '#000000' }]);
     const [sizes, setSizes] = useState(['']);
+    const [variants, setVariants] = useState<Variant[]>([]);
 
     // Specifications
     const [specifications, setSpecifications] = useState([{ label: '', value: '' }]);
@@ -97,16 +107,11 @@ export default function NewProductPage() {
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
 
-    // Pricing & Inventory
+    // Pricing (kept for backward compatibility, but variant pricing is main)
     const [price, setPrice] = useState('');
     const [comparePrice, setComparePrice] = useState('');
-    const [wholesalePrice, setWholesalePrice] = useState('');
-    const [discount, setDiscount] = useState('');
     const [tax, setTax] = useState('');
-    const [sku, setSku] = useState('');
-    const [stock, setStock] = useState('');
-    const [availability, setAvailability] = useState('in-stock');
-
+    
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
     
@@ -118,7 +123,7 @@ export default function NewProductPage() {
     // Vendors
     const [vendors, setVendors] = useState<Vendor[]>([]);
 
-     useEffect(() => {
+    useEffect(() => {
         if (!db) return;
         const fetchVendors = async () => {
             try {
@@ -134,6 +139,33 @@ export default function NewProductPage() {
         };
         fetchVendors();
     }, [db]);
+    
+    useEffect(() => {
+        // Generate variant combinations whenever colors or sizes change
+        const generateVariants = () => {
+            if (colors.length > 0 && sizes.length > 0 && colors[0].name && sizes[0]) {
+                const newVariants: Variant[] = [];
+                colors.forEach(color => {
+                    if (!color.name) return;
+                    sizes.forEach(size => {
+                        if (!size) return;
+                        const existingVariant = variants.find(v => v.color === color.name && v.size === size);
+                        newVariants.push(existingVariant || {
+                            color: color.name,
+                            size: size,
+                            sku: '',
+                            wholesalePrice: 0,
+                            stock: 0,
+                        });
+                    });
+                });
+                setVariants(newVariants);
+            } else {
+                setVariants([]);
+            }
+        };
+        generateVariants();
+    }, [colors, sizes]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
@@ -271,12 +303,40 @@ export default function NewProductPage() {
             setIsGenerating(false);
         }
     };
+    
+    const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
+        const newVariants = [...variants];
+        (newVariants[index] as any)[field] = value;
+        setVariants(newVariants);
+    };
+
+    const generateAllSKUs = () => {
+        const skuBase = productName.substring(0, 5).toUpperCase().replace(/\s/g, '');
+        const updatedVariants = variants.map(v => {
+             const colorCode = v.color.substring(0, 3).toUpperCase();
+             const sizeCode = v.size.replace(/\s/g, '').toUpperCase();
+             return {
+                 ...v,
+                 sku: `${skuBase}-${colorCode}-${sizeCode}`
+             }
+        });
+        setVariants(updatedVariants);
+    }
 
     const handleSaveProduct = async () => {
         if (!db || !storage) return;
+
+        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
+            toast({
+                title: "Incomplete Variant Information",
+                description: "Please fill out SKU, Wholesale Price (>0), and Stock (>=0) for all variants.",
+                variant: 'destructive'
+            });
+            return;
+        }
+
         setIsLoading(true);
         try {
-            // 1. Upload images to Firebase Storage if they are files
             const imageUrls = await Promise.all(
                 images.map(async (imageObj) => {
                     if (imageObj.file) {
@@ -288,9 +348,9 @@ export default function NewProductPage() {
                 })
             );
 
-            const stockAmount = parseInt(stock, 10) || 0;
+            // Determine the base price for the product from the variants
+            const basePrice = Math.min(...variants.map(v => v.wholesalePrice).filter(p => p > 0));
 
-            // 2. Prepare product data object
             const productData = {
                 name: productName,
                 description,
@@ -298,10 +358,7 @@ export default function NewProductPage() {
                 vendor,
                 images: imageUrls,
                 videoUrl,
-                variants: {
-                    colors: colors.filter(c => c.name),
-                    sizes: sizes.filter(s => s),
-                },
+                variants, // Save the full variant details
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
@@ -317,17 +374,13 @@ export default function NewProductPage() {
                     tags,
                 },
                 pricing: {
-                    price: parseFloat(price) || 0,
+                    price: parseFloat(price) || basePrice || 0, // Fallback to base price
                     comparePrice: parseFloat(comparePrice) || 0,
-                    wholesalePrice: parseFloat(wholesalePrice) || 0,
-                    discount: parseFloat(discount) || 0,
                     tax: parseFloat(tax) || 0,
                 },
-                inventory: {
-                    sku,
-                    stock: stockAmount,
-                    initialStock: stockAmount,
-                    availability,
+                inventory: { // Redundant but good for quick lookups
+                    stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                 },
                 shipping: {
                     estimatedDelivery,
@@ -336,7 +389,6 @@ export default function NewProductPage() {
                 updatedAt: serverTimestamp(),
             };
 
-            // 3. Save product data to Firestore
             await addDoc(collection(db, 'products'), productData);
 
             toast({
@@ -382,6 +434,10 @@ export default function NewProductPage() {
                 <Input id="product-name" placeholder="e.g. Stylish T-Shirt" value={productName} onChange={e => setProductName(e.target.value)} disabled={isLoading} />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="product-brand">Brand</Label>
+                <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
+              </div>
+               <div className="space-y-2">
                 <Label htmlFor="description-keywords">AI Generate Description</Label>
                 <div className="flex gap-2">
                    <Input id="description-keywords" placeholder="Keywords (e.g. summer, cotton, casual)" value={descriptionKeywords} onChange={e => setDescriptionKeywords(e.target.value)} disabled={isGenerating || isLoading} />
@@ -393,10 +449,6 @@ export default function NewProductPage() {
               <div className="space-y-2">
                 <Label htmlFor="product-description">Description</Label>
                 <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
-              </div>
-               <div className="space-y-2">
-                <Label htmlFor="product-brand">Brand</Label>
-                <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
@@ -470,57 +522,95 @@ export default function NewProductPage() {
           </Card>
 
            <Card>
-            <CardHeader>
-              <CardTitle>Variants</CardTitle>
-              <CardDescription>Add product variants like colors and sizes.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div>
-                    <Label className="font-semibold">Colors</Label>
-                    <div className="space-y-4 mt-2">
-                        {colors.map((color, index) => (
-                            <div key={index} className="flex items-end gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Label htmlFor={`color-name-${index}`} className="text-xs">Color Name</Label>
-                                    <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} disabled={isLoading} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor={`color-hex-${index}`} className="text-xs">Hex</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} disabled={isLoading} />
-                                        <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" disabled={isLoading} />
+                <CardHeader>
+                    <CardTitle>Variants & Pricing</CardTitle>
+                    <CardDescription>Define product variations and set their inventory and pricing details.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div>
+                        <Label className="font-semibold">Colors</Label>
+                        <div className="space-y-4 mt-2">
+                            {colors.map((color, index) => (
+                                <div key={index} className="flex items-end gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`color-name-${index}`} className="text-xs">Color Name</Label>
+                                        <Input id={`color-name-${index}`} placeholder="e.g. Midnight Black" value={color.name} onChange={(e) => handleColorChange(index, 'name', e.target.value)} disabled={isLoading} />
                                     </div>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)} disabled={isLoading}>
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                    <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor} disabled={isLoading}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Color
-                    </Button>
-                </div>
-                <div className="border-t pt-6">
-                     <Label className="font-semibold">Sizes</Label>
-                     <div className="space-y-4 mt-2">
-                        {sizes.map((size, index) => (
-                            <div key={index} className="flex items-end gap-4">
-                                <div className="flex-1 space-y-2">
-                                    <Label htmlFor={`size-value-${index}`} className="text-xs">Size</Label>
-                                    <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} disabled={isLoading}/>
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)} disabled={isLoading}>
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`color-hex-${index}`} className="text-xs">Hex</Label>
+                                        <div className="flex items-center gap-2">
+                                            <Input id={`color-hex-${index}`} className="w-24" placeholder="#000000" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} disabled={isLoading} />
+                                            <Input type="color" value={color.hex} onChange={(e) => handleColorChange(index, 'hex', e.target.value)} className="w-10 h-10 p-1" disabled={isLoading} />
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveColor(index)} disabled={isLoading}>
                                     <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        ))}
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={handleAddColor} disabled={isLoading}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Color
+                        </Button>
                     </div>
-                     <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize} disabled={isLoading}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Size
-                    </Button>
-                </div>
-            </CardContent>
+                    <div className="border-t pt-6">
+                        <Label className="font-semibold">Sizes</Label>
+                        <div className="space-y-4 mt-2">
+                            {sizes.map((size, index) => (
+                                <div key={index} className="flex items-end gap-4">
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor={`size-value-${index}`} className="text-xs">Size</Label>
+                                        <Input id={`size-value-${index}`} placeholder="e.g. Medium or 42" value={size} onChange={(e) => handleSizeChange(index, e.target.value)} disabled={isLoading}/>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveSize(index)} disabled={isLoading}>
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" className="mt-4" onClick={handleAddSize} disabled={isLoading}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Size
+                        </Button>
+                    </div>
+
+                    {variants.length > 0 && (
+                        <div className="border-t pt-6">
+                            <div className="flex justify-between items-center mb-4">
+                               <Label className="font-semibold">Variant Pricing & Inventory</Label>
+                               <Button size="sm" variant="secondary" onClick={generateAllSKUs}><RefreshCw className="w-4 h-4 mr-2"/>Generate SKUs</Button>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Color</TableHead>
+                                        <TableHead>Size</TableHead>
+                                        <TableHead>SKU</TableHead>
+                                        <TableHead>Wholesale Price (৳)</TableHead>
+                                        <TableHead>Stock</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {variants.map((variant, index) => (
+                                        <TableRow key={`${variant.color}-${variant.size}`}>
+                                            <TableCell>{variant.color}</TableCell>
+                                            <TableCell>{variant.size}</TableCell>
+                                            <TableCell>
+                                                <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} className="h-8"/>
+                                            </TableCell>
+                                            <TableCell>
+                                                 <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} className="h-8"/>
+                                            </TableCell>
+                                            <TableCell>
+                                                 <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} className="h-8"/>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+
+                </CardContent>
           </Card>
 
 
@@ -695,14 +785,12 @@ export default function NewProductPage() {
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader><CardTitle>Pricing & Inventory</CardTitle></CardHeader>
+                <CardHeader>
+                    <CardTitle>Pricing</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="wholesale-price">Wholesale Price (৳)</Label>
-                        <Input id="wholesale-price" type="number" placeholder="800" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-price">Price (৳)</Label>
+                        <Label htmlFor="product-price">Retail Price (৳)</Label>
                         <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
@@ -710,31 +798,8 @@ export default function NewProductPage() {
                         <Input id="product-compare-price" type="number" placeholder="1999" value={comparePrice} onChange={e => setComparePrice(e.target.value)} disabled={isLoading}/>
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="product-discount">Discount (%)</Label>
-                        <Input id="product-discount" type="number" placeholder="10" value={discount} onChange={e => setDiscount(e.target.value)} disabled={isLoading}/>
-                    </div>
-                     <div className="space-y-2">
                         <Label htmlFor="product-tax">Taxes (%)</Label>
                         <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-sku">SKU</Label>
-                        <Input id="product-sku" placeholder="TSHIRT-BLK-L" value={sku} onChange={e => setSku(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-stock">Stock Quantity</Label>
-                        <Input id="product-stock" type="number" placeholder="100" value={stock} onChange={e => setStock(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-availability">Availability</Label>
-                        <Select defaultValue="in-stock" onValueChange={setAvailability} value={availability} disabled={isLoading}>
-                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="in-stock">In Stock</SelectItem>
-                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                                <SelectItem value="pre-order">Pre-order</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                 </CardContent>
             </Card>
