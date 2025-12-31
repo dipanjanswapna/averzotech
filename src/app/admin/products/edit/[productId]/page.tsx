@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -250,8 +251,8 @@ export default function EditProductPage() {
           setFilterCategories(prevCategories => {
             return prevCategories.map(cat => {
               if (cat.name === selectedCategory) {
-                if (cat.groups.some((g:any) => g.name.toLowerCase() === newGroupName.toLowerCase())) return cat;
-                return { ...cat, groups: [...cat.groups, { name: newGroupName, subcategories: [] }] };
+                if (cat.subCategories.some((g:any) => g.group.toLowerCase() === newGroupName.toLowerCase())) return cat;
+                return { ...cat, subCategories: [...cat.subCategories, { group: newGroupName, items: [] }] };
               }
               return cat;
             });
@@ -268,10 +269,10 @@ export default function EditProductPage() {
               if (cat.name === selectedCategory) {
                 return {
                   ...cat,
-                  groups: cat.groups.map((group:any) => {
-                    if (group.name === selectedGroup) {
-                       if (group.subcategories.some((s:any) => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
-                      return { ...group, subcategories: [...group.subcategories, newSubcategoryName] };
+                  subCategories: cat.subCategories.map((group:any) => {
+                    if (group.group === selectedGroup) {
+                       if (group.items.some((s:any) => s.toLowerCase() === newSubcategoryName.toLowerCase())) return group;
+                      return { ...group, items: [...group.items, newSubcategoryName] };
                     }
                     return group;
                   })

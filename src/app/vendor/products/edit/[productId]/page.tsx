@@ -96,10 +96,7 @@ export default function EditVendorProductPage() {
     const [currentTag, setCurrentTag] = useState('');
 
     // Pricing & Inventory
-    const [price, setPrice] = useState('');
-    const [comparePrice, setComparePrice] = useState('');
-    const [discount, setDiscount] = useState('');
-    const [tax, setTax] = useState('');
+    const [wholesalePrice, setWholesalePrice] = useState('');
     const [sku, setSku] = useState('');
     const [stock, setStock] = useState('');
     const [availability, setAvailability] = useState('in-stock');
@@ -149,10 +146,7 @@ export default function EditVendorProductPage() {
                     setSelectedGroup(data.organization?.group || '');
                     setSelectedSubcategory(data.organization?.subcategory || '');
                     setTags(data.organization?.tags || []);
-                    setPrice(String(data.pricing?.price || ''));
-                    setComparePrice(String(data.pricing?.comparePrice || ''));
-                    setDiscount(String(data.pricing?.discount || ''));
-                    setTax(String(data.pricing?.tax || ''));
+                    setWholesalePrice(String(data.pricing?.wholesalePrice || ''));
                     setSku(data.inventory?.sku || '');
                     setStock(String(data.inventory?.stock || ''));
                     setAvailability(data.inventory?.availability || 'in-stock');
@@ -350,10 +344,11 @@ export default function EditVendorProductPage() {
                     tags,
                 },
                 pricing: {
-                    price: parseFloat(price) || 0,
-                    comparePrice: parseFloat(comparePrice) || 0,
-                    discount: parseFloat(discount) || 0,
-                    tax: parseFloat(tax) || 0,
+                    price: 0,
+                    comparePrice: 0,
+                    discount: 0,
+                    tax: 0,
+                    wholesalePrice: parseFloat(wholesalePrice) || 0,
                 },
                 inventory: {
                     sku,
@@ -711,23 +706,14 @@ export default function EditVendorProductPage() {
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader><CardTitle>Pricing & Inventory</CardTitle></CardHeader>
+                <CardHeader>
+                    <CardTitle>Wholesale Price & Inventory</CardTitle>
+                     <CardDescription>Admin will set the final price.</CardDescription>
+                </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="product-price">Price (৳)</Label>
-                        <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="product-compare-price">Compare-at Price (MRP ৳)</Label>
-                        <Input id="product-compare-price" type="number" placeholder="1999" value={comparePrice} onChange={e => setComparePrice(e.target.value)} disabled={isLoading}/>
-                    </div>
                      <div className="space-y-2">
-                        <Label htmlFor="product-discount">Discount (%)</Label>
-                        <Input id="product-discount" type="number" placeholder="10" value={discount} onChange={e => setDiscount(e.target.value)} disabled={isLoading}/>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="product-tax">Taxes (%)</Label>
-                        <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
+                        <Label htmlFor="wholesale-price">Your Wholesale Price (৳)</Label>
+                        <Input id="wholesale-price" type="number" placeholder="800" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-sku">SKU</Label>
@@ -744,7 +730,6 @@ export default function EditVendorProductPage() {
                             <SelectContent>
                                 <SelectItem value="in-stock">In Stock</SelectItem>
                                 <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                                <SelectItem value="pre-order">Pre-order</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
