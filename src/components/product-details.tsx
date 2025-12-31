@@ -465,7 +465,9 @@ export function ProductDetails() {
             </div>
             <p className="text-sm text-green-600 font-semibold">inclusive of all taxes</p>
              {product.giftWithPurchase?.enabled && (
-                <p className="text-sm text-pink-600 font-semibold mt-1">+ FREE GIFT: {product.giftWithPurchase.description}</p>
+                <p className="text-sm text-pink-600 font-semibold mt-1 flex items-center gap-1">
+                    <Gift className="w-4 h-4" />+ FREE: {product.giftWithPurchase.description}
+                </p>
              )}
             
             <div className="my-4">
