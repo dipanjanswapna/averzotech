@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { ChevronLeft, CheckCircle, XCircle, AlertTriangle, FileText, Banknote, Store, Link as LinkIcon, ShieldCheck } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -99,18 +99,31 @@ export default function VendorApplicationDetailsPage() {
     }, [applicationId, db, router, toast]);
 
     const handleUpdateStatus = async (status: 'Approved' | 'Rejected' | 'Update Requested', reason?: string) => {
-        if (!application) return;
+        if (!application || !db) return;
 
         try {
-            const docRef = doc(db, 'vendorApplications', applicationId);
-            await updateDoc(docRef, { 
+            const appDocRef = doc(db, 'vendorApplications', applicationId);
+            await updateDoc(appDocRef, { 
                 status,
                 ...(reason && { rejectionReason: reason })
             });
 
             if (status === 'Approved') {
-                // Here you would typically trigger creating a full vendor profile, user role update, etc.
-                // For now, we just update the status.
+                const userRef = doc(db, 'users', application.userId);
+                await updateDoc(userRef, { status: 'active' });
+
+                const vendorRef = doc(db, 'vendors', application.userId);
+                await setDoc(vendorRef, {
+                    userId: application.userId,
+                    shopName: application.shopInfo.shopName,
+                    category: application.shopInfo.category,
+                    contact: application.contactInfo,
+                    payment: application.paymentInfo,
+                    trustScore: 78, // Example score
+                    sla: { deliveryCommitment: 48 }, // Default SLA
+                    status: 'Active',
+                    createdAt: application.createdAt,
+                });
             }
 
             toast({
