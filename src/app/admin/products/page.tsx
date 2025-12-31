@@ -133,19 +133,12 @@ export default function ProductsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                        Bulk Actions
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => toast({title: "Coming Soon!", description: "Bulk product upload will be available soon."})}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Bulk Upload
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            <Button variant="outline" asChild>
+                <Link href="/admin/products/bulk-upload">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Bulk Upload
+                </Link>
+            </Button>
             <Button asChild>
                 <Link href="/admin/products/new">
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Product
