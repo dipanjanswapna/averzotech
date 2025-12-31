@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -108,8 +109,9 @@ export default function VendorApplicationDetailsPage() {
                 ...(reason && { rejectionReason: reason })
             });
 
+            const userRef = doc(db, 'users', application.userId);
+
             if (status === 'Approved') {
-                const userRef = doc(db, 'users', application.userId);
                 await updateDoc(userRef, { status: 'active' });
 
                 const vendorRef = doc(db, 'vendors', application.userId);
@@ -124,6 +126,8 @@ export default function VendorApplicationDetailsPage() {
                     status: 'Active',
                     createdAt: application.createdAt,
                 });
+            } else if (status === 'Rejected' || status === 'Update Requested') {
+                 await updateDoc(userRef, { status: 'suspended' });
             }
 
             toast({
