@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "Product": {
@@ -8,14 +9,23 @@
       "properties": {
         "name": { "type": "string" },
         "description": { "type": "string" },
-        "price": { "type": "number" },
+        "pricing": {
+          "type": "object",
+          "properties": {
+            "price": { "type": "number" },
+            "comparePrice": { "type": "number" },
+            "wholesalePrice": { "type": "number" },
+            "discount": { "type": "number" },
+            "tax": { "type": "number" }
+          }
+        },
         "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
         "category": { "type": "string" },
         "brand": { "type": "string" },
         "stock": { "type": "number" },
         "sku": { "type": "string" }
       },
-      "required": ["name", "price", "images", "category", "stock"]
+      "required": ["name", "pricing", "images", "organization", "inventory"]
     },
     "Order": {
       "title": "Order",

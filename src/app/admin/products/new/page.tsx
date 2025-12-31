@@ -100,6 +100,7 @@ export default function NewProductPage() {
     // Pricing & Inventory
     const [price, setPrice] = useState('');
     const [comparePrice, setComparePrice] = useState('');
+    const [wholesalePrice, setWholesalePrice] = useState('');
     const [discount, setDiscount] = useState('');
     const [tax, setTax] = useState('');
     const [sku, setSku] = useState('');
@@ -318,6 +319,7 @@ export default function NewProductPage() {
                 pricing: {
                     price: parseFloat(price) || 0,
                     comparePrice: parseFloat(comparePrice) || 0,
+                    wholesalePrice: parseFloat(wholesalePrice) || 0,
                     discount: parseFloat(discount) || 0,
                     tax: parseFloat(tax) || 0,
                 },
@@ -695,6 +697,10 @@ export default function NewProductPage() {
             <Card>
                 <CardHeader><CardTitle>Pricing & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="wholesale-price">Wholesale Price (৳)</Label>
+                        <Input id="wholesale-price" type="number" placeholder="800" value={wholesalePrice} onChange={e => setWholesalePrice(e.target.value)} disabled={isLoading}/>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-price">Price (৳)</Label>
                         <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
