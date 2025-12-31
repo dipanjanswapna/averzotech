@@ -156,7 +156,7 @@ service cloud.firestore {
       allow read, update: if isAdmin();
     }
 
-    // VENDORS collection
+     // VENDORS collection
     match /vendors/{vendorId} {
       // Admins can manage vendor profiles
       allow read, write: if isAdmin();
