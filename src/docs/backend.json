@@ -30,10 +30,25 @@
           }
         },
         "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
-        "category": { "type": "string" },
-        "brand": { "type": "string" },
-        "stock": { "type": "number" },
-        "sku": { "type": "string" }
+        "organization": {
+            "type": "object",
+            "properties": {
+                "category": { "type": "string" },
+                "group": { "type": "string" },
+                "subcategory": { "type": "string" },
+                "tags": { "type": "array", "items": { "type": "string" } },
+                "status": { "type": "string" }
+            }
+        },
+        "inventory": {
+            "type": "object",
+            "properties": {
+                 "stock": { "type": "number" },
+                 "sku": { "type": "string" },
+                 "availability": { "type": "string" }
+            }
+        },
+        "brand": { "type": "string" }
       },
       "required": ["name", "pricing", "images", "organization", "inventory"]
     },
@@ -197,4 +212,3 @@
     }
   }
 }
-

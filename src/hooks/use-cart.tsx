@@ -55,6 +55,7 @@ export interface Product {
       price: number;
       comparePrice?: number;
       discount?: number;
+      tax?: number;
     };
     shipping: {
         estimatedDelivery: string;
@@ -285,7 +286,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const subTotalAfterCoupon = subTotal - discountAmount;
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
   
-  const taxes = subTotal * 0.05; // 5% tax on subtotal
+  const taxes = useMemo(() => {
+    return cart.reduce((acc, item) => {
+      const itemTotal = item.pricing.price * item.quantity;
+      const taxRate = (item.pricing.tax || 5) / 100; // Default to 5% if not specified
+      return acc + (itemTotal * taxRate);
+    }, 0);
+  }, [cart]);
+
   const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + (shippingInfo ? shippingFee : 0) + taxes);
 
   return (
