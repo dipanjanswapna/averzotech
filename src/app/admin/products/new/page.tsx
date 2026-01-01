@@ -164,6 +164,7 @@ export default function NewProductPage() {
                             sku: '',
                             wholesalePrice: 0,
                             stock: 0,
+                            tiers: []
                         });
                     });
                 });
