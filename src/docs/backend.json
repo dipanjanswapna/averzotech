@@ -16,7 +16,17 @@
             "comparePrice": { "type": "number" },
             "wholesalePrice": { "type": "number" },
             "discount": { "type": "number" },
-            "tax": { "type": "number" }
+            "tax": { "type": "number" },
+            "tiers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "minQuantity": { "type": "number" },
+                  "pricePerUnit": { "type": "number" }
+                }
+              }
+            }
           }
         },
         "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
