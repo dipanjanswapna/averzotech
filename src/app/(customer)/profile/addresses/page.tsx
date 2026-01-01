@@ -27,7 +27,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { divisions, getDistrictsByDivision, getAreasByDistrict } from '@/lib/bangladesh-geo';
+import { divisions, getDistrictsByDivision, getUpazilasByDistrict, getAreasByUpazila } from '@/lib/bangladesh-geo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -39,7 +39,7 @@ interface Address {
     division: string;
     district: string;
     upazila: string;
-    delivery_area: string;
+    area: string;
     delivery_area_id: number;
     phone: string;
     isDefault: boolean;
@@ -60,33 +60,46 @@ export default function AddressesPage() {
         streetAddress: '',
         division: '',
         district: '',
-        upazila: '', // This will now hold area name for display
+        upazila: '',
+        area: '',
         phone: '',
         isDefault: false,
     });
     
     // Dependent dropdown options
     const [districts, setDistricts] = useState<string[]>([]);
+    const [upazilas, setUpazilas] = useState<string[]>([]);
     const [areas, setAreas] = useState<string[]>([]);
 
     useEffect(() => {
         if(formData.division) {
             setDistricts(getDistrictsByDivision(formData.division) || []);
-            setFormData(prev => ({ ...prev, district: '', upazila: '' }));
+            setFormData(prev => ({ ...prev, district: '', upazila: '', area: '' }));
         } else {
             setDistricts([]);
+            setUpazilas([]);
             setAreas([]);
         }
     }, [formData.division]);
 
     useEffect(() => {
         if (formData.district) {
-            setAreas(getAreasByDistrict(formData.division, formData.district) || []);
-            setFormData(prev => ({ ...prev, upazila: '' }));
+            setUpazilas(getUpazilasByDistrict(formData.division, formData.district) || []);
+            setFormData(prev => ({ ...prev, upazila: '', area: '' }));
         } else {
+            setUpazilas([]);
             setAreas([]);
         }
     }, [formData.district, formData.division]);
+
+    useEffect(() => {
+        if (formData.upazila) {
+            setAreas(getAreasByUpazila(formData.division, formData.district, formData.upazila) || []);
+            setFormData(prev => ({ ...prev, area: '' }));
+        } else {
+            setAreas([]);
+        }
+    }, [formData.upazila, formData.district, formData.division]);
 
 
     const fetchAddresses = async () => {
@@ -119,7 +132,8 @@ export default function AddressesPage() {
                 streetAddress: editingAddress.streetAddress,
                 division: editingAddress.division,
                 district: editingAddress.district,
-                upazila: editingAddress.upazila, 
+                upazila: editingAddress.upazila,
+                area: editingAddress.area, 
                 phone: editingAddress.phone,
                 isDefault: editingAddress.isDefault,
             });
@@ -136,6 +150,7 @@ export default function AddressesPage() {
             division: '',
             district: '',
             upazila: '',
+            area: '',
             phone: '',
             isDefault: false,
         });
@@ -176,7 +191,7 @@ export default function AddressesPage() {
 
     const handleSubmit = async () => {
         if (!user || !db) return;
-        if (!formData.division || !formData.district || !formData.upazila || !formData.streetAddress || !formData.phone.trim()) {
+        if (!formData.division || !formData.district || !formData.upazila || !formData.area || !formData.streetAddress || !formData.phone.trim()) {
             toast({ title: "Incomplete Address", description: "Please fill all required address fields including phone number.", variant: "destructive" });
             return;
         }
@@ -187,7 +202,8 @@ export default function AddressesPage() {
             streetAddress: formData.streetAddress,
             division: formData.division,
             district: formData.district,
-            upazila: formData.upazila, // Save area name as upazila for display
+            upazila: formData.upazila,
+            area: formData.area,
             phone: formData.phone,
             isDefault: formData.isDefault,
         };
@@ -272,7 +288,7 @@ export default function AddressesPage() {
                     <CardContent>
                         <p className="font-semibold">{addr.name}</p>
                         <p className="text-muted-foreground">{addr.streetAddress}</p>
-                        <p className="text-muted-foreground">{addr.upazila}, {addr.district}, {addr.division}</p>
+                        <p className="text-muted-foreground">{addr.area}, {addr.upazila}, {addr.district}, {addr.division}</p>
                         <p className="text-muted-foreground mt-2">Mobile: <span className="font-medium text-foreground">{addr.phone}</span></p>
                     </CardContent>
                     <CardFooter className="flex justify-between">
@@ -318,11 +334,11 @@ export default function AddressesPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Location</Label>
-                    <div className="col-span-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-2">
                         <Select value={formData.division} onValueChange={handleSelectChange('division')}>
                             <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
                             <SelectContent>
-                                {divisions.map(d => <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>)}
+                                {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
@@ -332,9 +348,15 @@ export default function AddressesPage() {
                             </SelectContent>
                         </Select>
                          <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
+                            <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
+                            <SelectContent>
+                                {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                         <Select value={formData.area} onValueChange={handleSelectChange('area')} disabled={!formData.upazila}>
                             <SelectTrigger><SelectValue placeholder="Select Area" /></SelectTrigger>
                             <SelectContent>
-                                {areas.map(area => <SelectItem key={area} value={area}>{area}</SelectItem>)}
+                                {areas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -364,4 +386,5 @@ export default function AddressesPage() {
     </div>
   );
 }
+
 
