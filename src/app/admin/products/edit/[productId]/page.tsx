@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -18,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, RefreshCw } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, RefreshCw, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +44,7 @@ import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { useFirebase } from '@/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { generateProductDescription } from '@/ai/flows/generate-product-description';
 
 interface ImageObject {
     file?: File;
@@ -72,6 +74,7 @@ export default function EditProductPage() {
 
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Product Details
     const [productName, setProductName] = useState('');
@@ -341,6 +344,34 @@ export default function EditProductPage() {
         });
         setVariants(updatedVariants);
     }
+    
+    const handleGenerateDescription = async () => {
+        if (!productName || !brand) {
+            toast({
+                title: 'Missing Information',
+                description: 'Please enter a product name and brand before generating a description.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        setIsGenerating(true);
+        try {
+            const generatedDesc = await generateProductDescription({
+                productName,
+                brand,
+                keywords: tags,
+                specifications: specifications.filter(s => s.label && s.value),
+                colors: colors.map(c => c.name).filter(Boolean),
+                sizes: sizes.filter(Boolean),
+            });
+            setDescription(generatedDesc);
+        } catch (error) {
+            console.error("AI Description generation failed:", error);
+            toast({ title: "Generation Failed", description: "Could not generate a description at this time.", variant: 'destructive' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
 
     const handleUpdateProduct = async () => {
@@ -447,12 +478,21 @@ export default function EditProductPage() {
                 <Input id="product-name" placeholder="e.g. Stylish T-Shirt" value={productName} onChange={e => setProductName(e.target.value)} disabled={isLoading} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="product-description">Description</Label>
-                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
-              </div>
-               <div className="space-y-2">
                 <Label htmlFor="product-brand">Brand</Label>
                 <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
+              </div>
+               <div className="space-y-2">
+                <Label>AI Generate Description</Label>
+                 <div className="p-4 bg-secondary/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-2">Click to generate a description based on the product name, brand, tags, and specifications.</p>
+                    <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
+                        <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate Description'}
+                    </Button>
+                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="product-description">Description</Label>
+                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={8}/>
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>

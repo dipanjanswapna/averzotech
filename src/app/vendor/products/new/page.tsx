@@ -64,7 +64,7 @@ interface Variant {
     size: string;
 }
 
-export default function NewVendorProductPage() {
+export default function NewProductPage() {
     const { app, db, user } = useFirebase();
     const storage = app ? getStorage(app) : null;
     const { toast } = useToast();
@@ -76,7 +76,6 @@ export default function NewVendorProductPage() {
     // Product Details
     const [productName, setProductName] = useState('');
     const [description, setDescription] = useState('');
-    const [descriptionKeywords, setDescriptionKeywords] = useState('');
     const [brand, setBrand] = useState('');
     
     // Media
@@ -266,8 +265,14 @@ export default function NewVendorProductPage() {
         }
         setIsGenerating(true);
         try {
-            const keywords = descriptionKeywords.split(',').map(k => k.trim()).filter(Boolean);
-            const generatedDesc = await generateProductDescription({ productName, brand, keywords });
+            const generatedDesc = await generateProductDescription({
+                productName,
+                brand,
+                keywords: tags,
+                specifications: specifications.filter(s => s.label && s.value),
+                colors: colors.map(c => c.name).filter(Boolean),
+                sizes: sizes.filter(Boolean),
+            });
             setDescription(generatedDesc);
         } catch (error) {
             console.error("AI Description generation failed:", error);
@@ -337,17 +342,21 @@ export default function NewVendorProductPage() {
                     description: giftDescription
                 },
                 organization: {
-                    status: 'pending-approval', // Default status for new products
+                    status: 'pending-approval',
                     category: selectedCategory,
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
                     tags,
                 },
                 pricing: {
-                    price: 0, // Admin will set this
+                    price: 0,
                     comparePrice: 0,
                     discount: 0,
                     tax: 0,
+                },
+                inventory: { 
+                    stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                 },
                 shipping: {
                     estimatedDelivery,
@@ -360,7 +369,7 @@ export default function NewVendorProductPage() {
 
             toast({
                 title: 'Product Submitted!',
-                description: 'Your product has been submitted for approval.',
+                description: 'Your new product has been submitted for approval.',
             });
             router.push('/vendor/products');
 
@@ -405,17 +414,17 @@ export default function NewVendorProductPage() {
                 <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
               </div>
                <div className="space-y-2">
-                <Label htmlFor="description-keywords">AI Generate Description</Label>
-                <div className="flex gap-2">
-                   <Input id="description-keywords" placeholder="Keywords (e.g. summer, cotton, casual)" value={descriptionKeywords} onChange={e => setDescriptionKeywords(e.target.value)} disabled={isGenerating || isLoading} />
-                   <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
-                     <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate'}
-                   </Button>
-                </div>
+                <Label>AI Generate Description</Label>
+                 <div className="p-4 bg-secondary/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-2">Click to generate a description based on the product name, brand, tags, and specifications.</p>
+                    <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
+                        <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate Description'}
+                    </Button>
+                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-description">Description</Label>
-                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={6} />
+                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={8} />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
