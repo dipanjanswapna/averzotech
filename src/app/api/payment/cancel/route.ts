@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, writeBatch, increment } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
 
 const { firestore: db } = initializeFirebase();
@@ -13,12 +13,25 @@ export async function POST(req: NextRequest) {
         try {
             const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
             const docSnap = await getDoc(pendingOrderRef);
+
             if(docSnap.exists()){
-                await deleteDoc(pendingOrderRef);
-                console.log("Payment cancelled, pending order deleted for tran_id:", tran_id);
+                const orderData = docSnap.data();
+                const batch = writeBatch(db);
+
+                // Restore stock for each item in the cancelled order
+                for (const item of orderData.items) {
+                    const productRef = doc(db, 'products', item.id);
+                    batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                }
+
+                // Delete the pending order
+                batch.delete(pendingOrderRef);
+
+                await batch.commit();
+                console.log("Payment cancelled, pending order deleted and stock restored for tran_id:", tran_id);
             }
         } catch (error) {
-            console.error("Error deleting pending order for cancelled transaction:", error);
+            console.error("Error processing cancelled transaction:", error);
         }
     } else {
         console.log("Payment cancelled, no tran_id provided.", Object.fromEntries(body));

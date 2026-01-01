@@ -12,11 +12,11 @@ export async function POST(req: NextRequest) {
         const { tran_id, status } = body;
 
         console.log("IPN Received for tran_id:", tran_id, "with status:", status);
+        
+        const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
+        const pendingOrderSnap = await getDoc(pendingOrderRef);
 
         if (status === 'VALID') {
-            const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
-            const pendingOrderSnap = await getDoc(pendingOrderRef);
-            
             if (pendingOrderSnap.exists()) {
                 const orderData = pendingOrderSnap.data();
                 const batch = writeBatch(db);
@@ -30,22 +30,29 @@ export async function POST(req: NextRequest) {
                     updatedAt: serverTimestamp()
                 });
                 
-                for (const item of orderData.items) {
-                    const productRef = doc(db, 'products', item.id);
-                    batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
-                }
-                
+                // Stock was already decremented at payment initiation.
+                // Now we just delete the pending order.
                 batch.delete(pendingOrderRef);
 
                 await batch.commit();
                 console.log("IPN processed successfully for tran_id:", tran_id);
             }
         } else if (status === 'FAILED' || status === 'CANCELLED') {
-            const pendingOrderRef = doc(db, 'pending_orders', tran_id as string);
-            const docSnap = await getDoc(pendingOrderRef);
-            if(docSnap.exists()){
-                await deleteDoc(pendingOrderRef);
-                console.log("IPN: Pending order deleted for failed/cancelled tran_id:", tran_id);
+            if(pendingOrderSnap.exists()){
+                const orderData = pendingOrderSnap.data();
+                const batch = writeBatch(db);
+
+                 // Restore stock for each item in the failed/cancelled order
+                for (const item of orderData.items) {
+                    const productRef = doc(db, 'products', item.id);
+                    batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                }
+
+                // Delete the pending order
+                batch.delete(pendingOrderRef);
+                
+                await batch.commit();
+                console.log("IPN: Pending order deleted and stock restored for failed/cancelled tran_id:", tran_id);
             }
         }
     } catch (error) {
