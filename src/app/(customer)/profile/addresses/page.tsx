@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -27,7 +26,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { bangladeshGeoData } from '@/lib/bangladesh-geo';
+import { bangladeshGeoData } from '@/lib/bangladeshgeo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -71,14 +70,16 @@ export default function AddressesPage() {
     // Dependent dropdown options
     const districts = useMemo(() => {
         if (!formData.division) return [];
-        return Object.keys(bangladeshGeoData[formData.division as keyof typeof bangladeshGeoData] || {});
+        const divisionData = bangladeshGeoData[formData.division as keyof typeof bangladeshGeoData];
+        return divisionData ? Object.keys(divisionData) : [];
     }, [formData.division]);
 
     const upazilas = useMemo(() => {
         if (!formData.division || !formData.district) return [];
         const divisionData = bangladeshGeoData[formData.division as keyof typeof bangladeshGeoData];
         // @ts-ignore
-        return Object.keys(divisionData[formData.district] || {});
+        const districtData = divisionData ? divisionData[formData.district] : null;
+        return districtData ? Object.keys(districtData) : [];
     }, [formData.division, formData.district]);
 
 
@@ -370,3 +371,4 @@ export default function AddressesPage() {
     </div>
   );
 }
+    

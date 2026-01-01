@@ -45,7 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getPickupStores, createPickupStore, RedXArea } from '@/lib/redx';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { divisions, getDistrictsByDivision, getUpazilasByDistrict } from '@/lib/bangladesh-geo';
+import { getDistrictsByDivision, getUpazilasByDistrict, divisions } from '@/lib/bangladeshgeo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PickupStore {
@@ -117,7 +117,6 @@ export default function PickupStoresPage() {
         // RedX area_id lookup would be needed here based on upazila/area which is not implemented in redx.ts
         // For now, we'll use a placeholder or assume a direct mapping if possible.
         // This is a limitation of the current mock implementation.
-        // Let's assume upazila can be mapped to an area_id for now.
         const areaId = 1; // Placeholder
         await createPickupStore(newStoreData.name, newStoreData.phone, newStoreData.address, areaId);
         toast({ title: "Store Added", description: "The new pickup store has been created successfully." });
@@ -249,3 +248,5 @@ export default function PickupStoresPage() {
     </div>
   );
 }
+
+    
