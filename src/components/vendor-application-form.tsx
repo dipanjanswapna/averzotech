@@ -267,5 +267,3 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
         </ScrollArea>
     )
 }
-
-    

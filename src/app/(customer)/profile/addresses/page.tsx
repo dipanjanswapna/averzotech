@@ -27,7 +27,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { bangladeshGeoData, getDistrictsByDivision, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
+import { bangladeshGeoData, getDistrictsByDivision, getUpazilasByDistrict, divisions } from '@/lib/bangladeshgeo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -44,8 +44,6 @@ interface Address {
     phone: string;
     isDefault: boolean;
 }
-
-const divisions = Object.keys(bangladeshGeoData);
 
 export default function AddressesPage() {
     const { user, db } = useFirebase();

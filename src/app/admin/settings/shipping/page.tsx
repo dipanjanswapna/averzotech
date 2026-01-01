@@ -248,5 +248,4 @@ export default function PickupStoresPage() {
     </div>
   );
 }
-
     
