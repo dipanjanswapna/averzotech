@@ -6,16 +6,21 @@ import { CartProvider } from '@/hooks/use-cart';
 import { WishlistProvider } from '@/hooks/use-wishlist';
 import { MobileBottomNav } from '@/components/mobile-bottom-nav';
 import { SiteFooter } from '@/components/site-footer';
-import { Roboto } from 'next/font/google';
+import { Playfair_Display, PT_Sans } from 'next/font/google';
 import { DynamicComponents } from '@/components/dynamic-components';
 import { CartSheet } from '@/components/cart-sheet';
 import { FirebaseProvider } from '@/firebase/provider';
 
-const roboto = Roboto({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   weight: ['400', '500', '700', '900'],
-  variable: '--font-roboto',
-  display: 'swap',
+  variable: '--font-playfair',
+});
+
+const ptSans = PT_Sans({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-pt-sans',
 });
 
 import { defaultMetadata } from '@/config/metadata';
@@ -27,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${roboto.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${ptSans.variable}`}>
       <body className="font-sans antialiased">
         <FirebaseProvider>
           <CartProvider>
