@@ -1,10 +1,9 @@
 
+
 'use server';
 
 import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 
 const bKashConfig = {
@@ -136,3 +135,4 @@ export const refundStatus = async (paymentID: string, trxID: string) => {
         trxID
     });
 };
+

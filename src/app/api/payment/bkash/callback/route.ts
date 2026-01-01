@@ -1,13 +1,12 @@
 
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, deleteDoc, writeBatch, increment, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { executePayment } from '@/lib/bkash';
 import { Order } from '@/types';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 async function finalizeOrder(paymentDetails: any) {
     const orderId = paymentDetails.merchantInvoiceNumber;
@@ -81,3 +80,4 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL(`/payment/fail?reason=Internal_server_error`, appUrl), { status: 302 });
     }
 }
+

@@ -1,12 +1,12 @@
 
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc } from 'firebase/firestore';
 import { Order } from '@/types';
-import { initializeFirebase } from '@/firebase';
+import { db } from '@/firebase-server';
 
-const { firestore: db } = initializeFirebase();
 
 export async function POST(req: NextRequest) {
     try {
@@ -64,3 +64,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create order.', details: error.message }, { status: 500 });
     }
 }
+

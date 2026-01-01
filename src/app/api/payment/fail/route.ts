@@ -1,9 +1,8 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, deleteDoc, writeBatch, increment } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 export async function POST(req: NextRequest) {
     const body = await req.formData();
@@ -19,9 +18,11 @@ export async function POST(req: NextRequest) {
                 const batch = writeBatch(db);
 
                 // Restore stock for each item in the failed order
-                for (const item of orderData.items) {
-                    const productRef = doc(db, 'products', item.id);
-                    batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                if (orderData.items && Array.isArray(orderData.items)) {
+                    for (const item of orderData.items) {
+                        const productRef = doc(db, 'products', item.id);
+                        batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                    }
                 }
                 
                 // Delete the pending order
@@ -42,3 +43,4 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, appUrl), { status: 302 });
 }
+

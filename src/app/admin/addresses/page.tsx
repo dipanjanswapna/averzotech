@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -108,7 +109,7 @@ export default function AddressManagementPage() {
 
     useEffect(() => {
         (Object.keys(ENTITY_CONFIG) as EntityKey[]).forEach(fetchData);
-    }, [db, toast]);
+    }, [db]);
 
     const filteredData = useMemo(() => {
         if (!searchTerm) return data[activeTab];
@@ -190,13 +191,11 @@ export default function AddressManagementPage() {
                     });
 
                     if (!response.ok) {
-                        // Check if the response is JSON before trying to parse it
                         const contentType = response.headers.get("content-type");
                         if (contentType && contentType.indexOf("application/json") !== -1) {
                             const errorData = await response.json();
                             throw new Error(errorData.message || 'Failed to import data.');
                         } else {
-                            // If not JSON, it's likely an HTML error page.
                             throw new Error(`Server error: ${response.statusText}`);
                         }
                     }
@@ -420,3 +419,4 @@ export default function AddressManagementPage() {
         </div>
     );
 }
+

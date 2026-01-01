@@ -1,9 +1,8 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, query, where, getDocs, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 const REDX_STATUS_MAP: { [key: string]: string } = {
     'ready-for-delivery': 'Shipped',
@@ -67,3 +66,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
     }
 }
+

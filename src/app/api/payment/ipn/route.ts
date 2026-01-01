@@ -1,9 +1,8 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 export async function POST(req: NextRequest) {
     try {
@@ -43,9 +42,11 @@ export async function POST(req: NextRequest) {
                 const batch = writeBatch(db);
 
                  // Restore stock for each item in the failed/cancelled order
-                for (const item of orderData.items) {
-                    const productRef = doc(db, 'products', item.id);
-                    batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                if (orderData.items && Array.isArray(orderData.items)) {
+                    for (const item of orderData.items) {
+                        const productRef = doc(db, 'products', item.id);
+                        batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                    }
                 }
 
                 // Delete the pending order
@@ -62,3 +63,4 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: 'IPN Processed' }, { status: 200 });
 }
+

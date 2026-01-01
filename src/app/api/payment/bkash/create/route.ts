@@ -1,13 +1,12 @@
 
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, setDoc, serverTimestamp, writeBatch, increment, getDoc } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 import { createPayment } from '@/lib/bkash';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 export async function POST(req: NextRequest) {
     const orderData = await req.json();
@@ -61,3 +60,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `An error occurred during bKash payment initiation: ${error.message}` }, { status: 500 });
     }
 }
+

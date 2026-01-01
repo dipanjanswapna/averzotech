@@ -1,12 +1,11 @@
 
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { bkashPaymentRequest } from '@/lib/bkash';
-import { initializeFirebase } from '@/firebase';
+import { db } from '@/firebase-server';
 import { doc, getDoc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-
-const { firestore: db } = initializeFirebase();
 
 // A simple in-memory check for admin role would be insecure.
 // In a real app, use Firebase Auth tokens and custom claims to verify admin status.
@@ -69,3 +68,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to process refund.', details: error.message }, { status: 500 });
     }
 }
+

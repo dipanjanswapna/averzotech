@@ -1,10 +1,9 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, getDoc, deleteDoc, query, where, getDocs, limit } from 'firebase/firestore';
 import { Order } from '@/types';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 async function findOrder(tran_id: string): Promise<string | null> {
     const ordersRef = collection(db, 'orders');
@@ -78,3 +77,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, appUrl), { status: 302 });
     }
 }
+
