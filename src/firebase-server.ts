@@ -1,4 +1,6 @@
 
+'use server';
+
 import { initializeApp, getApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -9,14 +11,20 @@ if (!serviceAccountString) {
     // This is intentional. The app CANNOT run without this config.
     // In a real production environment, this would be a hard failure.
     // For local dev, ensure .env.local has FIREBASE_SERVICE_ACCOUNT set.
-    console.error("Firebase service account is not configured. Set the FIREBASE_SERVICE_ACCOUNT environment variable.");
+    throw new Error("Firebase service account is not configured. Set the FIREBASE_SERVICE_ACCOUNT environment variable.");
 }
 
-const serviceAccount = serviceAccountString ? JSON.parse(serviceAccountString) : undefined;
+const serviceAccount = JSON.parse(serviceAccountString);
 
-const app = !getApps().length && serviceAccount
-    ? initializeApp({ credential: cert(serviceAccount) }) 
-    : getApp();
+let app;
+if (!getApps().length) {
+    app = initializeApp({
+        credential: cert(serviceAccount),
+    });
+} else {
+    app = getApp();
+}
+
 
 const db = getFirestore(app);
 
