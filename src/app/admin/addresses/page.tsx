@@ -73,30 +73,29 @@ export default function AddressManagementPage() {
     });
 
 
-    // States for bulk import simulation
+    // States for bulk import
     const [importFile, setImportFile] = useState<File | null>(null);
     const [isImporting, setIsImporting] = useState(false);
     const [importProgress, setImportProgress] = useState(0);
 
-    useEffect(() => {
+     const fetchData = async (entity: EntityKey) => {
         if (!db) return;
+        setLoading(prev => ({...prev, [entity]: true}));
+        try {
+            const querySnapshot = await getDocs(collection(db, ENTITY_CONFIG[entity].collectionName));
+            const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setData(prev => ({ ...prev, [entity]: items }));
+        } catch (error) {
+            console.error(`Error fetching ${entity}:`, error);
+            toast({ title: "Error", description: `Failed to fetch ${entity}.`, variant: "destructive" });
+        } finally {
+             setLoading(prev => ({...prev, [entity]: false}));
+        }
+    };
 
-        const fetchData = async (entity: EntityKey) => {
-            setLoading(prev => ({...prev, [entity]: true}));
-            try {
-                const querySnapshot = await getDocs(collection(db, ENTITY_CONFIG[entity].collectionName));
-                const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setData(prev => ({ ...prev, [entity]: items }));
-            } catch (error) {
-                console.error(`Error fetching ${entity}:`, error);
-                toast({ title: "Error", description: `Failed to fetch ${entity}.`, variant: "destructive" });
-            } finally {
-                 setLoading(prev => ({...prev, [entity]: false}));
-            }
-        };
-        
+
+    useEffect(() => {
         (Object.keys(ENTITY_CONFIG) as EntityKey[]).forEach(fetchData);
-
     }, [db, toast]);
 
 
@@ -109,7 +108,7 @@ export default function AddressManagementPage() {
     }, [activeTab, searchTerm, data]);
 
     const handleAddNew = async () => {
-        if (!newEntityData.name_en || !newEntityData.name_bn) {
+        if (!newEntityData.name_en || !newEntityData.name_bn || !db) {
             toast({ title: "Error", description: "English and Bengali names are required.", variant: "destructive" });
             return;
         }
@@ -153,29 +152,33 @@ export default function AddressManagementPage() {
         Papa.parse(importFile, {
             header: true,
             skipEmptyLines: true,
-            complete: (results) => {
-                console.log("Parsed CSV Data for bulk import:", results.data);
-                // In a real application, you would send this data to a serverless function
-                // to handle the batch write to Firestore to avoid browser limitations.
-                
-                // Simulate backend processing
-                const totalRows = results.data.length;
-                let processedRows = 0;
-                const interval = setInterval(() => {
-                    processedRows += Math.ceil(totalRows / 10); // Process 10% at a time
-                    const progress = (processedRows / totalRows) * 100;
-                    setImportProgress(Math.min(100, progress));
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        setIsImporting(false);
-                        setIsImportDialogOpen(false);
-                        toast({
-                            title: "Import Complete (Simulated)",
-                            description: `${totalRows} rows were processed. Check the console for parsed data.`,
-                        });
-                        setImportFile(null);
+            complete: async (results) => {
+                try {
+                     const response = await fetch('/api/addresses/bulk-import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(results.data),
+                    });
+                     if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to import data.');
                     }
-                }, 300);
+                     const data = await response.json();
+                     toast({
+                        title: "Import Successful",
+                        description: `${data.count} address entities were processed and saved.`,
+                    });
+                     // Refresh data for all tabs
+                    (Object.keys(ENTITY_CONFIG) as EntityKey[]).forEach(fetchData);
+
+                } catch (error: any) {
+                    toast({ title: "Import Error", description: error.message, variant: "destructive" });
+                } finally {
+                    setIsImporting(false);
+                    setIsImportDialogOpen(false);
+                    setImportFile(null);
+                    setImportProgress(0);
+                }
             },
             error: (error) => {
                 console.error("CSV Parsing Error:", error);
@@ -184,6 +187,7 @@ export default function AddressManagementPage() {
             }
         });
     };
+
 
     const renderAddDialogContent = () => {
         const parentKey = ENTITY_CONFIG[activeTab].parent;
@@ -296,7 +300,7 @@ export default function AddressManagementPage() {
                                         <DialogHeader><DialogTitle>Bulk Import {activeTab}</DialogTitle></DialogHeader>
                                         <div className="space-y-4">
                                             <Label htmlFor="import-file">Upload CSV or JSON file</Label>
-                                            <p className="text-sm text-muted-foreground">Note: This will parse the file in your browser. For very large files, a server-based import is recommended.</p>
+                                            <p className="text-sm text-muted-foreground">Note: The backend will process this file and populate all address levels (Divisions, Districts, etc.).</p>
                                             <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv,.json" />
                                             {isImporting && (
                                                 <div className="space-y-2">
@@ -351,3 +355,5 @@ export default function AddressManagementPage() {
         </div>
     );
 }
+
+    
