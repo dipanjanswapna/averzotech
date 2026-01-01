@@ -27,6 +27,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Search, Upload, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
@@ -36,6 +37,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 // Mock Data - In a real application, this would come from your database
 const mockData = {
@@ -66,14 +70,118 @@ export default function AddressManagementPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+    const [newEntityData, setNewEntityData] = useState<any>({});
+    const { toast } = useToast();
 
     const filteredData = useMemo(() => {
         if (!searchTerm) return mockData[activeTab as keyof typeof mockData];
         return mockData[activeTab as keyof typeof mockData].filter((item: any) => 
             item.name_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.name_bn.toLowerCase().includes(searchTerm.toLowerCase())
+            (item.name_bn && item.name_bn.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [activeTab, searchTerm]);
+
+    const handleAddNew = () => {
+        // Basic validation
+        if (!newEntityData.name_en || !newEntityData.name_bn) {
+            toast({ title: "Error", description: "English and Bengali names are required.", variant: "destructive" });
+            return;
+        }
+
+        // Check for duplicates
+        const dataSet = mockData[activeTab as keyof typeof mockData] as any[];
+        const isDuplicate = dataSet.some(item => item.name_en.toLowerCase() === newEntityData.name_en.toLowerCase());
+        if(isDuplicate){
+            toast({ title: "Duplicate Entry", description: `A ${activeTab.slice(0, -1)} with this name already exists.`, variant: "destructive" });
+            return;
+        }
+
+        console.log("Adding new entity:", newEntityData); // Replace with actual API call
+        toast({ title: "Success", description: `New ${activeTab.slice(0, -1)} added (simulated).`});
+        setNewEntityData({});
+        setIsAddDialogOpen(false);
+    };
+
+    const renderAddDialogContent = () => {
+        const commonFields = (
+            <>
+                <div className="space-y-2">
+                    <Label htmlFor="name_en">Name (English)</Label>
+                    <Input id="name_en" value={newEntityData.name_en || ''} onChange={e => setNewEntityData({...newEntityData, name_en: e.target.value})} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="name_bn">Name (Bengali)</Label>
+                    <Input id="name_bn" value={newEntityData.name_bn || ''} onChange={e => setNewEntityData({...newEntityData, name_bn: e.target.value})} />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="code">Code</Label>
+                    <Input id="code" value={newEntityData.code || ''} onChange={e => setNewEntityData({...newEntityData, code: e.target.value})} />
+                </div>
+            </>
+        );
+
+        switch (activeTab) {
+            case 'districts':
+                return <>
+                    <div className="space-y-2">
+                        <Label htmlFor="division_id">Division</Label>
+                        <Select onValueChange={value => setNewEntityData({...newEntityData, division_id: value})}>
+                            <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
+                            <SelectContent>
+                                {mockData.divisions.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name_en}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {commonFields}
+                </>;
+             case 'upazilas':
+                return <>
+                     <div className="space-y-2">
+                        <Label htmlFor="district_id">District</Label>
+                        <Select onValueChange={value => setNewEntityData({...newEntityData, district_id: value})}>
+                            <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                            <SelectContent>
+                                {mockData.districts.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name_en}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {commonFields}
+                </>;
+             case 'unions':
+                return <>
+                     <div className="space-y-2">
+                        <Label htmlFor="upazila_id">Upazila</Label>
+                        <Select onValueChange={value => setNewEntityData({...newEntityData, upazila_id: value})}>
+                            <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
+                            <SelectContent>
+                                {mockData.upazilas.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name_en}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {commonFields}
+                </>;
+             case 'areas':
+                return <>
+                    <div className="space-y-2">
+                        <Label htmlFor="union_id">Union</Label>
+                        <Select onValueChange={value => setNewEntityData({...newEntityData, union_id: value})}>
+                            <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
+                            <SelectContent>
+                                {mockData.unions.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name_en}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="postal_code">Postal Code</Label>
+                        <Input id="postal_code" value={newEntityData.postal_code || ''} onChange={e => setNewEntityData({...newEntityData, postal_code: e.target.value})} />
+                    </div>
+                    {commonFields}
+                </>;
+            default: // Divisions
+                return commonFields;
+        }
+    }
+
 
     const renderTable = (entityName: string, data: any[]) => {
         if (data.length === 0) return <p className="text-muted-foreground p-4">No data found.</p>;
@@ -153,16 +261,18 @@ export default function AddressManagementPage() {
                                 </Dialog>
                                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                                     <DialogTrigger asChild>
-                                        <Button><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
+                                        <Button onClick={() => setNewEntityData({})}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
                                     </DialogTrigger>
-                                    <DialogContent>
+                                     <DialogContent>
                                         <DialogHeader><DialogTitle>Add New {activeTab.slice(0,-1)}</DialogTitle></DialogHeader>
                                         <div className="space-y-4">
-                                             <p>Form fields for creating a new entity would go here.</p>
+                                             {renderAddDialogContent()}
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="secondary" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                                            <Button>Save</Button>
+                                            <DialogClose asChild>
+                                                <Button variant="secondary">Cancel</Button>
+                                            </DialogClose>
+                                            <Button onClick={handleAddNew}>Save</Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
