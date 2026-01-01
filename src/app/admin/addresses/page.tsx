@@ -29,6 +29,17 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
 import { PlusCircle, Search, Upload, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 import {
@@ -41,19 +52,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useFirebase } from '@/firebase';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import Papa from 'papaparse';
 
 
 const ENTITY_CONFIG = {
-    divisions: { collectionName: 'divisions', parent: null },
-    districts: { collectionName: 'districts', parent: 'divisions' },
-    upazilas: { collectionName: 'upazilas', parent: 'districts' },
-    unions: { collectionName: 'unions', parent: 'upazilas' },
-    areas: { collectionName: 'areas', parent: 'unions' },
+    divisions: { collectionName: 'divisions', parent: null, fields: ['name_en', 'name_bn', 'code'] },
+    districts: { collectionName: 'districts', parent: 'divisions', fields: ['name_en', 'name_bn', 'code'] },
+    upazilas: { collectionName: 'upazilas', parent: 'districts', fields: ['name_en', 'name_bn', 'code'] },
+    unions: { collectionName: 'unions', parent: 'upazilas', fields: ['name_en', 'name_bn', 'code'] },
+    areas: { collectionName: 'areas', parent: 'unions', fields: ['name_en', 'name_bn', 'postal_code'] },
 } as const;
 
 type EntityKey = keyof typeof ENTITY_CONFIG;
+type EntityData = { id: string, [key: string]: any };
 
 
 export default function AddressManagementPage() {
@@ -62,7 +74,7 @@ export default function AddressManagementPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-    const [newEntityData, setNewEntityData] = useState<any>({});
+    const [editingEntity, setEditingEntity] = useState<EntityData | null>(null);
     const { toast } = useToast();
     
     const [data, setData] = useState<Record<EntityKey, any[]>>({
@@ -98,7 +110,6 @@ export default function AddressManagementPage() {
         (Object.keys(ENTITY_CONFIG) as EntityKey[]).forEach(fetchData);
     }, [db, toast]);
 
-
     const filteredData = useMemo(() => {
         if (!searchTerm) return data[activeTab];
         return data[activeTab].filter((item: any) => 
@@ -107,32 +118,50 @@ export default function AddressManagementPage() {
         );
     }, [activeTab, searchTerm, data]);
 
-    const handleAddNew = async () => {
-        if (!newEntityData.name_en || !newEntityData.name_bn || !db) {
+    const handleSaveEntity = async (entityData: any) => {
+         if (!entityData.name_en || !entityData.name_bn || !db) {
             toast({ title: "Error", description: "English and Bengali names are required.", variant: "destructive" });
             return;
         }
 
         const currentDataSet = data[activeTab];
         const isDuplicate = currentDataSet.some(item => 
-            item.name_en.toLowerCase() === newEntityData.name_en.toLowerCase() &&
-            (!ENTITY_CONFIG[activeTab].parent || item[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`] === newEntityData[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`])
+            item.id !== entityData.id && // Exclude self in edit mode
+            item.name_en.toLowerCase() === entityData.name_en.toLowerCase() &&
+            (!ENTITY_CONFIG[activeTab].parent || item[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`] === entityData[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`])
         );
 
         if(isDuplicate){
             toast({ title: "Duplicate Entry", description: `A ${activeTab.slice(0, -1)} with this name already exists.`, variant: "destructive" });
             return;
         }
-
+        
         try {
-            const docRef = await addDoc(collection(db, ENTITY_CONFIG[activeTab].collectionName), newEntityData);
-            setData(prev => ({...prev, [activeTab]: [...prev[activeTab], {id: docRef.id, ...newEntityData}]}));
-            toast({ title: "Success", description: `New ${activeTab.slice(0, -1)} added.`});
-            setNewEntityData({});
+            if (editingEntity) { // Update
+                const docRef = doc(db, ENTITY_CONFIG[activeTab].collectionName, editingEntity.id);
+                await updateDoc(docRef, entityData);
+                toast({ title: "Success", description: `${activeTab.slice(0, -1)} updated.` });
+            } else { // Create
+                await addDoc(collection(db, ENTITY_CONFIG[activeTab].collectionName), entityData);
+                toast({ title: "Success", description: `New ${activeTab.slice(0, -1)} added.` });
+            }
+            fetchData(activeTab);
             setIsAddDialogOpen(false);
+            setEditingEntity(null);
         } catch (error) {
-             toast({ title: "Error", description: `Failed to add ${activeTab.slice(0, -1)}.`, variant: "destructive" });
+            toast({ title: "Error", description: `Failed to save ${activeTab.slice(0, -1)}.`, variant: "destructive" });
         }
+    };
+
+    const handleDeleteEntity = async (entityId: string) => {
+        if(!db) return;
+         try {
+            await deleteDoc(doc(db, ENTITY_CONFIG[activeTab].collectionName, entityId));
+            toast({ title: "Deleted", description: `${activeTab.slice(0, -1)} has been deleted.` });
+            fetchData(activeTab);
+         } catch(error) {
+            toast({ title: "Error", description: `Failed to delete ${activeTab.slice(0, -1)}.`, variant: "destructive" });
+         }
     };
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,18 +217,42 @@ export default function AddressManagementPage() {
         });
     };
 
+    const openEditDialog = (entity: EntityData) => {
+        setEditingEntity(entity);
+        setIsAddDialogOpen(true);
+    }
+    const openAddDialog = () => {
+        setEditingEntity(null);
+        setIsAddDialogOpen(true);
+    }
 
     const renderAddDialogContent = () => {
         const parentKey = ENTITY_CONFIG[activeTab].parent;
         const parentName = parentKey?.slice(0, -1);
         const parentData = parentKey ? data[parentKey] : [];
+        const currentData = editingEntity || {};
+
+        const fields = ENTITY_CONFIG[activeTab].fields;
+
+        const [formData, setFormData] = useState(currentData);
+
+        useEffect(() => {
+            setFormData(editingEntity || {});
+        }, [editingEntity]);
+
+        const handleChange = (field: string, value: string) => {
+            setFormData(prev => ({...prev, [field]: value}));
+        }
 
         return (
             <div className="space-y-4">
                 {parentKey && (
                      <div className="space-y-2">
                         <Label htmlFor={`${parentName}_id`} className="capitalize">{parentName}</Label>
-                        <Select onValueChange={value => setNewEntityData({...newEntityData, [`${parentName}_id`]: value})}>
+                        <Select
+                            value={formData[`${parentName}_id`]} 
+                            onValueChange={value => handleChange(`${parentName}_id`, value)}
+                        >
                             <SelectTrigger><SelectValue placeholder={`Select ${parentName}`} /></SelectTrigger>
                             <SelectContent>
                                 {parentData.map(d => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
@@ -207,34 +260,27 @@ export default function AddressManagementPage() {
                         </Select>
                     </div>
                 )}
-                <div className="space-y-2">
-                    <Label htmlFor="name_en">Name (English)</Label>
-                    <Input id="name_en" value={newEntityData.name_en || ''} onChange={e => setNewEntityData({...newEntityData, name_en: e.target.value})} />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="name_bn">Name (Bengali)</Label>
-                    <Input id="name_bn" value={newEntityData.name_bn || ''} onChange={e => setNewEntityData({...newEntityData, name_bn: e.target.value})} />
-                </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="code">Code (Optional)</Label>
-                    <Input id="code" value={newEntityData.code || ''} onChange={e => setNewEntityData({...newEntityData, code: e.target.value})} />
-                </div>
-                {activeTab === 'areas' && (
-                     <div className="space-y-2">
-                        <Label htmlFor="postal_code">Postal Code</Label>
-                        <Input id="postal_code" value={newEntityData.postal_code || ''} onChange={e => setNewEntityData({...newEntityData, postal_code: e.target.value})} />
+                {fields.map(field => (
+                    <div className="space-y-2" key={field}>
+                        <Label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}</Label>
+                        <Input id={field} value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
                     </div>
-                )}
+                ))}
+                 <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="secondary" onClick={() => setEditingEntity(null)}>Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={() => handleSaveEntity(formData)}>Save</Button>
+                </DialogFooter>
             </div>
         );
     }
 
-
-    const renderTable = (entityName: EntityKey, data: any[]) => {
+    const renderTable = (entityName: EntityKey, tableData: any[]) => {
         if (loading[entityName]) return <p className="text-muted-foreground p-4">Loading data...</p>;
-        if (data.length === 0) return <p className="text-muted-foreground p-4">No data found.</p>;
+        if (tableData.length === 0) return <p className="text-muted-foreground p-4">No data found.</p>;
         
-        const headers = Object.keys(data[0]).filter(h => h !== 'id' && !h.endsWith('_id'));
+        const headers = Object.keys(tableData[0]).filter(h => h !== 'id' && !h.endsWith('_id'));
 
         return (
             <Table>
@@ -245,19 +291,35 @@ export default function AddressManagementPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {data.map((row) => (
+                    {tableData.map((row) => (
                         <TableRow key={row.id}>
                             {headers.map(header => <TableCell key={header}>{row[header]}</TableCell>)}
                             <TableCell>
-                               <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuItem><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                <AlertDialog>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem onClick={() => openEditDialog(row)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete the selected {activeTab.slice(0, -1)}.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteEntity(row.id)}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </TableCell>
                         </TableRow>
                     ))}
@@ -297,11 +359,11 @@ export default function AddressManagementPage() {
                                         <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Bulk Import</Button>
                                     </DialogTrigger>
                                     <DialogContent>
-                                        <DialogHeader><DialogTitle>Bulk Import {activeTab}</DialogTitle></DialogHeader>
+                                        <DialogHeader><DialogTitle>Bulk Import Address Data</DialogTitle></DialogHeader>
                                         <div className="space-y-4">
-                                            <Label htmlFor="import-file">Upload CSV or JSON file</Label>
+                                            <Label htmlFor="import-file">Upload CSV file</Label>
                                             <p className="text-sm text-muted-foreground">Note: The backend will process this file and populate all address levels (Divisions, Districts, etc.).</p>
-                                            <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv,.json" />
+                                            <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv" />
                                             {isImporting && (
                                                 <div className="space-y-2">
                                                     <Progress value={importProgress} />
@@ -319,17 +381,11 @@ export default function AddressManagementPage() {
                                 </Dialog>
                                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                                     <DialogTrigger asChild>
-                                        <Button onClick={() => setNewEntityData({})}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
+                                        <Button onClick={openAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
                                     </DialogTrigger>
                                      <DialogContent>
-                                        <DialogHeader><DialogTitle>Add New {activeTab.slice(0,-1)}</DialogTitle></DialogHeader>
+                                        <DialogHeader><DialogTitle>{editingEntity ? 'Edit' : 'Add New'} {activeTab.slice(0,-1)}</DialogTitle></DialogHeader>
                                          {renderAddDialogContent()}
-                                        <DialogFooter>
-                                            <DialogClose asChild>
-                                                <Button variant="secondary">Cancel</Button>
-                                            </DialogClose>
-                                            <Button onClick={handleAddNew}>Save</Button>
-                                        </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
                             </div>
@@ -355,5 +411,3 @@ export default function AddressManagementPage() {
         </div>
     );
 }
-
-    
