@@ -43,6 +43,7 @@
             "type": "object",
             "properties": {
                  "stock": { "type": "number" },
+                 "initialStock": { "type": "number" },
                  "sku": { "type": "string" },
                  "availability": { "type": "string" },
                  "moq": { "type": "number" },

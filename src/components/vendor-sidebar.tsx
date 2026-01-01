@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, ShoppingCart, Settings, LogOut, FileText, BarChart3 } from 'lucide-react';
+import { Home, Package, ShoppingCart, Settings, LogOut, FileText, BarChart3, Boxes } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -29,6 +29,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { useFirebase } from '@/firebase';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 export function VendorSidebar({ user }: { user: any }) {
   const pathname = usePathname();
@@ -57,11 +58,15 @@ export function VendorSidebar({ user }: { user: any }) {
 
   const navItems = [
     { href: '/vendor/dashboard', label: 'Dashboard', icon: Home },
-    { href: '/vendor/products', label: 'Products', icon: Package },
     { href: '/vendor/orders', label: 'Orders', icon: ShoppingCart },
     { href: '/vendor/invoices', label: 'Invoices', icon: FileText },
     { href: '/vendor/reports', label: 'Reports', icon: BarChart3 },
   ];
+  
+  const productManagementItems = [
+      { href: '/vendor/products', label: 'All Products', icon: Package },
+      { href: '/vendor/products/stock', label: 'Stock', icon: Boxes },
+  ]
 
   return (
     <Sidebar>
@@ -90,6 +95,44 @@ export function VendorSidebar({ user }: { user: any }) {
                 </Link>
             </SidebarMenuItem>
           ))}
+          <Accordion type="single" collapsible className="w-full group-data-[state=collapsed]:hidden" defaultValue='products'>
+             <AccordionItem value="products" className="border-none">
+                <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
+                    <Package />
+                    <span>Products</span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-0 pl-5">
+                    <SidebarMenu>
+                       {productManagementItems.map((item) => (
+                            <SidebarMenuItem key={item.label}>
+                                <Link href={item.href}>
+                                    <SidebarMenuButton 
+                                        isActive={pathname === item.href}
+                                        tooltip={{ children: item.label }}
+                                        size="sm"
+                                    >
+                                        <item.icon />
+                                        <span>{item.label}</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+          <div className="hidden group-data-[state=collapsed]:block">
+                 <SidebarMenuItem>
+                    <Link href="/vendor/products">
+                        <SidebarMenuButton 
+                            isActive={pathname.startsWith('/vendor/products')}
+                            tooltip={{ children: 'Products' }}
+                        >
+                            <Package />
+                        </SidebarMenuButton>
+                    </Link>
+                 </SidebarMenuItem>
+            </div>
         </SidebarMenu>
       </SidebarContent>
 
