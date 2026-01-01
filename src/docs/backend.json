@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "Product": {
@@ -45,7 +44,8 @@
             "properties": {
                  "stock": { "type": "number" },
                  "sku": { "type": "string" },
-                 "availability": { "type": "string" }
+                 "availability": { "type": "string" },
+                 "moq": { "type": "number" }
             }
         },
         "brand": { "type": "string" }

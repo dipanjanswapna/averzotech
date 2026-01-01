@@ -105,6 +105,7 @@ export default function EditVendorProductPage() {
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
+    const [moq, setMoq] = useState('');
     
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
     
@@ -157,6 +158,7 @@ export default function EditVendorProductPage() {
                     setSelectedGroup(data.organization?.group || '');
                     setSelectedSubcategory(data.organization?.subcategory || '');
                     setTags(data.organization?.tags || []);
+                    setMoq(String(data.inventory?.moq || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
                     toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -324,7 +326,7 @@ export default function EditVendorProductPage() {
         setIsGenerating(true);
         try {
             const keywords = descriptionKeywords.split(',').map(k => k.trim()).filter(Boolean);
-            const generatedDesc = await generateProductDescription({ productName, brand, keywords });
+            const generatedDesc = await generateProductDescription({ productName, brand, keywords, specifications: [], colors: [], sizes: [] });
             setDescription(generatedDesc);
         } catch (error) {
             console.error("AI Description generation failed:", error);
@@ -370,7 +372,7 @@ export default function EditVendorProductPage() {
             const imageUrls = await Promise.all(
                 images.map(async (imageObj) => {
                     if (imageObj.file) {
-                        const storageRef = ref(storage, `products/${Date.now()}-${imageObj.file.name}`);
+                        const storageRef = ref(storage!, `products/${Date.now()}-${imageObj.file.name}`);
                         await uploadBytes(storageRef, imageObj.file);
                         return await getDownloadURL(storageRef);
                     }
@@ -399,6 +401,11 @@ export default function EditVendorProductPage() {
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
                     tags,
+                },
+                inventory: {
+                    moq: parseInt(moq, 10) || 1,
+                    stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                 },
                 shipping: {
                     estimatedDelivery,
@@ -793,6 +800,10 @@ export default function EditVendorProductPage() {
                 <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
+                        <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
+                        <Input id="moq" type="number" placeholder="e.g. 1" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
+                    </div>
+                    <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
                         <Input id="estimated-delivery" placeholder="e.g. 2-3 days" value={estimatedDelivery} onChange={e => setEstimatedDelivery(e.target.value)} disabled={isLoading}/>
                     </div>
@@ -810,4 +821,3 @@ export default function EditVendorProductPage() {
     </div>
   );
 }
-
