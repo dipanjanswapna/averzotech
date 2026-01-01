@@ -73,17 +73,16 @@ export default function AddressesPage() {
     useEffect(() => {
         if(formData.division) {
             setDistricts(getDistrictsByDivision(formData.division) || []);
-            setFormData(prev => ({ ...prev, district: '', upazila: '', area: '' }));
+            setFormData(prev => ({ ...prev, district: '', upazila: '' }));
         } else {
             setDistricts([]);
-            setUpazilas([]);
         }
     }, [formData.division]);
 
     useEffect(() => {
         if (formData.district) {
             setUpazilas(getUpazilasByDistrict(formData.division, formData.district) || []);
-            setFormData(prev => ({ ...prev, upazila: '', area: '' }));
+            setFormData(prev => ({ ...prev, upazila: '' }));
         } else {
             setUpazilas([]);
         }
@@ -331,15 +330,18 @@ export default function AddressesPage() {
                             </SelectContent>
                         </Select>
                          <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
-                            <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
+                            <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
                             <SelectContent>
                                 {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                        <Input id="area" placeholder="Area (e.g. Salimullah Road)" value={formData.area} onChange={handleFormChange} />
                     </div>
               </div>
                <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="area" className="text-right pt-2">Area</Label>
+                <Textarea id="area" value={formData.area} onChange={handleFormChange} className="col-span-3" placeholder="e.g. Salimullah Road" />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="streetAddress" className="text-right pt-2">Street Address</Label>
                 <Textarea id="streetAddress" value={formData.streetAddress} onChange={handleFormChange} className="col-span-3" placeholder="e.g. House 123, Road 4, Block F" />
               </div>
