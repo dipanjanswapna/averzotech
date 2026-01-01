@@ -45,7 +45,8 @@
                  "stock": { "type": "number" },
                  "sku": { "type": "string" },
                  "availability": { "type": "string" },
-                 "moq": { "type": "number" }
+                 "moq": { "type": "number" },
+                 "maxPurchaseLimit": { "type": "number" }
             }
         },
         "brand": { "type": "string" }
