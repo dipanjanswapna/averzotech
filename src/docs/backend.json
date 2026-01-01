@@ -168,6 +168,7 @@
         "shopName": { "type": "string" },
         "status": { "type": "string", "enum": ["Active", "Suspended"] },
         "trustScore": { "type": "number" },
+        "minimumOrderValue": { "type": "number" },
         "sla": {
           "type": "object",
           "properties": {

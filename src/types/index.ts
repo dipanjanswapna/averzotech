@@ -7,6 +7,7 @@
 
 
 
+
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -205,10 +206,16 @@ export interface Vendor {
         phone: string;
         email: string;
     };
+    documents?: {
+        tradeLicenseUrl: string;
+        nidUrl: string;
+        tinUrl: string;
+    };
     payment: any;
     trustScore: number;
     sla: {
         deliveryCommitment: number; // in hours
     };
     status: 'Active' | 'Suspended';
+    minimumOrderValue?: number;
 }

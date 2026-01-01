@@ -135,7 +135,7 @@ export default function VendorsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                            <DropdownMenuItem asChild>
-                                <Link href={`/admin/users/edit/${vendor.userId}`}>View Details</Link>
+                                <Link href={`/admin/vendors/${vendor.id}`}>View Details</Link>
                            </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
