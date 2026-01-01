@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -7,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
+  CardContent
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Home, Trash2, Edit, PlusCircle, CheckCircle } from 'lucide-react';
@@ -21,27 +21,22 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { divisions, getDistrictsByDivision, getUnionsByUpazila, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
-import { CardContent } from '@/components/ui/card';
 
 interface Address {
     id: string;
     type: string;
     name: string;
     streetAddress: string;
-    division: string;
-    district: string;
-    upazila: string;
-    union: string;
     area: string;
-    delivery_area_id?: number;
+    city: string;
+    district: string;
+    division: string;
     phone: string;
     isDefault: boolean;
 }
@@ -59,31 +54,13 @@ export default function AddressesPage() {
         type: 'Home',
         name: '',
         streetAddress: '',
-        division: '',
-        district: '',
-        upazila: '',
-        union: '',
         area: '',
+        city: '',
+        district: '',
+        division: '',
         phone: '',
         isDefault: false,
     });
-    
-    // Dependent dropdown options
-    const districts = useMemo(() => {
-        if (!formData.division) return [];
-        return getDistrictsByDivision(formData.division);
-    }, [formData.division]);
-
-    const upazilas = useMemo(() => {
-        if (!formData.division || !formData.district) return [];
-        return getUpazilasByDistrict(formData.division, formData.district);
-    }, [formData.division, formData.district]);
-
-    const unions = useMemo(() => {
-        if (!formData.division || !formData.district || !formData.upazila) return [];
-        return getUnionsByUpazila(formData.division, formData.district, formData.upazila);
-    }, [formData.division, formData.district, formData.upazila]);
-
 
     const fetchAddresses = async () => {
         if (!user || !db) return;
@@ -113,11 +90,10 @@ export default function AddressesPage() {
                 type: editingAddress.type,
                 name: editingAddress.name,
                 streetAddress: editingAddress.streetAddress,
-                division: editingAddress.division,
+                area: editingAddress.area,
+                city: editingAddress.city,
                 district: editingAddress.district,
-                upazila: editingAddress.upazila,
-                union: editingAddress.union,
-                area: editingAddress.area, 
+                division: editingAddress.division,
                 phone: editingAddress.phone,
                 isDefault: editingAddress.isDefault,
             });
@@ -131,11 +107,10 @@ export default function AddressesPage() {
             type: 'Home',
             name: user?.fullName || '',
             streetAddress: '',
-            division: '',
-            district: '',
-            upazila: '',
-            union: '',
             area: '',
+            city: '',
+            district: '',
+            division: '',
             phone: '',
             isDefault: false,
         });
@@ -144,18 +119,6 @@ export default function AddressesPage() {
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { id, value } = e.target;
         setFormData(prev => ({ ...prev, [id]: value }));
-    };
-    
-    const handleSelectChange = (field: 'division' | 'district' | 'upazila' | 'union') => (value: string) => {
-        if (field === 'division') {
-            setFormData(prev => ({ ...prev, division: value, district: '', upazila: '', union: '' }));
-        } else if (field === 'district') {
-            setFormData(prev => ({ ...prev, district: value, upazila: '', union: '' }));
-        } else if (field === 'upazila') {
-            setFormData(prev => ({ ...prev, upazila: value, union: '' }));
-        } else {
-            setFormData(prev => ({ ...prev, [field]: value }));
-        }
     };
 
     const handleSetDefault = async (addressId: string) => {
@@ -184,23 +147,8 @@ export default function AddressesPage() {
 
     const handleSubmit = async () => {
         if (!user || !db) return;
-        if (!formData.division || !formData.district || !formData.upazila || !formData.streetAddress || !formData.phone.trim()) {
-            toast({ title: "Incomplete Address", description: "Please fill all required address fields including phone number.", variant: "destructive" });
-            return;
-        }
         
-        const dataToSave = {
-            type: formData.type,
-            name: formData.name,
-            streetAddress: formData.streetAddress,
-            division: formData.division,
-            district: formData.district,
-            upazila: formData.upazila,
-            union: formData.union,
-            area: formData.area,
-            phone: formData.phone,
-            isDefault: formData.isDefault,
-        };
+        const dataToSave = { ...formData };
 
         const addressesCol = collection(db, 'users', user.uid, 'addresses');
         
@@ -282,7 +230,7 @@ export default function AddressesPage() {
                     <CardContent>
                         <p className="font-semibold">{addr.name}</p>
                         <p className="text-muted-foreground">{addr.streetAddress}</p>
-                        <p className="text-muted-foreground">{addr.area}, {addr.union}, {addr.upazila}, {addr.district}, {addr.division}</p>
+                        <p className="text-muted-foreground">{addr.area}, {addr.city}, {addr.district}, {addr.division}</p>
                         <p className="text-muted-foreground mt-2">Mobile: <span className="font-medium text-foreground">{addr.phone}</span></p>
                     </CardContent>
                     <CardFooter className="flex justify-between">
@@ -323,37 +271,20 @@ export default function AddressesPage() {
                 <Input id="name" value={formData.name} onChange={handleFormChange} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Location</Label>
-                    <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <Select value={formData.division} onValueChange={handleSelectChange('division')}>
-                            <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
-                            <SelectContent>
-                                {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
-                            <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                            <SelectContent>
-                                {districts.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                         <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
-                            <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
-                            <SelectContent>
-                                {upazilas.map((u, i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Select value={formData.union} onValueChange={handleSelectChange('union')} disabled={!formData.upazila}>
-                            <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
-                            <SelectContent>
-                                {unions.map((u, i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <Label htmlFor="division" className="text-right">Division</Label>
+                <Input id="division" value={formData.division} onChange={handleFormChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="district" className="text-right">District</Label>
+                <Input id="district" value={formData.district} onChange={handleFormChange} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="city" className="text-right">City/Upazila</Label>
+                <Input id="city" value={formData.city} onChange={handleFormChange} className="col-span-3" />
               </div>
                <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="area" className="text-right pt-2">Area</Label>
-                <Textarea id="area" value={formData.area} onChange={handleFormChange} className="col-span-3" placeholder="e.g. Salimullah Road" />
+                <Textarea id="area" value={formData.area} onChange={handleFormChange} className="col-span-3" placeholder="e.g. Salimullah Road, Mohammadpur" />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="streetAddress" className="text-right pt-2">Street Address</Label>

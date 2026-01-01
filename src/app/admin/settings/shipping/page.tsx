@@ -42,11 +42,9 @@ import {
 import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getPickupStores, createPickupStore, RedXArea } from '@/lib/redx';
+import { getPickupStores, createPickupStore } from '@/lib/redx';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getDistrictsByDivision, getUnionsByUpazila, getUpazilasByDistrict, divisions } from '@/lib/bangladeshgeo';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PickupStore {
   id: number;
@@ -62,11 +60,8 @@ export default function PickupStoresPage() {
   const { toast } = useToast();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newStoreData, setNewStoreData] = useState({ name: '', phone: '', address: '', division: '', district: '', upazila: '', union: '', area_id: 0 });
+  const [newStoreData, setNewStoreData] = useState({ name: '', phone: '', address: '', area_id: 0 });
   
-  const [districts, setDistricts] = useState<string[]>([]);
-  const [upazilas, setUpazilas] = useState<string[]>([]);
-  const [unions, setUnions] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const fetchStores = async () => {
@@ -84,55 +79,23 @@ export default function PickupStoresPage() {
   useEffect(() => {
     fetchStores();
   }, []);
-  
-  useEffect(() => {
-    if (newStoreData.division) {
-        setDistricts(getDistrictsByDivision(newStoreData.division) || []);
-        setNewStoreData(prev => ({ ...prev, district: '', upazila: '', union: '', area_id: 0 }));
-    } else {
-        setDistricts([]);
-    }
-  }, [newStoreData.division]);
-
-   useEffect(() => {
-    if (newStoreData.district) {
-        setUpazilas(getUpazilasByDistrict(newStoreData.division, newStoreData.district) || []);
-        setNewStoreData(prev => ({ ...prev, upazila: '', union: '' }));
-    } else {
-        setUpazilas([]);
-    }
-  }, [newStoreData.district, newStoreData.division]);
-
-  useEffect(() => {
-    if (newStoreData.upazila) {
-      setUnions(getUnionsByUpazila(newStoreData.division, newStoreData.district, newStoreData.upazila) || []);
-      setNewStoreData(prev => ({ ...prev, union: '' }));
-    } else {
-      setUnions([]);
-    }
-  }, [newStoreData.upazila, newStoreData.district, newStoreData.division]);
-
 
   const handleInputChange = (field: keyof typeof newStoreData, value: string | number) => {
     setNewStoreData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddStore = async () => {
-    if (!newStoreData.name || !newStoreData.phone || !newStoreData.address || !newStoreData.district || !newStoreData.upazila) {
+    if (!newStoreData.name || !newStoreData.phone || !newStoreData.address || !newStoreData.area_id) {
         toast({ title: "Missing fields", description: "Please fill all fields to add a store.", variant: "destructive" });
         return;
     }
     setIsSubmitting(true);
     try {
-        // RedX area_id lookup would be needed here based on upazila/area which is not implemented in redx.ts
-        // For now, we'll use a placeholder or assume a direct mapping if possible.
-        // This is a limitation of the current mock implementation.
-        const areaId = 1; // Placeholder
-        await createPickupStore(newStoreData.name, newStoreData.phone, newStoreData.address, areaId);
+        await createPickupStore(newStoreData.name, newStoreData.phone, newStoreData.address, newStoreData.area_id);
         toast({ title: "Store Added", description: "The new pickup store has been created successfully." });
         fetchStores();
         setIsDialogOpen(false);
-        setNewStoreData({ name: '', phone: '', address: '', division: '', district: '', upazila: '', union: '', area_id: 0 });
+        setNewStoreData({ name: '', phone: '', address: '', area_id: 0 });
     } catch (error: any) {
         toast({ title: "Error", description: `Could not add store: ${error.message}`, variant: "destructive" });
     } finally {
@@ -180,33 +143,9 @@ export default function PickupStoresPage() {
                         <Input id="address" value={newStoreData.address} onChange={e => handleInputChange('address', e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                        <Label>Location</Label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                             <Select value={newStoreData.division} onValueChange={value => handleInputChange('division', value)}>
-                                <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
-                                <SelectContent>
-                                    {divisions.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Select value={newStoreData.district} onValueChange={value => handleInputChange('district', value)} disabled={!newStoreData.division}>
-                                <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                                <SelectContent>
-                                    {districts.map((d,i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Select value={newStoreData.upazila} onValueChange={value => handleInputChange('upazila', value)} disabled={!newStoreData.district}>
-                                <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
-                                <SelectContent>
-                                    {upazilas.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                             <Select value={newStoreData.union} onValueChange={value => handleInputChange('union', value)} disabled={!newStoreData.upazila}>
-                                <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
-                                <SelectContent>
-                                    {unions.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Label htmlFor="area_id">Area ID</Label>
+                        <Input id="area_id" type="number" value={newStoreData.area_id} onChange={e => handleInputChange('area_id', Number(e.target.value))} />
+                        <p className="text-xs text-muted-foreground">Find the correct Area ID from the RedX portal.</p>
                     </div>
                 </div>
                 <DialogFooter>

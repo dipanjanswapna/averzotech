@@ -26,7 +26,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
-import { divisions, getDistrictsByDivision, getUpazilasByDistrict, getUnionsByUpazila } from '@/lib/bangladeshgeo';
 
 export interface VendorApplicationData {
     shopInfo: {
@@ -84,27 +83,6 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
 
     const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-    const [division, setDivision] = useState('');
-    const [district, setDistrict] = useState('');
-    const [upazila, setUpazila] = useState('');
-    const [union, setUnion] = useState('');
-
-    const availableDistricts = useMemo(() => {
-        if (!division) return [];
-        return getDistrictsByDivision(division);
-    }, [division]);
-
-    const availableUpazilas = useMemo(() => {
-        if (!district) return [];
-        return getUpazilasByDistrict(division, district);
-    }, [district, division]);
-
-    const availableUnions = useMemo(() => {
-        if (!upazila) return [];
-        return getUnionsByUpazila(division, district, upazila);
-    }, [upazila, district, division]);
-
-
     const handleSubmit = () => {
         if (!shopName || !shopAddress || !category || !contactName || !contactPhone || !tradeLicenseUrl || !nidUrl) {
             toast({ title: 'Missing Information', description: 'Please fill out all required fields.', variant: 'destructive' });
@@ -125,13 +103,11 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
             toast({ title: 'Agreement Required', description: 'You must agree to the terms and conditions to proceed.', variant: 'destructive' });
             return;
         }
-        
-        const fullAddress = `${shopAddress}, ${union}, ${upazila}, ${district}, ${division}`;
 
         const formData: VendorApplicationData = {
             shopInfo: {
                 shopName,
-                address: fullAddress,
+                address: shopAddress,
                 category,
             },
             contactInfo: {
@@ -168,48 +144,9 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                             <Label htmlFor="shop-name">Shop Name</Label>
                             <Input id="shop-name" value={shopName} onChange={e => setShopName(e.target.value)} disabled={isLoading} />
                         </div>
-
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            <div className="space-y-2">
-                                <Label>Division</Label>
-                                <Select value={division} onValueChange={(value) => { setDivision(value); setDistrict(''); setUpazila(''); }}>
-                                    <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
-                                    <SelectContent>
-                                        {divisions.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="space-y-2">
-                                <Label>District</Label>
-                                <Select value={district} onValueChange={(value) => { setDistrict(value); setUpazila(''); }} disabled={!division}>
-                                    <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                                    <SelectContent>
-                                        {availableDistricts.map((d,i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                             </div>
-                             <div className="space-y-2">
-                                <Label>Upazila/Thana</Label>
-                                 <Select value={upazila} onValueChange={setUpazila} disabled={!district}>
-                                    <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
-                                    <SelectContent>
-                                        {availableUpazilas.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Union</Label>
-                                 <Select value={union} onValueChange={setUnion} disabled={!upazila}>
-                                    <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
-                                    <SelectContent>
-                                        {availableUnions.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
                         <div className="space-y-2">
-                            <Label htmlFor="shop-address">Street Address</Label>
-                            <Textarea id="shop-address" value={shopAddress} onChange={e => setShopAddress(e.target.value)} disabled={isLoading} placeholder="e.g. House 123, Road 4, Block F" />
+                            <Label htmlFor="shop-address">Full Shop Address</Label>
+                            <Textarea id="shop-address" value={shopAddress} onChange={e => setShopAddress(e.target.value)} disabled={isLoading} />
                         </div>
                             <div className="space-y-2">
                             <Label htmlFor="shop-category">Primary Category</Label>
