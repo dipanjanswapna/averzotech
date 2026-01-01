@@ -289,7 +289,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const taxes = useMemo(() => {
     return cart.reduce((acc, item) => {
       const itemTotal = item.pricing.price * item.quantity;
-      const taxRate = (item.pricing.tax || 5) / 100; // Default to 5% if not specified
+      const taxRate = (item.pricing.tax || 0) / 100; // Use 0 if tax is not defined
       return acc + (itemTotal * taxRate);
     }, 0);
   }, [cart]);
