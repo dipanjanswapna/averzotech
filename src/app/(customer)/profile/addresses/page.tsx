@@ -334,7 +334,7 @@ export default function AddressesPage() {
                         <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
                             <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                             <SelectContent>
-                                {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                {districts.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
                          <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
@@ -384,4 +384,3 @@ export default function AddressesPage() {
     </div>
   );
 }
-
