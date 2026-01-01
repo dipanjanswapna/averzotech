@@ -1,4 +1,5 @@
 
+
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -213,8 +214,9 @@ export interface VendorApplicationData {
     };
     division: string;
     district: string;
-    upazila: string;
-    union: string;
+    thana: string;
+    postOffice: string;
+    postCode: string;
 }
 
 
@@ -241,3 +243,5 @@ export interface Vendor {
     status: 'Active' | 'Suspended';
     minimumOrderValue?: number;
 }
+
+    

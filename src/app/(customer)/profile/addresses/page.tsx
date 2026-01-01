@@ -27,7 +27,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getDivisions, getDistrictsByDivision, getUnionsByUpazila, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
+import { getDivisions, getDistricts, getThanas, getPostOffices } from '@/lib/location';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -36,12 +36,11 @@ interface Address {
     type: string;
     name: string;
     streetAddress: string;
-    area: string;
-    city: string;
-    district: string;
     division: string;
-    upazila: string;
-    union: string;
+    district: string;
+    thana: string;
+    postOffice: string;
+    postCode: string;
     phone: string;
     isDefault: boolean;
 }
@@ -59,33 +58,19 @@ export default function AddressesPage() {
         type: 'Home',
         name: '',
         streetAddress: '',
-        area: '',
-        city: '',
-        district: '',
         division: '',
-        upazila: '',
-        union: '',
+        district: '',
+        thana: '',
+        postOffice: '',
+        postCode: '',
         phone: '',
         isDefault: false,
     });
     
     const divisions = useMemo(() => getDivisions(), []);
-    
-    const districts = useMemo(() => {
-        if (!formData.division) return [];
-        return getDistrictsByDivision(formData.division);
-    }, [formData.division]);
-
-    const upazilas = useMemo(() => {
-        if (!formData.division || !formData.district) return [];
-        return getUpazilasByDistrict(formData.division, formData.district);
-    }, [formData.division, formData.district]);
-
-    const unions = useMemo(() => {
-        if (!formData.division || !formData.district || !formData.upazila) return [];
-        const unionData = getUnionsByUpazila(formData.division, formData.district, formData.upazila);
-        return Array.isArray(unionData) ? unionData : [];
-    }, [formData.division, formData.district, formData.upazila]);
+    const districts = useMemo(() => formData.division ? getDistricts(formData.division) : [], [formData.division]);
+    const thanas = useMemo(() => formData.district ? getThanas(formData.division, formData.district) : [], [formData.division, formData.district]);
+    const postOffices = useMemo(() => formData.thana ? getPostOffices(formData.division, formData.district, formData.thana) : [], [formData.division, formData.district, formData.thana]);
 
     const fetchAddresses = async () => {
         if (!user || !db) return;
@@ -115,12 +100,11 @@ export default function AddressesPage() {
                 type: editingAddress.type,
                 name: editingAddress.name,
                 streetAddress: editingAddress.streetAddress,
-                area: editingAddress.area || '',
-                city: editingAddress.city || '',
-                district: editingAddress.district,
                 division: editingAddress.division,
-                upazila: editingAddress.upazila,
-                union: editingAddress.union,
+                district: editingAddress.district,
+                thana: editingAddress.thana,
+                postOffice: editingAddress.postOffice,
+                postCode: editingAddress.postCode,
                 phone: editingAddress.phone,
                 isDefault: editingAddress.isDefault,
             });
@@ -134,12 +118,11 @@ export default function AddressesPage() {
             type: 'Home',
             name: user?.fullName || '',
             streetAddress: '',
-            area: '',
-            city: '',
-            district: '',
             division: '',
-            upazila: '',
-            union: '',
+            district: '',
+            thana: '',
+            postOffice: '',
+            postCode: '',
             phone: '',
             isDefault: false,
         });
@@ -150,19 +133,25 @@ export default function AddressesPage() {
         setFormData(prev => ({ ...prev, [id]: value }));
     };
     
-    const handleSelectChange = (field: 'division' | 'district' | 'upazila' | 'union') => (value: string) => {
+    const handleSelectChange = (field: 'division' | 'district' | 'thana' | 'postOffice') => (value: string) => {
         setFormData(prev => {
-            const newState = {...prev, [field]: value};
+            const newState:any = {...prev, [field]: value};
             // Reset dependent fields
             if (field === 'division') {
                 newState.district = '';
-                newState.upazila = '';
-                newState.union = '';
+                newState.thana = '';
+                newState.postOffice = '';
+                newState.postCode = '';
             } else if (field === 'district') {
-                newState.upazila = '';
-                newState.union = '';
-            } else if (field === 'upazila') {
-                newState.union = '';
+                newState.thana = '';
+                newState.postOffice = '';
+                newState.postCode = '';
+            } else if (field === 'thana') {
+                newState.postOffice = '';
+                newState.postCode = '';
+            } else if (field === 'postOffice') {
+                const selected = postOffices.find(p => p.postOffice === value);
+                newState.postCode = selected ? selected.postCode : '';
             }
             return newState;
         });
@@ -276,8 +265,8 @@ export default function AddressesPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="font-semibold">{addr.name}</p>
-                        <p className="text-muted-foreground">{addr.streetAddress}, {addr.area}</p>
-                        <p className="text-muted-foreground">{addr.union}, {addr.upazila}, {addr.district}, {addr.division}</p>
+                        <p className="text-muted-foreground">{addr.streetAddress}</p>
+                        <p className="text-muted-foreground">{addr.postOffice}, {addr.thana}, {addr.district}</p>
                         <p className="text-muted-foreground mt-2">Mobile: <span className="font-medium text-foreground">{addr.phone}</span></p>
                     </CardContent>
                     <CardFooter className="flex justify-between">
@@ -317,39 +306,35 @@ export default function AddressesPage() {
                 <Label htmlFor="name" className="text-right">Name</Label>
                 <Input id="name" value={formData.name} onChange={handleFormChange} className="col-span-3" />
               </div>
-               <div className="grid grid-cols-2 gap-4">
-                        <Select value={formData.division} onValueChange={handleSelectChange('division')}>
-                            <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
-                            <SelectContent>
-                                {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
-                            <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                            <SelectContent>
-                                {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
-                            <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
-                            <SelectContent>
-                                {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                         <Select value={formData.union} onValueChange={handleSelectChange('union')} disabled={!formData.upazila}>
-                            <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
-                            <SelectContent>
-                                {unions.map((u, i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <Select value={formData.division} onValueChange={handleSelectChange('division')}>
+                        <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
+                        <SelectContent>
+                            {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
+                        <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                        <SelectContent>
+                            {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <Select value={formData.thana} onValueChange={handleSelectChange('thana')} disabled={!formData.district}>
+                        <SelectTrigger><SelectValue placeholder="Select Thana/Upazila" /></SelectTrigger>
+                        <SelectContent>
+                            {thanas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                     <Select value={formData.postOffice} onValueChange={handleSelectChange('postOffice')} disabled={!formData.thana}>
+                        <SelectTrigger><SelectValue placeholder="Select Post Office" /></SelectTrigger>
+                        <SelectContent>
+                            {postOffices.map((u) => <SelectItem key={u.postCode} value={u.postOffice}>{u.postOffice} - {u.postCode}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
                <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="area" className="text-right pt-2">Area</Label>
-                <Textarea id="area" value={formData.area} onChange={handleFormChange} className="col-span-3" placeholder="e.g. Salimullah Road, Mohammadpur" />
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="streetAddress" className="text-right pt-2">Street Address</Label>
                 <Textarea id="streetAddress" value={formData.streetAddress} onChange={handleFormChange} className="col-span-3" placeholder="e.g. House 123, Road 4, Block F" />
               </div>

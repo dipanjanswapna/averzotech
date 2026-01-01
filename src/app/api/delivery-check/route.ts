@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getDeliveryInfoByPincode } from '@/lib/delivery';
+import { getDeliveryInfoByPincode } from '@/lib/location';
 
 export async function POST(req: NextRequest) {
     try {

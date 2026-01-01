@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,7 @@ import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
 import { VendorApplicationData } from '@/types';
-import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict, getUnionsByUpazila } from '@/lib/bangladeshgeo';
+import { getDivisions, getDistricts, getThanas, getPostOffices } from '@/lib/location';
 
 interface VendorApplicationFormProps {
     user: { fullName: string };
@@ -61,33 +62,40 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
     // Address state
     const [division, setDivision] = useState('');
     const [district, setDistrict] = useState('');
-    const [upazila, setUpazila] = useState('');
-    const [union, setUnion] = useState('');
+    const [thana, setThana] = useState('');
+    const [postOffice, setPostOffice] = useState('');
+    const [postCode, setPostCode] = useState('');
+
 
     const divisions = useMemo(() => getDivisions(), []);
-    const districts = useMemo(() => division ? getDistrictsByDivision(division) : [], [division]);
-    const upazilas = useMemo(() => district ? getUpazilasByDistrict(division, district) : [], [division, district]);
-    const unions = useMemo(() => upazila ? getUnionsByUpazila(division, district, upazila) : [], [division, district, upazila]);
+    const districts = useMemo(() => division ? getDistricts(division) : [], [division]);
+    const thanas = useMemo(() => district ? getThanas(division, district) : [], [division, district]);
+    const postOffices = useMemo(() => thana ? getPostOffices(division, district, thana) : [], [division, district, thana]);
 
-    const handleSelectChange = (field: 'division' | 'district' | 'upazila' | 'union') => (value: string) => {
+    const handleSelectChange = (field: 'division' | 'district' | 'thana' | 'postOffice') => (value: string) => {
         switch(field) {
             case 'division':
                 setDivision(value);
                 setDistrict('');
-                setUpazila('');
-                setUnion('');
+                setThana('');
+                setPostOffice('');
+                setPostCode('');
                 break;
             case 'district':
                 setDistrict(value);
-                setUpazila('');
-                setUnion('');
+                setThana('');
+                setPostOffice('');
+                setPostCode('');
                 break;
-            case 'upazila':
-                setUpazila(value);
-                setUnion('');
+            case 'thana':
+                setThana(value);
+                setPostOffice('');
+                setPostCode('');
                 break;
-            case 'union':
-                setUnion(value);
+            case 'postOffice':
+                setPostOffice(value);
+                const selected = postOffices.find(p => p.postOffice === value);
+                setPostCode(selected ? selected.postCode : '');
                 break;
         }
     };
@@ -140,8 +148,9 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
             },
             division,
             district,
-            upazila,
-            union,
+            thana,
+            postOffice,
+            postCode
         };
         onSubmit(formData);
     };
@@ -174,16 +183,16 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                             </Select>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <Select value={upazila} onValueChange={handleSelectChange('upazila')} disabled={!district}>
-                                <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
+                            <Select value={thana} onValueChange={handleSelectChange('thana')} disabled={!district}>
+                                <SelectTrigger><SelectValue placeholder="Select Thana/Upazila" /></SelectTrigger>
                                 <SelectContent>
-                                    {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                    {thanas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                                 </SelectContent>
                             </Select>
-                            <Select value={union} onValueChange={handleSelectChange('union')} disabled={!upazila}>
-                                <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
+                            <Select value={postOffice} onValueChange={handleSelectChange('postOffice')} disabled={!thana}>
+                                <SelectTrigger><SelectValue placeholder="Select Post Office" /></SelectTrigger>
                                 <SelectContent>
-                                    {unions.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
+                                    {postOffices.map((u) => <SelectItem key={u.postCode} value={u.postOffice}>{u.postOffice} - {u.postCode}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
