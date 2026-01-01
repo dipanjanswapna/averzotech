@@ -124,6 +124,7 @@ export default function EditProductPage() {
     const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
+    const [availability, setAvailability] = useState('in-stock');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -184,6 +185,7 @@ export default function EditProductPage() {
                     setPrice(String(data.pricing?.price || ''));
                     setComparePrice(String(data.pricing?.comparePrice || ''));
                     setTax(String(data.pricing?.tax || ''));
+                    setAvailability(data.inventory?.availability || 'in-stock');
                     setMoq(String(data.inventory?.moq || ''));
                     setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
@@ -465,6 +467,7 @@ export default function EditProductPage() {
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
                     stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    availability: availability,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -797,6 +800,17 @@ export default function EditProductPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                   <div className="space-y-2">
+                        <Label htmlFor="product-availability">Availability</Label>
+                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
+                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="in-stock">In Stock</SelectItem>
+                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                                <SelectItem value="pre-order">Pre-order</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                    <div className="space-y-2">
                     <Label>Category</Label>
                     <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); setSelectedSubcategory(''); }} value={selectedCategory} disabled={isLoading}>

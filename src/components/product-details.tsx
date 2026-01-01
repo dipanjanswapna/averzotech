@@ -382,7 +382,7 @@ export function ProductDetails() {
       return { star, count, percentage: reviews.length > 0 ? (count / reviews.length) * 100 : 0 };
   }).reverse();
   const safeVideoUrl = product.videoUrl ? product.videoUrl.replace("watch?v=", "embed/") : "";
-  const isOutOfStock = product.inventory.availability === 'out-of-stock' || product.inventory.stock <= 0;
+  const isOutOfStock = product.inventory.availability === 'out-of-stock';
   const isPreOrder = product.inventory.availability === 'pre-order';
   const isTryOnAvailable = product.organization.category === 'Accessories' && (product.organization.subcategory === 'Watches' || product.organization.subcategory === 'Sunglasses');
   const minQuantity = product.inventory.moq || 1;
@@ -770,7 +770,7 @@ export function ProductDetails() {
             product={product} 
             onAddToCart={() => handleAddToCart(false)}
             onBuyNow={() => handleAddToCart(true)}
-            isOutOfStock={isOutOfStock}
+            isOutOfStock={isOutOfStock || isPreOrder}
         />
       )}
       </>

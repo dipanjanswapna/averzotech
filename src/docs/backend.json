@@ -45,7 +45,7 @@
                  "stock": { "type": "number" },
                  "initialStock": { "type": "number" },
                  "sku": { "type": "string" },
-                 "availability": { "type": "string" },
+                 "availability": { "type": "string", "enum": ["in-stock", "out-of-stock", "pre-order"] },
                  "moq": { "type": "number" },
                  "maxPurchaseLimit": { "type": "number" }
             }
