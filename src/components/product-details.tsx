@@ -566,17 +566,21 @@ export function ProductDetails() {
                 <AccordionTrigger className="font-semibold uppercase text-sm">Product Details</AccordionTrigger>
                 <AccordionContent className="space-y-2 text-sm">
                     <p>{product.description}</p>
-                    <div>
-                        <h3 className="font-semibold mb-1">Specifications:</h3>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                            {product.specifications.map(spec => (
-                                <React.Fragment key={spec.label}>
-                                    <div className="text-muted-foreground">{spec.label}</div>
-                                    <div>{spec.value}</div>
-                                </React.Fragment>
-                            ))}
+                    {product.specifications && product.specifications.length > 0 && (
+                        <div>
+                            <h3 className="font-semibold mb-2">Specifications:</h3>
+                             <Table>
+                                <TableBody>
+                                    {product.specifications.map(spec => (
+                                        <TableRow key={spec.label}>
+                                            <TableHead className="w-1/3">{spec.label}</TableHead>
+                                            <TableCell>{spec.value}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                             </Table>
                         </div>
-                    </div>
+                    )}
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -297,7 +296,6 @@ export default function NewVendorProductPage() {
         setVariants(updatedVariants);
     }
 
-
     const handleSaveProduct = async () => {
         if (!db || !storage || !user) return;
 
@@ -323,7 +321,6 @@ export default function NewVendorProductPage() {
                 })
             );
 
-            // 2. Prepare product data object
             const productData = {
                 name: productName,
                 description,
@@ -359,7 +356,6 @@ export default function NewVendorProductPage() {
                 updatedAt: serverTimestamp(),
             };
 
-            // 3. Save product data to Firestore
             await addDoc(collection(db, 'products'), productData);
 
             toast({
@@ -408,7 +404,7 @@ export default function NewVendorProductPage() {
                 <Label htmlFor="product-brand">Brand</Label>
                 <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
               </div>
-              <div className="space-y-2">
+               <div className="space-y-2">
                 <Label htmlFor="description-keywords">AI Generate Description</Label>
                 <div className="flex gap-2">
                    <Input id="description-keywords" placeholder="Keywords (e.g. summer, cotton, casual)" value={descriptionKeywords} onChange={e => setDescriptionKeywords(e.target.value)} disabled={isGenerating || isLoading} />
