@@ -22,12 +22,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { divisions, getDistrictsByDivision, getUpazilasByDistrict } from '@/lib/bangladesh-geo';
+import { bangladeshGeoData } from '@/lib/bangladesh-geo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -44,6 +44,8 @@ interface Address {
     phone: string;
     isDefault: boolean;
 }
+
+const divisions = Object.keys(bangladeshGeoData);
 
 export default function AddressesPage() {
     const { user, db } = useFirebase();
@@ -67,26 +69,18 @@ export default function AddressesPage() {
     });
     
     // Dependent dropdown options
-    const [districts, setDistricts] = useState<string[]>([]);
-    const [upazilas, setUpazilas] = useState<string[]>([]);
-
-    useEffect(() => {
-        if(formData.division) {
-            setDistricts(getDistrictsByDivision(formData.division) || []);
-            setFormData(prev => ({ ...prev, district: '', upazila: '' }));
-        } else {
-            setDistricts([]);
-        }
+    const districts = useMemo(() => {
+        if (!formData.division) return [];
+        return Object.keys(bangladeshGeoData[formData.division as keyof typeof bangladeshGeoData] || {});
     }, [formData.division]);
 
-    useEffect(() => {
-        if (formData.district) {
-            setUpazilas(getUpazilasByDistrict(formData.division, formData.district) || []);
-            setFormData(prev => ({ ...prev, upazila: '' }));
-        } else {
-            setUpazilas([]);
-        }
-    }, [formData.district, formData.division]);
+    const upazilas = useMemo(() => {
+        if (!formData.division || !formData.district) return [];
+        const divisionData = bangladeshGeoData[formData.division as keyof typeof bangladeshGeoData];
+        // @ts-ignore
+        return Object.keys(divisionData[formData.district] || {});
+    }, [formData.division, formData.district]);
+
 
     const fetchAddresses = async () => {
         if (!user || !db) return;
@@ -147,8 +141,14 @@ export default function AddressesPage() {
         setFormData(prev => ({ ...prev, [id]: value }));
     };
     
-    const handleSelectChange = (field: keyof typeof formData) => (value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+    const handleSelectChange = (field: 'division' | 'district' | 'upazila') => (value: string) => {
+        if (field === 'division') {
+            setFormData(prev => ({ ...prev, division: value, district: '', upazila: '' }));
+        } else if (field === 'district') {
+            setFormData(prev => ({ ...prev, district: value, upazila: '' }));
+        } else {
+            setFormData(prev => ({ ...prev, [field]: value }));
+        }
     };
 
     const handleSetDefault = async (addressId: string) => {
