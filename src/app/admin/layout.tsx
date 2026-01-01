@@ -36,8 +36,8 @@ export default function AdminLayout({
       <AdminSidebar user={user}/>
         <main className="flex-1 p-4 sm:p-6 md:p-8 lg:ml-[var(--sidebar-width-icon)] group-data-[state=expanded]:lg:ml-[var(--sidebar-width)] transition-[margin-left] ease-in-out duration-300">
             {children}
-            <Toaster />
         </main>
+        <Toaster />
     </AdminSidebarProvider>
   );
 }

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -40,75 +40,100 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { useFirebase } from '@/firebase';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import Papa from 'papaparse';
 
 
-// Mock Data - In a real application, this would come from your database
-const mockData = {
-    divisions: [
-        { id: 1, name_en: 'Dhaka', name_bn: 'ঢাকা', code: 'DHA' },
-        { id: 2, name_en: 'Chattagram', name_bn: 'চট্টগ্রাম', code: 'CTG' },
-    ],
-    districts: [
-        { id: 1, division_id: 1, name_en: 'Dhaka', name_bn: 'ঢাকা', code: 'DHK' },
-        { id: 2, division_id: 1, name_en: 'Gazipur', name_bn: 'গাজীপুর', code: 'GAZ' },
-        { id: 3, division_id: 2, name_en: 'Cumilla', name_bn: 'কুমিল্লা', code: 'COM' },
-    ],
-    upazilas: [
-        { id: 1, district_id: 1, name_en: 'Gulshan', name_bn: 'গুলশান', code: 'GUL' },
-        { id: 2, district_id: 2, name_en: 'Sreepur', name_bn: 'শ্রীপুর', code: 'SRE' },
-        { id: 3, district_id: 3, name_en: 'Debidwar', name_bn: 'দেবিদ্বার', code: 'DBD' },
-        { id: 4, district_id: 3, name_en: 'Barura', name_bn: 'বরুড়া', code: 'BRR' },
-    ],
-    unions: [
-        { id: 1, upazila_id: 1, name_en: 'Gulshan Model Town', name_bn: 'গুলশান মডেল টাউন', code: 'GMT' },
-        { id: 2, upazila_id: 3, name_en: 'Subil', name_bn: 'সুবিল', code: 'SBL' },
-    ],
-    areas: [
-        { id: 1, union_id: 1, name_en: 'Gulshan 1', name_bn: 'গুলশান ১', postal_code: '1212' },
-    ]
-};
+const ENTITY_CONFIG = {
+    divisions: { collectionName: 'divisions', parent: null },
+    districts: { collectionName: 'districts', parent: 'divisions' },
+    upazilas: { collectionName: 'upazilas', parent: 'districts' },
+    unions: { collectionName: 'unions', parent: 'upazilas' },
+    areas: { collectionName: 'areas', parent: 'unions' },
+} as const;
+
+type EntityKey = keyof typeof ENTITY_CONFIG;
 
 
 export default function AddressManagementPage() {
-    const [activeTab, setActiveTab] = useState('divisions');
+    const { db } = useFirebase();
+    const [activeTab, setActiveTab] = useState<EntityKey>('divisions');
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
     const [newEntityData, setNewEntityData] = useState<any>({});
     const { toast } = useToast();
+    
+    const [data, setData] = useState<Record<EntityKey, any[]>>({
+        divisions: [], districts: [], upazilas: [], unions: [], areas: [],
+    });
+    const [loading, setLoading] = useState<Record<EntityKey, boolean>>({
+        divisions: true, districts: true, upazilas: true, unions: true, areas: true,
+    });
+
 
     // States for bulk import simulation
     const [importFile, setImportFile] = useState<File | null>(null);
     const [isImporting, setIsImporting] = useState(false);
     const [importProgress, setImportProgress] = useState(0);
 
+    useEffect(() => {
+        if (!db) return;
+
+        const fetchData = async (entity: EntityKey) => {
+            setLoading(prev => ({...prev, [entity]: true}));
+            try {
+                const querySnapshot = await getDocs(collection(db, ENTITY_CONFIG[entity].collectionName));
+                const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setData(prev => ({ ...prev, [entity]: items }));
+            } catch (error) {
+                console.error(`Error fetching ${entity}:`, error);
+                toast({ title: "Error", description: `Failed to fetch ${entity}.`, variant: "destructive" });
+            } finally {
+                 setLoading(prev => ({...prev, [entity]: false}));
+            }
+        };
+        
+        (Object.keys(ENTITY_CONFIG) as EntityKey[]).forEach(fetchData);
+
+    }, [db, toast]);
+
+
     const filteredData = useMemo(() => {
-        if (!searchTerm) return mockData[activeTab as keyof typeof mockData];
-        return mockData[activeTab as keyof typeof mockData].filter((item: any) => 
-            item.name_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        if (!searchTerm) return data[activeTab];
+        return data[activeTab].filter((item: any) => 
+            (item.name_en && item.name_en.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (item.name_bn && item.name_bn.toLowerCase().includes(searchTerm.toLowerCase()))
         );
-    }, [activeTab, searchTerm]);
+    }, [activeTab, searchTerm, data]);
 
-    const handleAddNew = () => {
-        // Basic validation
+    const handleAddNew = async () => {
         if (!newEntityData.name_en || !newEntityData.name_bn) {
             toast({ title: "Error", description: "English and Bengali names are required.", variant: "destructive" });
             return;
         }
 
-        // Check for duplicates
-        const dataSet = mockData[activeTab as keyof typeof mockData] as any[];
-        const isDuplicate = dataSet.some(item => item.name_en.toLowerCase() === newEntityData.name_en.toLowerCase());
+        const currentDataSet = data[activeTab];
+        const isDuplicate = currentDataSet.some(item => 
+            item.name_en.toLowerCase() === newEntityData.name_en.toLowerCase() &&
+            (!ENTITY_CONFIG[activeTab].parent || item[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`] === newEntityData[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`])
+        );
+
         if(isDuplicate){
             toast({ title: "Duplicate Entry", description: `A ${activeTab.slice(0, -1)} with this name already exists.`, variant: "destructive" });
             return;
         }
 
-        console.log("Adding new entity:", newEntityData); // Replace with actual API call
-        toast({ title: "Success", description: `New ${activeTab.slice(0, -1)} added (simulated).`});
-        setNewEntityData({});
-        setIsAddDialogOpen(false);
+        try {
+            const docRef = await addDoc(collection(db, ENTITY_CONFIG[activeTab].collectionName), newEntityData);
+            setData(prev => ({...prev, [activeTab]: [...prev[activeTab], {id: docRef.id, ...newEntityData}]}));
+            toast({ title: "Success", description: `New ${activeTab.slice(0, -1)} added.`});
+            setNewEntityData({});
+            setIsAddDialogOpen(false);
+        } catch (error) {
+             toast({ title: "Error", description: `Failed to add ${activeTab.slice(0, -1)}.`, variant: "destructive" });
+        }
     };
     
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,34 +150,59 @@ export default function AddressManagementPage() {
         setIsImporting(true);
         setImportProgress(0);
 
-        // Simulate a file upload/processing progress
-        const progressInterval = setInterval(() => {
-            setImportProgress(prev => {
-                if (prev >= 95) {
-                    clearInterval(progressInterval);
-                    return prev;
-                }
-                return prev + 10;
-            });
-        }, 300);
-
-        // Simulate backend processing delay
-        setTimeout(() => {
-            clearInterval(progressInterval);
-            setImportProgress(100);
-            toast({
-                title: "Import Complete (Simulated)",
-                description: `File "${importFile.name}" has been processed. In a real application, this would update the database.`,
-            });
-            setIsImporting(false);
-            setImportFile(null);
-            setIsImportDialogOpen(false);
-        }, 3500);
+        Papa.parse(importFile, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                console.log("Parsed CSV Data for bulk import:", results.data);
+                // In a real application, you would send this data to a serverless function
+                // to handle the batch write to Firestore to avoid browser limitations.
+                
+                // Simulate backend processing
+                const totalRows = results.data.length;
+                let processedRows = 0;
+                const interval = setInterval(() => {
+                    processedRows += Math.ceil(totalRows / 10); // Process 10% at a time
+                    const progress = (processedRows / totalRows) * 100;
+                    setImportProgress(Math.min(100, progress));
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setIsImporting(false);
+                        setIsImportDialogOpen(false);
+                        toast({
+                            title: "Import Complete (Simulated)",
+                            description: `${totalRows} rows were processed. Check the console for parsed data.`,
+                        });
+                        setImportFile(null);
+                    }
+                }, 300);
+            },
+            error: (error) => {
+                console.error("CSV Parsing Error:", error);
+                toast({ title: "Parsing Error", description: "Could not parse the CSV file.", variant: "destructive" });
+                setIsImporting(false);
+            }
+        });
     };
 
     const renderAddDialogContent = () => {
-        const commonFields = (
-            <>
+        const parentKey = ENTITY_CONFIG[activeTab].parent;
+        const parentName = parentKey?.slice(0, -1);
+        const parentData = parentKey ? data[parentKey] : [];
+
+        return (
+            <div className="space-y-4">
+                {parentKey && (
+                     <div className="space-y-2">
+                        <Label htmlFor={`${parentName}_id`} className="capitalize">{parentName}</Label>
+                        <Select onValueChange={value => setNewEntityData({...newEntityData, [`${parentName}_id`]: value})}>
+                            <SelectTrigger><SelectValue placeholder={`Select ${parentName}`} /></SelectTrigger>
+                            <SelectContent>
+                                {parentData.map(d => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
                 <div className="space-y-2">
                     <Label htmlFor="name_en">Name (English)</Label>
                     <Input id="name_en" value={newEntityData.name_en || ''} onChange={e => setNewEntityData({...newEntityData, name_en: e.target.value})} />
@@ -162,78 +212,25 @@ export default function AddressManagementPage() {
                     <Input id="name_bn" value={newEntityData.name_bn || ''} onChange={e => setNewEntityData({...newEntityData, name_bn: e.target.value})} />
                 </div>
                  <div className="space-y-2">
-                    <Label htmlFor="code">Code</Label>
+                    <Label htmlFor="code">Code (Optional)</Label>
                     <Input id="code" value={newEntityData.code || ''} onChange={e => setNewEntityData({...newEntityData, code: e.target.value})} />
                 </div>
-            </>
-        );
-
-        switch (activeTab) {
-            case 'districts':
-                return <>
-                    <div className="space-y-2">
-                        <Label htmlFor="division_id">Division</Label>
-                        <Select onValueChange={value => setNewEntityData({...newEntityData, division_id: value})}>
-                            <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
-                            <SelectContent>
-                                {mockData.divisions.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name_en}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {commonFields}
-                </>;
-             case 'upazilas':
-                return <>
+                {activeTab === 'areas' && (
                      <div className="space-y-2">
-                        <Label htmlFor="district_id">District</Label>
-                        <Select onValueChange={value => setNewEntityData({...newEntityData, district_id: value})}>
-                            <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
-                            <SelectContent>
-                                {mockData.districts.map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name_en}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {commonFields}
-                </>;
-             case 'unions':
-                return <>
-                     <div className="space-y-2">
-                        <Label htmlFor="upazila_id">Upazila</Label>
-                        <Select onValueChange={value => setNewEntityData({...newEntityData, upazila_id: value})}>
-                            <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
-                            <SelectContent>
-                                {mockData.upazilas.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name_en}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    {commonFields}
-                </>;
-             case 'areas':
-                return <>
-                    <div className="space-y-2">
-                        <Label htmlFor="union_id">Union</Label>
-                        <Select onValueChange={value => setNewEntityData({...newEntityData, union_id: value})}>
-                            <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
-                            <SelectContent>
-                                {mockData.unions.map(u => <SelectItem key={u.id} value={String(u.id)}>{u.name_en}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
                         <Label htmlFor="postal_code">Postal Code</Label>
                         <Input id="postal_code" value={newEntityData.postal_code || ''} onChange={e => setNewEntityData({...newEntityData, postal_code: e.target.value})} />
                     </div>
-                    {commonFields}
-                </>;
-            default: // Divisions
-                return commonFields;
-        }
+                )}
+            </div>
+        );
     }
 
 
-    const renderTable = (entityName: string, data: any[]) => {
+    const renderTable = (entityName: EntityKey, data: any[]) => {
+        if (loading[entityName]) return <p className="text-muted-foreground p-4">Loading data...</p>;
         if (data.length === 0) return <p className="text-muted-foreground p-4">No data found.</p>;
-        const headers = Object.keys(data[0]);
+        
+        const headers = Object.keys(data[0]).filter(h => h !== 'id' && !h.endsWith('_id'));
 
         return (
             <Table>
@@ -244,8 +241,8 @@ export default function AddressManagementPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {data.map((row, rowIndex) => (
-                        <TableRow key={rowIndex}>
+                    {data.map((row) => (
+                        <TableRow key={row.id}>
                             {headers.map(header => <TableCell key={header}>{row[header]}</TableCell>)}
                             <TableCell>
                                <DropdownMenu>
@@ -274,7 +271,7 @@ export default function AddressManagementPage() {
                 </p>
             </div>
             
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EntityKey)}>
                 <TabsList>
                     <TabsTrigger value="divisions">Divisions</TabsTrigger>
                     <TabsTrigger value="districts">Districts</TabsTrigger>
@@ -282,8 +279,8 @@ export default function AddressManagementPage() {
                     <TabsTrigger value="unions">Unions</TabsTrigger>
                     <TabsTrigger value="areas">Areas/Post Offices</TabsTrigger>
                 </TabsList>
-
-                <Card className="mt-4">
+                
+                 <Card className="mt-4">
                     <CardHeader>
                         <div className="flex justify-between items-center">
                             <div>
@@ -299,7 +296,7 @@ export default function AddressManagementPage() {
                                         <DialogHeader><DialogTitle>Bulk Import {activeTab}</DialogTitle></DialogHeader>
                                         <div className="space-y-4">
                                             <Label htmlFor="import-file">Upload CSV or JSON file</Label>
-                                            <p className="text-sm text-muted-foreground">Note: This is a UI simulation. The backend for file processing is not yet implemented. Clicking "Import" will simulate the upload process.</p>
+                                            <p className="text-sm text-muted-foreground">Note: This will parse the file in your browser. For very large files, a server-based import is recommended.</p>
                                             <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv,.json" />
                                             {isImporting && (
                                                 <div className="space-y-2">
@@ -322,9 +319,7 @@ export default function AddressManagementPage() {
                                     </DialogTrigger>
                                      <DialogContent>
                                         <DialogHeader><DialogTitle>Add New {activeTab.slice(0,-1)}</DialogTitle></DialogHeader>
-                                        <div className="space-y-4">
-                                             {renderAddDialogContent()}
-                                        </div>
+                                         {renderAddDialogContent()}
                                         <DialogFooter>
                                             <DialogClose asChild>
                                                 <Button variant="secondary">Cancel</Button>
@@ -346,7 +341,9 @@ export default function AddressManagementPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {renderTable(activeTab, filteredData)}
+                       <TabsContent value={activeTab}>
+                          {renderTable(activeTab, filteredData)}
+                       </TabsContent>
                     </CardContent>
                 </Card>
 
@@ -354,5 +351,3 @@ export default function AddressManagementPage() {
         </div>
     );
 }
-
-    
