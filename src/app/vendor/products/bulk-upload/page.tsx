@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useCallback } from 'react';
@@ -15,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { ChevronLeft, Download, UploadCloud, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
 
 const csvTemplateHeaders = [
     "name", "brand", "description", "category", "group", "subcategory", 
@@ -41,11 +43,13 @@ const csvInstructions = [
 export default function BulkUploadPage() {
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const { toast } = useToast();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             setFile(e.target.files[0]);
+            setUploadProgress(0);
         }
     };
 
@@ -55,12 +59,29 @@ export default function BulkUploadPage() {
             return;
         }
         
-        toast({
-            title: "Feature In Progress",
-            description: "The backend for processing bulk uploads is currently under development. Please check back later!",
-        });
+        setIsUploading(true);
+        setUploadProgress(0);
 
-        // Backend logic will be implemented here in a future step.
+        // Simulate upload progress
+        const interval = setInterval(() => {
+            setUploadProgress(prev => {
+                if (prev >= 95) {
+                    return prev;
+                }
+                return prev + 5;
+            });
+        }, 200);
+
+        // Simulate backend processing
+        setTimeout(() => {
+            clearInterval(interval);
+            setUploadProgress(100);
+            setIsUploading(false);
+            toast({
+                title: "File processed (simulation)",
+                description: "Backend for processing bulk uploads is under development. This is a UI demonstration.",
+            });
+        }, 4000);
     };
     
     const downloadTemplate = () => {
@@ -113,9 +134,17 @@ export default function BulkUploadPage() {
                             </Label>
                         </div>
 
-                         <Button onClick={handleUpload} disabled={isUploading || !file} className="w-full" size="lg">
-                            {isUploading ? 'Uploading...' : 'Upload and Process File'}
-                        </Button>
+                         <div className="flex items-center gap-4">
+                            <Button onClick={handleUpload} disabled={isUploading || !file} className="w-full" size="lg">
+                                {isUploading ? 'Uploading...' : 'Upload and Process File'}
+                            </Button>
+                            {isUploading && (
+                                <div className="w-full">
+                                    <Progress value={uploadProgress} />
+                                    <p className="text-xs text-muted-foreground text-center mt-1">{uploadProgress}%</p>
+                                </div>
+                            )}
+                         </div>
                     </CardContent>
                 </Card>
 
