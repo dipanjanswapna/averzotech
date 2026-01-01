@@ -114,48 +114,40 @@ export const bangladeshGeoData = {
         "Sakhipur": ["Baheratoil", "Dariapur", "Gajaria", "Hatibandha", "Jadabpur", "Kakradara", "Kakrajan", "Kalomegha"],
         "Tangail Sadar": ["Baghil", "Danya", "Gala", "Gharinda", "Hugu", "Kagmari", "Kakua", "Karatia", "Katuli", "Mahamudnagar", "Makorkaol", "Porabari", "Silimpur"]
       }
+    },
+    "Chattagram": {
+        "Cumilla": {
+            "Debidwar": ["Subil", "North Gunaighor", "South Gunaighor", "Boroshalghor", "Rajameher", "Yousufpur", "Rasulpur", "Fatehabad", "Elahabad", "Jafargonj", "Dhampti", "Mohanpur", "Vani", "Barkamta", "Sultanpur"],
+            "Barura": ["Aganagar", "Bhabanipur", "North Khoshbas", "South Khoshbas", "Jhalam", "Chitodda"]
+        }
     }
   };
+  
+  export const divisions = Object.keys(bangladeshGeoData);
 
   export function getDivisions() {
     return Object.keys(bangladeshGeoData);
   }
 
   export function getDistrictsByDivision(division: string) {
-    return division ? Object.keys(bangladeshGeoData[division as keyof typeof bangladeshGeoData] || {}) : [];
+    if (!division || !bangladeshGeoData[division as keyof typeof bangladeshGeoData]) return [];
+    return Object.keys(bangladeshGeoData[division as keyof typeof bangladeshGeoData]);
   }
 
   export function getUpazilasByDistrict(division: string, district: string) {
     if (!division || !district) return [];
-    const districts = bangladeshGeoData[division as keyof typeof bangladeshGeoData];
-    if (!districts) return [];
-    const upazilas = districts[district as keyof typeof districts];
-    return upazilas ? Object.keys(upazilas) : [];
+    const divisionData = bangladeshGeoData[division as keyof typeof bangladeshGeoData];
+    if (!divisionData) return [];
+    const districtData = divisionData[district as keyof typeof divisionData];
+    return districtData ? Object.keys(districtData) : [];
   }
 
   export function getUnionsByUpazila(division: string, district: string, upazila: string) {
     if (!division || !district || !upazila) return [];
-    const districts = bangladeshGeoData[division as keyof typeof bangladeshGeoData];
-    if (!districts) return [];
-    const upazilas = districts[district as keyof typeof districts];
-    if (!upazilas) return [];
-    const unions = upazilas[upazila as keyof typeof upazilas];
-    return unions || [];
-  }
-  
-  export const divisions = [
-    "Dhaka", "Chattogram", "Rajshahi", "Khulna", "Barisal", "Sylhet", "Rangpur", "Mymensingh"
-  ];
-  
-  export const districts: { [key: string]: string[] } = {
-    "Dhaka": ["Dhaka", "Faridpur", "Gazipur", "Gopalganj", "Kishoreganj", "Madaripur", "Manikganj", "Munshiganj", "Narayanganj", "Narsingdi", "Rajbari", "Shariatpur", "Tangail"],
-    "Chattogram": ["Bandarban", "Brahmanbaria", "Chandpur", "Chattogram", "Cumilla", "Cox's Bazar", "Feni", "Khagrachhari", "Lakshmipur", "Noakhali", "Rangamati"],
-    "Rajshahi": ["Bogura", "Joypurhat", "Naogaon", "Natore", "Nawabganj", "Pabna", "Rajshahi", "Sirajganj"],
-    "Khulna": ["Bagerhat", "Chuadanga", "Jashore", "Jhenaidah", "Khulna", "Kushtia", "Magura", "Meherpur", "Narail", "Satkhira"],
-    "Barisal": ["Barguna", "Barisal", "Bhola", "Jhalokati", "Patuakhali", "Pirojpur"],
-    "Sylhet": ["Habiganj", "Moulvibazar", "Sunamganj", "Sylhet"],
-    "Rangpur": ["Dinajpur", "Gaibandha", "Kurigram", "Lalmonirhat", "Nilphamari", "Panchagarh", "Rangpur", "Thakurgaon"],
-    "Mymensingh": ["Jamalpur", "Mymensingh", "Netrokona", "Sherpur"]
-  };
-  
-  
+    const divisionData = bangladeshGeoData[division as keyof typeof bangladeshGeoData];
+    if (!divisionData) return [];
+    const districtData = divisionData[district as keyof typeof divisionData];
+    if (!districtData) return [];
+    const upazilaData = districtData[upazila as keyof typeof districtData];
+    return upazilaData || [];
+}
