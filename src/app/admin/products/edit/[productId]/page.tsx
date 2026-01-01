@@ -122,6 +122,7 @@ export default function EditProductPage() {
     const [price, setPrice] = useState('');
     const [comparePrice, setComparePrice] = useState('');
     const [tax, setTax] = useState('');
+    const [moq, setMoq] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -182,6 +183,7 @@ export default function EditProductPage() {
                     setPrice(String(data.pricing?.price || ''));
                     setComparePrice(String(data.pricing?.comparePrice || ''));
                     setTax(String(data.pricing?.tax || ''));
+                    setMoq(String(data.inventory?.moq || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
                     toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -456,6 +458,9 @@ export default function EditProductPage() {
                     price: parseFloat(price) || 0,
                     comparePrice: parseFloat(comparePrice) || 0,
                     tax: parseFloat(tax) || 0,
+                },
+                inventory: {
+                    moq: parseInt(moq, 10) || 1,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -904,6 +909,10 @@ export default function EditProductPage() {
                 <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
+                        <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
+                        <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
+                    </div>
+                    <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
                         <Input id="estimated-delivery" placeholder="e.g. 2-3 days" value={estimatedDelivery} onChange={e => setEstimatedDelivery(e.target.value)} disabled={isLoading}/>
                     </div>
@@ -921,5 +930,6 @@ export default function EditProductPage() {
     </div>
   );
 }
+
 
 

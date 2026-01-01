@@ -119,6 +119,7 @@ export default function NewProductPage() {
     const [price, setPrice] = useState('');
     const [comparePrice, setComparePrice] = useState('');
     const [tax, setTax] = useState('');
+    const [moq, setMoq] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -412,6 +413,7 @@ export default function NewProductPage() {
                 inventory: { // Redundant but good for quick lookups
                     stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    moq: parseInt(moq, 10) || 1
                 },
                 shipping: {
                     estimatedDelivery,
@@ -858,6 +860,10 @@ export default function NewProductPage() {
                 <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
+                        <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
+                        <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
+                    </div>
+                    <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
                         <Input id="estimated-delivery" placeholder="e.g. 2-3 days" value={estimatedDelivery} onChange={e => setEstimatedDelivery(e.target.value)} disabled={isLoading}/>
                     </div>
@@ -875,5 +881,6 @@ export default function NewProductPage() {
     </div>
   );
 }
+
 
 

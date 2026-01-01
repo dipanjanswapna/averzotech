@@ -67,6 +67,7 @@ interface Product {
         stock: number;
         initialStock?: number;
         availability: 'in-stock' | 'out-of-stock' | 'pre-order';
+        moq?: number;
     };
     organization: {
         category: string;
@@ -510,6 +511,9 @@ export function ProductDetails() {
                   <Input type="number" value={quantity} readOnly className="w-12 h-8 text-center border-none focus-visible:ring-0" />
                   <Button variant="ghost" size="icon" onClick={() => setQuantity(q => q+1)}><Plus className="w-4 h-4" /></Button>
               </div>
+              {product.inventory.moq && product.inventory.moq > 1 && (
+                  <p className="text-sm text-muted-foreground">Minimum: {product.inventory.moq} pcs</p>
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-6">
@@ -766,3 +770,4 @@ export function ProductDetails() {
       </>
       );
 }
+
