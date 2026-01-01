@@ -27,7 +27,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { divisions, getDistrictsByDivision, getUpazilasByDistrict, getAreasByUpazila } from '@/lib/bangladesh-geo';
+import { divisions, getDistrictsByDivision, getUpazilasByDistrict } from '@/lib/bangladesh-geo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -40,7 +40,7 @@ interface Address {
     district: string;
     upazila: string;
     area: string;
-    delivery_area_id: number;
+    delivery_area_id?: number;
     phone: string;
     isDefault: boolean;
 }
@@ -69,7 +69,6 @@ export default function AddressesPage() {
     // Dependent dropdown options
     const [districts, setDistricts] = useState<string[]>([]);
     const [upazilas, setUpazilas] = useState<string[]>([]);
-    const [areas, setAreas] = useState<string[]>([]);
 
     useEffect(() => {
         if(formData.division) {
@@ -78,7 +77,6 @@ export default function AddressesPage() {
         } else {
             setDistricts([]);
             setUpazilas([]);
-            setAreas([]);
         }
     }, [formData.division]);
 
@@ -88,19 +86,8 @@ export default function AddressesPage() {
             setFormData(prev => ({ ...prev, upazila: '', area: '' }));
         } else {
             setUpazilas([]);
-            setAreas([]);
         }
     }, [formData.district, formData.division]);
-
-    useEffect(() => {
-        if (formData.upazila) {
-            setAreas(getAreasByUpazila(formData.division, formData.district, formData.upazila) || []);
-            setFormData(prev => ({ ...prev, area: '' }));
-        } else {
-            setAreas([]);
-        }
-    }, [formData.upazila, formData.district, formData.division]);
-
 
     const fetchAddresses = async () => {
         if (!user || !db) return;
@@ -191,7 +178,7 @@ export default function AddressesPage() {
 
     const handleSubmit = async () => {
         if (!user || !db) return;
-        if (!formData.division || !formData.district || !formData.upazila || !formData.area || !formData.streetAddress || !formData.phone.trim()) {
+        if (!formData.division || !formData.district || !formData.upazila || !formData.streetAddress || !formData.phone.trim()) {
             toast({ title: "Incomplete Address", description: "Please fill all required address fields including phone number.", variant: "destructive" });
             return;
         }
@@ -328,10 +315,6 @@ export default function AddressesPage() {
                 <Label htmlFor="name" className="text-right">Name</Label>
                 <Input id="name" value={formData.name} onChange={handleFormChange} className="col-span-3" />
               </div>
-               <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="streetAddress" className="text-right pt-2">Street Address</Label>
-                <Textarea id="streetAddress" value={formData.streetAddress} onChange={handleFormChange} className="col-span-3" placeholder="e.g. House 123, Road 4, Block F" />
-              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Location</Label>
                     <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -353,13 +336,12 @@ export default function AddressesPage() {
                                 {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                         <Select value={formData.area} onValueChange={handleSelectChange('area')} disabled={!formData.upazila}>
-                            <SelectTrigger><SelectValue placeholder="Select Area" /></SelectTrigger>
-                            <SelectContent>
-                                {areas.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <Input id="area" placeholder="Area (e.g. Salimullah Road)" value={formData.area} onChange={handleFormChange} />
                     </div>
+              </div>
+               <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="streetAddress" className="text-right pt-2">Street Address</Label>
+                <Textarea id="streetAddress" value={formData.streetAddress} onChange={handleFormChange} className="col-span-3" placeholder="e.g. House 123, Road 4, Block F" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="phone" className="text-right">Phone</Label>
@@ -386,5 +368,3 @@ export default function AddressesPage() {
     </div>
   );
 }
-
-

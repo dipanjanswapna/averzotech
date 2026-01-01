@@ -62,7 +62,7 @@ export const divisions = Object.keys(bangladeshGeoData);
 
 export const getDistrictsByDivision = (division: string) => {
     if (bangladeshGeoData[division as keyof typeof bangladeshGeoData]) {
-        return Object.keys(bangladeshGeoData[division as keyof typeof bangladeshGeoData]);
+        return [...new Set(Object.keys(bangladeshGeoData[division as keyof typeof bangladeshGeoData]))];
     }
     return [];
 };
@@ -72,7 +72,7 @@ export const getUpazilasByDistrict = (division: string, district: string) => {
     if (divisionData) {
         const districtData = divisionData[district as keyof typeof divisionData];
         if (districtData) {
-            return Object.keys(districtData);
+            return [...new Set(Object.keys(districtData))];
         }
     }
     return [];
