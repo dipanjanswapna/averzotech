@@ -46,6 +46,8 @@ import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { useFirebase } from '@/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 interface ImageObject {
     file?: File;
@@ -919,3 +921,4 @@ export default function EditProductPage() {
     </div>
   );
 }
+

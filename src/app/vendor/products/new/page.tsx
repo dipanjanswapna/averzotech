@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -45,6 +46,7 @@ import { filterCategories as initialFilterCategories } from '@/lib/categories';
 import { generateProductDescription } from '@/ai/flows/generate-product-description';
 import { useFirebase } from '@/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface ImageObject {
     file?: File;
@@ -56,12 +58,18 @@ interface Vendor {
     fullName: string;
 }
 
+interface Tier {
+    minQuantity: number;
+    pricePerUnit: number;
+}
+
 interface Variant {
     sku: string;
     wholesalePrice: number;
     stock: number;
     color: string;
     size: string;
+    tiers?: Tier[];
 }
 
 export default function NewProductPage() {
@@ -76,6 +84,7 @@ export default function NewProductPage() {
     // Product Details
     const [productName, setProductName] = useState('');
     const [description, setDescription] = useState('');
+    const [descriptionKeywords, setDescriptionKeywords] = useState('');
     const [brand, setBrand] = useState('');
     
     // Media
@@ -128,6 +137,7 @@ export default function NewProductPage() {
                             sku: '',
                             wholesalePrice: 0,
                             stock: 0,
+                            tiers: []
                         });
                     });
                 });
@@ -265,10 +275,11 @@ export default function NewProductPage() {
         }
         setIsGenerating(true);
         try {
+            const keywords = descriptionKeywords.split(',').map(k => k.trim()).filter(Boolean);
             const generatedDesc = await generateProductDescription({
                 productName,
                 brand,
-                keywords: tags,
+                keywords,
                 specifications: specifications.filter(s => s.label && s.value),
                 colors: colors.map(c => c.name).filter(Boolean),
                 sizes: sizes.filter(Boolean),
@@ -286,6 +297,28 @@ export default function NewProductPage() {
         const newVariants = [...variants];
         (newVariants[index] as any)[field] = value;
         setVariants(newVariants);
+    };
+
+    const handleAddTier = (variantIndex: number) => {
+        const newVariants = [...variants];
+        const tiers = newVariants[variantIndex].tiers || [];
+        newVariants[variantIndex].tiers = [...tiers, { minQuantity: 0, pricePerUnit: 0 }];
+        setVariants(newVariants);
+    };
+
+    const handleRemoveTier = (variantIndex: number, tierIndex: number) => {
+        const newVariants = [...variants];
+        newVariants[variantIndex]?.tiers?.splice(tierIndex, 1);
+        setVariants(newVariants);
+    };
+
+    const handleTierChange = (variantIndex: number, tierIndex: number, field: keyof Tier, value: string) => {
+        const newVariants = [...variants];
+        const tiers = newVariants[variantIndex].tiers;
+        if(tiers) {
+            tiers[tierIndex][field] = Number(value);
+            setVariants(newVariants);
+        }
     };
 
     const generateAllSKUs = () => {
@@ -326,6 +359,9 @@ export default function NewProductPage() {
                 })
             );
 
+            // Determine the base price for the product from the variants
+            const basePrice = Math.min(...variants.map(v => v.wholesalePrice).filter(p => p > 0));
+
             const productData = {
                 name: productName,
                 description,
@@ -333,7 +369,7 @@ export default function NewProductPage() {
                 vendor: user.fullName,
                 images: imageUrls,
                 videoUrl,
-                variants,
+                variants, // Save the full variant details
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
@@ -354,7 +390,7 @@ export default function NewProductPage() {
                     discount: 0,
                     tax: 0,
                 },
-                inventory: { 
+                inventory: { // Redundant but good for quick lookups
                     stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                 },
@@ -543,39 +579,58 @@ export default function NewProductPage() {
                     </div>
 
                     {variants.length > 0 && (
-                        <div className="border-t pt-6">
+                         <div className="border-t pt-6">
                             <div className="flex justify-between items-center mb-4">
-                               <Label className="font-semibold">Variant Pricing & Inventory</Label>
+                               <Label className="font-semibold">Variant Details</Label>
                                <Button size="sm" variant="secondary" onClick={generateAllSKUs}><RefreshCw className="w-4 h-4 mr-2"/>Generate SKUs</Button>
                             </div>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Color</TableHead>
-                                        <TableHead>Size</TableHead>
-                                        <TableHead>SKU</TableHead>
-                                        <TableHead>Wholesale Price (৳)</TableHead>
-                                        <TableHead>Stock</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {variants.map((variant, index) => (
-                                        <TableRow key={`${variant.color}-${variant.size}`}>
-                                            <TableCell>{variant.color}</TableCell>
-                                            <TableCell>{variant.size}</TableCell>
-                                            <TableCell>
-                                                <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} className="h-8"/>
-                                            </TableCell>
-                                            <TableCell>
-                                                 <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} className="h-8"/>
-                                            </TableCell>
-                                            <TableCell>
-                                                 <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} className="h-8"/>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                            <div className="space-y-6">
+                                {variants.map((variant, index) => (
+                                    <Accordion type="single" collapsible key={`${variant.color}-${variant.size}`}>
+                                        <AccordionItem value="item-1">
+                                            <AccordionTrigger>
+                                                <div className="flex items-center gap-4">
+                                                     <div className="w-5 h-5 rounded-full border" style={{backgroundColor: colors.find(c=>c.name === variant.color)?.hex || '#ffffff'}}></div>
+                                                    <span>{variant.color} / {variant.size}</span>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="p-4 bg-secondary/50 rounded-b-md">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>SKU</Label>
+                                                        <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} />
+                                                    </div>
+                                                     <div className="space-y-2">
+                                                        <Label>Wholesale Price (৳)</Label>
+                                                        <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Stock</Label>
+                                                        <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} />
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 border-t pt-4">
+                                                    <Label className="font-medium">Tiered Wholesale Pricing</Label>
+                                                    <div className="space-y-2 mt-2">
+                                                        {variant.tiers?.map((tier, tierIndex) => (
+                                                            <div key={tierIndex} className="flex items-center gap-2">
+                                                                <Input type="number" placeholder="Min Quantity" value={tier.minQuantity} onChange={(e) => handleTierChange(index, tierIndex, 'minQuantity', e.target.value)} />
+                                                                <Input type="number" placeholder="Price per Unit" value={tier.pricePerUnit} onChange={(e) => handleTierChange(index, tierIndex, 'pricePerUnit', e.target.value)} />
+                                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(index, tierIndex)}>
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                        <Button variant="outline" size="sm" onClick={() => handleAddTier(index)}>
+                                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -764,3 +819,4 @@ export default function NewProductPage() {
     </div>
   );
 }
+
