@@ -1,4 +1,4 @@
-﻿District,Area,Post Code,Home Delivery,Lockdown,Charge(1kg),Charge(2kg),Charge(3kg),COD Charge
+District,Area,Post Code,Home Delivery,Lockdown,Charge(1kg),Charge(2kg),Charge(3kg),COD Charge
 Dhaka,Salimullah Road(Mohammadpur),1207,Yes,No,65,80,95,0%
 Dhaka,Dhanmondi - Road 3,1209,Yes,No,65,80,95,0%
 Dhaka,Gulshan-1 Road-1,1212,Yes,No,65,80,95,0%
@@ -903,7 +903,7 @@ Dhaka,Am Bagicha (Keraniganj),,Yes,No,90,105,120,1%
 Dhaka,Zia Nagor (Keraniganj),,Yes,No,90,105,120,1%
 Dhaka,Imambari (Keraniganj),,Yes,No,90,105,120,1%
 Dhaka,Kodomtoli (Keraniganj),,Yes,No,90,105,120,1%
-Dhaka,Najirabag (Keraniganj),,Yes,No,90,105,120,1%
+Dhaka,Nazirabag (Keraniganj),,Yes,No,90,105,120,1%
 Dhaka,Bondok Para (Keraniganj),,Yes,No,90,105,120,1%
 Dhaka,Golam Bazar (Keraniganj),,Yes,No,90,105,120,1%
 Dhaka,Par Gendaria (Keraniganj),,Yes,No,90,105,120,1%

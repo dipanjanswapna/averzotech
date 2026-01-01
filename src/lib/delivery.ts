@@ -22,13 +22,13 @@ async function loadDeliveryData(): Promise<DeliveryData[]> {
         
         const lines = fileContent.split('\n').slice(1); // Skip header row
         const data = lines.map(line => {
-            const [pincode, area, time] = line.split(',');
+            const [district, area, pincode, homeDelivery, lockdown, charge1kg, charge2kg, charge3kg, codCharge] = line.split(',');
             return {
                 pincode: pincode?.trim(),
                 area: area?.trim(),
-                time: time?.trim().replace(/\r$/, '')
+                time: "2-4" // Placeholder for time as it is not in the new CSV
             };
-        }).filter(item => item.pincode && item.area && item.time);
+        }).filter(item => item.pincode && item.area);
         
         deliveryDataCache = data;
         return data;
