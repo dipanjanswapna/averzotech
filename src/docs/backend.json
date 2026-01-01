@@ -179,6 +179,35 @@
         }
       },
       "required": ["userId", "shopName", "status"]
+    },
+     "PurchaseOrderItem": {
+      "title": "Purchase Order Item",
+      "description": "Represents an item within a purchase order.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" }
+      },
+      "required": ["productId", "productName", "quantity", "price"]
+    },
+    "PurchaseOrder": {
+      "title": "Purchase Order",
+      "description": "Represents a purchase order from Averzo to a vendor.",
+      "type": "object",
+      "properties": {
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/entities/PurchaseOrderItem" } },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Shipped", "Received", "Cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "confirmedAt": { "type": "string", "format": "date-time" },
+        "estimatedDelivery": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["vendorId", "vendorName", "items", "total", "status"]
     }
   },
   "auth": {
@@ -212,6 +241,10 @@
     "/vendors/{vendorId}": {
       "schema": { "$ref": "#/entities/Vendor" },
       "description": "Stores profiles of approved vendors."
+    },
+     "/purchaseOrders/{purchaseOrderId}": {
+      "schema": { "$ref": "#/entities/PurchaseOrder" },
+      "description": "Stores purchase orders from Averzo to vendors."
     }
   }
 }

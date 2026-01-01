@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store, Truck, Undo2, FileText as VendorInvoiceIcon, BarChart3, Bike, Handshake, ShieldCheck as VendorsIcon, MapPin } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store, Truck, Undo2, FileText as VendorInvoiceIcon, BarChart3, Bike, Handshake, ShieldCheck as VendorsIcon, MapPin, Receipt } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -63,6 +63,7 @@ export function AdminSidebar({ user }: { user: any }) {
     { href: '/admin/vendors', label: 'Vendors', icon: VendorsIcon },
     { href: '/admin/products', label: 'Products', icon: Package },
     { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+    { href: '/admin/purchase-orders', label: 'Purchase Orders', icon: Receipt },
     { href: '/admin/returns', label: 'Returns', icon: Undo2 },
     { href: '/admin/vendor-invoices', label: 'Vendor Invoices', icon: VendorInvoiceIcon },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },

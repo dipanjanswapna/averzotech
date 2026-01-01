@@ -91,6 +91,14 @@ service cloud.firestore {
       }
     }
 
+    // PURCHASE_ORDERS collection
+    match /purchaseOrders/{purchaseOrderId} {
+      // Admins can manage all POs
+      allow read, write: if isAdmin();
+      // Vendors can read and update their own POs
+      allow read, update: if isVendor() && resource.data.vendorId == request.auth.uid;
+    }
+
     // RETURNS collection
     match /returns/{returnId} {
       // Admins can manage all return requests

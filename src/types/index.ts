@@ -1,5 +1,4 @@
 
-
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -244,4 +243,25 @@ export interface Vendor {
     minimumOrderValue?: number;
 }
 
+// Purchase Order
+export interface PurchaseOrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  items: PurchaseOrderItem[];
+  total: number;
+  status: 'Pending' | 'Confirmed' | 'Shipped' | 'Received' | 'Cancelled';
+  createdAt: any;
+  confirmedAt?: any;
+  estimatedDelivery?: string;
+  notes?: string;
+}
     
