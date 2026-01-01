@@ -46,19 +46,22 @@ import { Progress } from '@/components/ui/progress';
 const mockData = {
     divisions: [
         { id: 1, name_en: 'Dhaka', name_bn: 'ঢাকা', code: 'DHA' },
-        { id: 2, name_en: 'Chittagong', name_bn: 'চট্টগ্রাম', code: 'CTG' },
+        { id: 2, name_en: 'Chattagram', name_bn: 'চট্টগ্রাম', code: 'CTG' },
     ],
     districts: [
         { id: 1, division_id: 1, name_en: 'Dhaka', name_bn: 'ঢাকা', code: 'DHK' },
         { id: 2, division_id: 1, name_en: 'Gazipur', name_bn: 'গাজীপুর', code: 'GAZ' },
-        { id: 3, division_id: 2, name_en: 'Comilla', name_bn: 'কুমিল্লা', code: 'COM' },
+        { id: 3, division_id: 2, name_en: 'Cumilla', name_bn: 'কুমিল্লা', code: 'COM' },
     ],
     upazilas: [
         { id: 1, district_id: 1, name_en: 'Gulshan', name_bn: 'গুলশান', code: 'GUL' },
         { id: 2, district_id: 2, name_en: 'Sreepur', name_bn: 'শ্রীপুর', code: 'SRE' },
+        { id: 3, district_id: 3, name_en: 'Debidwar', name_bn: 'দেবিদ্বার', code: 'DBD' },
+        { id: 4, district_id: 3, name_en: 'Barura', name_bn: 'বরুড়া', code: 'BRR' },
     ],
     unions: [
         { id: 1, upazila_id: 1, name_en: 'Gulshan Model Town', name_bn: 'গুলশান মডেল টাউন', code: 'GMT' },
+        { id: 2, upazila_id: 3, name_en: 'Subil', name_bn: 'সুবিল', code: 'SBL' },
     ],
     areas: [
         { id: 1, union_id: 1, name_en: 'Gulshan 1', name_bn: 'গুলশান ১', postal_code: '1212' },
@@ -296,6 +299,7 @@ export default function AddressManagementPage() {
                                         <DialogHeader><DialogTitle>Bulk Import {activeTab}</DialogTitle></DialogHeader>
                                         <div className="space-y-4">
                                             <Label htmlFor="import-file">Upload CSV or JSON file</Label>
+                                            <p className="text-sm text-muted-foreground">Note: This is a UI simulation. The backend for file processing is not yet implemented. Clicking "Import" will simulate the upload process.</p>
                                             <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv,.json" />
                                             {isImporting && (
                                                 <div className="space-y-2">
@@ -350,3 +354,5 @@ export default function AddressManagementPage() {
         </div>
     );
 }
+
+    

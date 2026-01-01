@@ -114,6 +114,12 @@ export const bangladeshGeoData = {
         "Sakhipur": ["Baheratoil", "Dariapur", "Gajaria", "Hatibandha", "Jadabpur", "Kakradara", "Kakrajan", "Kalomegha"],
         "Tangail Sadar": ["Baghil", "Danya", "Gala", "Gharinda", "Hugu", "Kagmari", "Kakua", "Karatia", "Katuli", "Mahamudnagar", "Makorkaol", "Porabari", "Silimpur"]
       }
+    },
+    "Chattagram": {
+        "Cumilla": {
+            "Debidwar": ["Subil", "North Gunaighor", "South Gunaighor", "Boroshalghor", "Rajameher", "Yousufpur", "Rasulpur", "Fatehabad", "Elahabad", "Jafargonj", "Dhampti", "Mohanpur", "Vani", "Barkamta", "Sultanpur"],
+            "Barura": ["Aganagar", "Bhabanipur", "North Khoshbas", "South Khoshbas", "Jhalam", "Chitodda"]
+        }
     }
   };
   
@@ -145,3 +151,5 @@ export const bangladeshGeoData = {
     const upazilaData = districtData[upazila as keyof typeof districtData];
     return upazilaData || [];
 }
+
+    
