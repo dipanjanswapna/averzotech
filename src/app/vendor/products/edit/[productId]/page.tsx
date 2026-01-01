@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -464,7 +465,7 @@ export default function EditVendorProductPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-description">Description</Label>
-                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={6}/>
+                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={6} />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>

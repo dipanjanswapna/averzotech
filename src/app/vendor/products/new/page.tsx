@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -51,6 +52,11 @@ interface ImageObject {
     url: string;
 }
 
+interface Vendor {
+    uid: string;
+    fullName: string;
+}
+
 interface Variant {
     sku: string;
     wholesalePrice: number;
@@ -58,7 +64,6 @@ interface Variant {
     color: string;
     size: string;
 }
-
 
 export default function NewVendorProductPage() {
     const { app, db, user } = useFirebase();
@@ -100,7 +105,8 @@ export default function NewVendorProductPage() {
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
-
+    
+    // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
     
     // Dynamic Categories
@@ -294,11 +300,11 @@ export default function NewVendorProductPage() {
 
     const handleSaveProduct = async () => {
         if (!db || !storage || !user) return;
-        
-        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock <= 0)) {
+
+        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
             toast({
                 title: "Incomplete Variant Information",
-                description: "Please fill out SKU, Wholesale Price (>0), and Stock (>0) for all variants.",
+                description: "Please fill out SKU, Wholesale Price (>0), and Stock (>=0) for all variants.",
                 variant: 'destructive'
             });
             return;
