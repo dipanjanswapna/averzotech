@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 
 
 // Mock Data - In a real application, this would come from your database
@@ -73,6 +74,11 @@ export default function AddressManagementPage() {
     const [newEntityData, setNewEntityData] = useState<any>({});
     const { toast } = useToast();
 
+    // States for bulk import simulation
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [isImporting, setIsImporting] = useState(false);
+    const [importProgress, setImportProgress] = useState(0);
+
     const filteredData = useMemo(() => {
         if (!searchTerm) return mockData[activeTab as keyof typeof mockData];
         return mockData[activeTab as keyof typeof mockData].filter((item: any) => 
@@ -100,6 +106,45 @@ export default function AddressManagementPage() {
         toast({ title: "Success", description: `New ${activeTab.slice(0, -1)} added (simulated).`});
         setNewEntityData({});
         setIsAddDialogOpen(false);
+    };
+    
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setImportFile(e.target.files[0]);
+        }
+    };
+
+    const handleImport = async () => {
+        if (!importFile) {
+            toast({ title: "No file selected", description: "Please select a CSV or JSON file to import.", variant: "destructive" });
+            return;
+        }
+        setIsImporting(true);
+        setImportProgress(0);
+
+        // Simulate a file upload/processing progress
+        const progressInterval = setInterval(() => {
+            setImportProgress(prev => {
+                if (prev >= 95) {
+                    clearInterval(progressInterval);
+                    return prev;
+                }
+                return prev + 10;
+            });
+        }, 300);
+
+        // Simulate backend processing delay
+        setTimeout(() => {
+            clearInterval(progressInterval);
+            setImportProgress(100);
+            toast({
+                title: "Import Complete (Simulated)",
+                description: `File "${importFile.name}" has been processed. In a real application, this would update the database.`,
+            });
+            setIsImporting(false);
+            setImportFile(null);
+            setIsImportDialogOpen(false);
+        }, 3500);
     };
 
     const renderAddDialogContent = () => {
@@ -251,11 +296,19 @@ export default function AddressManagementPage() {
                                         <DialogHeader><DialogTitle>Bulk Import {activeTab}</DialogTitle></DialogHeader>
                                         <div className="space-y-4">
                                             <Label htmlFor="import-file">Upload CSV or JSON file</Label>
-                                            <Input id="import-file" type="file" />
+                                            <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv,.json" />
+                                            {isImporting && (
+                                                <div className="space-y-2">
+                                                    <Progress value={importProgress} />
+                                                    <p className="text-xs text-muted-foreground text-center">{importProgress}%</p>
+                                                </div>
+                                            )}
                                         </div>
                                         <DialogFooter>
-                                            <Button variant="secondary" onClick={() => setIsImportDialogOpen(false)}>Cancel</Button>
-                                            <Button>Import</Button>
+                                            <Button variant="secondary" onClick={() => setIsImportDialogOpen(false)} disabled={isImporting}>Cancel</Button>
+                                            <Button onClick={handleImport} disabled={isImporting || !importFile}>
+                                                {isImporting ? 'Importing...' : 'Import'}
+                                            </Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
@@ -297,4 +350,3 @@ export default function AddressManagementPage() {
         </div>
     );
 }
-
