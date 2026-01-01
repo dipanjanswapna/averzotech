@@ -1,4 +1,5 @@
 
+      
 
 'use client';
 
@@ -20,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2, RefreshCw } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, RefreshCw, Wand2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -43,13 +44,20 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
 import { filterCategories as initialFilterCategories } from '@/lib/categories';
-import { generateProductDescription } from '@/ai/flows/generate-product-description';
 import { useFirebase } from '@/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { generateProductDescription } from '@/ai/flows/generate-product-description';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 interface ImageObject {
     file?: File;
     url: string;
+}
+
+interface Tier {
+    minQuantity: number;
+    pricePerUnit: number;
 }
 
 interface Variant {
@@ -58,6 +66,7 @@ interface Variant {
     stock: number;
     color: string;
     size: string;
+    tiers?: Tier[];
 }
 
 export default function EditVendorProductPage() {
@@ -75,7 +84,6 @@ export default function EditVendorProductPage() {
     // Product Details
     const [productName, setProductName] = useState('');
     const [description, setDescription] = useState('');
-    const [descriptionKeywords, setDescriptionKeywords] = useState('');
     const [brand, setBrand] = useState('');
     const [vendor, setVendor] = useState('');
     
@@ -105,11 +113,15 @@ export default function EditVendorProductPage() {
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
+
+    // Pricing & Inventory
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
+    const [availability, setAvailability] = useState('in-stock');
     
+    // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
-    
+
     // Dynamic Categories
     const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
     const [newGroupName, setNewGroupName] = React.useState('');
@@ -159,6 +171,7 @@ export default function EditVendorProductPage() {
                     setSelectedGroup(data.organization?.group || '');
                     setSelectedSubcategory(data.organization?.subcategory || '');
                     setTags(data.organization?.tags || []);
+                    setAvailability(data.inventory?.availability || 'in-stock');
                     setMoq(String(data.inventory?.moq || ''));
                     setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
@@ -196,8 +209,6 @@ export default function EditVendorProductPage() {
                 });
             });
             setVariants(newVariants);
-        } else {
-             // If colors or sizes are cleared, respect the loaded variants
         }
     }, [colors, sizes]);
 
@@ -315,33 +326,33 @@ export default function EditVendorProductPage() {
         const group: any = availableGroups.find((g: any) => g.group === selectedGroup);
         return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
-
-    const handleGenerateDescription = async () => {
-        if (!productName || !brand) {
-            toast({
-                title: 'Missing Information',
-                description: 'Please enter a product name and brand before generating a description.',
-                variant: 'destructive',
-            });
-            return;
-        }
-        setIsGenerating(true);
-        try {
-            const keywords = descriptionKeywords.split(',').map(k => k.trim()).filter(Boolean);
-            const generatedDesc = await generateProductDescription({ productName, brand, keywords, specifications: [], colors: [], sizes: [] });
-            setDescription(generatedDesc);
-        } catch (error) {
-            console.error("AI Description generation failed:", error);
-            toast({ title: "Generation Failed", description: "Could not generate a description at this time.", variant: 'destructive' });
-        } finally {
-            setIsGenerating(false);
-        }
-    };
     
-    const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
+     const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
         const newVariants = [...variants];
         (newVariants[index] as any)[field] = value;
         setVariants(newVariants);
+    };
+
+    const handleAddTier = (variantIndex: number) => {
+        const newVariants = [...variants];
+        const tiers = newVariants[variantIndex].tiers || [];
+        newVariants[variantIndex].tiers = [...tiers, { minQuantity: 0, pricePerUnit: 0 }];
+        setVariants(newVariants);
+    };
+
+    const handleRemoveTier = (variantIndex: number, tierIndex: number) => {
+        const newVariants = [...variants];
+        newVariants[variantIndex]?.tiers?.splice(tierIndex, 1);
+        setVariants(newVariants);
+    };
+
+    const handleTierChange = (variantIndex: number, tierIndex: number, field: keyof Tier, value: string) => {
+        const newVariants = [...variants];
+        const tiers = newVariants[variantIndex].tiers;
+        if(tiers) {
+            tiers[tierIndex][field] = Number(value);
+            setVariants(newVariants);
+        }
     };
 
     const generateAllSKUs = () => {
@@ -356,9 +367,38 @@ export default function EditVendorProductPage() {
         });
         setVariants(updatedVariants);
     }
+    
+    const handleGenerateDescription = async () => {
+        if (!productName || !brand) {
+            toast({
+                title: 'Missing Information',
+                description: 'Please enter a product name and brand before generating a description.',
+                variant: 'destructive',
+            });
+            return;
+        }
+        setIsGenerating(true);
+        try {
+            const generatedDesc = await generateProductDescription({
+                productName,
+                brand,
+                keywords: tags,
+                specifications: specifications.filter(s => s.label && s.value),
+                colors: colors.map(c => c.name).filter(Boolean),
+                sizes: sizes.filter(Boolean),
+            });
+            setDescription(generatedDesc);
+        } catch (error) {
+            console.error("AI Description generation failed:", error);
+            toast({ title: "Generation Failed", description: "Could not generate a description at this time.", variant: 'destructive' });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
 
     const handleUpdateProduct = async () => {
-        if (!productId || !db) return;
+        if (!productId || !db || !storage) return;
         
         if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
             toast({
@@ -374,7 +414,7 @@ export default function EditVendorProductPage() {
             const imageUrls = await Promise.all(
                 images.map(async (imageObj) => {
                     if (imageObj.file) {
-                        const storageRef = ref(storage!, `products/${Date.now()}-${imageObj.file.name}`);
+                        const storageRef = ref(storage, `products/${Date.now()}-${imageObj.file.name}`);
                         await uploadBytes(storageRef, imageObj.file);
                         return await getDownloadURL(storageRef);
                     }
@@ -408,7 +448,7 @@ export default function EditVendorProductPage() {
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
                     stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
-                    initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    availability: availability,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -465,18 +505,18 @@ export default function EditVendorProductPage() {
                 <Label htmlFor="product-brand">Brand</Label>
                 <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
               </div>
-                <div className="space-y-2">
-                <Label htmlFor="description-keywords">AI Generate Description</Label>
-                <div className="flex gap-2">
-                   <Input id="description-keywords" placeholder="Keywords (e.g. summer, cotton, casual)" value={descriptionKeywords} onChange={e => setDescriptionKeywords(e.target.value)} disabled={isGenerating || isLoading} />
-                   <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
-                     <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate'}
-                   </Button>
-                </div>
+               <div className="space-y-2">
+                <Label>AI Generate Description</Label>
+                 <div className="p-4 bg-secondary/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground mb-2">Click to generate a description based on the product name, brand, tags, and specifications.</p>
+                    <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
+                        <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate Description'}
+                    </Button>
+                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-description">Description</Label>
-                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={6} />
+                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={8}/>
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
@@ -702,10 +742,21 @@ export default function EditVendorProductPage() {
                   <CardTitle>Organization</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <Label>Approval Status</Label>
                     <Input value={status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')} disabled />
                   </div>
+                   <div className="space-y-2">
+                        <Label htmlFor="product-availability">Availability</Label>
+                        <Select onValueChange={(value) => setAvailability(value)} value={availability} disabled={isLoading}>
+                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="in-stock">In Stock</SelectItem>
+                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                                <SelectItem value="pre-order">Pre-order</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                    <div className="space-y-2">
                     <Label>Category</Label>
                     <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); setSelectedSubcategory(''); }} value={selectedCategory} disabled={isLoading}>
@@ -741,7 +792,7 @@ export default function EditVendorProductPage() {
                       <Select onValueChange={value => { setSelectedGroup(value); setSelectedSubcategory(''); }} value={selectedGroup} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select group" /></SelectTrigger>
                         <SelectContent>
-                          {availableGroups.map((g:any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
+                          {availableGroups.map((g: any) => <SelectItem key={g.group} value={g.group}>{g.group}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -772,7 +823,7 @@ export default function EditVendorProductPage() {
                       <Select onValueChange={setSelectedSubcategory} value={selectedSubcategory} disabled={isLoading}>
                         <SelectTrigger><SelectValue placeholder="Select sub-category" /></SelectTrigger>
                         <SelectContent>
-                          {availableSubcategories.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          {availableSubcategories.map((s:any) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -798,13 +849,13 @@ export default function EditVendorProductPage() {
                   </div>
                 </CardContent>
             </Card>
-
+            
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
-                        <Input id="moq" type="number" placeholder="e.g. 1" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
+                        <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="max-purchase">Maximum Purchase Limit</Label>
@@ -828,3 +879,9 @@ export default function EditVendorProductPage() {
     </div>
   );
 }
+
+
+
+
+
+    

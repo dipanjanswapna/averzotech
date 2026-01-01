@@ -1,4 +1,6 @@
 
+      
+
 'use client';
 
 import React from 'react';
@@ -54,3 +56,5 @@ export function StockIndicator({ stock, initialStock, availability }: StockIndic
     </div>
   );
 }
+
+    
