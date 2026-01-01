@@ -450,17 +450,17 @@ export default function NewProductPage() {
                 <Input id="product-brand" placeholder="e.g. Averzo" value={brand} onChange={e => setBrand(e.target.value)} disabled={isLoading} />
               </div>
                <div className="space-y-2">
-                <Label>AI Generate Description</Label>
-                 <div className="p-4 bg-secondary/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-2">Click to generate a description based on the product name, brand, tags, and specifications.</p>
-                    <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
-                        <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate Description'}
-                    </Button>
-                 </div>
+                <Label htmlFor="description-keywords">AI Generate Description</Label>
+                <div className="flex gap-2">
+                   <Input id="description-keywords" placeholder="Keywords (e.g. summer, cotton, casual)" value={descriptionKeywords} onChange={e => setDescriptionKeywords(e.target.value)} disabled={isGenerating || isLoading} />
+                   <Button onClick={handleGenerateDescription} disabled={isGenerating || isLoading}>
+                     <Wand2 className="mr-2 h-4 w-4" /> {isGenerating ? 'Generating...' : 'Generate'}
+                   </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-description">Description</Label>
-                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} rows={8} />
+                <Textarea id="product-description" placeholder="Provide a detailed description of the product..." value={description} onChange={e => setDescription(e.target.value)} disabled={isLoading} />
               </div>
                <div className="space-y-2">
                 <Label htmlFor="product-vendor">Sold By</Label>
@@ -819,4 +819,5 @@ export default function NewProductPage() {
     </div>
   );
 }
+
 

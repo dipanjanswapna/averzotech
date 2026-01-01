@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -530,7 +531,7 @@ export default function EditVendorProductPage() {
               </div>
             </CardContent>
           </Card>
-
+          
            <Card>
                 <CardHeader>
                     <CardTitle>Variants & Pricing</CardTitle>
@@ -809,3 +810,4 @@ export default function EditVendorProductPage() {
     </div>
   );
 }
+
