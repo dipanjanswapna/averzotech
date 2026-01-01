@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -26,7 +27,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { bangladeshGeoData } from '@/lib/bangladeshgeo';
+import { bangladeshGeoData, getDistrictsByDivision, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -70,16 +71,12 @@ export default function AddressesPage() {
     // Dependent dropdown options
     const districts = useMemo(() => {
         if (!formData.division) return [];
-        const divisionData = bangladeshGeoData[formData.division as keyof typeof bangladeshGeoData];
-        return divisionData ? Object.keys(divisionData) : [];
+        return getDistrictsByDivision(formData.division);
     }, [formData.division]);
 
     const upazilas = useMemo(() => {
         if (!formData.division || !formData.district) return [];
-        const divisionData = bangladeshGeoData[formData.division as keyof typeof bangladeshGeoData];
-        // @ts-ignore
-        const districtData = divisionData ? divisionData[formData.district] : null;
-        return districtData ? Object.keys(districtData) : [];
+        return getUpazilasByDistrict(formData.division, formData.district);
     }, [formData.division, formData.district]);
 
 
@@ -327,13 +324,13 @@ export default function AddressesPage() {
                         <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
                             <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                             <SelectContent>
-                                {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                {districts.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
                          <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
                             <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
                             <SelectContent>
-                                {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                {upazilas.map((u, i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
