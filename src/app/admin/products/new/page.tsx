@@ -120,6 +120,7 @@ export default function NewProductPage() {
     const [comparePrice, setComparePrice] = useState('');
     const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
+    const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -304,7 +305,7 @@ export default function NewProductPage() {
         setIsGenerating(true);
         try {
             const keywords = descriptionKeywords.split(',').map(k => k.trim()).filter(Boolean);
-            const generatedDesc = await generateProductDescription({ productName, brand, keywords });
+            const generatedDesc = await generateProductDescription({ productName, brand, keywords, specifications: [], colors: [], sizes: [] });
             setDescription(generatedDesc);
         } catch (error) {
             console.error("AI Description generation failed:", error);
@@ -413,7 +414,8 @@ export default function NewProductPage() {
                 inventory: { // Redundant but good for quick lookups
                     stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
-                    moq: parseInt(moq, 10) || 1
+                    moq: parseInt(moq, 10) || 1,
+                    maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null
                 },
                 shipping: {
                     estimatedDelivery,
@@ -857,11 +859,15 @@ export default function NewProductPage() {
             </Card>
 
             <Card>
-                <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
                         <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="max-purchase">Maximum Purchase Limit</Label>
+                        <Input id="max-purchase" type="number" placeholder="e.g. 100" value={maxPurchaseLimit} onChange={e => setMaxPurchaseLimit(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>

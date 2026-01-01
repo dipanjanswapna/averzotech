@@ -123,6 +123,7 @@ export default function EditProductPage() {
     const [comparePrice, setComparePrice] = useState('');
     const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
+    const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -184,6 +185,7 @@ export default function EditProductPage() {
                     setComparePrice(String(data.pricing?.comparePrice || ''));
                     setTax(String(data.pricing?.tax || ''));
                     setMoq(String(data.inventory?.moq || ''));
+                    setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
                     toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -461,6 +463,8 @@ export default function EditProductPage() {
                 },
                 inventory: {
                     moq: parseInt(moq, 10) || 1,
+                    maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
+                    stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                 },
                 shipping: {
                     estimatedDelivery,
@@ -906,11 +910,15 @@ export default function EditProductPage() {
             </Card>
             
             <Card>
-                <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
                         <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="max-purchase">Maximum Purchase Limit</Label>
+                        <Input id="max-purchase" type="number" placeholder="e.g. 100" value={maxPurchaseLimit} onChange={e => setMaxPurchaseLimit(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
@@ -930,6 +938,7 @@ export default function EditProductPage() {
     </div>
   );
 }
+
 
 
 
