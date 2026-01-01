@@ -46,11 +46,11 @@ export function StockIndicator({ stock, initialStock, availability }: StockIndic
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center">
-        <p className={cn("text-sm font-semibold", textColor, pulse && "animate-pulse")}>
+        <p className={cn("text-xs font-semibold", textColor, pulse && "animate-pulse")}>
           {text}
         </p>
       </div>
-      <Progress value={stockPercentage} className="h-2" progressClassName={progressColor} />
+      <Progress value={stockPercentage} className="h-1.5" progressClassName={progressColor} />
     </div>
   );
 }

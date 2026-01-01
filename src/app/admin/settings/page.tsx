@@ -13,7 +13,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import React, { useState, useEffect } from 'react';
@@ -21,10 +20,54 @@ import { Store } from 'lucide-react';
 import Link from 'next/link';
 import { useFirebase } from '@/firebase';
 
+interface NotificationSettings {
+    newOrders: boolean;
+    lowStock: boolean;
+}
+
 export default function SettingsPage() {
     const { toast } = useToast();
-    const [loading, setLoading] = useState(false);
     const { db } = useFirebase();
+    const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(true);
+
+    const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+        newOrders: true,
+        lowStock: true,
+    });
+    
+    useEffect(() => {
+        if (!db) return;
+        const fetchSettings = async () => {
+            setFetching(true);
+            const docRef = doc(db, 'site_content', 'notification_settings');
+            const docSnap = await getDoc(docRef);
+            if(docSnap.exists()) {
+                setNotificationSettings(docSnap.data() as NotificationSettings);
+            }
+            setFetching(false);
+        }
+        fetchSettings();
+    }, [db]);
+
+    const handleNotificationChange = (key: keyof NotificationSettings, value: boolean) => {
+        setNotificationSettings(prev => ({ ...prev, [key]: value }));
+    }
+
+    const handleSaveNotifications = async () => {
+        if (!db) return;
+        setLoading(true);
+        try {
+            const docRef = doc(db, 'site_content', 'notification_settings');
+            await setDoc(docRef, notificationSettings, { merge: true });
+            toast({ title: 'Success', description: 'Notification settings have been updated.' });
+        } catch (error) {
+             toast({ title: 'Error', description: 'Failed to save notification settings.', variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    }
+
 
   return (
     <div className="space-y-8">
@@ -84,18 +127,28 @@ export default function SettingsPage() {
                             <p className="font-medium">New Orders</p>
                             <p className="text-sm text-muted-foreground">Receive an email for every new order.</p>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch 
+                            checked={notificationSettings.newOrders}
+                            onCheckedChange={(checked) => handleNotificationChange('newOrders', checked)}
+                            disabled={fetching || loading}
+                        />
                     </div>
                      <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
                             <p className="font-medium">Low Stock Alerts</p>
-                            <p className="text-sm text-muted-foreground">Get notified when a product's stock is low.</p>
+                            <p className="text-sm text-muted-foreground">Get notified when a product's stock is low (below 20 items).</p>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch
+                            checked={notificationSettings.lowStock}
+                            onCheckedChange={(checked) => handleNotificationChange('lowStock', checked)}
+                            disabled={fetching || loading}
+                        />
                     </div>
                 </CardContent>
                  <CardFooter>
-                     <Button>Save Preferences</Button>
+                     <Button onClick={handleSaveNotifications} disabled={fetching || loading}>
+                        {loading ? 'Saving...' : 'Save Preferences'}
+                     </Button>
                 </CardFooter>
             </Card>
         </div>
