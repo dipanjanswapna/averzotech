@@ -21,11 +21,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
+import { divisions, getDistrictsByDivision, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
 
 export interface VendorApplicationData {
     shopInfo: {
@@ -83,6 +84,20 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
 
     const [agreedToTerms, setAgreedToTerms] = useState(false);
 
+    const [division, setDivision] = useState('');
+    const [district, setDistrict] = useState('');
+    const [upazila, setUpazila] = useState('');
+
+    const availableDistricts = useMemo(() => {
+        if (!division) return [];
+        return getDistrictsByDivision(division);
+    }, [division]);
+
+    const availableUpazilas = useMemo(() => {
+        if (!district) return [];
+        return getUpazilasByDistrict(division, district);
+    }, [district, division]);
+
 
     const handleSubmit = () => {
         if (!shopName || !shopAddress || !category || !contactName || !contactPhone || !tradeLicenseUrl || !nidUrl) {
@@ -105,10 +120,12 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
             return;
         }
         
+        const fullAddress = `${shopAddress}, ${upazila}, ${district}, ${division}`;
+
         const formData: VendorApplicationData = {
             shopInfo: {
                 shopName,
-                address: shopAddress,
+                address: fullAddress,
                 category,
             },
             contactInfo: {
@@ -145,9 +162,39 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                             <Label htmlFor="shop-name">Shop Name</Label>
                             <Input id="shop-name" value={shopName} onChange={e => setShopName(e.target.value)} disabled={isLoading} />
                         </div>
+
+                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div className="space-y-2">
+                                <Label>Division</Label>
+                                <Select value={division} onValueChange={(value) => { setDivision(value); setDistrict(''); setUpazila(''); }}>
+                                    <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
+                                    <SelectContent>
+                                        {divisions.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="space-y-2">
+                                <Label>District</Label>
+                                <Select value={district} onValueChange={(value) => { setDistrict(value); setUpazila(''); }} disabled={!division}>
+                                    <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableDistricts.map((d,i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                             </div>
+                             <div className="space-y-2">
+                                <Label>Upazila/Thana</Label>
+                                 <Select value={upazila} onValueChange={setUpazila} disabled={!district}>
+                                    <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableUpazilas.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                         <div className="space-y-2">
-                            <Label htmlFor="shop-address">Full Shop Address</Label>
-                            <Textarea id="shop-address" value={shopAddress} onChange={e => setShopAddress(e.target.value)} disabled={isLoading} />
+                            <Label htmlFor="shop-address">Street Address</Label>
+                            <Textarea id="shop-address" value={shopAddress} onChange={e => setShopAddress(e.target.value)} disabled={isLoading} placeholder="e.g. House 123, Road 4, Block F" />
                         </div>
                             <div className="space-y-2">
                             <Label htmlFor="shop-category">Primary Category</Label>

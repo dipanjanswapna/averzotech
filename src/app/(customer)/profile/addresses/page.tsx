@@ -316,13 +316,13 @@ export default function AddressesPage() {
                         <Select value={formData.division} onValueChange={handleSelectChange('division')}>
                             <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
                             <SelectContent>
-                                {divisions.map((d: string, i: number) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
+                                {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
                             <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                             <SelectContent>
-                                {districts.map((d: string, i: number) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
+                                {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
                          <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
