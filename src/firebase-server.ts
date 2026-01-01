@@ -7,14 +7,17 @@ import { getFirestore } from 'firebase-admin/firestore';
 const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
 
 if (!serviceAccountString) {
-    // We are throwing an error here which will stop the build process.
-    // This is intentional. The app CANNOT run without this config.
-    // In a real production environment, this would be a hard failure.
-    // For local dev, ensure .env.local has FIREBASE_SERVICE_ACCOUNT set.
-    throw new Error("Firebase service account is not configured. Set the FIREBASE_SERVICE_ACCOUNT environment variable.");
+    throw new Error("Firebase service account is not configured. Please set the FIREBASE_SERVICE_ACCOUNT environment variable with the JSON key.");
 }
 
-const serviceAccount = JSON.parse(serviceAccountString);
+let serviceAccount;
+try {
+    serviceAccount = JSON.parse(serviceAccountString);
+} catch (error) {
+    console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT JSON string.", error);
+    throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not a valid JSON object.");
+}
+
 
 let app;
 if (!getApps().length) {
