@@ -7,7 +7,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +26,7 @@ import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
 import { VendorApplicationData } from '@/types';
+import { getDivisions, getDistrictsByDivision, getUpazilasByDistrict, getUnionsByUpazila } from '@/lib/bangladeshgeo';
 
 interface VendorApplicationFormProps {
     user: { fullName: string };
@@ -57,6 +57,41 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
     const [mobileNumber, setMobileNumber] = useState('');
 
     const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+    // Address state
+    const [division, setDivision] = useState('');
+    const [district, setDistrict] = useState('');
+    const [upazila, setUpazila] = useState('');
+    const [union, setUnion] = useState('');
+
+    const divisions = useMemo(() => getDivisions(), []);
+    const districts = useMemo(() => division ? getDistrictsByDivision(division) : [], [division]);
+    const upazilas = useMemo(() => district ? getUpazilasByDistrict(division, district) : [], [division, district]);
+    const unions = useMemo(() => upazila ? getUnionsByUpazila(division, district, upazila) : [], [division, district, upazila]);
+
+    const handleSelectChange = (field: 'division' | 'district' | 'upazila' | 'union') => (value: string) => {
+        switch(field) {
+            case 'division':
+                setDivision(value);
+                setDistrict('');
+                setUpazila('');
+                setUnion('');
+                break;
+            case 'district':
+                setDistrict(value);
+                setUpazila('');
+                setUnion('');
+                break;
+            case 'upazila':
+                setUpazila(value);
+                setUnion('');
+                break;
+            case 'union':
+                setUnion(value);
+                break;
+        }
+    };
+
 
     const handleSubmit = () => {
         if (!shopName || !shopAddress || !category || !contactName || !contactPhone || !tradeLicenseUrl || !nidUrl) {
@@ -103,6 +138,10 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                 branchName: paymentMethod === 'bank' ? branchName : '',
                 mobileNumber: paymentMethod === 'mobile' ? mobileNumber : '',
             },
+            division,
+            district,
+            upazila,
+            union,
         };
         onSubmit(formData);
     };
@@ -119,6 +158,34 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                         <div className="space-y-2">
                             <Label htmlFor="shop-name">Shop Name</Label>
                             <Input id="shop-name" value={shopName} onChange={e => setShopName(e.target.value)} disabled={isLoading} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Select value={division} onValueChange={handleSelectChange('division')}>
+                                <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
+                                <SelectContent>
+                                    {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <Select value={district} onValueChange={handleSelectChange('district')} disabled={!division}>
+                                <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                                <SelectContent>
+                                    {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Select value={upazila} onValueChange={handleSelectChange('upazila')} disabled={!district}>
+                                <SelectTrigger><SelectValue placeholder="Select Upazila" /></SelectTrigger>
+                                <SelectContent>
+                                    {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <Select value={union} onValueChange={handleSelectChange('union')} disabled={!upazila}>
+                                <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
+                                <SelectContent>
+                                    {unions.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="shop-address">Full Shop Address</Label>

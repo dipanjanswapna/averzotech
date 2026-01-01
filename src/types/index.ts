@@ -1,5 +1,4 @@
 
-
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -212,6 +211,10 @@ export interface VendorApplicationData {
         branchName?: string;
         mobileNumber?: string;
     };
+    division: string;
+    district: string;
+    upazila: string;
+    union: string;
 }
 
 

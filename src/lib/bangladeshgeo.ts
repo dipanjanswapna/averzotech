@@ -1,5 +1,5 @@
 
-export const bangladeshGeoData = {
+export const bangladeshGeoData: { [key: string]: { [key: string]: { [key: string]: string[] } } } = {
     "Dhaka": {
       "Dhaka": {
         "Dhamrai": ["Amta", "Baisakanda", "Balitha", "Chauhat", "Dhulivita", "Gangutia", "Jadabpur", "Kullia", "Kushura", "Nannar", "Panchalish", "Rowail", "Sanora", "Sombhog", "Suapur"],
@@ -118,38 +118,26 @@ export const bangladeshGeoData = {
     "Chattagram": {
         "Cumilla": {
             "Debidwar": ["Subil", "North Gunaighor", "South Gunaighor", "Boroshalghor", "Rajameher", "Yousufpur", "Rasulpur", "Fatehabad", "Elahabad", "Jafargonj", "Dhampti", "Mohanpur", "Vani", "Barkamta", "Sultanpur"],
-            "Barura": ["Aganagar", "Bhabanipur", "North Khoshbas", "South Khoshbas", "Jhalam", "Chitodda"]
+            "Barura": ["Aganagar", "Bhabanipur", "North Khoshbas", "South Khoshbas", "Jhalam", "Chitodda", "Payalgacha", "Shilmuri", "Galimpur", "Kakairtala", "Shoshdol", "Adda", "Purbashilmuri", "Pashchimshilmuri", "Vauksar"]
         }
     }
   };
   
-  export const divisions = Object.keys(bangladeshGeoData);
-
   export function getDivisions() {
     return Object.keys(bangladeshGeoData);
   }
 
   export function getDistrictsByDivision(division: string) {
-    if (!division || !bangladeshGeoData[division as keyof typeof bangladeshGeoData]) return [];
-    return Object.keys(bangladeshGeoData[division as keyof typeof bangladeshGeoData]);
+    if (!division || !bangladeshGeoData[division]) return [];
+    return Object.keys(bangladeshGeoData[division]);
   }
 
   export function getUpazilasByDistrict(division: string, district: string) {
-    if (!division || !district) return [];
-    const divisionData = bangladeshGeoData[division as keyof typeof bangladeshGeoData];
-    if (!divisionData) return [];
-    const districtData = divisionData[district as keyof typeof divisionData];
-    return districtData ? Object.keys(districtData) : [];
+    if (!division || !district || !bangladeshGeoData[division]?.[district]) return [];
+    return Object.keys(bangladeshGeoData[division][district]);
   }
 
   export function getUnionsByUpazila(division: string, district: string, upazila: string) {
-    if (!division || !district || !upazila) return [];
-    const divisionData = bangladeshGeoData[division as keyof typeof bangladeshGeoData];
-    if (!divisionData) return [];
-    const districtData = divisionData[district as keyof typeof divisionData];
-    if (!districtData) return [];
-    const upazilaData = districtData[upazila as keyof typeof districtData];
-    return upazilaData || [];
+    if (!division || !district || !upazila || !bangladeshGeoData[division]?.[district]?.[upazila]) return [];
+    return bangladeshGeoData[division][district][upazila] || [];
 }
-
-    

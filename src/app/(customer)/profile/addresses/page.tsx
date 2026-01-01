@@ -83,7 +83,8 @@ export default function AddressesPage() {
 
     const unions = useMemo(() => {
         if (!formData.division || !formData.district || !formData.upazila) return [];
-        return getUnionsByUpazila(formData.division, formData.district, formData.upazila);
+        const unionData = getUnionsByUpazila(formData.division, formData.district, formData.upazila);
+        return Array.isArray(unionData) ? unionData : [];
     }, [formData.division, formData.district, formData.upazila]);
 
     const fetchAddresses = async () => {
