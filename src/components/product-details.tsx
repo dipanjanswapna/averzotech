@@ -157,6 +157,11 @@ export function ProductDetails() {
       if (docSnap.exists()) {
         const productData = { id: docSnap.id, ...docSnap.data() } as Product;
         setProduct(productData);
+        if (productData.inventory?.moq && productData.inventory.moq > 1) {
+            setQuantity(productData.inventory.moq);
+        } else {
+            setQuantity(1);
+        }
         if (!selectedSize && productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
         if (!selectedColor && productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
         setError(null);
@@ -380,6 +385,7 @@ export function ProductDetails() {
   const isOutOfStock = product.inventory.availability === 'out-of-stock' || product.inventory.stock <= 0;
   const isPreOrder = product.inventory.availability === 'pre-order';
   const isTryOnAvailable = product.organization.category === 'Accessories' && (product.organization.subcategory === 'Watches' || product.organization.subcategory === 'Sunglasses');
+  const minQuantity = product.inventory.moq || 1;
 
 
   return (
@@ -507,12 +513,12 @@ export function ProductDetails() {
             <div className="mt-6 flex items-center gap-4">
               <h3 className="text-sm font-semibold text-foreground">QUANTITY</h3>
               <div className="flex items-center border rounded-md">
-                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.max(1, q-1))}><Minus className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.max(minQuantity, q-1))}><Minus className="w-4 h-4" /></Button>
                   <Input type="number" value={quantity} readOnly className="w-12 h-8 text-center border-none focus-visible:ring-0" />
                   <Button variant="ghost" size="icon" onClick={() => setQuantity(q => q+1)}><Plus className="w-4 h-4" /></Button>
               </div>
-              {product.inventory.moq && product.inventory.moq > 1 && (
-                  <p className="text-sm text-muted-foreground">Minimum: {product.inventory.moq} pcs</p>
+              {minQuantity > 1 && (
+                  <p className="text-sm text-muted-foreground">Minimum: {minQuantity} pcs</p>
               )}
             </div>
 
@@ -770,4 +776,5 @@ export function ProductDetails() {
       </>
       );
 }
+
 
