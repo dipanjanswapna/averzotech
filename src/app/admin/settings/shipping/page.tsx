@@ -40,12 +40,12 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getPickupStores, createPickupStore, RedXArea } from '@/lib/redx';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getDistrictsByDivision, getUpazilasByDistrict, divisions } from '@/lib/bangladeshgeo';
+import { getDistrictsByDivision, getUnionsByUpazila, getUpazilasByDistrict, divisions } from '@/lib/bangladeshgeo';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface PickupStore {
@@ -62,10 +62,11 @@ export default function PickupStoresPage() {
   const { toast } = useToast();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newStoreData, setNewStoreData] = useState({ name: '', phone: '', address: '', division: '', district: '', upazila: '', area_id: 0 });
+  const [newStoreData, setNewStoreData] = useState({ name: '', phone: '', address: '', division: '', district: '', upazila: '', union: '', area_id: 0 });
   
   const [districts, setDistricts] = useState<string[]>([]);
   const [upazilas, setUpazilas] = useState<string[]>([]);
+  const [unions, setUnions] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const fetchStores = async () => {
@@ -87,7 +88,7 @@ export default function PickupStoresPage() {
   useEffect(() => {
     if (newStoreData.division) {
         setDistricts(getDistrictsByDivision(newStoreData.division) || []);
-        setNewStoreData(prev => ({ ...prev, district: '', upazila: '', area_id: 0 }));
+        setNewStoreData(prev => ({ ...prev, district: '', upazila: '', union: '', area_id: 0 }));
     } else {
         setDistricts([]);
     }
@@ -96,11 +97,20 @@ export default function PickupStoresPage() {
    useEffect(() => {
     if (newStoreData.district) {
         setUpazilas(getUpazilasByDistrict(newStoreData.division, newStoreData.district) || []);
-        setNewStoreData(prev => ({ ...prev, upazila: '' }));
+        setNewStoreData(prev => ({ ...prev, upazila: '', union: '' }));
     } else {
         setUpazilas([]);
     }
   }, [newStoreData.district, newStoreData.division]);
+
+  useEffect(() => {
+    if (newStoreData.upazila) {
+      setUnions(getUnionsByUpazila(newStoreData.division, newStoreData.district, newStoreData.upazila) || []);
+      setNewStoreData(prev => ({ ...prev, union: '' }));
+    } else {
+      setUnions([]);
+    }
+  }, [newStoreData.upazila, newStoreData.district, newStoreData.division]);
 
 
   const handleInputChange = (field: keyof typeof newStoreData, value: string | number) => {
@@ -122,7 +132,7 @@ export default function PickupStoresPage() {
         toast({ title: "Store Added", description: "The new pickup store has been created successfully." });
         fetchStores();
         setIsDialogOpen(false);
-        setNewStoreData({ name: '', phone: '', address: '', division: '', district: '', upazila: '', area_id: 0 });
+        setNewStoreData({ name: '', phone: '', address: '', division: '', district: '', upazila: '', union: '', area_id: 0 });
     } catch (error: any) {
         toast({ title: "Error", description: `Could not add store: ${error.message}`, variant: "destructive" });
     } finally {
@@ -188,6 +198,12 @@ export default function PickupStoresPage() {
                                 <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
                                 <SelectContent>
                                     {upazilas.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                             <Select value={newStoreData.union} onValueChange={value => handleInputChange('union', value)} disabled={!newStoreData.upazila}>
+                                <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
+                                <SelectContent>
+                                    {unions.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>

@@ -26,7 +26,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { bangladeshGeoData, getDistrictsByDivision, getUpazilasByDistrict, divisions } from '@/lib/bangladeshgeo';
+import { divisions, getDistrictsByDivision, getUnionsByUpazila, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 import { CardContent } from '@/components/ui/card';
@@ -39,6 +39,7 @@ interface Address {
     division: string;
     district: string;
     upazila: string;
+    union: string;
     area: string;
     delivery_area_id?: number;
     phone: string;
@@ -61,6 +62,7 @@ export default function AddressesPage() {
         division: '',
         district: '',
         upazila: '',
+        union: '',
         area: '',
         phone: '',
         isDefault: false,
@@ -76,6 +78,11 @@ export default function AddressesPage() {
         if (!formData.division || !formData.district) return [];
         return getUpazilasByDistrict(formData.division, formData.district);
     }, [formData.division, formData.district]);
+
+    const unions = useMemo(() => {
+        if (!formData.division || !formData.district || !formData.upazila) return [];
+        return getUnionsByUpazila(formData.division, formData.district, formData.upazila);
+    }, [formData.division, formData.district, formData.upazila]);
 
 
     const fetchAddresses = async () => {
@@ -109,6 +116,7 @@ export default function AddressesPage() {
                 division: editingAddress.division,
                 district: editingAddress.district,
                 upazila: editingAddress.upazila,
+                union: editingAddress.union,
                 area: editingAddress.area, 
                 phone: editingAddress.phone,
                 isDefault: editingAddress.isDefault,
@@ -126,6 +134,7 @@ export default function AddressesPage() {
             division: '',
             district: '',
             upazila: '',
+            union: '',
             area: '',
             phone: '',
             isDefault: false,
@@ -137,11 +146,13 @@ export default function AddressesPage() {
         setFormData(prev => ({ ...prev, [id]: value }));
     };
     
-    const handleSelectChange = (field: 'division' | 'district' | 'upazila') => (value: string) => {
+    const handleSelectChange = (field: 'division' | 'district' | 'upazila' | 'union') => (value: string) => {
         if (field === 'division') {
-            setFormData(prev => ({ ...prev, division: value, district: '', upazila: '' }));
+            setFormData(prev => ({ ...prev, division: value, district: '', upazila: '', union: '' }));
         } else if (field === 'district') {
-            setFormData(prev => ({ ...prev, district: value, upazila: '' }));
+            setFormData(prev => ({ ...prev, district: value, upazila: '', union: '' }));
+        } else if (field === 'upazila') {
+            setFormData(prev => ({ ...prev, upazila: value, union: '' }));
         } else {
             setFormData(prev => ({ ...prev, [field]: value }));
         }
@@ -185,6 +196,7 @@ export default function AddressesPage() {
             division: formData.division,
             district: formData.district,
             upazila: formData.upazila,
+            union: formData.union,
             area: formData.area,
             phone: formData.phone,
             isDefault: formData.isDefault,
@@ -270,7 +282,7 @@ export default function AddressesPage() {
                     <CardContent>
                         <p className="font-semibold">{addr.name}</p>
                         <p className="text-muted-foreground">{addr.streetAddress}</p>
-                        <p className="text-muted-foreground">{addr.area}, {addr.upazila}, {addr.district}, {addr.division}</p>
+                        <p className="text-muted-foreground">{addr.area}, {addr.union}, {addr.upazila}, {addr.district}, {addr.division}</p>
                         <p className="text-muted-foreground mt-2">Mobile: <span className="font-medium text-foreground">{addr.phone}</span></p>
                     </CardContent>
                     <CardFooter className="flex justify-between">
@@ -331,6 +343,12 @@ export default function AddressesPage() {
                                 {upazilas.map((u, i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
                             </SelectContent>
                         </Select>
+                        <Select value={formData.union} onValueChange={handleSelectChange('union')} disabled={!formData.upazila}>
+                            <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
+                            <SelectContent>
+                                {unions.map((u, i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
               </div>
                <div className="grid grid-cols-4 items-start gap-4">
@@ -366,3 +384,4 @@ export default function AddressesPage() {
     </div>
   );
 }
+

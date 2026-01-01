@@ -26,7 +26,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
-import { divisions, getDistrictsByDivision, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
+import { divisions, getDistrictsByDivision, getUpazilasByDistrict, getUnionsByUpazila } from '@/lib/bangladeshgeo';
 
 export interface VendorApplicationData {
     shopInfo: {
@@ -87,6 +87,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
     const [division, setDivision] = useState('');
     const [district, setDistrict] = useState('');
     const [upazila, setUpazila] = useState('');
+    const [union, setUnion] = useState('');
 
     const availableDistricts = useMemo(() => {
         if (!division) return [];
@@ -97,6 +98,11 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
         if (!district) return [];
         return getUpazilasByDistrict(division, district);
     }, [district, division]);
+
+    const availableUnions = useMemo(() => {
+        if (!upazila) return [];
+        return getUnionsByUpazila(division, district, upazila);
+    }, [upazila, district, division]);
 
 
     const handleSubmit = () => {
@@ -120,7 +126,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
             return;
         }
         
-        const fullAddress = `${shopAddress}, ${upazila}, ${district}, ${division}`;
+        const fullAddress = `${shopAddress}, ${union}, ${upazila}, ${district}, ${division}`;
 
         const formData: VendorApplicationData = {
             shopInfo: {
@@ -163,7 +169,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                             <Input id="shop-name" value={shopName} onChange={e => setShopName(e.target.value)} disabled={isLoading} />
                         </div>
 
-                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                             <div className="space-y-2">
                                 <Label>Division</Label>
                                 <Select value={division} onValueChange={(value) => { setDivision(value); setDistrict(''); setUpazila(''); }}>
@@ -188,6 +194,15 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                                     <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
                                     <SelectContent>
                                         {availableUpazilas.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Union</Label>
+                                 <Select value={union} onValueChange={setUnion} disabled={!upazila}>
+                                    <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
+                                    <SelectContent>
+                                        {availableUnions.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
