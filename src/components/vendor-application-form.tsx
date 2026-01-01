@@ -26,32 +26,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
-
-export interface VendorApplicationData {
-    shopInfo: {
-        shopName: string;
-        address: string;
-        category: string;
-    };
-    contactInfo: {
-        name: string;
-        phone: string;
-    };
-    documents: {
-        tradeLicenseUrl: string;
-        nidUrl: string;
-        tinUrl: string;
-    };
-    paymentInfo: {
-        method: 'bank' | 'mobile';
-        bankName?: string;
-        accountName?: string;
-        accountNumber?: string;
-        branchName?: string;
-        mobileNumber?: string;
-    };
-}
-
+import { VendorApplicationData } from '@/types';
 
 interface VendorApplicationFormProps {
     user: { fullName: string };
@@ -113,6 +88,7 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
             contactInfo: {
                 name: contactName,
                 phone: contactPhone,
+                email: ''
             },
             documents: {
                 tradeLicenseUrl,

@@ -1,13 +1,5 @@
 
 
-
-
-
-
-
-
-
-
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -195,6 +187,33 @@ export interface VendorApplication {
     rejectionReason?: string;
     createdAt: any;
 }
+
+export interface VendorApplicationData {
+    shopInfo: {
+        shopName: string;
+        address: string;
+        category: string;
+    };
+    contactInfo: {
+        name: string;
+        phone: string;
+        email: string;
+    };
+    documents: {
+        tradeLicenseUrl: string;
+        nidUrl: string;
+        tinUrl: string;
+    };
+    paymentInfo: {
+        method: 'bank' | 'mobile';
+        bankName?: string;
+        accountName?: string;
+        accountNumber?: string;
+        branchName?: string;
+        mobileNumber?: string;
+    };
+}
+
 
 export interface Vendor {
     id: string;

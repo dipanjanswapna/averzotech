@@ -27,7 +27,7 @@ import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } fr
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getDistrictsByDivision, getDivisions, getUnionsByUpazila, getUpazilasByDistrict } from '@/lib/bangladesh-geo';
+import { getDivisions, getDistrictsByDivision, getUnionsByUpazila, getUpazilasByDistrict } from '@/lib/bangladeshgeo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
 
@@ -316,7 +316,7 @@ export default function AddressesPage() {
                 <Label htmlFor="name" className="text-right">Name</Label>
                 <Input id="name" value={formData.name} onChange={handleFormChange} className="col-span-3" />
               </div>
-                <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-2 gap-4">
                         <Select value={formData.division} onValueChange={handleSelectChange('division')}>
                             <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
                             <SelectContent>
@@ -337,7 +337,7 @@ export default function AddressesPage() {
                                 {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                             </SelectContent>
                         </Select>
-                        <Select value={formData.union} onValueChange={handleSelectChange('union')} disabled={!formData.upazila}>
+                         <Select value={formData.union} onValueChange={handleSelectChange('union')} disabled={!formData.upazila}>
                             <SelectTrigger><SelectValue placeholder="Select Union" /></SelectTrigger>
                             <SelectContent>
                                 {unions.map((u, i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
