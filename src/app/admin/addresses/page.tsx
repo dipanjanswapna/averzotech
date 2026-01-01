@@ -188,10 +188,19 @@ export default function AddressManagementPage() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(results.data),
                     });
-                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'Failed to import data.');
+
+                    if (!response.ok) {
+                        // Check if the response is JSON before trying to parse it
+                        const contentType = response.headers.get("content-type");
+                        if (contentType && contentType.indexOf("application/json") !== -1) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Failed to import data.');
+                        } else {
+                            // If not JSON, it's likely an HTML error page.
+                            throw new Error(`Server error: ${response.statusText}`);
+                        }
                     }
+
                      const data = await response.json();
                      toast({
                         title: "Import Successful",
