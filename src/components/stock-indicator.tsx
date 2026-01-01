@@ -30,7 +30,7 @@ export function StockIndicator({ stock, initialStock, availability }: StockIndic
   let progressColor = 'bg-green-500';
   let pulse = false;
 
-  if (stock < 10) {
+  if (stock < 20) {
     text = `Low Stock`;
     textColor = 'text-orange-500';
     progressColor = 'bg-orange-500';

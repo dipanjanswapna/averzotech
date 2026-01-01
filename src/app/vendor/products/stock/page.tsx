@@ -26,6 +26,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, where, doc, writeBatch, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
+import { cn } from '@/lib/utils';
 
 interface Product {
   id: string;
@@ -203,7 +204,7 @@ export default function StockManagementPage() {
                                         type="number"
                                         value={variant.stock}
                                         onChange={e => handleStockChange(product.id, variant.sku, e.target.value)}
-                                        className="h-9"
+                                        className={cn("h-9", variant.stock < 20 && 'bg-red-100/50 border-red-300')}
                                     />
                                 </TableCell>
                             </TableRow>
