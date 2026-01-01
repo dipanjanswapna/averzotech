@@ -175,19 +175,19 @@ export default function PickupStoresPage() {
                              <Select value={newStoreData.division} onValueChange={value => handleInputChange('division', value)}>
                                 <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
                                 <SelectContent>
-                                    {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                    {divisions.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                             <Select value={newStoreData.district} onValueChange={value => handleInputChange('district', value)} disabled={!newStoreData.division}>
                                 <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                                 <SelectContent>
-                                    {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                    {districts.map((d,i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                             <Select value={newStoreData.upazila} onValueChange={value => handleInputChange('upazila', value)} disabled={!newStoreData.district}>
                                 <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
                                 <SelectContent>
-                                    {upazilas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                                    {upazilas.map((u,i) => <SelectItem key={`${u}-${i}`} value={u}>{u}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -248,4 +248,3 @@ export default function PickupStoresPage() {
     </div>
   );
 }
-    

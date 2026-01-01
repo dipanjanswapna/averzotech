@@ -154,8 +154,8 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                             <Select value={category} onValueChange={setCategory}>
                                 <SelectTrigger id="shop-category"><SelectValue placeholder="Select your main category" /></SelectTrigger>
                                 <SelectContent>
-                                    {filterCategories.map(cat => (
-                                        <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
+                                    {filterCategories.map((cat: any, i:number) => (
+                                        <SelectItem key={`${cat.name}-${i}`} value={cat.name}>{cat.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

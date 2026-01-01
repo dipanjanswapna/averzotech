@@ -3,7 +3,6 @@
 
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -30,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { bangladeshGeoData, getDistrictsByDivision, getUpazilasByDistrict, divisions } from '@/lib/bangladeshgeo';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase } from '@/firebase';
+import { CardContent } from '@/components/ui/card';
 
 interface Address {
     id: string;
@@ -316,13 +316,13 @@ export default function AddressesPage() {
                         <Select value={formData.division} onValueChange={handleSelectChange('division')}>
                             <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
                             <SelectContent>
-                                {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                {divisions.map((d: string, i: number) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
                             <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                             <SelectContent>
-                                {districts.map((d, i) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
+                                {districts.map((d: string, i: number) => <SelectItem key={`${d}-${i}`} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                         </Select>
                          <Select value={formData.upazila} onValueChange={handleSelectChange('upazila')} disabled={!formData.district}>
@@ -366,4 +366,3 @@ export default function AddressesPage() {
     </div>
   );
 }
-    
