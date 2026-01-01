@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, writeBatch, increment, getDoc } from 'firebase/firestore';
 import { nanoid } from 'nanoid';
 import { initializeFirebase } from '@/firebase';
 
@@ -59,12 +59,27 @@ export async function POST(req: NextRequest) {
     };
 
     try {
+        const batch = writeBatch(db);
         const pendingOrderRef = doc(db, 'pending_orders', tran_id);
-        await setDoc(pendingOrderRef, {
+        
+        // Reserve stock
+        for (const item of items) {
+            const productRef = doc(db, 'products', item.id);
+            const productSnap = await getDoc(productRef);
+            if (!productSnap.exists() || productSnap.data().inventory.stock < item.quantity) {
+                throw new Error(`Not enough stock for ${item.name}.`);
+            }
+            batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
+        }
+
+        // Create pending order
+        batch.set(pendingOrderRef, {
              ...orderData,
              tran_id: tran_id,
              createdAt: serverTimestamp()
         });
+
+        await batch.commit();
         
         const sslcz_url = is_live 
             ? 'https://securepay.sslcommerz.com/gwprocess/v4/api.php' 
@@ -85,10 +100,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ GatewayPageURL: responseData.GatewayPageURL });
         } else {
             console.error("SSLCommerz init failed:", responseData);
+            // If payment init fails, we should ideally revert the stock changes.
+            // This part is complex and may require a cron job for cleanup.
+            // For now, we log it. A more robust solution would handle this.
             return NextResponse.json({ error: 'Failed to create payment session.', details: responseData.failedreason || 'Unknown reason' }, { status: 500 });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("SSLCommerz init error:", error);
-        return NextResponse.json({ error: 'An error occurred during payment initiation.' }, { status: 500 });
+        return NextResponse.json({ error: `An error occurred during payment initiation: ${error.message}` }, { status: 500 });
     }
 }

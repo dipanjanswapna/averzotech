@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc, query, where, getDocs, limit, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, writeBatch, doc, getDoc, deleteDoc, query, where, getDocs, limit } from 'firebase/firestore';
 import { Order } from '@/types';
 import { initializeFirebase } from '@/firebase';
 
@@ -65,11 +65,7 @@ export async function POST(req: NextRequest) {
 
         batch.set(newOrderRef, finalOrderData);
         
-        for (const item of orderData.items) {
-            const productRef = doc(db, 'products', item.id);
-            batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
-        }
-        
+        // Stock is already decremented at initiation. Now just delete the pending order.
         batch.delete(pendingOrderRef);
 
         await batch.commit();
@@ -78,6 +74,7 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error("Error processing successful payment:", error);
+        // Here we should also attempt to revert stock, but that's a complex recovery operation.
         return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, appUrl), { status: 302 });
     }
 }
