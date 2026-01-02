@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -194,7 +195,7 @@ export default function PurchaseOrderDetailsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
-                        <Label htmlFor="delivery-date">Estimated Delivery Date</Label>
+                        <Label htmlFor="delivery-date">Estimated Delivery Date *</Label>
                         <Input type="date" id="delivery-date" value={estimatedDelivery} onChange={e => setEstimatedDelivery(e.target.value)} />
                     </div>
                      <div>

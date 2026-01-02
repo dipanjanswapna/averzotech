@@ -61,6 +61,17 @@
                                 "pricePerUnit": { "type": "number" }
                             }
                         }
+                    },
+                    "batches": {
+                      "type": "array",
+                      "items": {
+                          "type": "object",
+                          "properties": {
+                              "batchNumber": { "type": "string" },
+                              "expiryDate": { "type": "string", "format": "date" },
+                              "stock": { "type": "number" }
+                          }
+                      }
                     }
                 }
             }

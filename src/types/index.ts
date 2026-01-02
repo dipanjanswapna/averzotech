@@ -272,6 +272,13 @@ export interface Tier {
   pricePerUnit: number;
 }
 
+// Represents a product batch
+export interface Batch {
+  batchNumber: string;
+  expiryDate: string;
+  stock: number;
+}
+
 // Represents a single variant of a product
 export interface Variant {
   sku: string;
@@ -280,4 +287,5 @@ export interface Variant {
   color: string;
   size: string;
   tiers?: Tier[];
+  batches?: Batch[];
 }

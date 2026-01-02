@@ -53,10 +53,21 @@ interface ImageObject {
     url: string;
 }
 
+interface Vendor {
+    uid: string;
+    fullName: string;
+}
+
 interface Tier {
     minQuantity: number;
     pricePerUnit: number;
 }
+interface Batch {
+    batchNumber: string;
+    expiryDate: string;
+    stock: number;
+}
+
 interface Variant {
     sku: string;
     wholesalePrice: number;
@@ -64,7 +75,9 @@ interface Variant {
     color: string;
     size: string;
     tiers?: Tier[];
+    batches?: Batch[];
 }
+
 
 export default function NewProductPage() {
     const { app, db, user } = useFirebase();
@@ -137,7 +150,8 @@ export default function NewProductPage() {
                             sku: '',
                             wholesalePrice: 0,
                             stock: 0,
-                            tiers: []
+                            tiers: [],
+                            batches: [],
                         });
                     });
                 });
@@ -286,7 +300,7 @@ export default function NewProductPage() {
         }
     };
     
-    const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
+    const handleVariantChange = (index: number, field: keyof Variant, value: any) => {
         const newVariants = [...variants];
         (newVariants[index] as any)[field] = value;
         setVariants(newVariants);
@@ -313,6 +327,30 @@ export default function NewProductPage() {
             setVariants(newVariants);
         }
     };
+    
+    const handleAddBatch = (variantIndex: number) => {
+        const newVariants = [...variants];
+        const batches = newVariants[variantIndex].batches || [];
+        newVariants[variantIndex].batches = [...batches, { batchNumber: '', expiryDate: '', stock: 0 }];
+        setVariants(newVariants);
+    };
+
+    const handleRemoveBatch = (variantIndex: number, batchIndex: number) => {
+        const newVariants = [...variants];
+        newVariants[variantIndex]?.batches?.splice(batchIndex, 1);
+        handleVariantChange(variantIndex, 'stock', newVariants[variantIndex].batches!.reduce((acc, b) => acc + (b.stock || 0), 0));
+        setVariants(newVariants);
+    };
+
+    const handleBatchChange = (variantIndex: number, batchIndex: number, field: keyof Batch, value: string | number) => {
+        const newVariants = [...variants];
+        const batches = newVariants[variantIndex].batches;
+        if (batches) {
+            (batches[batchIndex] as any)[field] = value;
+            handleVariantChange(variantIndex, 'stock', batches.reduce((acc, b) => acc + (Number(b.stock) || 0), 0));
+        }
+        setVariants(newVariants);
+    };
 
     const generateAllSKUs = () => {
         const skuBase = productName.substring(0, 5).toUpperCase().replace(/\s/g, '');
@@ -330,10 +368,10 @@ export default function NewProductPage() {
     const handleSaveProduct = async () => {
         if (!db || !storage || !user) return;
 
-        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
+        if (variants.some(v => !v.sku || v.wholesalePrice <= 0)) {
             toast({
                 title: "Incomplete Variant Information",
-                description: "Please fill out SKU, Wholesale Price (>0), and Stock (>=0) for all variants.",
+                description: "Please fill out SKU and Wholesale Price (>0) for all variants.",
                 variant: 'destructive'
             });
             return;
@@ -351,10 +389,12 @@ export default function NewProductPage() {
                     return imageObj.url;
                 })
             );
-
-            // Determine the base price for the product from the variants
-            const basePrice = Math.min(...variants.map(v => v.wholesalePrice).filter(p => p > 0));
-
+            
+            const updatedVariants = variants.map(v => ({
+                ...v,
+                stock: (v.batches || []).reduce((acc, b) => acc + (Number(b.stock) || 0), 0)
+            }));
+            
             const productData = {
                 name: productName,
                 description,
@@ -362,7 +402,7 @@ export default function NewProductPage() {
                 vendor: user.fullName,
                 images: imageUrls,
                 videoUrl,
-                variants, // Save the full variant details
+                variants: updatedVariants,
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
@@ -383,10 +423,10 @@ export default function NewProductPage() {
                     discount: 0,
                     tax: parseFloat(tax) || 0,
                 },
-                inventory: { // Redundant but good for quick lookups
+                inventory: { 
                     availability: availability,
-                    stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
-                    initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    initialStock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null
                 },
@@ -584,23 +624,20 @@ export default function NewProductPage() {
                                 {variants.map((variant, index) => {
                                     const netPrice = variant.wholesalePrice + (variant.wholesalePrice * (parseFloat(tax) / 100 || 0));
                                     return (
-                                        <Accordion type="single" collapsible key={`${variant.color}-${variant.size}`}>
+                                        <Accordion type="single" collapsible key={`${variant.color}-${variant.size}`} defaultValue="item-1">
                                             <AccordionItem value="item-1">
                                                 <AccordionTrigger>
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-5 h-5 rounded-full border" style={{backgroundColor: colors.find(c=>c.name === variant.color)?.hex || '#ffffff'}}></div>
                                                         <span>{variant.color} / {variant.size}</span>
+                                                         <Badge variant={variant.stock > 0 ? 'default' : 'destructive'} className={variant.stock > 0 ? 'bg-green-100 text-green-800' : ''}>Stock: {variant.stock}</Badge>
                                                     </div>
                                                 </AccordionTrigger>
                                                 <AccordionContent className="p-4 bg-secondary/50 rounded-b-md">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div className="space-y-2">
                                                             <Label>SKU</Label>
                                                             <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <Label>Stock</Label>
-                                                            <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} />
                                                         </div>
                                                         <div className="space-y-2 md:col-span-2">
                                                             <Label>Wholesale Price (৳)</Label>
@@ -611,6 +648,24 @@ export default function NewProductPage() {
                                                                 <span className="text-sm text-muted-foreground">=</span>
                                                                 <Input value={`৳ ${netPrice.toFixed(2)}`} readOnly className="font-bold border-primary" />
                                                             </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-4 border-t pt-4">
+                                                        <Label className="font-medium">Batch & Expiry Tracking</Label>
+                                                        <div className="space-y-2 mt-2">
+                                                             {variant.batches?.map((batch, batchIndex) => (
+                                                                <div key={batchIndex} className="flex items-center gap-2">
+                                                                    <Input type="text" placeholder="Batch No." value={batch.batchNumber} onChange={(e) => handleBatchChange(index, batchIndex, 'batchNumber', e.target.value)} />
+                                                                    <Input type="date" placeholder="Expiry" value={batch.expiryDate} onChange={(e) => handleBatchChange(index, batchIndex, 'expiryDate', e.target.value)} />
+                                                                    <Input type="number" placeholder="Stock" value={batch.stock} onChange={(e) => handleBatchChange(index, batchIndex, 'stock', Number(e.target.value))} />
+                                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveBatch(index, batchIndex)}>
+                                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                                    </Button>
+                                                                </div>
+                                                            ))}
+                                                            <Button variant="outline" size="sm" onClick={() => handleAddBatch(index)}>
+                                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Batch
+                                                            </Button>
                                                         </div>
                                                     </div>
                                                     <div className="mt-4 border-t pt-4">
@@ -638,6 +693,7 @@ export default function NewProductPage() {
                             </div>
                         </div>
                     )}
+
                 </CardContent>
           </Card>
 
@@ -801,7 +857,18 @@ export default function NewProductPage() {
                   </div>
                 </CardContent>
             </Card>
-            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Pricing</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="product-tax">Taxes (%)</Label>
+                        <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
