@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "Product": {
@@ -8,14 +9,75 @@
       "properties": {
         "name": { "type": "string" },
         "description": { "type": "string" },
-        "price": { "type": "number" },
+        "pricing": {
+          "type": "object",
+          "properties": {
+            "price": { "type": "number" },
+            "comparePrice": { "type": "number" },
+            "wholesalePrice": { "type": "number" },
+            "discount": { "type": "number" },
+            "tax": { "type": "number" }
+          }
+        },
         "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
-        "category": { "type": "string" },
+        "organization": {
+            "type": "object",
+            "properties": {
+                "category": { "type": "string" },
+                "group": { "type": "string" },
+                "subcategory": { "type": "string" },
+                "tags": { "type": "array", "items": { "type": "string" } },
+                "status": { "type": "string" }
+            }
+        },
+        "inventory": {
+            "type": "object",
+            "properties": {
+                 "stock": { "type": "number" },
+                 "initialStock": { "type": "number" },
+                 "sku": { "type": "string" },
+                 "availability": { "type": "string", "enum": ["in-stock", "out-of-stock", "pre-order"] },
+                 "moq": { "type": "number" },
+                 "maxPurchaseLimit": { "type": "number" }
+            }
+        },
         "brand": { "type": "string" },
-        "stock": { "type": "number" },
-        "sku": { "type": "string" }
+        "variants": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "sku": { "type": "string" },
+                    "wholesalePrice": { "type": "number" },
+                    "stock": { "type": "number" },
+                    "color": { "type": "string" },
+                    "size": { "type": "string" },
+                    "tiers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "minQuantity": { "type": "number" },
+                                "pricePerUnit": { "type": "number" }
+                            }
+                        }
+                    },
+                    "batches": {
+                      "type": "array",
+                      "items": {
+                          "type": "object",
+                          "properties": {
+                              "batchNumber": { "type": "string" },
+                              "expiryDate": { "type": "string", "format": "date" },
+                              "stock": { "type": "number" }
+                          }
+                      }
+                    }
+                }
+            }
+        }
       },
-      "required": ["name", "price", "images", "category", "stock"]
+      "required": ["name", "pricing", "images", "organization", "inventory"]
     },
     "Order": {
       "title": "Order",
@@ -39,7 +101,8 @@
         "productId": { "type": "string" },
         "name": { "type": "string" },
         "quantity": { "type": "number" },
-        "price": { "type": "number" }
+        "price": { "type": "number" },
+        "sku": { "type": "string" }
       },
       "required": ["productId", "name", "quantity", "price"]
     },
@@ -113,6 +176,36 @@
       },
       "required": ["vendorId", "vendorName", "items", "total", "status"]
     },
+     "PurchaseOrderItem": {
+      "title": "Purchase Order Item",
+      "description": "Represents an item within a purchase order.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" },
+        "total": { "type": "number" }
+      },
+      "required": ["productId", "productName", "quantity", "price", "total"]
+    },
+     "PurchaseOrder": {
+      "title": "Purchase Order",
+      "description": "Represents a purchase order from Averzo to a vendor.",
+      "type": "object",
+      "properties": {
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/entities/PurchaseOrderItem" } },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Shipped", "Received", "Cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "confirmedAt": { "type": "string", "format": "date-time" },
+        "estimatedDelivery": { "type": "string", "format": "date" },
+        "notes": { "type": "string" }
+      },
+      "required": ["vendorId", "vendorName", "items", "total", "status"]
+    },
     "VendorApplication": {
       "title": "Vendor Application",
       "description": "Represents a vendor's application to join the platform.",
@@ -148,9 +241,14 @@
       "schema": { "$ref": "#/entities/VendorInvoice" },
       "description": "Stores invoices from vendors for stock supply."
     },
+     "/purchaseOrders/{purchaseOrderId}": {
+      "schema": { "$ref": "#/entities/PurchaseOrder" },
+      "description": "Stores purchase orders sent to vendors."
+    },
     "/vendorApplications/{applicationId}": {
       "schema": { "$ref": "#/entities/VendorApplication" },
       "description": "Stores applications from potential vendors."
     }
   }
 }
+

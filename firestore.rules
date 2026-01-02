@@ -1,4 +1,5 @@
 
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -91,6 +92,14 @@ service cloud.firestore {
       }
     }
 
+    // PURCHASE_ORDERS collection
+    match /purchaseOrders/{purchaseOrderId} {
+      // Admins can manage all POs
+      allow create, read, update, delete: if isAdmin();
+      // Vendors can read and update their own POs
+      allow read, update: if isVendor() && resource.data.vendorId == request.auth.uid;
+    }
+
     // RETURNS collection
     match /returns/{returnId} {
       // Admins can manage all return requests
@@ -154,6 +163,14 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       // Admins can read and update applications
       allow read, update: if isAdmin();
+    }
+
+     // VENDORS collection
+    match /vendors/{vendorId} {
+      // Admins can manage vendor profiles
+      allow read, write: if isAdmin();
+      // Vendors can read their own profile
+      allow get: if isVendor() && isOwner(get(/databases/$(database)/documents/vendors/$(vendorId)).data.userId);
     }
   }
 }
