@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, onSnapshot } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { PurchaseOrder } from '@/types';
@@ -42,29 +42,29 @@ export default function VendorPurchaseOrdersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      if (!user?.uid || !db) return;
-      setLoading(true);
-      try {
-        const poCollection = collection(db, 'purchaseOrders');
-        const q = query(poCollection, where("vendorId", "==", user.uid), orderBy('createdAt', 'desc'));
-        const poSnapshot = await getDocs(q);
-        const poList = poSnapshot.docs.map(doc => ({
+    if (!user?.uid || !db) return;
+
+    setLoading(true);
+    const poQuery = query(
+      collection(db, 'purchaseOrders'),
+      where('vendorId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(poQuery, (snapshot) => {
+        const poList = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         } as PurchaseOrder));
         setOrders(poList);
-      } catch (error) {
+        setLoading(false);
+    }, (error) => {
         console.error("Error fetching purchase orders: ", error);
         toast({ title: "Error", description: "Could not fetch your purchase orders.", variant: "destructive" });
-      } finally {
         setLoading(false);
-      }
-    };
+    });
 
-    if (user) {
-      fetchOrders();
-    }
+    return () => unsubscribe();
   }, [user, db, toast]);
   
   const { pendingOrders, otherOrders } = useMemo(() => {
@@ -158,7 +158,7 @@ function OrderTable({ title, description, orders }: { title: string, description
                     <TableCell className="font-medium">{order.id.substring(0, 7)}...</TableCell>
                     <TableCell>{formatDate(order.createdAt)}</TableCell>
                     <TableCell>
-                        <Badge variant="outline" className={cn(getStatusBadgeClass(order.status))}>
+                        <Badge variant="outline" className={cn("capitalize", getStatusBadgeClass(order.status))}>
                            {order.status === 'Pending' && <span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
                            {order.status}
                         </Badge>
