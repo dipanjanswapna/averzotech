@@ -27,6 +27,8 @@ import { Logo } from '@/components/logo';
 import { useFirebase } from '@/firebase';
 import { PurchaseOrder } from '@/types';
 import { useReactToPrint } from 'react-to-print';
+import Link from 'next/link';
+import Image from 'next/image';
 
 export default function PackingListPage() {
   const params = useParams();
@@ -70,28 +72,31 @@ export default function PackingListPage() {
     <div className="bg-background min-h-screen">
         <div className="max-w-4xl mx-auto p-4 sm:p-8 flex flex-col gap-4">
             <div className="flex justify-end gap-2 print:hidden">
+                 <Button variant="outline" asChild>
+                    <Link href={`/vendor/purchase-orders/${purchaseOrderId}`}>Back to PO</Link>
+                </Button>
                 <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print</Button>
             </div>
-            <div ref={printComponentRef} className="p-8 border rounded-lg">
+            <div ref={printComponentRef} className="p-8 border rounded-lg bg-white text-black">
                 <CardHeader className="p-0">
                     <div className="flex justify-between items-start">
                         <div>
                             <Logo />
-                            <p className="text-sm text-muted-foreground mt-2 font-semibold">{order.vendorName}</p>
+                            <p className="text-sm text-gray-500 mt-2 font-semibold">{order.vendorName}</p>
                         </div>
                         <div className="text-right">
                             <h1 className="text-3xl font-bold text-primary">PACKING LIST</h1>
-                            <p className="text-muted-foreground">PO# {order.id.substring(0, 7)}</p>
+                            <p className="text-gray-500">PO# {order.id.substring(0, 7)}</p>
                         </div>
                     </div>
                     <div className="flex justify-between items-end mt-8">
                         <div>
-                            <h2 className="font-semibold text-muted-foreground text-sm">SHIP TO</h2>
+                            <h2 className="font-semibold text-gray-500 text-sm">SHIP TO</h2>
                             <p className="font-bold">Averzo Central Warehouse</p>
                             <p className="text-sm">123 Logistics Way, Gazipur, Dhaka</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-muted-foreground text-sm">Order Date: <span className="font-medium text-foreground">{orderDate}</span></p>
+                            <p className="text-gray-500 text-sm">Order Date: <span className="font-medium text-black">{orderDate}</span></p>
                         </div>
                     </div>
                 </CardHeader>
@@ -100,8 +105,9 @@ export default function PackingListPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-[10%]">No.</TableHead>
-                                <TableHead className="w-[60%]">Product Description</TableHead>
+                                <TableHead className="w-[50%]">Product Description</TableHead>
                                 <TableHead className="text-center">Quantity</TableHead>
+                                <TableHead className="w-[20%] text-center">Barcode</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -113,6 +119,17 @@ export default function PackingListPage() {
                                         <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
                                     </TableCell>
                                     <TableCell className="text-center font-bold text-lg">{item.quantity}</TableCell>
+                                    <TableCell className="text-center">
+                                         {item.sku && (
+                                            <Image
+                                                src={`https://bwipjs-api.metafloor.com/?bcid=code128&text=${item.sku}&scale=2&includetext`}
+                                                alt={`Barcode for ${item.sku}`}
+                                                width={150}
+                                                height={50}
+                                                style={{height: 'auto', width: 'auto'}}
+                                            />
+                                        )}
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
