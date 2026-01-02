@@ -151,7 +151,7 @@ export default function VendorInvoicesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                           <Link href={`/admin/vendor-invoices/${invoice.id}`}>View Details</Link>
+                           <Link href={`/vendor/invoices/${invoice.id}`}>View Details</Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
