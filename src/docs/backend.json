@@ -183,6 +183,7 @@
       "properties": {
         "productId": { "type": "string" },
         "productName": { "type": "string" },
+        "sku": { "type": "string" },
         "quantity": { "type": "number" },
         "price": { "type": "number" },
         "total": { "type": "number" }
@@ -199,7 +200,10 @@
         "items": { "type": "array", "items": { "$ref": "#/entities/PurchaseOrderItem" } },
         "total": { "type": "number" },
         "status": { "type": "string", "enum": ["Pending", "Confirmed", "Shipped", "Received", "Cancelled"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "confirmedAt": { "type": "string", "format": "date-time" },
+        "estimatedDelivery": { "type": "string", "format": "date" },
+        "notes": { "type": "string" }
       },
       "required": ["vendorId", "vendorName", "items", "total", "status"]
     },
@@ -248,4 +252,3 @@
     }
   }
 }
-
