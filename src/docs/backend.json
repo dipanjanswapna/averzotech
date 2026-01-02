@@ -118,6 +118,34 @@
         },
         "required": ["fullName", "email", "role", "status"]
     },
+     "Vendor": {
+        "title": "Vendor",
+        "description": "Represents a vendor on the platform.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string" },
+            "shopName": { "type": "string" },
+            "category": { "type": "string" },
+            "status": { "type": "string", "enum": ["Active", "Suspended"] },
+            "performance": {
+                "type": "object",
+                "properties": {
+                    "trustScore": { "type": "number" },
+                    "deliveryScore": { "type": "number" },
+                    "qualityScore": { "type": "number" },
+                    "returnRate": { "type": "number" }
+                }
+            },
+            "sla": {
+                "type": "object",
+                "properties": {
+                    "deliveryCommitment": { "type": "number" }
+                }
+            },
+            "minimumOrderValue": { "type": "number" }
+        },
+        "required": ["userId", "shopName", "status"]
+    },
     "ReturnItem": {
       "title": "Return Item",
       "description": "Represents an item within a return request.",
@@ -272,6 +300,10 @@
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "Stores user profile information."
+    },
+     "/vendors/{vendorId}": {
+      "schema": { "$ref": "#/entities/Vendor" },
+      "description": "Stores public-facing vendor profile information and performance metrics."
     },
     "/orders/{orderId}": {
       "schema": { "$ref": "#/entities/Order" },

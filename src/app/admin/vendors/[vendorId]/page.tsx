@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, FileText, Banknote, Store, ShieldCheck, User as UserIcon, Calendar, TrendingUp, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, FileText, Banknote, Store, ShieldCheck, User as UserIcon, Calendar, TrendingUp, AlertTriangle, Package, Percent, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -25,6 +26,7 @@ import { useFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 
 export default function VendorDetailsPage() {
   const params = useParams();
@@ -110,6 +112,8 @@ export default function VendorDetailsPage() {
       return 'text-red-500';
   }
 
+  const performance = vendor.performance || { trustScore: 78, deliveryScore: 95, qualityScore: 98, returnRate: 2 };
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="flex items-center gap-4">
@@ -146,11 +150,11 @@ export default function VendorDetailsPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5"/> Performance</CardTitle>
+                    <CardTitle className="flex items-center gap-2"><TrendingUp className="w-5 h-5"/> Performance Overview</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                         <p className={cn("text-4xl font-bold", getScoreColor(vendor.trustScore))}>{vendor.trustScore}</p>
+                         <p className={cn("text-4xl font-bold", getScoreColor(performance.trustScore))}>{performance.trustScore}</p>
                          <p className="text-xs text-muted-foreground">Trust Score</p>
                     </div>
                      <div>
@@ -160,6 +164,32 @@ export default function VendorDetailsPage() {
                 </CardContent>
             </Card>
         </div>
+
+        <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Performance Scorecard</CardTitle></CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <Label>Delivery Score</Label>
+                        <Progress value={performance.deliveryScore} />
+                        <p className="text-sm font-bold text-center">{performance.deliveryScore}%</p>
+                        <p className="text-xs text-muted-foreground text-center">On-time delivery commitment met</p>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Quality Score</Label>
+                        <Progress value={performance.qualityScore} />
+                        <p className="text-sm font-bold text-center">{performance.qualityScore}%</p>
+                        <p className="text-xs text-muted-foreground text-center">Products passed QC check</p>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Return Rate</Label>
+                        <Progress value={100 - performance.returnRate} />
+                        <p className="text-sm font-bold text-center">{performance.returnRate}%</p>
+                        <p className="text-xs text-muted-foreground text-center">Products returned by customers</p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
 
         <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Banknote className="w-5 h-5" /> Payment & Business Info</CardTitle></CardHeader>

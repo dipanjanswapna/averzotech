@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Truck, Package } from 'lucide-react';
+import { ChevronLeft, Truck, Package, Check, X } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -20,12 +20,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PurchaseOrder } from '@/types';
+import { PurchaseOrder, PurchaseOrderItem } from '@/types';
 import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format, parseISO } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+interface ItemQc extends PurchaseOrderItem {
+    accepted: number;
+    rejected: number;
+}
 
 export default function AdminPurchaseOrderDetailsPage() {
   const params = useParams();
@@ -35,6 +42,7 @@ export default function AdminPurchaseOrderDetailsPage() {
   const { db } = useFirebase();
 
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
+  const [qcItems, setQcItems] = useState<ItemQc[]>([]);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [newStatus, setNewStatus] = useState('');
@@ -48,6 +56,8 @@ export default function AdminPurchaseOrderDetailsPage() {
                 const orderData = { id: docSnap.id, ...docSnap.data() } as PurchaseOrder;
                 setOrder(orderData);
                 setNewStatus(orderData.status);
+                const initialQcItems = orderData.items.map(item => ({ ...item, accepted: item.quantity, rejected: 0 }));
+                setQcItems(initialQcItems);
             } else {
                 toast({ title: "Error", description: "Purchase Order not found.", variant: "destructive" });
                 router.push('/admin/purchase-orders');
@@ -63,8 +73,31 @@ export default function AdminPurchaseOrderDetailsPage() {
     }
   }, [purchaseOrderId, toast, router, db]);
 
+  const handleQcChange = (sku: string, field: 'accepted' | 'rejected', value: number) => {
+      setQcItems(prevItems => prevItems.map(item => {
+          if (item.sku === sku) {
+              if (field === 'accepted') {
+                  const rejected = item.quantity - value;
+                  return { ...item, accepted: value, rejected: rejected < 0 ? 0 : rejected };
+              } else {
+                  const accepted = item.quantity - value;
+                   return { ...item, rejected: value, accepted: accepted < 0 ? 0 : accepted };
+              }
+          }
+          return item;
+      }));
+  }
+
   const handleUpdateStatus = async () => {
     if (!order || newStatus === order.status) return;
+
+    const totalAccepted = qcItems.reduce((acc, item) => acc + item.accepted, 0);
+
+    if (newStatus === 'Received & Closed' && totalAccepted === 0) {
+      toast({ title: "No Items Accepted", description: "Please accept at least one item before closing the order.", variant: "destructive" });
+      return;
+    }
+
     setIsUpdating(true);
     const batch = writeBatch(db);
     const orderRef = doc(db, 'purchaseOrders', order.id);
@@ -73,9 +106,11 @@ export default function AdminPurchaseOrderDetailsPage() {
         batch.update(orderRef, { status: newStatus });
         
         if (newStatus === 'Received & Closed' && order.status !== 'Received & Closed') {
-             for (const item of order.items) {
-                const productRef = doc(db, 'products', item.productId);
-                batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+             for (const item of qcItems) {
+                if (item.accepted > 0) {
+                    const productRef = doc(db, 'products', item.productId);
+                    batch.update(productRef, { "inventory.stock": increment(item.accepted) });
+                }
             }
         }
         
@@ -162,7 +197,7 @@ export default function AdminPurchaseOrderDetailsPage() {
                         <TableRow>
                             <TableHead>Product</TableHead>
                             <TableHead>SKU</TableHead>
-                            <TableHead className="text-center">Quantity</TableHead>
+                            <TableHead className="text-center">Quantity Ordered</TableHead>
                             <TableHead className="text-right">Unit Price</TableHead>
                             <TableHead className="text-right">Total</TableHead>
                         </TableRow>
@@ -190,37 +225,52 @@ export default function AdminPurchaseOrderDetailsPage() {
         
         <Card>
             <CardHeader>
-                <CardTitle>Update Order Status</CardTitle>
-                <CardDescription>Update the lifecycle of this purchase order.</CardDescription>
+                <CardTitle>Receive & QC</CardTitle>
+                <CardDescription>Update order status and stock upon receiving items.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex gap-4 items-center">
-                    <Select value={newStatus} onValueChange={setNewStatus}>
-                        <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="Confirmed">Confirmed</SelectItem>
-                            <SelectItem value="In-Transit">In-Transit</SelectItem>
-                            <SelectItem value="Received & Closed">Received & Closed</SelectItem>
-                            <SelectItem value="Cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                    </Select>
-                     <Button onClick={handleUpdateStatus} disabled={isUpdating || newStatus === order.status}>
-                        {isUpdating ? 'Saving...' : 'Save Status'}
-                    </Button>
-                </div>
-                {newStatus === 'Received & Closed' && order.status !== 'Received & Closed' && (
-                    <Alert variant="destructive" className="mt-4">
-                        <AlertTriangle className="h-4 w-4"/>
-                        <AlertTitle>Confirm Stock Update</AlertTitle>
-                        <AlertDescription>
-                            This action will add the ordered quantities to your product stock. This is irreversible. Please ensure you have physically verified all items before proceeding.
-                        </AlertDescription>
-                    </Alert>
-                )}
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Product</TableHead>
+                            <TableHead className="text-center">Ordered</TableHead>
+                            <TableHead className="w-28 text-center">Accepted</TableHead>
+                            <TableHead className="w-28 text-center">Rejected</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {qcItems.map(item => (
+                            <TableRow key={item.sku}>
+                                <TableCell>{item.productName}</TableCell>
+                                <TableCell className="text-center">{item.quantity}</TableCell>
+                                <TableCell>
+                                    <Input type="number" value={item.accepted} onChange={e => handleQcChange(item.sku, 'accepted', Number(e.target.value))} max={item.quantity} min={0} />
+                                </TableCell>
+                                <TableCell>
+                                    <Input type="number" value={item.rejected} readOnly className="bg-secondary" />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </CardContent>
+            <CardFooter className="flex justify-end gap-4">
+                 <Select value={newStatus} onValueChange={setNewStatus}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Confirmed">Confirmed</SelectItem>
+                        <SelectItem value="In-Transit">In-Transit</SelectItem>
+                        <SelectItem value="Received & Closed">Received & Closed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                </Select>
+                    <Button onClick={handleUpdateStatus} disabled={isUpdating || newStatus === order.status}>
+                    {isUpdating ? 'Saving...' : 'Save & Update Stock'}
+                </Button>
+            </CardFooter>
         </Card>
     </div>
   );

@@ -237,7 +237,12 @@ export interface Vendor {
         tinUrl: string;
     };
     payment: any;
-    trustScore: number;
+    performance: {
+      trustScore: number;
+      deliveryScore: number;
+      qualityScore: number;
+      returnRate: number;
+    };
     sla: {
         deliveryCommitment: number; // in hours
     };
