@@ -236,7 +236,7 @@ export default function PurchaseOrderDetailsPage() {
                     <CardTitle>Next Steps</CardTitle>
                     <CardDescription>Your order is confirmed. Please prepare the items for delivery.</CardDescription>
                 </CardHeader>
-                 <CardContent className="space-y-4">
+                 <CardContent className="space-y-6">
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <h4 className="font-semibold text-blue-800">Your Confirmed Details</h4>
                         <p className="text-sm text-blue-700">Estimated Warehouse Delivery: <span className="font-bold">{order.estimatedDelivery ? format(new Date(order.estimatedDelivery), 'dd MMM, yyyy') : 'Not set'}</span></p>
@@ -245,11 +245,6 @@ export default function PurchaseOrderDetailsPage() {
                      <div>
                         <h4 className="font-semibold">1. Prepare Your Shipment</h4>
                         <p className="text-sm text-muted-foreground">Please pack all items securely according to our packaging guidelines.</p>
-                        <ul className="text-xs list-disc pl-5 mt-2 text-muted-foreground">
-                            <li>Ensure all items are in new condition.</li>
-                            <li>Use durable packaging to prevent damage.</li>
-                            <li>Attach the printed Packing List & Label to the outside of your package.</li>
-                        </ul>
                     </div>
                      <div>
                         <h4 className="font-semibold">2. Print Documents</h4>
@@ -267,9 +262,19 @@ export default function PurchaseOrderDetailsPage() {
                             </Button>
                         </div>
                     </div>
+                    <div>
+                        <h4 className="font-semibold">3. Packaging Guidelines</h4>
+                        <p className="text-sm text-muted-foreground">Ensure products are packed securely to prevent damage during transit.</p>
+                        <ul className="text-xs list-disc pl-5 mt-2 text-muted-foreground">
+                            <li>Use sturdy boxes that can withstand handling.</li>
+                            <li>Wrap fragile items individually with bubble wrap.</li>
+                            <li>Fill any empty space in the box to prevent items from moving.</li>
+                            <li>Seal the package securely with strong tape.</li>
+                        </ul>
+                    </div>
                      {order.inboundMethod === 'self-dropoff' && (
                           <div>
-                            <h4 className="font-semibold flex items-center gap-2"><MapPin className="h-4 w-4" />3. Drop-off at Warehouse</h4>
+                            <h4 className="font-semibold flex items-center gap-2"><MapPin className="h-4 w-4" />4. Drop-off at Warehouse</h4>
                             <p className="text-sm text-muted-foreground">Please deliver the shipment to the following address before your committed delivery date:</p>
                              <address className="text-sm not-italic mt-2 p-2 bg-secondary rounded-md">
                                 <strong>Averzo Central Warehouse</strong><br/>
@@ -279,7 +284,7 @@ export default function PurchaseOrderDetailsPage() {
                      )}
                       {order.inboundMethod === 'averzo-pickup' && (
                           <div>
-                            <h4 className="font-semibold flex items-center gap-2"><Package className="h-4 w-4" />3. Prepare for Pickup</h4>
+                            <h4 className="font-semibold flex items-center gap-2"><Package className="h-4 w-4" />4. Prepare for Pickup</h4>
                             <p className="text-sm text-muted-foreground">An Averzo rider will be assigned to collect the package from your registered address within your committed lead time. Please keep the package ready.</p>
                         </div>
                      )}
