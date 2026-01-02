@@ -615,7 +615,7 @@ export default function NewProductPage() {
                     </div>
 
                     {variants.length > 0 && (
-                        <div className="border-t pt-6">
+                         <div className="border-t pt-6">
                             <div className="flex justify-between items-center mb-4">
                                <Label className="font-semibold">Variant Details</Label>
                                <Button size="sm" variant="secondary" onClick={generateAllSKUs}><RefreshCw className="w-4 h-4 mr-2"/>Generate SKUs</Button>
@@ -628,7 +628,7 @@ export default function NewProductPage() {
                                             <AccordionItem value="item-1">
                                                 <AccordionTrigger>
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-5 h-5 rounded-full border" style={{backgroundColor: colors.find(c=>c.name === variant.color)?.hex || '#ffffff'}}></div>
+                                                         <div className="w-5 h-5 rounded-full border" style={{backgroundColor: colors.find(c=>c.name === variant.color)?.hex || '#ffffff'}}></div>
                                                         <span>{variant.color} / {variant.size}</span>
                                                          <Badge variant={variant.stock > 0 ? 'default' : 'destructive'} className={variant.stock > 0 ? 'bg-green-100 text-green-800' : ''}>Stock: {variant.stock}</Badge>
                                                     </div>
@@ -909,3 +909,4 @@ export default function NewProductPage() {
     </div>
   );
 }
+
