@@ -98,7 +98,7 @@ export default function VendorPurchaseOrdersPage() {
         <TabsList>
             <TabsTrigger value="pending">
                 New Orders ({pendingOrders.length})
-                {pendingOrders.length > 0 && <span className="ml-2 h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>}
+                {pendingOrders.length > 0 && <span className="relative flex h-3 w-3 ml-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>}
             </TabsTrigger>
             <TabsTrigger value="history">Order History ({otherOrders.length})</TabsTrigger>
         </TabsList>
@@ -121,7 +121,7 @@ function OrderTable({ title, description, orders }: { title: string, description
         case 'Shipped':
         case 'Confirmed': return 'bg-blue-100 text-blue-800';
         case 'Cancelled': return 'bg-red-100 text-red-800';
-        case 'Pending': return 'bg-yellow-100 text-yellow-800 animate-pulse';
+        case 'Pending': return 'bg-yellow-100 text-yellow-800';
         default: return '';
         }
     };
@@ -159,7 +159,7 @@ function OrderTable({ title, description, orders }: { title: string, description
                     <TableCell>{formatDate(order.createdAt)}</TableCell>
                     <TableCell>
                         <Badge variant="outline" className={cn(getStatusBadgeClass(order.status))}>
-                           {order.status === 'Pending' && <span className="mr-2 h-2 w-2 rounded-full bg-red-500 animate-ping absolute"></span>}
+                           {order.status === 'Pending' && <span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>}
                            {order.status}
                         </Badge>
                     </TableCell>
