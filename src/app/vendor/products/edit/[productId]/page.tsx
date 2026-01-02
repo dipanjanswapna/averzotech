@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, RefreshCw, Wand2 } from 'lucide-react';
+import { UploadCloud, ChevronLeft, PlusCircle, Trash2, Link as LinkIcon, Gift, Wand2, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -116,6 +116,7 @@ export default function EditVendorProductPage() {
     const [currentTag, setCurrentTag] = useState('');
 
     // Pricing & Inventory
+    const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     const [availability, setAvailability] = useState('in-stock');
@@ -172,6 +173,7 @@ export default function EditVendorProductPage() {
                     setSelectedGroup(data.organization?.group || '');
                     setSelectedSubcategory(data.organization?.subcategory || '');
                     setTags(data.organization?.tags || []);
+                    setTax(String(data.pricing?.tax || ''));
                     setAvailability(data.inventory?.availability || 'in-stock');
                     setMoq(String(data.inventory?.moq || ''));
                     setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
@@ -423,6 +425,8 @@ export default function EditVendorProductPage() {
                     return imageObj.url;
                 })
             );
+            
+            const basePrice = Math.min(...variants.map(v => v.wholesalePrice).filter(p => p > 0));
 
             const productData = {
                 name: productName,
@@ -445,6 +449,12 @@ export default function EditVendorProductPage() {
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
                     tags,
+                },
+                pricing: {
+                    price: 0,
+                    comparePrice: 0,
+                    discount: 0,
+                    tax: parseFloat(tax) || 0,
                 },
                 inventory: {
                     moq: parseInt(moq, 10) || 1,
@@ -849,6 +859,17 @@ export default function EditVendorProductPage() {
                           ))}
                       </div>
                   </div>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Pricing</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="product-tax">Taxes (%)</Label>
+                        <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
+                    </div>
                 </CardContent>
             </Card>
             

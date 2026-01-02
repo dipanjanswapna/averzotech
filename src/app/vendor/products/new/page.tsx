@@ -53,16 +53,10 @@ interface ImageObject {
     url: string;
 }
 
-interface Vendor {
-    uid: string;
-    fullName: string;
-}
-
 interface Tier {
     minQuantity: number;
     pricePerUnit: number;
 }
-
 interface Variant {
     sku: string;
     wholesalePrice: number;
@@ -112,12 +106,15 @@ export default function NewProductPage() {
     const [selectedSubcategory, setSelectedSubcategory] = useState('');
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
-    
-    // Shipping & Inventory
-    const [estimatedDelivery, setEstimatedDelivery] = useState('');
+
+    // Pricing & Inventory
+    const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     const [availability, setAvailability] = useState('in-stock');
+    
+    // Shipping
+    const [estimatedDelivery, setEstimatedDelivery] = useState('');
     
     // Dynamic Categories
     const [filterCategories, setFilterCategories] = React.useState(initialFilterCategories);
@@ -384,7 +381,7 @@ export default function NewProductPage() {
                     price: 0,
                     comparePrice: 0,
                     discount: 0,
-                    tax: 0,
+                    tax: parseFloat(tax) || 0,
                 },
                 inventory: { // Redundant but good for quick lookups
                     availability: availability,
@@ -578,61 +575,69 @@ export default function NewProductPage() {
                     </div>
 
                     {variants.length > 0 && (
-                         <div className="border-t pt-6">
+                        <div className="border-t pt-6">
                             <div className="flex justify-between items-center mb-4">
                                <Label className="font-semibold">Variant Details</Label>
                                <Button size="sm" variant="secondary" onClick={generateAllSKUs}><RefreshCw className="w-4 h-4 mr-2"/>Generate SKUs</Button>
                             </div>
                             <div className="space-y-6">
-                                {variants.map((variant, index) => (
-                                    <Accordion type="single" collapsible key={`${variant.color}-${variant.size}`}>
-                                        <AccordionItem value="item-1">
-                                            <AccordionTrigger>
-                                                <div className="flex items-center gap-4">
-                                                     <div className="w-5 h-5 rounded-full border" style={{backgroundColor: colors.find(c=>c.name === variant.color)?.hex || '#ffffff'}}></div>
-                                                    <span>{variant.color} / {variant.size}</span>
-                                                </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent className="p-4 bg-secondary/50 rounded-b-md">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div className="space-y-2">
-                                                        <Label>SKU</Label>
-                                                        <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} />
+                                {variants.map((variant, index) => {
+                                    const netPrice = variant.wholesalePrice + (variant.wholesalePrice * (parseFloat(tax) / 100 || 0));
+                                    return (
+                                        <Accordion type="single" collapsible key={`${variant.color}-${variant.size}`}>
+                                            <AccordionItem value="item-1">
+                                                <AccordionTrigger>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-5 h-5 rounded-full border" style={{backgroundColor: colors.find(c=>c.name === variant.color)?.hex || '#ffffff'}}></div>
+                                                        <span>{variant.color} / {variant.size}</span>
                                                     </div>
-                                                     <div className="space-y-2">
-                                                        <Label>Wholesale Price (৳)</Label>
-                                                        <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} />
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Stock</Label>
-                                                        <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} />
-                                                    </div>
-                                                </div>
-                                                <div className="mt-4 border-t pt-4">
-                                                    <Label className="font-medium">Tiered Wholesale Pricing</Label>
-                                                    <div className="space-y-2 mt-2">
-                                                        {variant.tiers?.map((tier, tierIndex) => (
-                                                            <div key={tierIndex} className="flex items-center gap-2">
-                                                                <Input type="number" placeholder="Min Quantity" value={tier.minQuantity} onChange={(e) => handleTierChange(index, tierIndex, 'minQuantity', e.target.value)} />
-                                                                <Input type="number" placeholder="Price per Unit" value={tier.pricePerUnit} onChange={(e) => handleTierChange(index, tierIndex, 'pricePerUnit', e.target.value)} />
-                                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(index, tierIndex)}>
-                                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                                </Button>
+                                                </AccordionTrigger>
+                                                <AccordionContent className="p-4 bg-secondary/50 rounded-b-md">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="space-y-2">
+                                                            <Label>SKU</Label>
+                                                            <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label>Stock</Label>
+                                                            <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} />
+                                                        </div>
+                                                        <div className="space-y-2 md:col-span-2">
+                                                            <Label>Wholesale Price (৳)</Label>
+                                                            <div className="flex items-center gap-2">
+                                                                <Input type="number" placeholder="e.g. 800" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} />
+                                                                <span className="text-sm text-muted-foreground">+</span>
+                                                                <Input type="number" placeholder="Tax %" value={tax} onChange={e => setTax(e.target.value)} className="w-24" />
+                                                                <span className="text-sm text-muted-foreground">=</span>
+                                                                <Input value={`৳ ${netPrice.toFixed(2)}`} readOnly className="font-bold border-primary" />
                                                             </div>
-                                                        ))}
-                                                        <Button variant="outline" size="sm" onClick={() => handleAddTier(index)}>
-                                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
-                                                        </Button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    </Accordion>
-                                ))}
+                                                    <div className="mt-4 border-t pt-4">
+                                                        <Label className="font-medium">Tiered Wholesale Pricing</Label>
+                                                        <div className="space-y-2 mt-2">
+                                                            {variant.tiers?.map((tier, tierIndex) => (
+                                                                <div key={tierIndex} className="flex items-center gap-2">
+                                                                    <Input type="number" placeholder="Min Quantity" value={tier.minQuantity} onChange={(e) => handleTierChange(index, tierIndex, 'minQuantity', e.target.value)} />
+                                                                    <Input type="number" placeholder="Price per Unit" value={tier.pricePerUnit} onChange={(e) => handleTierChange(index, tierIndex, 'pricePerUnit', e.target.value)} />
+                                                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(index, tierIndex)}>
+                                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                                    </Button>
+                                                                </div>
+                                                            ))}
+                                                            <Button variant="outline" size="sm" onClick={() => handleAddTier(index)}>
+                                                                <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </AccordionContent>
+                                            </AccordionItem>
+                                        </Accordion>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
-
                 </CardContent>
           </Card>
 
@@ -704,17 +709,6 @@ export default function NewProductPage() {
                   <CardTitle>Organization</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                   <div className="space-y-2">
-                        <Label htmlFor="product-availability">Availability</Label>
-                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
-                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="in-stock">In Stock</SelectItem>
-                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                                <SelectItem value="pre-order">Pre-order</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                    <div className="space-y-2">
                     <Label>Category</Label>
                     <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); setSelectedSubcategory(''); }} value={selectedCategory} disabled={isLoading}>
@@ -807,10 +801,21 @@ export default function NewProductPage() {
                   </div>
                 </CardContent>
             </Card>
-
+            
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="product-availability">Availability</Label>
+                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
+                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="in-stock">In Stock</SelectItem>
+                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                                <SelectItem value="pre-order">Pre-order</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
                         <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>

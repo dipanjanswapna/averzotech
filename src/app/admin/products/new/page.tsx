@@ -47,8 +47,6 @@ import { generateProductDescription } from '@/ai/flows/generate-product-descript
 import { useFirebase } from '@/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Tier, Variant } from '@/types';
-
 
 interface ImageObject {
     file?: File;
@@ -58,6 +56,20 @@ interface ImageObject {
 interface Vendor {
     uid: string;
     fullName: string;
+}
+
+interface Tier {
+    minQuantity: number;
+    pricePerUnit: number;
+}
+
+interface Variant {
+    sku: string;
+    wholesalePrice: number;
+    stock: number;
+    color: string;
+    size: string;
+    tiers?: Tier[];
 }
 
 
@@ -104,8 +116,8 @@ export default function NewProductPage() {
     const [tags, setTags] = useState<string[]>([]);
     const [currentTag, setCurrentTag] = useState('');
 
-    // Pricing (kept for backward compatibility, but variant pricing is main)
-    const [price, setPrice] = useState('');
+    // Pricing & Inventory
+    const [retailPrice, setRetailPrice] = useState('');
     const [comparePrice, setComparePrice] = useState('');
     const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
@@ -396,11 +408,12 @@ export default function NewProductPage() {
                     tags,
                 },
                 pricing: {
-                    price: parseFloat(price) || basePrice || 0, // Fallback to base price
+                    price: parseFloat(retailPrice) || basePrice || 0,
                     comparePrice: parseFloat(comparePrice) || 0,
                     tax: parseFloat(tax) || 0,
                 },
                 inventory: { // Redundant but good for quick lookups
+                    availability,
                     stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     moq: parseInt(moq, 10) || 1,
@@ -834,7 +847,7 @@ export default function NewProductPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="product-price">Retail Price (৳)</Label>
-                        <Input id="product-price" type="number" placeholder="1299" value={price} onChange={e => setPrice(e.target.value)} disabled={isLoading}/>
+                        <Input id="product-price" type="number" placeholder="1299" value={retailPrice} onChange={e => setRetailPrice(e.target.value)} disabled={isLoading}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="product-compare-price">Compare-at Price (MRP ৳)</Label>
