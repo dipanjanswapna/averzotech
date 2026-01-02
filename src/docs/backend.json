@@ -231,6 +231,34 @@
             "transactionId": { "type": "string" }
         },
         "required": ["vendorId", "vendorName", "amount", "status"]
+    },
+    "SupportTicket": {
+      "title": "Support Ticket",
+      "description": "Represents a support request from a vendor.",
+      "type": "object",
+      "properties": {
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "subject": { "type": "string" },
+        "department": { "type": "string", "enum": ["Accounts", "Logistics", "General"] },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "In Progress", "Closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["vendorId", "vendorName", "subject", "department", "message", "status"]
+    },
+    "TicketReply": {
+      "title": "Ticket Reply",
+      "description": "A reply to a support ticket.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "authorName", "message"]
     }
   },
   "auth": {
@@ -268,6 +296,14 @@
     "/withdrawalRequests/{requestId}": {
         "schema": { "$ref": "#/entities/WithdrawalRequest"},
         "description": "Stores vendor withdrawal requests."
+    },
+    "/supportTickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "Stores support tickets from vendors."
+    },
+    "/supportTickets/{ticketId}/replies/{replyId}": {
+      "schema": { "$ref": "#/entities/TicketReply" },
+      "description": "Stores replies to a specific support ticket."
     }
   }
 }

@@ -303,3 +303,23 @@ export interface WithdrawalRequest {
   processedAt?: any;
   transactionId?: string;
 }
+
+export interface SupportTicket {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  subject: string;
+  department: 'Accounts' | 'Logistics' | 'General';
+  message: string;
+  status: 'Open' | 'In Progress' | 'Closed';
+  createdAt: any;
+  updatedAt: any;
+}
+
+export interface TicketReply {
+    id: string;
+    authorId: string;
+    authorName: string;
+    message: string;
+    createdAt: any;
+}
