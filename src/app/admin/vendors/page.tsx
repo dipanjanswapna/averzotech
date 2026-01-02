@@ -122,8 +122,8 @@ export default function VendorsPage() {
                     </TableCell>
                     <TableCell>{vendor.category}</TableCell>
                     <TableCell>
-                        <span className={cn("font-bold", getScoreColor(vendor.performance.trustScore))}>
-                            {vendor.performance.trustScore}
+                        <span className={cn("font-bold", getScoreColor(vendor.performance?.trustScore || 0))}>
+                            {vendor.performance?.trustScore || 'N/A'}
                         </span>
                     </TableCell>
                     <TableCell>{vendor.sla?.deliveryCommitment} hours</TableCell>
