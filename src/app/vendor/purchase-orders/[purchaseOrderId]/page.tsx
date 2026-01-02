@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -23,7 +22,6 @@ import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PurchaseOrder } from '@/types';
 import { useFirebase } from '@/firebase';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -161,7 +159,8 @@ export default function PurchaseOrderDetailsPage() {
                <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Product Name</TableHead>
+                            <TableHead>Product</TableHead>
+                            <TableHead>SKU</TableHead>
                             <TableHead className="text-center">Quantity</TableHead>
                             <TableHead className="text-right">Unit Price</TableHead>
                             <TableHead className="text-right">Total</TableHead>
@@ -171,6 +170,7 @@ export default function PurchaseOrderDetailsPage() {
                         {order.items.map(item => (
                             <TableRow key={item.productId}>
                                 <TableCell className="font-medium">{item.productName}</TableCell>
+                                <TableCell className="text-muted-foreground">{item.sku}</TableCell>
                                 <TableCell className="text-center">{item.quantity}</TableCell>
                                 <TableCell className="text-right">৳{item.price.toFixed(2)}</TableCell>
                                 <TableCell className="text-right">৳{item.total.toFixed(2)}</TableCell>

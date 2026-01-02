@@ -248,6 +248,7 @@ export interface Vendor {
 export interface PurchaseOrderItem {
   productId: string;
   productName: string;
+  sku: string;
   quantity: number;
   price: number;
   total: number;
