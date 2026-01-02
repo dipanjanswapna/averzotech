@@ -14,8 +14,7 @@
           "properties": {
             "price": { "type": "number" },
             "comparePrice": { "type": "number" },
-            "wholesalePrice": { "type": "number" },
-            "discount": { "type": "number" }
+            "wholesalePrice": { "type": "number" }
           }
         },
         "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
@@ -198,7 +197,7 @@
         "vendorName": { "type": "string" },
         "items": { "type": "array", "items": { "$ref": "#/entities/PurchaseOrderItem" } },
         "total": { "type": "number" },
-        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Shipped", "Received", "Cancelled"] },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "In-Transit", "Received & Closed", "Cancelled"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "confirmedAt": { "type": "string", "format": "date-time" },
         "estimatedDelivery": { "type": "string", "format": "date" },

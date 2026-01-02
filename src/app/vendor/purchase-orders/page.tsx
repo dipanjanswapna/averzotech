@@ -40,6 +40,7 @@ export default function VendorPurchaseOrdersPage() {
   const [loading, setLoading] = useState(true);
   const { user, db } = useFirebase();
   const { toast } = useToast();
+  const [newPoCount, setNewPoCount] = useState(0);
 
   useEffect(() => {
     if (!user?.uid || !db) return;
@@ -57,6 +58,7 @@ export default function VendorPurchaseOrdersPage() {
           ...doc.data()
         } as PurchaseOrder));
         setOrders(poList);
+        setNewPoCount(poList.filter(o => o.status === 'Pending').length);
         setLoading(false);
     }, (error) => {
         console.error("Error fetching purchase orders: ", error);
@@ -117,12 +119,13 @@ function OrderTable({ title, description, orders }: { title: string, description
     
     const getStatusBadgeClass = (status: string) => {
         switch (status) {
-        case 'Received': return 'bg-green-100 text-green-800';
-        case 'Shipped':
-        case 'Confirmed': return 'bg-blue-100 text-blue-800';
-        case 'Cancelled': return 'bg-red-100 text-red-800';
-        case 'Pending': return 'bg-yellow-100 text-yellow-800';
-        default: return '';
+            case 'Received & Closed':
+                return 'bg-green-100 text-green-800';
+            case 'In-Transit':
+            case 'Confirmed': return 'bg-blue-100 text-blue-800';
+            case 'Cancelled': return 'bg-red-100 text-red-800';
+            case 'Pending': return 'bg-yellow-100 text-yellow-800';
+            default: return '';
         }
     };
 

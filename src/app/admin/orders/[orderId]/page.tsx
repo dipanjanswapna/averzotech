@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -44,7 +45,7 @@ import { useFirebase } from '@/firebase';
 interface Order {
     id: string;
     createdAt: any;
-    status: 'Pending' | 'Processing' | 'Shipped' | 'Fulfilled' | 'Cancelled' | 'In-house Delivery' | 'Returning to Warehouse';
+    status: 'Pending' | 'Processing' | 'In-Transit' | 'Shipped' | 'Fulfilled' | 'Cancelled' | 'In-house Delivery' | 'Returning to Warehouse' | 'Received & Closed';
     total: number;
     shippingAddress: {
         name: string;
@@ -303,7 +304,7 @@ export default function OrderDetailsPage() {
   
   const validStatuses = ['Pending', 'Processing', 'Shipped', 'Fulfilled'];
   let currentStatusIndex = validStatuses.indexOf(order.status);
-  if(order.status === 'Cancelled' || order.status === 'In-house Delivery' || order.status === 'Returning to Warehouse') {
+  if(order.status === 'Cancelled' || order.status === 'In-house Delivery' || order.status === 'Returning to Warehouse' || order.status === 'Received & Closed' || order.status === 'In-Transit') {
       currentStatusIndex = -1; // Or some other value to indicate it's off the normal path
   }
   const formatDate = (timestamp: any) => {
@@ -328,7 +329,7 @@ export default function OrderDetailsPage() {
         </div>
       </div>
         <div className="mx-auto w-full max-w-5xl">
-            {order.status !== 'Cancelled' && order.status !== 'In-house Delivery' && order.status !== 'Returning to Warehouse' ? (
+            {order.status !== 'Cancelled' && order.status !== 'In-house Delivery' && order.status !== 'Returning to Warehouse' && order.status !== 'Received & Closed' && order.status !== 'In-Transit' ? (
                 <Stepper initialStep={0} activeStep={currentStatusIndex + 1} steps={orderSteps.map(s => ({label: s.label}))} />
             ) : (
                  <div className="text-center p-4 bg-destructive/10 rounded-lg text-destructive font-semibold">Order Status: {order.status}</div>
@@ -508,8 +509,9 @@ export default function OrderDetailsPage() {
                         <SelectItem value="Pending">Pending</SelectItem>
                         <SelectItem value="Processing">Processing</SelectItem>
                         <SelectItem value="In-house Delivery">In-house Delivery</SelectItem>
-                        <SelectItem value="Shipped">Shipped (with RedX)</SelectItem>
+                        <SelectItem value="In-Transit">In-Transit (Shipped)</SelectItem>
                         <SelectItem value="Fulfilled">Fulfilled</SelectItem>
+                        <SelectItem value="Received & Closed">Received & Closed</SelectItem>
                         <SelectItem value="Returning to Warehouse">Returning to Warehouse</SelectItem>
                         <SelectItem value="Cancelled">Cancelled</SelectItem>
                       </SelectContent>

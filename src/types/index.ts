@@ -260,7 +260,7 @@ export interface PurchaseOrder {
   vendorName: string;
   items: PurchaseOrderItem[];
   total: number;
-  status: 'Pending' | 'Confirmed' | 'Shipped' | 'Received' | 'Cancelled';
+  status: 'Pending' | 'Confirmed' | 'In-Transit' | 'Received & Closed' | 'Cancelled';
   createdAt: any;
   confirmedAt?: any;
   estimatedDelivery?: string;
