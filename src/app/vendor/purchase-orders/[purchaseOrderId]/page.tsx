@@ -259,9 +259,11 @@ export default function PurchaseOrderDetailsPage() {
                                 <Printer className="mr-2 h-4 w-4" />
                                 Print Packing List & Label
                             </Button>
-                            <Button variant="outline" onClick={handleCreateInvoice}>
-                                <Printer className="mr-2 h-4 w-4" />
-                                Generate Invoice
+                            <Button variant="outline" asChild>
+                                <Link href={`/vendor/purchase-orders/${order.id}/invoice`} target="_blank">
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Generate & Print Invoice
+                                </Link>
                             </Button>
                         </div>
                     </div>
@@ -291,8 +293,10 @@ export default function PurchaseOrderDetailsPage() {
                     <Printer className="mr-2 h-4 w-4" />
                     Print Packing List & Label
                 </Button>
-                <Button onClick={handleCreateInvoice}>
-                    Generate Invoice
+                <Button asChild>
+                   <Link href={`/vendor/purchase-orders/${order.id}/invoice`} target="_blank">
+                     Generate Invoice
+                   </Link>
                 </Button>
             </div>
         )}

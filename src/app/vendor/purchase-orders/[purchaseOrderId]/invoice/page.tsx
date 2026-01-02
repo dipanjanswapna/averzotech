@@ -1,12 +1,10 @@
 
+
 'use client';
 
 import {
-  Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -86,7 +84,7 @@ export default function InvoicePage() {
                     <div className="flex justify-between items-start">
                         <div>
                             <Logo />
-                            <p className="text-sm text-gray-500 mt-2">Averzo Inc.<br/>123 Fashion Street, Dhaka<br/>BIN: 00123456789</p>
+                            <p className="text-sm text-gray-500 mt-2">Averzo Inc.<br/>123 Fashion Street, Dhaka<br/>BIN: 0012345678901</p>
                         </div>
                         <div className="text-right">
                             <h1 className="text-3xl font-bold text-primary">INVOICE</h1>
@@ -107,11 +105,12 @@ export default function InvoicePage() {
                 <CardContent className="p-0 mt-8">
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[10%]">No.</TableHead>
-                                <TableHead className="w-[45%]">Product Description</TableHead>
+                             <TableRow>
+                                <TableHead className="w-[8%]">No.</TableHead>
+                                <TableHead className="w-[30%]">Product Description</TableHead>
+                                <TableHead>HSN/SAC Code</TableHead>
                                 <TableHead className="text-center">Qty</TableHead>
-                                <TableHead className="text-right">Unit Price</TableHead>
+                                <TableHead className="text-right">Rate</TableHead>
                                 <TableHead className="text-right">Taxable Value</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -123,6 +122,7 @@ export default function InvoicePage() {
                                         <p className="font-medium">{item.productName}</p>
                                         <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
                                     </TableCell>
+                                    <TableCell>N/A</TableCell>
                                     <TableCell className="text-center">{item.quantity}</TableCell>
                                     <TableCell className="text-right">৳{item.price.toFixed(2)}</TableCell>
                                     <TableCell className="text-right">৳{item.total.toFixed(2)}</TableCell>
@@ -153,9 +153,9 @@ export default function InvoicePage() {
                         <p>Payment will be processed within 15-30 business days after goods are received and verified at Averzo warehouse.</p>
                       </div>
                 </CardContent>
-                 <CardFooter className="mt-12 text-center text-xs text-gray-400">
+                 <div className="mt-24 pt-4 border-t text-center text-xs text-gray-400">
                     <p>This is a system-generated invoice and does not require a signature.</p>
-                </CardFooter>
+                </div>
             </div>
        </div>
        <style jsx global>{`
