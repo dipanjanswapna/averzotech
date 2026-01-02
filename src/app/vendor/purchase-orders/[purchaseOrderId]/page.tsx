@@ -239,7 +239,7 @@ export default function PurchaseOrderDetailsPage() {
                  <CardContent className="space-y-4">
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <h4 className="font-semibold text-blue-800">Your Confirmed Details</h4>
-                        <p className="text-sm text-blue-700">Estimated Warehouse Delivery: <span className="font-bold">{format(new Date(order.estimatedDelivery!), 'dd MMM, yyyy')}</span></p>
+                        <p className="text-sm text-blue-700">Estimated Warehouse Delivery: <span className="font-bold">{order.estimatedDelivery ? format(new Date(order.estimatedDelivery), 'dd MMM, yyyy') : 'Not set'}</span></p>
                         <p className="text-sm text-blue-700">Inbound Method: <span className="font-bold capitalize">{order.inboundMethod?.replace('-', ' ')}</span></p>
                     </div>
                      <div>

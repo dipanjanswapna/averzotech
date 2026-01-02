@@ -24,6 +24,8 @@ import { PurchaseOrder } from '@/types';
 import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format, parseISO } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 export default function AdminPurchaseOrderDetailsPage() {
   const params = useParams();
@@ -133,7 +135,7 @@ export default function AdminPurchaseOrderDetailsPage() {
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                         <p className="font-semibold text-blue-900">Estimated Delivery to Warehouse</p>
-                        <p>{order.estimatedDelivery ? format(parseISO(order.estimatedDelivery), 'dd MMM, yyyy') : 'Not set'}</p>
+                        <p>{order.estimatedDelivery ? format(new Date(order.estimatedDelivery), 'dd MMM, yyyy') : 'Not set'}</p>
                     </div>
                     <div>
                         <p className="font-semibold text-blue-900">Inbound Method</p>
@@ -210,13 +212,13 @@ export default function AdminPurchaseOrderDetailsPage() {
                     </Button>
                 </div>
                 {newStatus === 'Received & Closed' && order.status !== 'Received & Closed' && (
-                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 flex items-start gap-3">
-                        <AlertTriangle className="h-5 w-5 mt-0.5"/>
-                        <div>
-                            <p className="font-bold">This action will add the ordered quantities to your product stock.</p>
-                            <p>This is irreversible. Please ensure you have physically verified all items before proceeding.</p>
-                        </div>
-                    </div>
+                    <Alert variant="destructive" className="mt-4">
+                        <AlertTriangle className="h-4 w-4"/>
+                        <AlertTitle>Confirm Stock Update</AlertTitle>
+                        <AlertDescription>
+                            This action will add the ordered quantities to your product stock. This is irreversible. Please ensure you have physically verified all items before proceeding.
+                        </AlertDescription>
+                    </Alert>
                 )}
             </CardContent>
         </Card>
