@@ -280,6 +280,17 @@ export default function PurchaseOrderDetailsPage() {
                                 <strong>Averzo Central Warehouse</strong><br/>
                                 123 Logistics Way, Gazipur, Dhaka
                             </address>
+                            <div className="mt-4 aspect-video w-full rounded-lg overflow-hidden border">
+                                <iframe 
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3643.511397579893!2d90.3204983154032!3d24.04838698444253!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755da5f1d454df7%3A0x1d6245c33838c644!2sGazipur!5e0!3m2!1sen!2sbd!4v1676458535123!5m2!1sen!2sbd" 
+                                    width="100%" 
+                                    height="100%" 
+                                    style={{border:0}} 
+                                    allowFullScreen
+                                    loading="lazy" 
+                                    referrerPolicy="no-referrer-when-downgrade">
+                                </iframe>
+                            </div>
                         </div>
                      )}
                       {order.inboundMethod === 'averzo-pickup' && (
