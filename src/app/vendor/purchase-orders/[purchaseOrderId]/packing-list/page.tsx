@@ -127,6 +127,7 @@ export default function PackingListPage() {
                                                 width={150}
                                                 height={50}
                                                 style={{height: 'auto', width: 'auto'}}
+                                                unoptimized
                                             />
                                         )}
                                     </TableCell>
