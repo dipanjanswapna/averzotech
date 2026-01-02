@@ -114,9 +114,9 @@ export function VendorSidebar({ user }: { user: any }) {
                     >
                         <item.icon />
                         <span className="flex-1">{item.label}</span>
-                        {item.badge && item.badge > 0 && (
-                            <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white">{item.badge}</Badge>
-                        )}
+                        {item.badge && item.badge > 0 ? (
+                            <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white animate-pulse">{item.badge}</Badge>
+                        ) : null}
                     </SidebarMenuButton>
                 </Link>
             </SidebarMenuItem>
@@ -167,7 +167,7 @@ export function VendorSidebar({ user }: { user: any }) {
             <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-secondary">
                     <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL} alt={user?.fullName} />
+                        <AvatarImage src={user?.photoURL || undefined} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 group-data-[state=expanded]:block hidden">
