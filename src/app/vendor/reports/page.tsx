@@ -53,13 +53,15 @@ const LoadingSkeleton = () => (
         <div className="flex justify-between items-center">
             <Skeleton className="h-10 w-64" />
         </div>
-        <Skeleton className="h-96 w-full" />
+        <div className="grid gap-8 md:grid-cols-2">
+             <Skeleton className="h-96 w-full" />
+             <Skeleton className="h-96 w-full" />
+        </div>
     </div>
 );
 
 export default function VendorReportsPage() {
     const { user, db } = useFirebase();
-    const [vendorProducts, setVendorProducts] = useState<string[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [date, setDate] = useState<DateRange | undefined>({
@@ -73,12 +75,10 @@ export default function VendorReportsPage() {
             
             setLoading(true);
             try {
-                // 1. Get all product IDs for the current vendor
                 const productsRef = collection(db, 'products');
                 const qProducts = query(productsRef, where("vendor", "==", user.fullName));
                 const productSnapshot = await getDocs(qProducts);
                 const vendorProductIds = productSnapshot.docs.map(doc => doc.id);
-                setVendorProducts(vendorProductIds);
 
                 if (vendorProductIds.length === 0) {
                     setOrders([]);
@@ -86,18 +86,15 @@ export default function VendorReportsPage() {
                     return;
                 }
 
-                // 2. Fetch all fulfilled orders
                 const ordersRef = collection(db, 'orders');
                 const qOrders = query(ordersRef, where('status', '==', 'Fulfilled'));
                 const orderSnapshot = await getDocs(qOrders);
                 
-                // 3. Filter orders to only include those with the vendor's products
                 const relevantOrders = orderSnapshot.docs.map(doc => {
                     const orderData = { id: doc.id, ...doc.data() } as Order;
-                    // Filter items within each order to only include vendor's products
                     orderData.items = orderData.items.filter(item => vendorProductIds.includes(item.id));
                     return orderData;
-                }).filter(order => order.items.length > 0); // Only keep orders that have at least one of the vendor's products
+                }).filter(order => order.items.length > 0);
 
                 setOrders(relevantOrders);
 

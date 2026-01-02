@@ -26,11 +26,11 @@ import {
   ArrowDown,
   ArrowUp,
 } from 'lucide-react';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useState, useEffect, useMemo } from 'react';
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +45,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+interface ProductPerformance {
+    name: string;
+    sold: number;
+}
+
 const salesData = [
   { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000 },
   { name: 'Feb', total: Math.floor(Math.random() * 5000) + 1000 },
@@ -54,19 +59,65 @@ const salesData = [
   { name: 'Jun', total: Math.floor(Math.random() * 5000) + 1000 },
 ];
 
-const topProducts = [
-    { name: 'Premium Cotton T-Shirt', sold: 320 },
-    { name: 'Classic Blue Jeans', sold: 210 },
-    { name: 'Leather Biker Jacket', sold: 150 },
-    { name: 'Formal Oxford Shirt', sold: 90 },
-    { name: 'Casual Summer Shorts', sold: 75 },
-]
 
 export default function VendorAccountsPage() {
   const { user, db } = useFirebase();
   const { toast } = useToast();
   const [isRequesting, setIsRequesting] = useState(false);
   const [withdrawalAmount, setWithdrawalAmount] = useState<number>(125500);
+  const [topProducts, setTopProducts] = useState<ProductPerformance[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.fullName || !db) return;
+
+    const fetchAnalyticsData = async () => {
+        setLoading(true);
+        try {
+            const productsRef = collection(db, 'products');
+            const qProducts = query(productsRef, where("vendor", "==", user.fullName));
+            const productSnapshot = await getDocs(qProducts);
+            const vendorProductIds = productSnapshot.docs.map(doc => doc.id);
+
+            if (vendorProductIds.length === 0) {
+                setLoading(false);
+                return;
+            }
+
+            const ordersRef = collection(db, 'orders');
+            const allOrdersSnapshot = await getDocs(ordersRef);
+
+            const productSales: { [key: string]: { name: string, sold: number } } = {};
+
+            allOrdersSnapshot.docs.forEach(doc => {
+                const orderItems = doc.data().items as { id: string, name: string, quantity: number }[];
+                orderItems.forEach(item => {
+                    if (vendorProductIds.includes(item.id)) {
+                        if (!productSales[item.id]) {
+                            productSales[item.id] = { name: item.name, sold: 0 };
+                        }
+                        productSales[item.id].sold += item.quantity;
+                    }
+                });
+            });
+
+            const sortedProducts = Object.values(productSales)
+                .sort((a, b) => b.sold - a.sold)
+                .slice(0, 5);
+            
+            setTopProducts(sortedProducts);
+
+        } catch (error) {
+            console.error("Error fetching analytics data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    fetchAnalyticsData();
+
+  }, [user, db]);
+
 
   const handleRequestWithdrawal = async () => {
     if (!user || !db) {
@@ -165,6 +216,29 @@ export default function VendorAccountsPage() {
                                 tickLine={false}
                                 axisLine={false}
                                 tickFormatter={(value) => `৳${value / 1000}k`}
+                                />
+                                <Tooltip
+                                    cursor={{fill: 'hsl(var(--secondary))'}}
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                        return (
+                                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="flex flex-col">
+                                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                                    Sales
+                                                </span>
+                                                <span className="font-bold text-muted-foreground">
+                                                    ৳{payload[0].value}
+                                                </span>
+                                                </div>
+                                            </div>
+                                            </div>
+                                        )
+                                        }
+
+                                        return null
+                                    }}
                                 />
                                 <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                             </BarChart>
