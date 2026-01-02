@@ -156,6 +156,8 @@ export default function EditProductPage() {
 
                 if (productSnap.exists()) {
                     const data = productSnap.data();
+                    const productVariants = Array.isArray(data.variants) ? data.variants : [];
+
                     setProductName(data.name || '');
                     setDescription(data.description || '');
                     setBrand(data.brand || '');
@@ -163,14 +165,14 @@ export default function EditProductPage() {
                     setImages((data.images || []).map((url: string) => ({ url })));
                     setVideoUrl(data.videoUrl || '');
                     
-                    const savedColors = data.variants?.map((v: Variant) => v.color) || [];
+                    const savedColors = productVariants.map((v: Variant) => v.color) || [];
                     const uniqueColors = [...new Set(savedColors)];
                     setColors(uniqueColors.map(c => ({ name: c, hex: '#000000' }))); // hex is placeholder
                     
-                    const savedSizes = data.variants?.map((v: Variant) => v.size) || [];
+                    const savedSizes = productVariants.map((v: Variant) => v.size) || [];
                     setSizes([...new Set(savedSizes)]);
 
-                    setVariants(data.variants || []);
+                    setVariants(productVariants);
                     
                     setSpecifications(data.specifications || [{ label: '', value: '' }]);
                     setOffers(data.offers || '');
