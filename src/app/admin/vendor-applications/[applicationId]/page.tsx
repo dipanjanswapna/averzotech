@@ -121,6 +121,7 @@ export default function VendorApplicationDetailsPage() {
                     category: application.shopInfo.category,
                     contact: application.contactInfo,
                     payment: application.paymentInfo,
+                    documents: application.documents,
                     trustScore: 78, // Example score
                     sla: { deliveryCommitment: 48 }, // Default SLA
                     status: 'Active',

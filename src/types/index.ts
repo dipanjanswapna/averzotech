@@ -243,6 +243,7 @@ export interface Vendor {
     };
     status: 'Active' | 'Suspended';
     minimumOrderValue?: number;
+    createdAt: any;
 }
 
 // Purchase Order
