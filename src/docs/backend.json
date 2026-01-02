@@ -90,7 +90,8 @@
         "productId": { "type": "string" },
         "name": { "type": "string" },
         "quantity": { "type": "number" },
-        "price": { "type": "number" }
+        "price": { "type": "number" },
+        "sku": { "type": "string" }
       },
       "required": ["productId", "name", "quantity", "price"]
     },

@@ -326,7 +326,7 @@ export default function EditVendorProductPage() {
 
     const availableSubcategories = useMemo(() => {
         if (!selectedGroup) return [];
-        const group: any = availableGroups.find((g: any) => g.group === selectedGroup);
+        const group:any = availableGroups.find((g:any) => g.group === selectedGroup);
         return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
     
