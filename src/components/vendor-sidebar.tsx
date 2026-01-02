@@ -30,12 +30,34 @@ import {
 } from '@/components/ui/sidebar';
 import { useFirebase } from '@/firebase';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { useEffect, useState } from 'react';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { Badge } from './ui/badge';
 
 export function VendorSidebar({ user }: { user: any }) {
   const pathname = usePathname();
-  const { auth } = useFirebase();
+  const { auth, db } = useFirebase();
   const { toast } = useToast();
   const router = useRouter();
+  const [newPoCount, setNewPoCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.uid || !db) return;
+
+    const poQuery = query(
+        collection(db, 'purchaseOrders'),
+        where('vendorId', '==', user.uid),
+        where('status', '==', 'Pending')
+    );
+
+    const unsubscribe = onSnapshot(poQuery, (snapshot) => {
+        setNewPoCount(snapshot.size);
+    }, (error) => {
+        console.error("Error fetching new PO count:", error);
+    });
+
+    return () => unsubscribe();
+  }, [user, db]);
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -59,7 +81,7 @@ export function VendorSidebar({ user }: { user: any }) {
   const navItems = [
     { href: '/vendor/dashboard', label: 'Dashboard', icon: Home },
     { href: '/vendor/orders', label: 'Customer Orders', icon: ShoppingCart },
-    { href: '/vendor/purchase-orders', label: 'Purchase Orders', icon: Receipt },
+    { href: '/vendor/purchase-orders', label: 'Purchase Orders', icon: Receipt, badge: newPoCount },
     { href: '/vendor/invoices', label: 'Invoices', icon: FileText },
     { href: '/vendor/reports', label: 'Reports', icon: BarChart3 },
   ];
@@ -91,7 +113,10 @@ export function VendorSidebar({ user }: { user: any }) {
                         tooltip={{ children: item.label }}
                     >
                         <item.icon />
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {item.badge && item.badge > 0 && (
+                            <Badge className="h-5 w-5 p-0 flex items-center justify-center bg-red-500 text-white">{item.badge}</Badge>
+                        )}
                     </SidebarMenuButton>
                 </Link>
             </SidebarMenuItem>
