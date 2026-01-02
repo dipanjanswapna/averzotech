@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -24,6 +25,9 @@ import { useFirebase } from '@/firebase';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { addDays, format } from 'date-fns';
+
 
 export default function PurchaseOrderDetailsPage() {
   const params = useParams();
@@ -35,7 +39,7 @@ export default function PurchaseOrderDetailsPage() {
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [estimatedDelivery, setEstimatedDelivery] = useState('');
+  const [leadTime, setLeadTime] = useState<string>('');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -47,7 +51,6 @@ export default function PurchaseOrderDetailsPage() {
             if (docSnap.exists()) {
                 const orderData = { id: docSnap.id, ...docSnap.data() } as PurchaseOrder;
                 setOrder(orderData);
-                setEstimatedDelivery(orderData.estimatedDelivery || '');
                 setNotes(orderData.notes || '');
             } else {
                 toast({ title: "Error", description: "Purchase Order not found.", variant: "destructive" });
@@ -60,12 +63,15 @@ export default function PurchaseOrderDetailsPage() {
   }, [purchaseOrderId, toast, router, db]);
 
   const handleConfirmOrder = async () => {
-      if (!order || !estimatedDelivery) {
-          toast({ title: "Information Missing", description: "Please provide an estimated delivery date.", variant: "destructive" });
+      if (!order || !leadTime) {
+          toast({ title: "Information Missing", description: "Please select a delivery commitment (lead time).", variant: "destructive" });
           return;
       };
       setIsUpdating(true);
       try {
+          const deliveryDate = addDays(new Date(), parseInt(leadTime));
+          const estimatedDelivery = format(deliveryDate, 'yyyy-MM-dd');
+
           const orderRef = doc(db, 'purchaseOrders', order.id);
           await updateDoc(orderRef, {
               status: 'Confirmed',
@@ -92,7 +98,8 @@ export default function PurchaseOrderDetailsPage() {
               productName: item.productName,
               quantity: item.quantity,
               price: item.price,
-              total: item.total
+              total: item.total,
+              sku: item.sku
           })),
           total: order.total
       }));
@@ -182,8 +189,17 @@ export default function PurchaseOrderDetailsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
-                        <Label htmlFor="delivery-date">Estimated Delivery Date *</Label>
-                        <Input type="date" id="delivery-date" value={estimatedDelivery} onChange={e => setEstimatedDelivery(e.target.value)} />
+                        <Label htmlFor="lead-time">Delivery Commitment (Lead Time) *</Label>
+                         <Select value={leadTime} onValueChange={setLeadTime}>
+                            <SelectTrigger id="lead-time">
+                                <SelectValue placeholder="Select how soon you can deliver" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="1">Within 1 Day</SelectItem>
+                                <SelectItem value="3">Within 3 Days</SelectItem>
+                                <SelectItem value="7">Within 7 Days</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div>
                         <Label htmlFor="notes">Notes (Optional)</Label>
@@ -191,7 +207,7 @@ export default function PurchaseOrderDetailsPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                     <Button onClick={handleConfirmOrder} disabled={isUpdating || !estimatedDelivery}>
+                     <Button onClick={handleConfirmOrder} disabled={isUpdating || !leadTime}>
                         {isUpdating ? 'Confirming...' : 'Confirm & Send Update'}
                     </Button>
                 </CardFooter>
