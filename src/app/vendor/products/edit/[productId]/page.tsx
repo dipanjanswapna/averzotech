@@ -124,6 +124,7 @@ export default function EditVendorProductPage() {
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     const [availability, setAvailability] = useState('in-stock');
+    const [lowStockThreshold, setLowStockThreshold] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -181,6 +182,7 @@ export default function EditVendorProductPage() {
                     setAvailability(data.inventory?.availability || 'in-stock');
                     setMoq(String(data.inventory?.moq || ''));
                     setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
+                    setLowStockThreshold(String(data.inventory?.lowStockThreshold || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
                 } else {
                     toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -476,7 +478,7 @@ export default function EditVendorProductPage() {
                     description: giftDescription
                 },
                 organization: {
-                    status,
+                    status: 'pending-approval', // Always set to pending for review
                     category: selectedCategory,
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
@@ -492,6 +494,7 @@ export default function EditVendorProductPage() {
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
                     stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     availability: availability,
+                    lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold, 10) : 10,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -941,6 +944,11 @@ export default function EditVendorProductPage() {
                      <div className="space-y-2">
                         <Label htmlFor="max-purchase">Maximum Purchase Limit</Label>
                         <Input id="max-purchase" type="number" placeholder="e.g. 100" value={maxPurchaseLimit} onChange={e => setMaxPurchaseLimit(e.target.value)} disabled={isLoading}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="low-stock-threshold">Low Stock Threshold</Label>
+                        <Input id="low-stock-threshold" type="number" placeholder="e.g. 10" value={lowStockThreshold} onChange={e => setLowStockThreshold(e.target.value)} disabled={isLoading}/>
+                         <p className="text-xs text-muted-foreground">Receive an alert when total stock falls below this number.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
