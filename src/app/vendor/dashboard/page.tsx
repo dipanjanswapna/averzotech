@@ -4,10 +4,12 @@
 import { getFirestore, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, Package, ShoppingCart } from "lucide-react";
+import { DollarSign, Package, ShoppingCart, TrendingUp, AlertTriangle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useFirebase } from '@/firebase/provider';
+import { generateDemandForecast, DemandForecastInput, DemandForecastOutput } from '@/ai/flows/generate-demand-forecast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Stat {
     title: string;
@@ -31,6 +33,8 @@ export default function VendorDashboard() {
   const { user, loading: authLoading, db } = useFirebase();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [forecast, setForecast] = useState<DemandForecastOutput | null>(null);
+  const [forecastLoading, setForecastLoading] = useState(true);
 
   useEffect(() => {
     if (authLoading || !user?.fullName || !db) return;
@@ -43,16 +47,19 @@ export default function VendorDashboard() {
         const qProducts = query(productsRef, where("vendor", "==", user.fullName));
         const productSnapshot = await getDocs(qProducts);
         const vendorProductIds = productSnapshot.docs.map(doc => doc.id);
+        const vendorProducts = productSnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
         const totalProducts = vendorProductIds.length;
 
         let totalRevenue = 0;
         let totalOrders = 0;
         let recentSales: RecentSale[] = [];
+        let topSellingProducts: DemandForecastInput['topSellingProducts'] = [];
 
         if (totalProducts > 0) {
             // 2. Get all orders
             const ordersRef = collection(db, 'orders');
             const allOrdersSnapshot = await getDocs(query(ordersRef, orderBy('createdAt', 'desc')));
+            const productSalesCount: {[key: string]: number} = {};
 
             // 3. Filter orders to find ones containing this vendor's products
             const vendorOrders = allOrdersSnapshot.docs.filter(doc => {
@@ -66,7 +73,10 @@ export default function VendorDashboard() {
             vendorOrders.forEach(orderDoc => {
                 const orderData = orderDoc.data();
                 const relevantItems = orderData.items.filter((item: any) => vendorProductIds.includes(item.id));
-                const revenueFromThisOrder = relevantItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+                const revenueFromThisOrder = relevantItems.reduce((sum: number, item: any) => {
+                    productSalesCount[item.id] = (productSalesCount[item.id] || 0) + item.quantity;
+                    return sum + (item.price * item.quantity);
+                }, 0);
                 totalRevenue += revenueFromThisOrder;
 
                 if(recentSales.length < 5) {
@@ -78,6 +88,18 @@ export default function VendorDashboard() {
                     });
                 }
             });
+
+             topSellingProducts = Object.entries(productSalesCount)
+                .sort(([,a],[,b]) => b-a)
+                .slice(0, 5)
+                .map(([id, unitsSold]) => {
+                    const product = vendorProducts.find(p => p.id === id);
+                    return {
+                        productName: product?.name || 'Unknown Product',
+                        category: product?.organization?.category || 'Unknown',
+                        unitsSoldLast30Days: unitsSold,
+                    }
+                });
         }
         
         const stats: Stat[] = [
@@ -87,6 +109,27 @@ export default function VendorDashboard() {
         ];
 
         setDashboardData({ stats, recentSales });
+
+         // 5. Fetch demand forecast
+        setForecastLoading(true);
+        try {
+            const forecastInput: DemandForecastInput = {
+                vendorId: user.uid,
+                topSellingProducts: topSellingProducts,
+                upcomingCampaigns: [ // This would be fetched dynamically in a real app
+                    { name: '11.11 Mega Sale', type: 'Mega Sale' },
+                    { name: 'Winter Fest', type: 'Seasonal' }
+                ]
+            };
+            const generatedForecast = await generateDemandForecast(forecastInput);
+            setForecast(generatedForecast);
+        } catch (forecastError) {
+            console.error("Failed to generate demand forecast:", forecastError);
+            setForecast(null); // Set to null on error
+        } finally {
+            setForecastLoading(false);
+        }
+
 
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -181,6 +224,53 @@ export default function VendorDashboard() {
                 </CardContent>
             </Card>
         </div>
+         <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><TrendingUp className="text-primary"/> Demand Forecast & Insights</CardTitle>
+                <CardDescription>AI-powered suggestions to help you prepare for upcoming demand.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {forecastLoading ? (
+                    <div className="space-y-4">
+                        <Skeleton className="h-8 w-1/3" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                ) : forecast ? (
+                    <div className="space-y-4">
+                        {forecast.seasonalAlerts.length > 0 && (
+                             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <h3 className="font-semibold text-blue-800">Seasonal Alerts</h3>
+                                <ul className="list-disc pl-5 mt-2 text-sm text-blue-700">
+                                   {forecast.seasonalAlerts.map((alert, i) => <li key={i}>{alert}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                        {forecast.campaignForecasts.length > 0 && (
+                            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                                <h3 className="font-semibold text-purple-800">Campaign Forecasts</h3>
+                                 <ul className="list-disc pl-5 mt-2 text-sm text-purple-700">
+                                   {forecast.campaignForecasts.map((fc, i) => <li key={i}>{fc}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                         {forecast.actionableSuggestions.length > 0 && (
+                            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                <h3 className="font-semibold text-green-800">Actionable Suggestions</h3>
+                                 <ul className="list-disc pl-5 mt-2 text-sm text-green-700">
+                                   {forecast.actionableSuggestions.map((suggestion, i) => <li key={i}>{suggestion}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center p-8 text-center bg-secondary rounded-md">
+                        <p className="text-muted-foreground">Could not generate demand forecast at this time.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     </div>
   );
 }
+
