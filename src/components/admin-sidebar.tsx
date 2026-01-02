@@ -1,8 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store, Truck, Undo2, FileText as VendorInvoiceIcon, BarChart3, Bike, Handshake, ShieldCheck as VendorsIcon, MapPin, Receipt } from 'lucide-react';
+import { Home, Users, Package, ShoppingCart, Settings, LogOut, Megaphone, TicketPercent, Gift, LayoutDashboard, Shirt, PersonStanding, ToyBrick, Armchair, Sparkles, Laptop, Trophy, BookOpen, MessageSquarePlus, Annoyed, Store, Truck, Undo2, FileText as VendorInvoiceIcon, BarChart3, Bike, Handshake, ShieldCheck as VendorsIcon, MapPin, Receipt, Wallet } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -71,6 +72,10 @@ export function AdminSidebar({ user }: { user: any }) {
     { href: '/admin/gift-cards', label: 'Gift Cards', icon: Gift },
     { href: '/admin/addresses', label: 'Address Management', icon: MapPin },
   ];
+  
+  const accountItems = [
+    { href: '/admin/accounts/withdrawals', label: 'Withdrawal Requests', icon: Wallet },
+  ];
 
   const shippingItems = [
       { href: '/admin/settings/shipping', label: 'Pickup Stores', icon: Store },
@@ -118,7 +123,31 @@ export function AdminSidebar({ user }: { user: any }) {
                 </Link>
             </SidebarMenuItem>
           ))}
-          <Accordion type="single" collapsible className="w-full group-data-[state=collapsed]:hidden" defaultValue='site-management'>
+          <Accordion type="multiple" className="w-full group-data-[state=collapsed]:hidden" defaultValue={['accounts', 'site-management']}>
+             <AccordionItem value="accounts" className="border-none">
+                <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
+                    <Wallet />
+                    <span>Accounts</span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-0 pl-5">
+                    <SidebarMenu>
+                       {accountItems.map((item) => (
+                            <SidebarMenuItem key={item.label}>
+                                <Link href={item.href}>
+                                    <SidebarMenuButton 
+                                        isActive={pathname.startsWith(item.href)}
+                                        tooltip={{ children: item.label }}
+                                        size="sm"
+                                    >
+                                        <item.icon />
+                                        <span>{item.label}</span>
+                                    </SidebarMenuButton>
+                                </Link>
+                            </SidebarMenuItem>
+                        ))}
+                    </SidebarMenu>
+                </AccordionContent>
+            </AccordionItem>
              <AccordionItem value="shipping" className="border-none">
                 <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
                     <Truck />
@@ -169,6 +198,16 @@ export function AdminSidebar({ user }: { user: any }) {
             </AccordionItem>
           </Accordion>
            <div className="hidden group-data-[state=collapsed]:block">
+                 <SidebarMenuItem>
+                    <Link href="/admin/accounts/withdrawals">
+                        <SidebarMenuButton 
+                            isActive={pathname.startsWith('/admin/accounts')}
+                            tooltip={{ children: 'Accounts' }}
+                        >
+                            <Wallet />
+                        </SidebarMenuButton>
+                    </Link>
+                 </SidebarMenuItem>
                  <SidebarMenuItem>
                     <Link href="/admin/site-management/home">
                         <SidebarMenuButton 

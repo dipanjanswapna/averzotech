@@ -292,3 +292,14 @@ export interface Variant {
   tiers?: Tier[];
   batches?: Batch[];
 }
+
+export interface WithdrawalRequest {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  amount: number;
+  status: 'Pending' | 'Processing' | 'Completed' | 'Rejected';
+  requestedAt: any;
+  processedAt?: any;
+  transactionId?: string;
+}

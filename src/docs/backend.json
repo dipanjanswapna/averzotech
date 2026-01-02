@@ -215,6 +215,21 @@
         "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected", "Update Requested"] }
       },
       "required": ["userId", "status"]
+    },
+    "WithdrawalRequest": {
+        "title": "Withdrawal Request",
+        "description": "A vendor's request to withdraw funds.",
+        "type": "object",
+        "properties": {
+            "vendorId": { "type": "string" },
+            "vendorName": { "type": "string" },
+            "amount": { "type": "number" },
+            "status": { "type": "string", "enum": ["Pending", "Processing", "Completed", "Rejected"] },
+            "requestedAt": { "type": "string", "format": "date-time" },
+            "processedAt": { "type": "string", "format": "date-time" },
+            "transactionId": { "type": "string" }
+        },
+        "required": ["vendorId", "vendorName", "amount", "status"]
     }
   },
   "auth": {
@@ -248,6 +263,11 @@
     "/vendorApplications/{applicationId}": {
       "schema": { "$ref": "#/entities/VendorApplication" },
       "description": "Stores applications from potential vendors."
+    },
+    "/withdrawalRequests/{requestId}": {
+        "schema": { "$ref": "#/entities/WithdrawalRequest"},
+        "description": "Stores vendor withdrawal requests."
     }
   }
 }
+

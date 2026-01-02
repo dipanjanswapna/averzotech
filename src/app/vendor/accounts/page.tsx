@@ -28,6 +28,22 @@ import {
 } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useFirebase } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const salesData = [
   { name: 'Jan', total: Math.floor(Math.random() * 5000) + 1000 },
@@ -47,7 +63,47 @@ const topProducts = [
 ]
 
 export default function VendorAccountsPage() {
-  const { user } = useFirebase();
+  const { user, db } = useFirebase();
+  const { toast } = useToast();
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState<number>(125500);
+
+  const handleRequestWithdrawal = async () => {
+    if (!user || !db) {
+        toast({ title: 'Error', description: 'User not logged in.', variant: 'destructive'});
+        return;
+    }
+    if (withdrawalAmount <= 0) {
+        toast({ title: 'Invalid Amount', description: 'Please enter a valid amount to withdraw.', variant: 'destructive'});
+        return;
+    }
+    // In a real app, you would check against the actual withdrawable balance.
+    if (withdrawalAmount > 125500) {
+        toast({ title: 'Insufficient Balance', description: 'Withdrawal amount exceeds your withdrawable balance.', variant: 'destructive'});
+        return;
+    }
+
+    setIsRequesting(true);
+    try {
+        await addDoc(collection(db, "withdrawalRequests"), {
+            vendorId: user.uid,
+            vendorName: user.fullName,
+            amount: withdrawalAmount,
+            status: 'Pending',
+            requestedAt: serverTimestamp(),
+        });
+        toast({
+            title: 'Request Submitted',
+            description: `Your request to withdraw ৳${withdrawalAmount} has been submitted for review.`,
+        });
+    } catch (error) {
+        console.error("Error submitting withdrawal request:", error);
+        toast({ title: 'Request Failed', description: 'There was an error submitting your request.', variant: 'destructive'});
+    } finally {
+        setIsRequesting(false);
+    }
+  }
+
 
   return (
     <div className="space-y-8">
@@ -154,7 +210,27 @@ export default function VendorAccountsPage() {
                             <p className="text-4xl font-bold">৳125,500.00</p>
                         </div>
                         <p className="text-xs text-muted-foreground text-center">Funds become withdrawable after the 14-day return period.</p>
-                        <Button className="w-full" size="lg">Request Withdrawal</Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button className="w-full" size="lg">Request Withdrawal</Button>
+                            </AlertDialogTrigger>
+                             <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Request Withdrawal</AlertDialogTitle>
+                                    <AlertDialogDescription>Enter the amount you wish to withdraw. The request will be sent to the admin for approval.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <div className="space-y-2">
+                                    <Label htmlFor="amount">Amount (Max: ৳125,500.00)</Label>
+                                    <Input id="amount" type="number" value={withdrawalAmount} onChange={e => setWithdrawalAmount(Number(e.target.value))} />
+                                </div>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleRequestWithdrawal} disabled={isRequesting}>
+                                        {isRequesting ? 'Submitting...' : 'Submit Request'}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                             </AlertDialogContent>
+                        </AlertDialog>
                     </CardContent>
                     <CardFooter>
                          <p className="text-sm text-muted-foreground">Pending Balance: <span className="font-semibold text-foreground">৳274,500.00</span></p>
