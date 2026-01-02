@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -153,9 +154,6 @@ export default function PackingListPage() {
         @media print {
             body {
                 background-color: white;
-            }
-            .print\\:p-0 {
-                padding: 0 !important;
             }
             .print\\:hidden {
                 display: none !important;

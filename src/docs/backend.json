@@ -198,6 +198,7 @@
         "items": { "type": "array", "items": { "$ref": "#/entities/PurchaseOrderItem" } },
         "total": { "type": "number" },
         "status": { "type": "string", "enum": ["Pending", "Confirmed", "In-Transit", "Received & Closed", "Cancelled"] },
+        "inboundMethod": { "type": "string", "enum": ["self-dropoff", "averzo-pickup"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "confirmedAt": { "type": "string", "format": "date-time" },
         "estimatedDelivery": { "type": "string", "format": "date" },

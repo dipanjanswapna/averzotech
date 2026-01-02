@@ -261,6 +261,7 @@ export interface PurchaseOrder {
   items: PurchaseOrderItem[];
   total: number;
   status: 'Pending' | 'Confirmed' | 'In-Transit' | 'Received & Closed' | 'Cancelled';
+  inboundMethod?: 'self-dropoff' | 'averzo-pickup';
   createdAt: any;
   confirmedAt?: any;
   estimatedDelivery?: string;

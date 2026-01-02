@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -10,7 +11,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Printer } from 'lucide-react';
+import { ChevronLeft, Printer, AlertTriangle, MapPin, Package } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -25,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addDays, format } from 'date-fns';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 
 export default function PurchaseOrderDetailsPage() {
@@ -38,6 +40,7 @@ export default function PurchaseOrderDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [leadTime, setLeadTime] = useState<string>('');
+  const [inboundMethod, setInboundMethod] = useState<'self-dropoff' | 'averzo-pickup'>('self-dropoff');
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
@@ -50,6 +53,7 @@ export default function PurchaseOrderDetailsPage() {
                 const orderData = { id: docSnap.id, ...docSnap.data() } as PurchaseOrder;
                 setOrder(orderData);
                 setNotes(orderData.notes || '');
+                setInboundMethod(orderData.inboundMethod || 'self-dropoff');
             } else {
                 toast({ title: "Error", description: "Purchase Order not found.", variant: "destructive" });
                 router.push('/vendor/purchase-orders');
@@ -74,10 +78,11 @@ export default function PurchaseOrderDetailsPage() {
           await updateDoc(orderRef, {
               status: 'Confirmed',
               estimatedDelivery,
+              inboundMethod,
               notes,
               confirmedAt: serverTimestamp()
           });
-          setOrder(prev => prev ? {...prev, status: 'Confirmed', estimatedDelivery, notes } : null);
+          setOrder(prev => prev ? {...prev, status: 'Confirmed', estimatedDelivery, notes, inboundMethod } : null);
           toast({ title: "Order Confirmed", description: "Averzo has been notified about your confirmation." });
       } catch (error) {
           console.error("Error confirming order:", error);
@@ -87,10 +92,16 @@ export default function PurchaseOrderDetailsPage() {
       }
   }
 
-  const handleViewInvoice = () => {
+  const handleCreateInvoice = () => {
       if (!order) return;
-      router.push(`/vendor/purchase-orders/${order.id}/invoice`);
+      // Store PO data in local storage for the new invoice page to pick up
+      localStorage.setItem('poForInvoice', JSON.stringify(order));
+      router.push('/vendor/invoices/new');
   };
+
+   const handlePrintPackingList = () => {
+        router.push(`/vendor/purchase-orders/${purchaseOrderId}/packing-list`);
+    };
 
   if (loading) return <p className="p-8">Loading purchase order details...</p>;
   if (!order) return null;
@@ -102,8 +113,8 @@ export default function PurchaseOrderDetailsPage() {
   
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'Received': return 'bg-green-100 text-green-800';
-      case 'Shipped':
+      case 'Received & Closed': return 'bg-green-100 text-green-800';
+      case 'In-Transit':
       case 'Confirmed': return 'bg-blue-100 text-blue-800';
       case 'Cancelled': return 'bg-red-100 text-red-800';
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
@@ -171,9 +182,9 @@ export default function PurchaseOrderDetailsPage() {
              <Card>
                 <CardHeader>
                     <CardTitle>Confirm Order</CardTitle>
-                    <CardDescription>Please confirm the order and provide an estimated delivery date to Averzo's warehouse.</CardDescription>
+                    <CardDescription>Please confirm the order and select your inbound method.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                     <div>
                         <Label htmlFor="lead-time">Delivery Commitment (Lead Time) *</Label>
                          <Select value={leadTime} onValueChange={setLeadTime}>
@@ -188,6 +199,25 @@ export default function PurchaseOrderDetailsPage() {
                         </Select>
                     </div>
                      <div>
+                        <Label>Inbound Method *</Label>
+                        <RadioGroup value={inboundMethod} onValueChange={(value) => setInboundMethod(value as any)} className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <Label htmlFor="self-dropoff" className="flex items-start gap-4 border p-4 rounded-lg cursor-pointer hover:bg-accent/50 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                               <RadioGroupItem value="self-dropoff" id="self-dropoff" className="mt-1"/>
+                               <div>
+                                   <p className="font-semibold">Self Drop-off</p>
+                                   <p className="text-xs text-muted-foreground">You will deliver the products to the Averzo warehouse yourself.</p>
+                               </div>
+                           </Label>
+                           <Label htmlFor="averzo-pickup" className="flex items-start gap-4 border p-4 rounded-lg cursor-pointer hover:bg-accent/50 has-[:checked]:border-primary has-[:checked]:ring-1 has-[:checked]:ring-primary">
+                               <RadioGroupItem value="averzo-pickup" id="averzo-pickup" className="mt-1"/>
+                               <div>
+                                   <p className="font-semibold">Averzo Pickup</p>
+                                   <p className="text-xs text-muted-foreground">An Averzo rider will collect the products from your location.</p>
+                               </div>
+                           </Label>
+                        </RadioGroup>
+                    </div>
+                     <div>
                         <Label htmlFor="notes">Notes (Optional)</Label>
                         <Textarea id="notes" placeholder="Any comments for the Averzo team..." value={notes} onChange={e => setNotes(e.target.value)} />
                     </div>
@@ -199,17 +229,70 @@ export default function PurchaseOrderDetailsPage() {
                 </CardFooter>
              </Card>
         )}
+        
+        {order.status === 'Confirmed' && (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Next Steps</CardTitle>
+                    <CardDescription>Your order is confirmed. Please prepare the items for delivery.</CardDescription>
+                </CardHeader>
+                 <CardContent className="space-y-4">
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <h4 className="font-semibold text-blue-800">Your Confirmed Details</h4>
+                        <p className="text-sm text-blue-700">Estimated Warehouse Delivery: <span className="font-bold">{format(new Date(order.estimatedDelivery!), 'dd MMM, yyyy')}</span></p>
+                        <p className="text-sm text-blue-700">Inbound Method: <span className="font-bold capitalize">{order.inboundMethod?.replace('-', ' ')}</span></p>
+                    </div>
+                     <div>
+                        <h4 className="font-semibold">1. Prepare Your Shipment</h4>
+                        <p className="text-sm text-muted-foreground">Please pack all items securely according to our packaging guidelines.</p>
+                        <ul className="text-xs list-disc pl-5 mt-2 text-muted-foreground">
+                            <li>Ensure all items are in new condition.</li>
+                            <li>Use durable packaging to prevent damage.</li>
+                            <li>Attach the printed Packing List & Label to the outside of your package.</li>
+                        </ul>
+                    </div>
+                     <div>
+                        <h4 className="font-semibold">2. Print Documents</h4>
+                        <p className="text-sm text-muted-foreground">Print the Packing List and the Invoice. Include the Invoice inside the package and attach the Shipping Label outside.</p>
+                         <div className="flex gap-2 mt-2">
+                             <Button variant="outline" onClick={handlePrintPackingList}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Print Packing List & Label
+                            </Button>
+                            <Button variant="outline" onClick={handleCreateInvoice}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Generate Invoice
+                            </Button>
+                        </div>
+                    </div>
+                     {order.inboundMethod === 'self-dropoff' && (
+                          <div>
+                            <h4 className="font-semibold flex items-center gap-2"><MapPin className="h-4 w-4" />3. Drop-off at Warehouse</h4>
+                            <p className="text-sm text-muted-foreground">Please deliver the shipment to the following address before your committed delivery date:</p>
+                             <address className="text-sm not-italic mt-2 p-2 bg-secondary rounded-md">
+                                <strong>Averzo Central Warehouse</strong><br/>
+                                123 Logistics Way, Gazipur, Dhaka
+                            </address>
+                        </div>
+                     )}
+                      {order.inboundMethod === 'averzo-pickup' && (
+                          <div>
+                            <h4 className="font-semibold flex items-center gap-2"><Package className="h-4 w-4" />3. Prepare for Pickup</h4>
+                            <p className="text-sm text-muted-foreground">An Averzo rider will be assigned to collect the package from your registered address within your committed lead time. Please keep the package ready.</p>
+                        </div>
+                     )}
+                 </CardContent>
+            </Card>
+        )}
 
-        {(order.status === 'Confirmed' || order.status === 'Shipped' || order.status === 'Received') && (
-            <div className="flex justify-end gap-2">
-                 <Button variant="outline" asChild>
-                    <Link href={`/vendor/purchase-orders/${order.id}/packing-list`} target="_blank">
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Packing List & Label
-                    </Link>
+        {order.status !== 'Pending' && order.status !== 'Confirmed' && (
+             <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={handlePrintPackingList}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Packing List & Label
                 </Button>
-                <Button onClick={handleViewInvoice}>
-                    View & Print Invoice
+                <Button onClick={handleCreateInvoice}>
+                    Generate Invoice
                 </Button>
             </div>
         )}
