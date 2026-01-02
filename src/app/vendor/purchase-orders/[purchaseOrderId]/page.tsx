@@ -10,7 +10,6 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -24,7 +23,6 @@ import { PurchaseOrder } from '@/types';
 import { useFirebase } from '@/firebase';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addDays, format } from 'date-fns';
 
@@ -89,21 +87,9 @@ export default function PurchaseOrderDetailsPage() {
       }
   }
 
-  const handleGenerateInvoice = () => {
+  const handleViewInvoice = () => {
       if (!order) return;
-      // Store PO data in localStorage to pre-fill the invoice form
-      localStorage.setItem('poForInvoice', JSON.stringify({
-          items: order.items.map(item => ({
-              productId: item.productId,
-              productName: item.productName,
-              quantity: item.quantity,
-              price: item.price,
-              total: item.total,
-              sku: item.sku
-          })),
-          total: order.total
-      }));
-      router.push('/vendor/invoices/new');
+      router.push(`/vendor/purchase-orders/${order.id}/invoice`);
   };
 
   if (loading) return <p className="p-8">Loading purchase order details...</p>;
@@ -222,8 +208,8 @@ export default function PurchaseOrderDetailsPage() {
                         Print Packing List & Label
                     </Link>
                 </Button>
-                <Button onClick={handleGenerateInvoice}>
-                    Generate Invoice
+                <Button onClick={handleViewInvoice}>
+                    View & Print Invoice
                 </Button>
             </div>
         )}
