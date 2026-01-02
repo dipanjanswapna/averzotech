@@ -311,4 +311,3 @@ export function AdminSidebar({ user }: { user: any }) {
     </Sidebar>
   );
 }
-
