@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -123,7 +124,7 @@ export function AdminSidebar({ user }: { user: any }) {
                 </Link>
             </SidebarMenuItem>
           ))}
-          <Accordion type="multiple" className="w-full group-data-[state=collapsed]:hidden" defaultValue={['accounts', 'site-management']}>
+          <Accordion type="multiple" className="w-full group-data-[state=collapsed]:hidden" defaultValue={['accounts', 'site-management', 'shipping']}>
              <AccordionItem value="accounts" className="border-none">
                 <AccordionTrigger className="p-2 text-sm rounded-md hover:bg-secondary hover:no-underline font-normal justify-start gap-3 text-foreground data-[state=closed]:text-foreground data-[state=open]:text-primary data-[state=open]:font-semibold">
                     <Wallet />
