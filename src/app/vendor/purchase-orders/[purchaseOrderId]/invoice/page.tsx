@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -67,6 +68,11 @@ export default function InvoicePage() {
 
   const orderDate = new Date(order.createdAt?.seconds * 1000).toLocaleDateString('en-GB');
 
+  const taxableValue = order.total; // Assuming total is exclusive of VAT for now
+  const vatRate = 0.15; // 15% VAT
+  const vatAmount = taxableValue * vatRate;
+  const grandTotal = taxableValue + vatAmount;
+
   return (
     <div className="bg-background min-h-screen">
        <div className="max-w-4xl mx-auto p-4 sm:p-8 flex flex-col gap-4">
@@ -76,7 +82,7 @@ export default function InvoicePage() {
                 </Button>
                 <Button onClick={handlePrint}><Printer className="mr-2 h-4 w-4" /> Print / Save PDF</Button>
             </div>
-            <div ref={printComponentRef} className="p-8 border rounded-lg bg-white">
+            <div ref={printComponentRef} className="p-8 border rounded-lg bg-white text-black">
                  <CardHeader className="p-0">
                     <div className="flex justify-between items-start">
                         <div>
@@ -126,11 +132,19 @@ export default function InvoicePage() {
                     </Table>
 
                      <div className="flex justify-end mt-6">
-                        <div className="w-full max-w-xs space-y-2">
+                        <div className="w-full max-w-sm space-y-2">
+                             <div className="flex justify-between">
+                                <span className="text-gray-500">Subtotal</span>
+                                <span className="font-medium">৳{order.total.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">VAT (15%)</span>
+                                <span className="font-medium">৳{vatAmount.toFixed(2)}</span>
+                            </div>
                              <Separator />
                             <div className="flex justify-between font-bold text-lg">
                                 <p>Grand Total</p>
-                                <p>৳{order.total.toFixed(2)}</p>
+                                <p>৳{grandTotal.toFixed(2)}</p>
                             </div>
                         </div>
                      </div>
@@ -139,6 +153,9 @@ export default function InvoicePage() {
                         <p>Payment will be processed within 15-30 business days after goods are received and verified at Averzo warehouse.</p>
                       </div>
                 </CardContent>
+                 <CardFooter className="mt-12 text-center text-xs text-gray-400">
+                    <p>This is a system-generated invoice and does not require a signature.</p>
+                </CardFooter>
             </div>
        </div>
        <style jsx global>{`
