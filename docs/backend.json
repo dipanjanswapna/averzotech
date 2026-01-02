@@ -14,9 +14,7 @@
           "properties": {
             "price": { "type": "number" },
             "comparePrice": { "type": "number" },
-            "wholesalePrice": { "type": "number" },
-            "discount": { "type": "number" },
-            "tax": { "type": "number" }
+            "wholesalePrice": { "type": "number" }
           }
         },
         "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
@@ -38,7 +36,8 @@
                  "sku": { "type": "string" },
                  "availability": { "type": "string", "enum": ["in-stock", "out-of-stock", "pre-order"] },
                  "moq": { "type": "number" },
-                 "maxPurchaseLimit": { "type": "number" }
+                 "maxPurchaseLimit": { "type": "number" },
+                 "lowStockThreshold": { "type": "number" }
             }
         },
         "brand": { "type": "string" },
@@ -119,6 +118,35 @@
         },
         "required": ["fullName", "email", "role", "status"]
     },
+     "Vendor": {
+        "title": "Vendor",
+        "description": "Represents a vendor on the platform.",
+        "type": "object",
+        "properties": {
+            "userId": { "type": "string" },
+            "shopName": { "type": "string" },
+            "category": { "type": "string" },
+            "status": { "type": "string", "enum": ["Active", "Suspended"] },
+            "isSuperVendor": { "type": "boolean" },
+            "performance": {
+                "type": "object",
+                "properties": {
+                    "trustScore": { "type": "number" },
+                    "deliveryScore": { "type": "number" },
+                    "qualityScore": { "type": "number" },
+                    "returnRate": { "type": "number" }
+                }
+            },
+            "sla": {
+                "type": "object",
+                "properties": {
+                    "deliveryCommitment": { "type": "number" }
+                }
+            },
+            "minimumOrderValue": { "type": "number" }
+        },
+        "required": ["userId", "shopName", "status"]
+    },
     "ReturnItem": {
       "title": "Return Item",
       "description": "Represents an item within a return request.",
@@ -183,11 +211,12 @@
       "properties": {
         "productId": { "type": "string" },
         "productName": { "type": "string" },
+        "sku": { "type": "string" },
         "quantity": { "type": "number" },
         "price": { "type": "number" },
         "total": { "type": "number" }
       },
-      "required": ["productId", "productName", "quantity", "price", "total"]
+      "required": ["productId", "productName", "quantity", "price", "total", "sku"]
     },
      "PurchaseOrder": {
       "title": "Purchase Order",
@@ -198,7 +227,8 @@
         "vendorName": { "type": "string" },
         "items": { "type": "array", "items": { "$ref": "#/entities/PurchaseOrderItem" } },
         "total": { "type": "number" },
-        "status": { "type": "string", "enum": ["Pending", "Confirmed", "Shipped", "Received", "Cancelled"] },
+        "status": { "type": "string", "enum": ["Pending", "Confirmed", "In-Transit", "Received & Closed", "Cancelled"] },
+        "inboundMethod": { "type": "string", "enum": ["self-dropoff", "averzo-pickup"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "confirmedAt": { "type": "string", "format": "date-time" },
         "estimatedDelivery": { "type": "string", "format": "date" },
@@ -215,6 +245,49 @@
         "status": { "type": "string", "enum": ["Pending", "Approved", "Rejected", "Update Requested"] }
       },
       "required": ["userId", "status"]
+    },
+    "WithdrawalRequest": {
+        "title": "Withdrawal Request",
+        "description": "A vendor's request to withdraw funds.",
+        "type": "object",
+        "properties": {
+            "vendorId": { "type": "string" },
+            "vendorName": { "type": "string" },
+            "amount": { "type": "number" },
+            "status": { "type": "string", "enum": ["Pending", "Processing", "Completed", "Rejected"] },
+            "requestedAt": { "type": "string", "format": "date-time" },
+            "processedAt": { "type": "string", "format": "date-time" },
+            "transactionId": { "type": "string" }
+        },
+        "required": ["vendorId", "vendorName", "amount", "status"]
+    },
+    "SupportTicket": {
+      "title": "Support Ticket",
+      "description": "Represents a support request from a vendor.",
+      "type": "object",
+      "properties": {
+        "vendorId": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "subject": { "type": "string" },
+        "department": { "type": "string", "enum": ["Accounts", "Logistics", "General"] },
+        "message": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "In Progress", "Closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["vendorId", "vendorName", "subject", "department", "message", "status"]
+    },
+    "TicketReply": {
+      "title": "Ticket Reply",
+      "description": "A reply to a support ticket.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "authorName", "message"]
     }
   },
   "auth": {
@@ -228,6 +301,10 @@
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "Stores user profile information."
+    },
+     "/vendors/{vendorId}": {
+      "schema": { "$ref": "#/entities/Vendor" },
+      "description": "Stores public-facing vendor profile information and performance metrics."
     },
     "/orders/{orderId}": {
       "schema": { "$ref": "#/entities/Order" },
@@ -248,7 +325,18 @@
     "/vendorApplications/{applicationId}": {
       "schema": { "$ref": "#/entities/VendorApplication" },
       "description": "Stores applications from potential vendors."
+    },
+    "/withdrawalRequests/{requestId}": {
+        "schema": { "$ref": "#/entities/WithdrawalRequest"},
+        "description": "Stores vendor withdrawal requests."
+    },
+    "/supportTickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "Stores support tickets from vendors."
+    },
+    "/supportTickets/{ticketId}/replies/{replyId}": {
+      "schema": { "$ref": "#/entities/TicketReply" },
+      "description": "Stores replies to a specific support ticket."
     }
   }
 }
-

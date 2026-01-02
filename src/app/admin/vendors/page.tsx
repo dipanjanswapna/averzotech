@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Star } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,11 +112,18 @@ export default function VendorsPage() {
               <TableBody>
                 {vendors.map((vendor) => (
                   <TableRow key={vendor.id}>
-                    <TableCell className="font-medium">{vendor.shopName}</TableCell>
+                    <TableCell className="font-medium flex items-center gap-2">
+                        {vendor.shopName}
+                        {vendor.isSuperVendor && (
+                            <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400">
+                                <Star className="w-3 h-3 mr-1"/> Super
+                            </Badge>
+                        )}
+                    </TableCell>
                     <TableCell>{vendor.category}</TableCell>
                     <TableCell>
-                        <span className={cn("font-bold", getScoreColor(vendor.trustScore))}>
-                            {vendor.trustScore}
+                        <span className={cn("font-bold", getScoreColor(vendor.performance.trustScore))}>
+                            {vendor.performance.trustScore}
                         </span>
                     </TableCell>
                     <TableCell>{vendor.sla?.deliveryCommitment} hours</TableCell>

@@ -247,6 +247,7 @@ export interface Vendor {
         deliveryCommitment: number; // in hours
     };
     status: 'Active' | 'Suspended';
+    isSuperVendor?: boolean;
     minimumOrderValue?: number;
     createdAt: any;
 }

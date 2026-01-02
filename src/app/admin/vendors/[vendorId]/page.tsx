@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, FileText, Banknote, Store, ShieldCheck, User as UserIcon, Calendar, TrendingUp, AlertTriangle, Package, Percent, Undo2 } from 'lucide-react';
+import { ChevronLeft, FileText, Banknote, Store, ShieldCheck, User as UserIcon, Calendar, TrendingUp, AlertTriangle, Package, Percent, Undo2, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 
 export default function VendorDetailsPage() {
   const params = useParams();
@@ -42,6 +43,7 @@ export default function VendorDetailsPage() {
   
   const [sla, setSla] = useState(48);
   const [mov, setMov] = useState(0);
+  const [isSuperVendor, setIsSuperVendor] = useState(false);
 
   useEffect(() => {
     if (vendorId && db) {
@@ -56,6 +58,7 @@ export default function VendorDetailsPage() {
             setVendor(vendorData);
             setSla(vendorData.sla?.deliveryCommitment || 48);
             setMov(vendorData.minimumOrderValue || 0);
+            setIsSuperVendor(vendorData.isSuperVendor || false);
 
             // Fetch associated user data
             const userRef = doc(db, 'users', vendorData.userId);
@@ -86,6 +89,7 @@ export default function VendorDetailsPage() {
           await updateDoc(vendorRef, {
               "sla.deliveryCommitment": sla,
               "minimumOrderValue": mov,
+              "isSuperVendor": isSuperVendor,
           });
           toast({ title: "Vendor Updated", description: "Vendor details have been successfully updated." });
       } catch (error) {
@@ -126,6 +130,9 @@ export default function VendorDetailsPage() {
           <h1 className="text-2xl font-bold">{vendor.shopName}</h1>
           <p className="text-muted-foreground text-sm">Vendor ID: {vendor.id}</p>
         </div>
+        {vendor.isSuperVendor && (
+            <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400"><Star className="w-3.5 h-3.5 mr-1" /> Super Vendor</Badge>
+        )}
         <Badge variant="outline" className={cn("ml-auto", getStatusBadgeClass(vendor.status))}>
           {vendor.status}
         </Badge>
@@ -223,7 +230,7 @@ export default function VendorDetailsPage() {
         </Card>
 
         <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Business Rules</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="w-5 h-5" /> Business Rules & Status</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
                     <Label htmlFor="sla">SLA: Delivery Commitment (hours)</Label>
@@ -234,6 +241,13 @@ export default function VendorDetailsPage() {
                     <Label htmlFor="mov">Minimum Order Value (MOV)</Label>
                     <Input id="mov" type="number" value={mov} onChange={e => setMov(Number(e.target.value))} placeholder="e.g. 5000" />
                     <p className="text-xs text-muted-foreground">Minimum total order value required from this vendor.</p>
+                 </div>
+                  <div className="md:col-span-2 flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                        <Label htmlFor="super-vendor-switch" className="font-semibold">Super Vendor Status</Label>
+                        <p className="text-xs text-muted-foreground">Grant this vendor priority and other incentives.</p>
+                    </div>
+                     <Switch id="super-vendor-switch" checked={isSuperVendor} onCheckedChange={setIsSuperVendor} />
                  </div>
             </CardContent>
             <CardFooter>
