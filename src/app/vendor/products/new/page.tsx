@@ -1,5 +1,4 @@
 
-      
 
 'use client';
 
@@ -707,7 +706,7 @@ export default function NewProductPage() {
                 <CardContent className="space-y-4">
                    <div className="space-y-2">
                         <Label htmlFor="product-availability">Availability</Label>
-                        <Select onValueChange={(value) => setAvailability(value)} value={availability} disabled={isLoading}>
+                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
                             <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="in-stock">In Stock</SelectItem>
@@ -838,8 +837,3 @@ export default function NewProductPage() {
     </div>
   );
 }
-
-
-
-
-    

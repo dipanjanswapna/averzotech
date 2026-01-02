@@ -219,6 +219,7 @@ export default function EditProductPage() {
                         sku: '',
                         wholesalePrice: 0,
                         stock: 0,
+                        tiers: []
                     });
                 });
             });
@@ -952,7 +953,3 @@ export default function EditProductPage() {
     </div>
   );
 }
-
-
-
-

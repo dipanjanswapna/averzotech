@@ -1,4 +1,5 @@
 
+
 // Loading states
 export interface LoadingState {
   isLoading: boolean;
@@ -264,4 +265,19 @@ export interface PurchaseOrder {
   estimatedDelivery?: string;
   notes?: string;
 }
-    
+
+// Represents a single variant of a product
+export interface Variant {
+  sku: string;
+  wholesalePrice: number;
+  stock: number;
+  color: string;
+  size: string;
+  tiers?: Tier[];
+}
+
+// Represents a pricing tier for wholesale
+export interface Tier {
+  minQuantity: number;
+  pricePerUnit: number;
+}
