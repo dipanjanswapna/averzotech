@@ -123,6 +123,8 @@ export default function NewProductPage() {
     // Pricing & Inventory
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
+    const [availability, setAvailability] = useState('in-stock');
+    const [lowStockThreshold, setLowStockThreshold] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -427,7 +429,8 @@ export default function NewProductPage() {
                     stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     initialStock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     moq: parseInt(moq, 10) || 1,
-                    maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null
+                    maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
+                    lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold, 10) : 10,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -868,6 +871,11 @@ export default function NewProductPage() {
                      <div className="space-y-2">
                         <Label htmlFor="max-purchase">Maximum Purchase Limit</Label>
                         <Input id="max-purchase" type="number" placeholder="e.g. 100" value={maxPurchaseLimit} onChange={e => setMaxPurchaseLimit(e.target.value)} disabled={isLoading}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="low-stock-threshold">Low Stock Threshold</Label>
+                        <Input id="low-stock-threshold" type="number" placeholder="e.g. 10" value={lowStockThreshold} onChange={e => setLowStockThreshold(e.target.value)} disabled={isLoading}/>
+                         <p className="text-xs text-muted-foreground">Receive an alert when total stock falls below this number.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
