@@ -266,6 +266,12 @@ export interface PurchaseOrder {
   notes?: string;
 }
 
+// Represents a pricing tier for wholesale
+export interface Tier {
+  minQuantity: number;
+  pricePerUnit: number;
+}
+
 // Represents a single variant of a product
 export interface Variant {
   sku: string;
@@ -274,10 +280,4 @@ export interface Variant {
   color: string;
   size: string;
   tiers?: Tier[];
-}
-
-// Represents a pricing tier for wholesale
-export interface Tier {
-  minQuantity: number;
-  pricePerUnit: number;
 }

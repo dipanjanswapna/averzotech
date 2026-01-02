@@ -47,6 +47,8 @@ import { generateProductDescription } from '@/ai/flows/generate-product-descript
 import { useFirebase } from '@/firebase';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tier, Variant } from '@/types';
+
 
 interface ImageObject {
     file?: File;
@@ -58,19 +60,6 @@ interface Vendor {
     fullName: string;
 }
 
-interface Tier {
-    minQuantity: number;
-    pricePerUnit: number;
-}
-
-interface Variant {
-    sku: string;
-    wholesalePrice: number;
-    stock: number;
-    color: string;
-    size: string;
-    tiers?: Tier[];
-}
 
 export default function NewProductPage() {
     const { app, db } = useFirebase();
