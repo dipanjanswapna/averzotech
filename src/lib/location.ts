@@ -21584,7 +21584,7 @@ export const postalData: { [key: string]: { en: any, bn: any } } = {
         "postcode": "৫১০০"
       }
     }
-  };
+    };
 
 const processedData: { [division: string]: { [district: string]: { [thana: string]: { postOffice: string; postCode: string }[] } } } = {};
 const allDivisions: string[] = [];

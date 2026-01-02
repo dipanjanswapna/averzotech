@@ -861,6 +861,17 @@ export default function NewProductPage() {
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                        <Label htmlFor="product-availability">Availability</Label>
+                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
+                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="in-stock">In Stock</SelectItem>
+                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                                <SelectItem value="pre-order">Pre-order</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
                         <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
@@ -887,6 +898,7 @@ export default function NewProductPage() {
     </div>
   );
 }
+
 
 
 

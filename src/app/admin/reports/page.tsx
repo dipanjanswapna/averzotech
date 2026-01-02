@@ -27,6 +27,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirebase } from '@/firebase';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface Order {
     id: string;
@@ -47,6 +48,15 @@ interface ProductPerformance {
     unitsSold: number;
     revenue: number;
 }
+
+const priceHistoryData = [
+  { month: 'Jan', price: 1200 },
+  { month: 'Feb', price: 1250 },
+  { month: 'Mar', price: 1220 },
+  { month: 'Apr', price: 1280 },
+  { month: 'May', price: 1300 },
+  { month: 'Jun', price: 1290 },
+];
 
 const LoadingSkeleton = () => (
     <div className="space-y-8">
@@ -191,6 +201,25 @@ export default function ReportsPage() {
                             <p className="text-3xl font-bold">৳{salesData.averageOrderValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                         </div>
                     </div>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Price History Tracking</CardTitle>
+                    <CardDescription>Visualizing price changes over time for a sample product.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={priceHistoryData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="price" fill="#8884d8" name="Price (BDT)" />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </CardContent>
             </Card>
 
