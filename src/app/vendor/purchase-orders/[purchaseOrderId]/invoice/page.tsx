@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -7,7 +6,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -111,18 +110,19 @@ export default function InvoicePage() {
                             <TableRow>
                                 <TableHead className="w-[10%]">No.</TableHead>
                                 <TableHead className="w-[45%]">Product Description</TableHead>
-                                <TableHead>SKU</TableHead>
                                 <TableHead className="text-center">Qty</TableHead>
                                 <TableHead className="text-right">Unit Price</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
+                                <TableHead className="text-right">Taxable Value</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {order.items.map((item, index) => (
                                 <TableRow key={item.productId}>
                                     <TableCell>{index + 1}</TableCell>
-                                    <TableCell className="font-medium">{item.productName}</TableCell>
-                                    <TableCell className="text-muted-foreground">{item.sku}</TableCell>
+                                    <TableCell>
+                                        <p className="font-medium">{item.productName}</p>
+                                        <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
+                                    </TableCell>
                                     <TableCell className="text-center">{item.quantity}</TableCell>
                                     <TableCell className="text-right">৳{item.price.toFixed(2)}</TableCell>
                                     <TableCell className="text-right">৳{item.total.toFixed(2)}</TableCell>

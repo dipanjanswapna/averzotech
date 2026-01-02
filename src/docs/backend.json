@@ -15,8 +15,7 @@
             "price": { "type": "number" },
             "comparePrice": { "type": "number" },
             "wholesalePrice": { "type": "number" },
-            "discount": { "type": "number" },
-            "tax": { "type": "number" }
+            "discount": { "type": "number" }
           }
         },
         "images": { "type": "array", "items": { "type": "string", "format": "uri" } },

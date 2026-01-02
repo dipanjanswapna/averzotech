@@ -59,6 +59,12 @@ interface Tier {
     pricePerUnit: number;
 }
 
+interface Batch {
+    batchNumber: string;
+    expiryDate: string;
+    stock: number;
+}
+
 interface Variant {
     sku: string;
     wholesalePrice: number;
@@ -66,6 +72,7 @@ interface Variant {
     color: string;
     size: string;
     tiers?: Tier[];
+    batches?: Batch[];
 }
 
 export default function EditVendorProductPage() {
@@ -114,7 +121,6 @@ export default function EditVendorProductPage() {
     const [currentTag, setCurrentTag] = useState('');
 
     // Pricing & Inventory
-    const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     const [availability, setAvailability] = useState('in-stock');
@@ -172,7 +178,6 @@ export default function EditVendorProductPage() {
                     setSelectedGroup(data.organization?.group || '');
                     setSelectedSubcategory(data.organization?.subcategory || '');
                     setTags(data.organization?.tags || []);
-                    setTax(String(data.pricing?.tax || ''));
                     setAvailability(data.inventory?.availability || 'in-stock');
                     setMoq(String(data.inventory?.moq || ''));
                     setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
@@ -207,7 +212,8 @@ export default function EditVendorProductPage() {
                         sku: '',
                         wholesalePrice: 0,
                         stock: 0,
-                        tiers: []
+                        tiers: [],
+                        batches: []
                     });
                 });
             });
@@ -330,7 +336,7 @@ export default function EditVendorProductPage() {
         return group ? group.items : [];
     }, [selectedGroup, availableGroups]);
     
-     const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
+     const handleVariantChange = (index: number, field: keyof Variant, value: any) => {
         const newVariants = [...variants];
         (newVariants[index] as any)[field] = value;
         setVariants(newVariants);
@@ -356,6 +362,30 @@ export default function EditVendorProductPage() {
             tiers[tierIndex][field] = Number(value);
             setVariants(newVariants);
         }
+    };
+    
+    const handleAddBatch = (variantIndex: number) => {
+        const newVariants = [...variants];
+        const batches = newVariants[variantIndex].batches || [];
+        newVariants[variantIndex].batches = [...batches, { batchNumber: '', expiryDate: '', stock: 0 }];
+        setVariants(newVariants);
+    };
+
+    const handleRemoveBatch = (variantIndex: number, batchIndex: number) => {
+        const newVariants = [...variants];
+        newVariants[variantIndex]?.batches?.splice(batchIndex, 1);
+        handleVariantChange(variantIndex, 'stock', (newVariants[variantIndex].batches || []).reduce((acc, b) => acc + (b.stock || 0), 0));
+        setVariants(newVariants);
+    };
+
+    const handleBatchChange = (variantIndex: number, batchIndex: number, field: keyof Batch, value: string | number) => {
+        const newVariants = [...variants];
+        const batches = newVariants[variantIndex].batches;
+        if (batches) {
+            (batches[batchIndex] as any)[field] = value;
+            handleVariantChange(variantIndex, 'stock', batches.reduce((acc, b) => acc + (Number(b.stock) || 0), 0));
+        }
+        setVariants(newVariants);
     };
 
     const generateAllSKUs = () => {
@@ -403,10 +433,10 @@ export default function EditVendorProductPage() {
     const handleUpdateProduct = async () => {
         if (!productId || !db || !storage) return;
         
-        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
+        if (variants.some(v => !v.sku || v.wholesalePrice <= 0)) {
             toast({
                 title: "Incomplete Variant Information",
-                description: "Please fill out SKU, Wholesale Price (>0), and Stock for all variants.",
+                description: "Please fill out SKU and Wholesale Price (>0) for all variants.",
                 variant: 'destructive'
             });
             return;
@@ -424,8 +454,11 @@ export default function EditVendorProductPage() {
                     return imageObj.url;
                 })
             );
-            
-            const basePrice = Math.min(...variants.map(v => v.wholesalePrice).filter(p => p > 0));
+
+            const updatedVariants = variants.map(v => ({
+                ...v,
+                stock: (v.batches || []).reduce((acc, b) => acc + (Number(b.stock) || 0), 0)
+            }));
 
             const productData = {
                 name: productName,
@@ -434,7 +467,7 @@ export default function EditVendorProductPage() {
                 vendor,
                 images: imageUrls,
                 videoUrl,
-                variants,
+                variants: updatedVariants,
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
@@ -443,7 +476,7 @@ export default function EditVendorProductPage() {
                     description: giftDescription
                 },
                 organization: {
-                    status: 'pending-approval', // Products go back to pending on edit
+                    status,
                     category: selectedCategory,
                     group: selectedGroup,
                     subcategory: selectedSubcategory,
@@ -453,12 +486,11 @@ export default function EditVendorProductPage() {
                     price: 0,
                     comparePrice: 0,
                     discount: 0,
-                    tax: parseFloat(tax) || 0,
                 },
                 inventory: {
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
-                    stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     availability: availability,
                 },
                 shipping: {
@@ -648,37 +680,75 @@ export default function EditVendorProductPage() {
                     {variants.length > 0 && (
                         <div className="border-t pt-6">
                             <div className="flex justify-between items-center mb-4">
-                               <Label className="font-semibold">Variant Pricing & Inventory</Label>
+                               <Label className="font-semibold">Variant Details</Label>
                                <Button size="sm" variant="secondary" onClick={generateAllSKUs}><RefreshCw className="w-4 h-4 mr-2"/>Generate SKUs</Button>
                             </div>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Color</TableHead>
-                                        <TableHead>Size</TableHead>
-                                        <TableHead>SKU</TableHead>
-                                        <TableHead>Wholesale Price (৳)</TableHead>
-                                        <TableHead>Stock</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {variants.map((variant, index) => (
-                                        <TableRow key={`${variant.color}-${variant.size}`}>
-                                            <TableCell>{variant.color}</TableCell>
-                                            <TableCell>{variant.size}</TableCell>
-                                            <TableCell>
-                                                <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} className="h-8"/>
-                                            </TableCell>
-                                            <TableCell>
-                                                 <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} className="h-8"/>
-                                            </TableCell>
-                                            <TableCell>
-                                                 <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} className="h-8"/>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                            <div className="space-y-6">
+                                {variants.map((variant, index) => (
+                                    <Accordion type="single" collapsible key={`${variant.color}-${variant.size}`} defaultValue="item-1">
+                                        <AccordionItem value="item-1">
+                                            <AccordionTrigger>
+                                                <div className="flex items-center gap-4">
+                                                     <div className="w-5 h-5 rounded-full border" style={{backgroundColor: colors.find(c=>c.name === variant.color)?.hex || '#ffffff'}}></div>
+                                                    <span>{variant.color} / {variant.size}</span>
+                                                    <Badge variant={variant.stock > 0 ? 'default' : 'destructive'} className={variant.stock > 0 ? 'bg-green-100 text-green-800' : ''}>Stock: {variant.stock}</Badge>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="p-4 bg-secondary/50 rounded-b-md">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label>SKU</Label>
+                                                        <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} />
+                                                    </div>
+                                                     <div className="space-y-2">
+                                                        <Label>Wholesale Price (৳)</Label>
+                                                        <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label>Stock</Label>
+                                                        <Input type="number" value={variant.stock} readOnly disabled/>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 border-t pt-4">
+                                                    <Label className="font-medium">Batch & Expiry Tracking</Label>
+                                                    <div className="space-y-2 mt-2">
+                                                            {variant.batches?.map((batch, batchIndex) => (
+                                                            <div key={batchIndex} className="flex items-center gap-2">
+                                                                <Input type="text" placeholder="Batch No." value={batch.batchNumber} onChange={(e) => handleBatchChange(index, batchIndex, 'batchNumber', e.target.value)} />
+                                                                <Input type="date" placeholder="Expiry" value={batch.expiryDate} onChange={(e) => handleBatchChange(index, batchIndex, 'expiryDate', e.target.value)} />
+                                                                <Input type="number" placeholder="Stock" value={batch.stock} onChange={(e) => handleBatchChange(index, batchIndex, 'stock', Number(e.target.value))} />
+                                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveBatch(index, batchIndex)}>
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                        <Button variant="outline" size="sm" onClick={() => handleAddBatch(index)}>
+                                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Batch
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 border-t pt-4">
+                                                    <Label className="font-medium">Tiered Wholesale Pricing</Label>
+                                                    <div className="space-y-2 mt-2">
+                                                        {variant.tiers?.map((tier, tierIndex) => (
+                                                            <div key={tierIndex} className="flex items-center gap-2">
+                                                                <Input type="number" placeholder="Min Quantity" value={tier.minQuantity} onChange={(e) => handleTierChange(index, tierIndex, 'minQuantity', e.target.value)} />
+                                                                <Input type="number" placeholder="Price per Unit" value={tier.pricePerUnit} onChange={(e) => handleTierChange(index, tierIndex, 'pricePerUnit', e.target.value)} />
+                                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveTier(index, tierIndex)}>
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                        <Button variant="outline" size="sm" onClick={() => handleAddTier(index)}>
+                                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Tier
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    </Accordion>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -858,17 +928,6 @@ export default function EditVendorProductPage() {
                           ))}
                       </div>
                   </div>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle>Pricing</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="product-tax">Taxes (%)</Label>
-                        <Input id="product-tax" type="number" placeholder="5" value={tax} onChange={e => setTax(e.target.value)} disabled={isLoading}/>
-                    </div>
                 </CardContent>
             </Card>
             
