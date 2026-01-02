@@ -7,7 +7,7 @@ import { AdminSidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getAuth, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DeliverySidebar } from '@/components/delivery-sidebar';
 
@@ -16,7 +16,7 @@ export default function DeliveryLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, app } = useFirebase();
+  const { user, loading, auth } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   
@@ -41,7 +41,6 @@ export default function DeliveryLayout({
     }
     
     if (user.role === 'delivery' && user.status !== 'active') {
-        const auth = getAuth(app!);
         signOut(auth).then(() => {
            toast({
               title: "Account Not Active",
@@ -52,7 +51,7 @@ export default function DeliveryLayout({
            router.push('/login');
         });
     }
-  }, [user, loading, router, toast, app]);
+  }, [user, loading, router, toast, auth]);
 
 
   if (loading || !user || (user.role !== 'delivery' && user.role !== 'admin')) {

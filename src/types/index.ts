@@ -134,6 +134,7 @@ export interface Order {
         } | null;
         total: number;
     };
+    status: 'Pending' | 'Processing' | 'In-house Delivery' | 'In-Transit' | 'Shipped' | 'Fulfilled' | 'Cancelled' | 'Returning to Warehouse' | 'Received & Closed';
 }
 
 // Vendor Invoice
