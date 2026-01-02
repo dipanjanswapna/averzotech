@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -148,7 +149,7 @@ export default function PackingListPage() {
                 </div>
             </div>
        </div>
-       <style jsx global>{`
+       <style jsx global>{\`
         @media print {
             body {
                 background-color: white;
@@ -164,7 +165,7 @@ export default function PackingListPage() {
                 margin: 0;
             }
         }
-       `}</style>
+       \`}</style>
     </div>
   );
 }
