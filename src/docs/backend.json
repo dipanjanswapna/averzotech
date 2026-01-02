@@ -188,7 +188,7 @@
         "price": { "type": "number" },
         "total": { "type": "number" }
       },
-      "required": ["productId", "productName", "quantity", "price", "total"]
+      "required": ["productId", "productName", "quantity", "price", "total", "sku"]
     },
      "PurchaseOrder": {
       "title": "Purchase Order",

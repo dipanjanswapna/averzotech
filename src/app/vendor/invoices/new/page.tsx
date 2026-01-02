@@ -58,6 +58,35 @@ export default function NewVendorInvoicePage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
+        // Check for PO data in localStorage
+        const poDataString = localStorage.getItem('poForInvoice');
+        if (poDataString) {
+            try {
+                const poData = JSON.parse(poDataString);
+                const prefillItems = poData.items.map((item: any) => ({
+                    id: item.productId,
+                    name: item.productName,
+                    pricing: { price: item.price },
+                    quantity: item.quantity,
+                    total: item.total,
+                    images: [], // Images aren't critical for invoice items
+                    vendor: user?.fullName || ''
+                }));
+                setSelectedItems(prefillItems);
+                toast({
+                    title: "Invoice Pre-filled",
+                    description: "Items from your Purchase Order have been added."
+                });
+            } catch (error) {
+                console.error("Failed to parse PO data for invoice:", error);
+            } finally {
+                localStorage.removeItem('poForInvoice');
+            }
+        }
+    }, [user, toast]);
+
+
+    useEffect(() => {
         const fetchProducts = async () => {
             if (!user?.fullName || !db) return;
             try {
@@ -174,7 +203,7 @@ export default function NewVendorInvoicePage() {
                             {selectedItems.map(item => (
                                 <TableRow key={item.id}>
                                     <TableCell className="hidden sm:table-cell">
-                                        <Image src={item.images[0]} alt={item.name} width={64} height={64} className="rounded-md object-cover" />
+                                        <Image src={item.images?.[0] || 'https://placehold.co/64x64.png'} alt={item.name} width={64} height={64} className="rounded-md object-cover" />
                                     </TableCell>
                                     <TableCell>{item.name}</TableCell>
                                     <TableCell>

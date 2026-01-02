@@ -109,7 +109,7 @@ export default function PackingListPage() {
                                     <TableCell>{index + 1}</TableCell>
                                     <TableCell>
                                         <p className="font-medium">{item.productName}</p>
-                                        <p className="text-xs text-muted-foreground">SKU: {item.productId}</p>
+                                        <p className="text-xs text-muted-foreground">SKU: {item.sku}</p>
                                     </TableCell>
                                     <TableCell className="text-center font-bold text-lg">{item.quantity}</TableCell>
                                 </TableRow>
@@ -149,7 +149,7 @@ export default function PackingListPage() {
                 </div>
             </div>
        </div>
-       <style jsx global>{\`
+       <style jsx global>{`
         @media print {
             body {
                 background-color: white;
@@ -165,7 +165,7 @@ export default function PackingListPage() {
                 margin: 0;
             }
         }
-       \`}</style>
+       `}</style>
     </div>
   );
 }
