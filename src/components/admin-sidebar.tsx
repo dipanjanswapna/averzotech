@@ -35,7 +35,7 @@ import {
   MapPin,
   Receipt,
   Wallet,
-  MessageSquareQuestion,
+  MessageCircleQuestion,
 } from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
@@ -99,7 +99,7 @@ export function AdminSidebar({ user }: { user: any }) {
     { href: '/admin/purchase-orders', label: 'Purchase Orders', icon: Receipt },
     { href: '/admin/returns', label: 'Returns', icon: Undo2 },
     { href: '/admin/vendor-invoices', label: 'Vendor Invoices', icon: FileText },
-    { href: '/admin/support', label: 'Support Tickets', icon: MessageSquareQuestion },
+    { href: '/admin/support', label: 'Support Tickets', icon: MessageCircleQuestion },
     { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
     { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
     { href: '/admin/coupons', label: 'Coupons', icon: TicketPercent },
