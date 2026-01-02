@@ -63,4 +63,3 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: 'IPN Processed' }, { status: 200 });
 }
-

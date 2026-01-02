@@ -77,4 +77,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.redirect(new URL(`/payment/fail?reason=processing_error&tran_id=${tran_id}`, appUrl), { status: 302 });
     }
 }
-

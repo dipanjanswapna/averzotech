@@ -109,4 +109,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `An error occurred during payment initiation: ${error.message}` }, { status: 500 });
     }
 }
-
