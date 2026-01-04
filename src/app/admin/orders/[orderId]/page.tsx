@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -174,7 +175,10 @@ export default function OrderDetailsPage() {
               if (order.status !== 'Cancelled') {
                 for (const item of order.items) {
                     const productRef = doc(db, 'products', item.id);
-                    batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                    batch.update(productRef, { 
+                        "inventory.warehouseStock": increment(item.quantity),
+                        "inventory.stock": increment(item.quantity)
+                    });
                 }
               }
           }

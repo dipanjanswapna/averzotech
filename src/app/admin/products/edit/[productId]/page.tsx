@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, getDoc, updateDoc, getDocs, collection, query, where } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, getDocs, collection, query, where, writeBatch, increment } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { Switch } from '@/components/ui/switch';
@@ -134,8 +134,6 @@ export default function EditProductPage() {
     const [availability, setAvailability] = useState('in-stock');
     const [physicalStoreStock, setPhysicalStoreStock] = useState('');
     const [warehouseStock, setWarehouseStock] = useState('');
-    const totalStock = useMemo(() => Number(physicalStoreStock || 0) + Number(warehouseStock || 0), [physicalStoreStock, warehouseStock]);
-
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -147,6 +145,13 @@ export default function EditProductPage() {
 
     // Vendors
     const [vendors, setVendors] = useState<Vendor[]>([]);
+
+    const totalStock = useMemo(() => {
+        const physical = Number(physicalStoreStock) || 0;
+        const warehouse = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+        return physical + warehouse;
+    }, [physicalStoreStock, variants]);
+
     
     useEffect(() => {
         if (!productId || !db) return;
@@ -457,6 +462,8 @@ export default function EditProductPage() {
                 ...v,
                 stock: (v.batches || []).reduce((acc, b) => acc + (Number(b.stock) || 0), 0)
             }));
+            
+            const warehouseTotalStock = updatedVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
 
             const productData = {
                 name: productName,
@@ -490,7 +497,7 @@ export default function EditProductPage() {
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
                     stock: totalStock,
                     physicalStoreStock: Number(physicalStoreStock) || 0,
-                    warehouseStock: Number(warehouseStock) || 0,
+                    warehouseStock: warehouseTotalStock,
                     availability: availability,
                 },
                 shipping: {
@@ -736,7 +743,7 @@ export default function EditProductPage() {
                                                         <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <Label>Stock</Label>
+                                                        <Label>Warehouse Stock</Label>
                                                         <Input type="number" value={variant.stock} readOnly disabled/>
                                                     </div>
                                                 </div>
@@ -1033,4 +1040,5 @@ export default function EditProductPage() {
     </div>
   );
 }
+
 

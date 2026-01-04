@@ -52,7 +52,10 @@ export async function POST(req: NextRequest) {
         // Decrement stock for each item in the order
         for (const item of orderData.items) {
             const productRef = doc(db, 'products', item.id);
-            batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
+            batch.update(productRef, { 
+                "inventory.warehouseStock": increment(-item.quantity),
+                "inventory.stock": increment(-item.quantity) 
+            });
         }
         
         await batch.commit();
@@ -64,4 +67,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to create order.', details: error.message }, { status: 500 });
     }
 }
-

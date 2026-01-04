@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
                 if (orderData.items && Array.isArray(orderData.items)) {
                     for (const item of orderData.items) {
                         const productRef = doc(db, 'products', item.id);
-                        batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                        batch.update(productRef, { 
+                            "inventory.warehouseStock": increment(item.quantity),
+                            "inventory.stock": increment(item.quantity) 
+                        });
                     }
                 }
                 
@@ -43,4 +46,3 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     return NextResponse.redirect(new URL(`/payment/fail?reason=${reason}`, appUrl), { status: 302 });
 }
-

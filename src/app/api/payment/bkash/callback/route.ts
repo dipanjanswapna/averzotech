@@ -35,7 +35,10 @@ async function finalizeOrder(paymentDetails: any) {
     
     for (const item of orderData.items) {
         const productRef = doc(db, 'products', item.id);
-        batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
+        batch.update(productRef, { 
+            "inventory.warehouseStock": increment(-item.quantity),
+            "inventory.stock": increment(-item.quantity) 
+        });
     }
     
     batch.delete(pendingOrderRef);
@@ -80,4 +83,3 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL(`/payment/fail?reason=Internal_server_error`, appUrl), { status: 302 });
     }
 }
-
