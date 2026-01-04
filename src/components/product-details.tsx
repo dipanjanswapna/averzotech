@@ -1,4 +1,5 @@
 
+
       
 
 'use client';
@@ -158,23 +159,32 @@ export function ProductDetails() {
       if (docSnap.exists()) {
         const productData = { id: docSnap.id, ...docSnap.data() } as Product;
         setProduct(productData);
-        if (productData.inventory?.moq && productData.inventory.moq > 1) {
-            setQuantity(productData.inventory.moq);
-        } else {
-            setQuantity(1);
+
+        if (!selectedSize && productData.variants?.sizes?.length > 0) {
+            setSelectedSize(productData.variants.sizes[0]);
         }
-        if (!selectedSize && productData.variants.sizes.length > 0) setSelectedSize(productData.variants.sizes[0]);
-        if (!selectedColor && productData.variants.colors.length > 0) setSelectedColor(productData.variants.colors[0]);
+        if (!selectedColor && productData.variants?.colors?.length > 0) {
+            setSelectedColor(productData.variants.colors[0]);
+        }
+        if (productData.inventory?.moq && quantity < productData.inventory.moq) {
+            setQuantity(productData.inventory.moq);
+        }
         setError(null);
 
         // Fetch comparable products
-        const productsRef = collection(db, 'products');
-        const q = query(productsRef, where('organization.category', '==', productData.organization.category), limit(10));
-        const comparableSnap = await getDocs(q);
-        const comparableList = comparableSnap.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Product))
-            .filter(p => p.id !== productId);
-        setComparableProducts(comparableList);
+        if(comparableProducts.length === 0) {
+            const productsRef = collection(db, 'products');
+            const q = query(productsRef, 
+                where('organization.category', '==', productData.organization.category),
+                where('organization.status', '==', 'active'),
+                limit(10)
+            );
+            const comparableSnap = await getDocs(q);
+            const comparableList = comparableSnap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Product))
+                .filter(p => p.id !== productId);
+            setComparableProducts(comparableList);
+        }
 
       } else {
         setError('Product not found.');
@@ -211,7 +221,7 @@ export function ProductDetails() {
       unsubscribeQna();
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [productId, selectedSize, selectedColor, db]);
+  }, [productId, db]);
   
   const handleAddToCart = (buyNow: boolean = false) => {
     if (!product) return;
