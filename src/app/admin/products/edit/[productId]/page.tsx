@@ -133,7 +133,6 @@ export default function EditProductPage() {
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     const [availability, setAvailability] = useState('in-stock');
     const [physicalStoreStock, setPhysicalStoreStock] = useState('');
-    const [warehouseStock, setWarehouseStock] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -145,12 +144,15 @@ export default function EditProductPage() {
 
     // Vendors
     const [vendors, setVendors] = useState<Vendor[]>([]);
+    
+    const warehouseTotalStock = useMemo(() => {
+        return variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    }, [variants]);
 
     const totalStock = useMemo(() => {
         const physical = Number(physicalStoreStock) || 0;
-        const warehouse = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
-        return physical + warehouse;
-    }, [physicalStoreStock, variants]);
+        return physical + warehouseTotalStock;
+    }, [physicalStoreStock, warehouseTotalStock]);
 
     
     useEffect(() => {
@@ -205,7 +207,6 @@ export default function EditProductPage() {
                     setTax(String(data.pricing?.tax || ''));
                     setAvailability(data.inventory?.availability || 'in-stock');
                     setPhysicalStoreStock(String(data.inventory?.physicalStoreStock || ''));
-                    setWarehouseStock(String(data.inventory?.warehouseStock || ''));
                     setMoq(String(data.inventory?.moq || ''));
                     setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
@@ -463,8 +464,6 @@ export default function EditProductPage() {
                 stock: (v.batches || []).reduce((acc, b) => acc + (Number(b.stock) || 0), 0)
             }));
             
-            const warehouseTotalStock = updatedVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
-
             const productData = {
                 name: productName,
                 description,
@@ -1040,6 +1039,7 @@ export default function EditProductPage() {
     </div>
   );
 }
+
 
 
 
