@@ -127,6 +127,7 @@
             "shopName": { "type": "string" },
             "category": { "type": "string" },
             "status": { "type": "string", "enum": ["Active", "Suspended"] },
+            "isSuperVendor": { "type": "boolean" },
             "performance": {
                 "type": "object",
                 "properties": {
@@ -339,3 +340,4 @@
     }
   }
 }
+

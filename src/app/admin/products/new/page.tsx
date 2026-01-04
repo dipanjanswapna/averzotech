@@ -63,6 +63,12 @@ interface Tier {
     pricePerUnit: number;
 }
 
+interface Batch {
+    batchNumber: string;
+    expiryDate: string;
+    stock: number;
+}
+
 interface Variant {
     sku: string;
     wholesalePrice: number;
@@ -70,6 +76,7 @@ interface Variant {
     color: string;
     size: string;
     tiers?: Tier[];
+    batches?: Batch[];
 }
 
 
@@ -167,7 +174,8 @@ export default function NewProductPage() {
                             sku: '',
                             wholesalePrice: 0,
                             stock: 0,
-                            tiers: []
+                            tiers: [],
+                            batches: [],
                         });
                     });
                 });
@@ -316,7 +324,7 @@ export default function NewProductPage() {
         }
     };
     
-    const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
+    const handleVariantChange = (index: number, field: keyof Variant, value: any) => {
         const newVariants = [...variants];
         (newVariants[index] as any)[field] = value;
         setVariants(newVariants);
@@ -343,6 +351,30 @@ export default function NewProductPage() {
             setVariants(newVariants);
         }
     };
+    
+    const handleAddBatch = (variantIndex: number) => {
+        const newVariants = [...variants];
+        const batches = newVariants[variantIndex].batches || [];
+        newVariants[variantIndex].batches = [...batches, { batchNumber: '', expiryDate: '', stock: 0 }];
+        setVariants(newVariants);
+    };
+
+    const handleRemoveBatch = (variantIndex: number, batchIndex: number) => {
+        const newVariants = [...variants];
+        newVariants[variantIndex]?.batches?.splice(batchIndex, 1);
+        handleVariantChange(variantIndex, 'stock', newVariants[variantIndex].batches!.reduce((acc, b) => acc + (b.stock || 0), 0));
+        setVariants(newVariants);
+    };
+
+    const handleBatchChange = (variantIndex: number, batchIndex: number, field: keyof Batch, value: string | number) => {
+        const newVariants = [...variants];
+        const batches = newVariants[variantIndex].batches;
+        if (batches) {
+            (batches[batchIndex] as any)[field] = value;
+            handleVariantChange(variantIndex, 'stock', batches.reduce((acc, b) => acc + (Number(b.stock) || 0), 0));
+        }
+        setVariants(newVariants);
+    };
 
     const generateAllSKUs = () => {
         const skuBase = productName.substring(0, 5).toUpperCase().replace(/\s/g, '');
@@ -360,10 +392,10 @@ export default function NewProductPage() {
     const handleSaveProduct = async () => {
         if (!db || !storage) return;
 
-        if (variants.some(v => !v.sku || v.wholesalePrice <= 0 || v.stock < 0)) {
+        if (variants.some(v => !v.sku || v.wholesalePrice <= 0)) {
             toast({
                 title: "Incomplete Variant Information",
-                description: "Please fill out SKU, Wholesale Price (>0), and Stock (>=0) for all variants.",
+                description: "Please fill out SKU and Wholesale Price (>0) for all variants.",
                 variant: 'destructive'
             });
             return;
@@ -382,7 +414,11 @@ export default function NewProductPage() {
                 })
             );
 
-            // Determine the base price for the product from the variants
+            const updatedVariants = variants.map(v => ({
+                ...v,
+                stock: (v.batches || []).reduce((acc, b) => acc + (Number(b.stock) || 0), 0)
+            }));
+            
             const basePrice = Math.min(...variants.map(v => v.wholesalePrice).filter(p => p > 0));
 
             const productData = {
@@ -392,7 +428,7 @@ export default function NewProductPage() {
                 vendor,
                 images: imageUrls,
                 videoUrl,
-                variants, // Save the full variant details
+                variants: updatedVariants, 
                 specifications: specifications.filter(s => s.label && s.value),
                 offers,
                 returnPolicy,
@@ -412,10 +448,10 @@ export default function NewProductPage() {
                     comparePrice: parseFloat(comparePrice) || 0,
                     tax: parseFloat(tax) || 0,
                 },
-                inventory: { // Redundant but good for quick lookups
-                    availability,
-                    stock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
-                    initialStock: variants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                inventory: { 
+                    availability: 'in-stock',
+                    stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    initialStock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null
                 },
@@ -627,18 +663,32 @@ export default function NewProductPage() {
                                                 </div>
                                             </AccordionTrigger>
                                             <AccordionContent className="p-4 bg-secondary/50 rounded-b-md">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label>SKU</Label>
                                                         <Input value={variant.sku} onChange={(e) => handleVariantChange(index, 'sku', e.target.value)} />
                                                     </div>
                                                      <div className="space-y-2">
                                                         <Label>Wholesale Price (৳)</Label>
-                                                        <Input type="number" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} />
+                                                        <Input type="number" placeholder="e.g. 800" value={variant.wholesalePrice} onChange={(e) => handleVariantChange(index, 'wholesalePrice', Number(e.target.value))} />
                                                     </div>
-                                                    <div className="space-y-2">
-                                                        <Label>Stock</Label>
-                                                        <Input type="number" value={variant.stock} onChange={(e) => handleVariantChange(index, 'stock', Number(e.target.value))} />
+                                                </div>
+                                                 <div className="mt-4 border-t pt-4">
+                                                    <Label className="font-medium">Batch & Expiry Tracking</Label>
+                                                    <div className="space-y-2 mt-2">
+                                                            {variant.batches?.map((batch, batchIndex) => (
+                                                            <div key={batchIndex} className="flex items-center gap-2">
+                                                                <Input type="text" placeholder="Batch No." value={batch.batchNumber} onChange={(e) => handleBatchChange(index, batchIndex, 'batchNumber', e.target.value)} />
+                                                                <Input type="date" placeholder="Expiry" value={batch.expiryDate} onChange={(e) => handleBatchChange(index, batchIndex, 'expiryDate', e.target.value)} />
+                                                                <Input type="number" placeholder="Stock" value={batch.stock} onChange={(e) => handleBatchChange(index, batchIndex, 'stock', Number(e.target.value))} />
+                                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveBatch(index, batchIndex)}>
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                        <Button variant="outline" size="sm" onClick={() => handleAddBatch(index)}>
+                                                            <PlusCircle className="mr-2 h-4 w-4" /> Add Batch
+                                                        </Button>
                                                     </div>
                                                 </div>
                                                 <div className="mt-4 border-t pt-4">
@@ -842,7 +892,7 @@ export default function NewProductPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Pricing</CardTitle>
+                    <CardTitle>Retail Pricing</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -859,7 +909,7 @@ export default function NewProductPage() {
                     </div>
                 </CardContent>
             </Card>
-
+            
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
@@ -900,3 +950,4 @@ export default function NewProductPage() {
     </div>
   );
 }
+
