@@ -4,7 +4,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const DemandForecastInputSchema = z.object({
+const DemandForecastInputSchema = z.object({
   vendorId: z.string().describe('The unique identifier for the vendor.'),
   topSellingProducts: z.array(z.object({
     productName: z.string(),
@@ -18,7 +18,7 @@ export const DemandForecastInputSchema = z.object({
 });
 export type DemandForecastInput = z.infer<typeof DemandForecastInputSchema>;
 
-export const DemandForecastOutputSchema = z.object({
+const DemandForecastOutputSchema = z.object({
   seasonalAlerts: z.array(z.string()).describe('Alerts related to upcoming seasons and the types of products that will be in demand.'),
   campaignForecasts: z.array(z.string()).describe('Forecasts related to upcoming sales campaigns, specifying which products might see a surge.'),
   actionableSuggestions: z.array(z.string()).describe('Specific, actionable suggestions for the vendor, such as "Double the stock for T-Shirts" or "Introduce a new color for Winter Hoodies".'),
