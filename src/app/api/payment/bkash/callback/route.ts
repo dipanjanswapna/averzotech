@@ -3,7 +3,7 @@
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, getDoc, deleteDoc, writeBatch, increment, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, deleteDoc, writeBatch, collection, serverTimestamp } from 'firebase/firestore';
 import { executePayment } from '@/lib/bkash';
 import { Order } from '@/types';
 import { db } from '@/firebase-server';
@@ -33,13 +33,7 @@ async function finalizeOrder(paymentDetails: any) {
     
     batch.set(newOrderRef, finalOrderData);
     
-    for (const item of orderData.items) {
-        const productRef = doc(db, 'products', item.id);
-        batch.update(productRef, { 
-            "inventory.warehouseStock": increment(-item.quantity),
-        });
-    }
-    
+    // Stock was already decremented at payment initiation. Now we just delete the pending order.
     batch.delete(pendingOrderRef);
     await batch.commit();
     

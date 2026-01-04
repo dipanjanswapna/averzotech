@@ -22,10 +22,10 @@ export async function POST(req: NextRequest) {
         for (const item of items) {
             const productRef = doc(db, 'products', item.id);
             const productSnap = await getDoc(productRef);
-            if (!productSnap.exists() || productSnap.data().inventory.stock < item.quantity) {
+            if (!productSnap.exists() || productSnap.data()?.inventory?.warehouseStock < item.quantity) {
                 throw new Error(`Not enough stock for ${item.name}.`);
             }
-            batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
+            batch.update(productRef, { "inventory.warehouseStock": increment(-item.quantity) });
         }
 
         // Create pending order
@@ -60,4 +60,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `An error occurred during bKash payment initiation: ${error.message}` }, { status: 500 });
     }
 }
-
