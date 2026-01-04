@@ -37,7 +37,6 @@ async function finalizeOrder(paymentDetails: any) {
         const productRef = doc(db, 'products', item.id);
         batch.update(productRef, { 
             "inventory.warehouseStock": increment(-item.quantity),
-            "inventory.stock": increment(-item.quantity) 
         });
     }
     

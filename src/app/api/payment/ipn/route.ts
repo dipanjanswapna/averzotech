@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
                 if (orderData.items && Array.isArray(orderData.items)) {
                     for (const item of orderData.items) {
                         const productRef = doc(db, 'products', item.id);
-                        batch.update(productRef, { "inventory.stock": increment(item.quantity) });
+                        batch.update(productRef, { "inventory.warehouseStock": increment(item.quantity) });
                     }
                 }
 
