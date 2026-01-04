@@ -189,10 +189,10 @@ export default function StockManagementPage() {
                 </TableHeader>
                 <TableBody>
                     {filteredProducts.flatMap(product => 
-                        product.variants.map(variant => (
+                        (product.variants || []).map(variant => (
                             <TableRow key={variant.sku}>
                                 <TableCell className="hidden sm:table-cell">
-                                    <Image src={product.images[0]} alt={product.name} width={48} height={48} className="rounded-md object-cover"/>
+                                    <Image src={product.images?.[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={48} height={48} className="rounded-md object-cover"/>
                                 </TableCell>
                                 <TableCell>
                                     <p className="font-semibold">{product.name}</p>
