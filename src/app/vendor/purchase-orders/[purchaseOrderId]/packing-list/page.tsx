@@ -70,7 +70,7 @@ export default function PackingListPage() {
 
   return (
     <div className="bg-background min-h-screen">
-        <div className="max-w-4xl mx-auto p-4 sm:p-8 flex flex-col gap-4">
+       <div className="max-w-4xl mx-auto p-4 sm:p-8 flex flex-col gap-4">
             <div className="flex justify-end gap-2 print:hidden">
                  <Button variant="outline" asChild>
                     <Link href={`/vendor/purchase-orders/${purchaseOrderId}`}>Back to PO</Link>

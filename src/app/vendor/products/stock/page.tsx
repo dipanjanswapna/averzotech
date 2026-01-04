@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -20,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, Save } from 'lucide-react';
+import { ChevronLeft, Save, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -42,6 +41,7 @@ interface Product {
   }[];
   inventory: {
       physicalStoreStock?: number;
+      warehouseStock?: number;
   }
 }
 
@@ -220,12 +220,15 @@ export default function StockManagementPage() {
 
        <Card>
         <CardHeader>
-           <Input 
-             placeholder="Search products..." 
-             className="max-w-sm" 
-             value={searchTerm}
-             onChange={e => setSearchTerm(e.target.value)}
-            />
+           <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                placeholder="Search products..." 
+                className="pl-9" 
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                />
+            </div>
         </CardHeader>
         <CardContent>
            {loading ? (
@@ -247,11 +250,11 @@ export default function StockManagementPage() {
                             <TableRow key={`${product.id}-${variant.sku}`}>
                                 {index === 0 && (
                                   <>
-                                    <TableCell rowSpan={product.variants?.length || 1} className="hidden sm:table-cell align-top">
+                                    <TableCell rowSpan={product.variants?.length || 1} className="hidden sm:table-cell align-top py-2">
                                         <Image src={product.images?.[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={48} height={48} className="rounded-md object-cover"/>
                                     </TableCell>
-                                    <TableCell rowSpan={product.variants?.length || 1} className="align-top">
-                                      <p className="font-semibold">{product.name}</p>
+                                    <TableCell rowSpan={product.variants?.length || 1} className="align-top py-2 font-semibold">
+                                      {product.name}
                                     </TableCell>
                                   </>
                                 )}
@@ -269,7 +272,7 @@ export default function StockManagementPage() {
                                     />
                                 </TableCell>
                                  {index === 0 && (
-                                   <TableCell rowSpan={product.variants?.length || 1} className="align-top">
+                                   <TableCell rowSpan={product.variants?.length || 1} className="align-top py-2">
                                       <Input
                                         type="number"
                                         value={product.inventory?.physicalStoreStock ?? ''}
