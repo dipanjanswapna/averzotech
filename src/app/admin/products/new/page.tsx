@@ -129,6 +129,8 @@ export default function NewProductPage() {
     const [tax, setTax] = useState('');
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
+    const [availability, setAvailability] = useState('in-stock');
+    const [lowStockThreshold, setLowStockThreshold] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -362,7 +364,7 @@ export default function NewProductPage() {
     const handleRemoveBatch = (variantIndex: number, batchIndex: number) => {
         const newVariants = [...variants];
         newVariants[variantIndex]?.batches?.splice(batchIndex, 1);
-        handleVariantChange(variantIndex, 'stock', newVariants[variantIndex].batches!.reduce((acc, b) => acc + (b.stock || 0), 0));
+        handleVariantChange(variantIndex, 'stock', (newVariants[variantIndex].batches || []).reduce((acc, b) => acc + (b.stock || 0), 0));
         setVariants(newVariants);
     };
 
@@ -449,11 +451,12 @@ export default function NewProductPage() {
                     tax: parseFloat(tax) || 0,
                 },
                 inventory: { 
-                    availability: 'in-stock',
+                    availability,
                     stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     initialStock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
                     moq: parseInt(moq, 10) || 1,
-                    maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null
+                    maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
+                    lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold, 10) : 10,
                 },
                 shipping: {
                     estimatedDelivery,
@@ -799,6 +802,17 @@ export default function NewProductPage() {
                     </Select>
                   </div>
                    <div className="space-y-2">
+                        <Label htmlFor="product-availability">Availability</Label>
+                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
+                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="in-stock">In Stock</SelectItem>
+                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                                <SelectItem value="pre-order">Pre-order</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                   <div className="space-y-2">
                     <Label>Category</Label>
                     <Select onValueChange={(value) => { setSelectedCategory(value); setSelectedGroup(''); setSelectedSubcategory(''); }} value={selectedCategory} disabled={isLoading}>
                       <SelectTrigger><SelectValue placeholder="Select mother category" /></SelectTrigger>
@@ -913,17 +927,6 @@ export default function NewProductPage() {
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                        <Label htmlFor="product-availability">Availability</Label>
-                        <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
-                            <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="in-stock">In Stock</SelectItem>
-                                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                                <SelectItem value="pre-order">Pre-order</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
                         <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
@@ -931,6 +934,11 @@ export default function NewProductPage() {
                      <div className="space-y-2">
                         <Label htmlFor="max-purchase">Maximum Purchase Limit</Label>
                         <Input id="max-purchase" type="number" placeholder="e.g. 100" value={maxPurchaseLimit} onChange={e => setMaxPurchaseLimit(e.target.value)} disabled={isLoading}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="low-stock-threshold">Low Stock Threshold</Label>
+                        <Input id="low-stock-threshold" type="number" placeholder="e.g. 10" value={lowStockThreshold} onChange={e => setLowStockThreshold(e.target.value)} disabled={isLoading}/>
+                         <p className="text-xs text-muted-foreground">Receive an alert when total stock falls below this number.</p>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="estimated-delivery">Estimated Delivery Time</Label>
@@ -950,4 +958,3 @@ export default function NewProductPage() {
     </div>
   );
 }
-
