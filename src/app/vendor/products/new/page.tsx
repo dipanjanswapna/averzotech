@@ -365,6 +365,10 @@ export default function NewProductPage() {
         setVariants(updatedVariants);
     }
 
+    const warehouseTotalStock = useMemo(() => {
+        return variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    }, [variants]);
+
     const handleSaveProduct = async () => {
         if (!db || !storage || !user) return;
 
@@ -426,8 +430,10 @@ export default function NewProductPage() {
                 },
                 inventory: { 
                     availability,
-                    stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
-                    initialStock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    stock: warehouseTotalStock,
+                    warehouseStock: warehouseTotalStock,
+                    physicalStoreStock: 0,
+                    initialStock: warehouseTotalStock,
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
                     lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold, 10) : 10,
@@ -849,11 +855,11 @@ export default function NewProductPage() {
                   </div>
                 </CardContent>
             </Card>
-
+            
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="space-y-2">
+                    <div className="space-y-2">
                         <Label htmlFor="product-availability">Availability</Label>
                         <Select onValueChange={setAvailability} value={availability} disabled={isLoading}>
                             <SelectTrigger id="product-availability"><SelectValue placeholder="Select availability" /></SelectTrigger>

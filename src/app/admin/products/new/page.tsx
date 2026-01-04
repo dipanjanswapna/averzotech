@@ -131,6 +131,7 @@ export default function NewProductPage() {
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     const [availability, setAvailability] = useState('in-stock');
     const [lowStockThreshold, setLowStockThreshold] = useState('');
+    const [physicalStoreStock, setPhysicalStoreStock] = useState('');
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -364,7 +365,7 @@ export default function NewProductPage() {
     const handleRemoveBatch = (variantIndex: number, batchIndex: number) => {
         const newVariants = [...variants];
         newVariants[variantIndex]?.batches?.splice(batchIndex, 1);
-        handleVariantChange(variantIndex, 'stock', (newVariants[variantIndex].batches || []).reduce((acc, b) => acc + (b.stock || 0), 0));
+        handleVariantChange(variantIndex, 'stock', newVariants[variantIndex].batches!.reduce((acc, b) => acc + (b.stock || 0), 0));
         setVariants(newVariants);
     };
 
@@ -390,6 +391,16 @@ export default function NewProductPage() {
         });
         setVariants(updatedVariants);
     }
+
+    const warehouseTotalStock = useMemo(() => {
+        return variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+    }, [variants]);
+
+    const totalStock = useMemo(() => {
+        const physical = Number(physicalStoreStock) || 0;
+        return physical + warehouseTotalStock;
+    }, [physicalStoreStock, warehouseTotalStock]);
+
 
     const handleSaveProduct = async () => {
         if (!db || !storage) return;
@@ -452,8 +463,10 @@ export default function NewProductPage() {
                 },
                 inventory: { 
                     availability,
-                    stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
-                    initialStock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    stock: totalStock,
+                    physicalStoreStock: Number(physicalStoreStock) || 0,
+                    warehouseStock: warehouseTotalStock,
+                    initialStock: totalStock,
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
                     lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold, 10) : 10,
@@ -958,3 +971,4 @@ export default function NewProductPage() {
     </div>
   );
 }
+

@@ -23,11 +23,12 @@ import { Input } from '@/components/ui/input';
 import { ChevronLeft, Save } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
-import { collection, getDocs, query, where, doc, writeBatch, getDoc } from 'firebase/firestore';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { collection, getDocs, query, where, doc, writeBatch, getDoc, runTransaction } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase';
 import { cn } from '@/lib/utils';
+import { debounce } from 'lodash';
 
 interface Product {
   id: string;
@@ -39,11 +40,19 @@ interface Product {
       size: string;
       stock: number;
   }[];
+  inventory: {
+      physicalStoreStock?: number;
+  }
 }
 
-interface VariantStock {
+interface VariantStockChange {
     productId: string;
     sku: string;
+    stock: number;
+}
+
+interface PhysicalStockChange {
+    productId: string;
     stock: number;
 }
 
@@ -55,91 +64,134 @@ export default function StockManagementPage() {
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    const [changedStocks, setChangedStocks] = useState<VariantStock[]>([]);
+    const [changedVariantStocks, setChangedVariantStocks] = useState<Record<string, VariantStockChange>>({});
+    const [changedPhysicalStocks, setChangedPhysicalStocks] = useState<Record<string, PhysicalStockChange>>({});
+
+    const fetchProducts = useCallback(async () => {
+        if (!user?.fullName || !db) return;
+        setLoading(true);
+        try {
+            const productsRef = collection(db, 'products');
+            const q = query(productsRef, where("vendor", "==", user.fullName));
+            const productSnapshot = await getDocs(q);
+            const productList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+            setProducts(productList);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+            toast({ title: "Error", description: "Could not fetch your products.", variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
+    }, [user, db, toast]);
 
     useEffect(() => {
-        const fetchProducts = async () => {
-            if (!user?.fullName || !db) return;
-            setLoading(true);
-            try {
-                const productsRef = collection(db, 'products');
-                const q = query(productsRef, where("vendor", "==", user.fullName));
-                const productSnapshot = await getDocs(q);
-                const productList = productSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-                setProducts(productList);
-            } catch (error) {
-                console.error("Error fetching products:", error);
-                toast({ title: "Error", description: "Could not fetch your products.", variant: "destructive" });
-            } finally {
-                setLoading(false);
-            }
-        };
-        if(user) fetchProducts();
-    }, [user, db, toast]);
+        fetchProducts();
+    }, [fetchProducts]);
     
     const filteredProducts = useMemo(() => {
         return products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }, [products, searchTerm]);
 
-    const handleStockChange = (productId: string, sku: string, newStock: string) => {
-        const stockValue = parseInt(newStock, 10);
-        if (isNaN(stockValue) || stockValue < 0) return;
+    const handleVariantStockChange = (productId: string, sku: string, newStockStr: string) => {
+        const newStock = parseInt(newStockStr, 10);
+        if (isNaN(newStock) || newStock < 0) return;
 
-        const existingChangeIndex = changedStocks.findIndex(c => c.sku === sku);
-        if (existingChangeIndex > -1) {
-            const updatedChanges = [...changedStocks];
-            updatedChanges[existingChangeIndex].stock = stockValue;
-            setChangedStocks(updatedChanges);
-        } else {
-            setChangedStocks(prev => [...prev, { productId, sku, stock: stockValue }]);
-        }
-
-        // Also update the local state for immediate UI feedback
-        setProducts(prevProducts => prevProducts.map(p => {
+        setProducts(prev => prev.map(p => {
             if (p.id === productId) {
                 return {
                     ...p,
-                    variants: Array.isArray(p.variants) ? p.variants.map(v => v.sku === sku ? { ...v, stock: stockValue } : v) : []
-                };
+                    variants: p.variants.map(v => v.sku === sku ? {...v, stock: newStock} : v)
+                }
             }
             return p;
         }));
+        
+        setChangedVariantStocks(prev => ({
+            ...prev,
+            [sku]: { productId, sku, stock: newStock }
+        }));
     };
     
+    const handlePhysicalStockChange = (productId: string, newStockStr: string) => {
+        const newStock = parseInt(newStockStr, 10);
+         if (isNaN(newStock) || newStock < 0) return;
+
+        setProducts(prev => prev.map(p => 
+            p.id === productId ? {...p, inventory: {...p.inventory, physicalStoreStock: newStock}} : p
+        ));
+        
+        setChangedPhysicalStocks(prev => ({
+            ...prev,
+            [productId]: { productId, stock: newStock }
+        }));
+    }
+
     const handleSaveChanges = async () => {
-        if (changedStocks.length === 0) {
+        const variantChanges = Object.values(changedVariantStocks);
+        const physicalChanges = Object.values(changedPhysicalStocks);
+
+        if (variantChanges.length === 0 && physicalChanges.length === 0) {
             toast({ title: "No Changes", description: "You haven't changed any stock values." });
             return;
         }
         if (!db) return;
 
         setIsSaving(true);
-        const batch = writeBatch(db);
 
         try {
-            for (const change of changedStocks) {
-                const productRef = doc(db, 'products', change.productId);
-                const productSnap = await getDoc(productRef);
-                if (productSnap.exists()) {
-                    const productData = productSnap.data();
-                    const updatedVariants = productData.variants.map((v: any) => 
+            await runTransaction(db, async (transaction) => {
+                const productUpdates = new Map<string, any>();
+
+                // Process variant stock changes
+                for (const change of variantChanges) {
+                    if (!productUpdates.has(change.productId)) {
+                        const productRef = doc(db, 'products', change.productId);
+                        const productSnap = await transaction.get(productRef);
+                        if (!productSnap.exists()) throw new Error(`Product ${change.productId} not found!`);
+                        productUpdates.set(change.productId, productSnap.data());
+                    }
+                    const productData = productUpdates.get(change.productId);
+                    productData.variants = productData.variants.map((v: any) => 
                         v.sku === change.sku ? { ...v, stock: change.stock } : v
                     );
-                    const totalStock = updatedVariants.reduce((sum: number, v: any) => sum + v.stock, 0);
+                }
 
-                    batch.update(productRef, { 
-                        variants: updatedVariants,
-                        "inventory.stock": totalStock 
+                // Process physical stock changes
+                 for (const change of physicalChanges) {
+                    if (!productUpdates.has(change.productId)) {
+                        const productRef = doc(db, 'products', change.productId);
+                        const productSnap = await transaction.get(productRef);
+                        if (!productSnap.exists()) throw new Error(`Product ${change.productId} not found!`);
+                        productUpdates.set(change.productId, productSnap.data());
+                    }
+                    const productData = productUpdates.get(change.productId);
+                    productData.inventory.physicalStoreStock = change.stock;
+                }
+
+                // Calculate new total stock and update in transaction
+                for (const [productId, productData] of productUpdates.entries()) {
+                    const productRef = doc(db, 'products', productId);
+                    const warehouseStock = productData.variants.reduce((sum: number, v: any) => sum + v.stock, 0);
+                    const physicalStock = productData.inventory.physicalStoreStock || 0;
+                    productData.inventory.warehouseStock = warehouseStock;
+                    productData.inventory.stock = warehouseStock + physicalStock;
+                    transaction.update(productRef, {
+                        variants: productData.variants,
+                        'inventory.stock': productData.inventory.stock,
+                        'inventory.warehouseStock': productData.inventory.warehouseStock,
+                        'inventory.physicalStoreStock': productData.inventory.physicalStoreStock
                     });
                 }
-            }
+            });
 
-            await batch.commit();
-            toast({ title: "Stock Updated", description: "All changes have been saved." });
-            setChangedStocks([]);
+            toast({ title: "Stock Updated", description: "All changes have been saved successfully." });
+            setChangedVariantStocks({});
+            setChangedPhysicalStocks({});
         } catch (error) {
             console.error("Error updating stock:", error);
-            toast({ title: "Error", description: "Failed to save stock changes.", variant: "destructive" });
+            toast({ title: "Error", description: `Failed to save stock changes. ${error}`, variant: "destructive" });
+             // Optionally refetch data to revert UI changes on error
+            fetchProducts();
         } finally {
             setIsSaving(false);
         }
@@ -160,9 +212,9 @@ export default function StockManagementPage() {
                  <p className="text-muted-foreground">Quickly update stock levels for all your products and variants.</p>
             </div>
         </div>
-        <Button onClick={handleSaveChanges} disabled={isSaving || changedStocks.length === 0}>
+        <Button onClick={handleSaveChanges} disabled={isSaving || (Object.keys(changedVariantStocks).length === 0 && Object.keys(changedPhysicalStocks).length === 0)}>
             <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Saving...' : `Save ${changedStocks.length} Change(s)`}
+            {isSaving ? 'Saving...' : `Save ${Object.keys(changedVariantStocks).length + Object.keys(changedPhysicalStocks).length} Change(s)`}
         </Button>
       </div>
 
@@ -185,29 +237,47 @@ export default function StockManagementPage() {
                         <TableHead className="w-[100px] hidden sm:table-cell">Image</TableHead>
                         <TableHead>Product & Variant</TableHead>
                         <TableHead>SKU</TableHead>
-                        <TableHead className="w-[120px]">Stock</TableHead>
+                        <TableHead className="w-[120px]">Warehouse Stock</TableHead>
+                        <TableHead className="w-[120px]">Physical Store</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {filteredProducts.flatMap(product => 
-                        (Array.isArray(product.variants) ? product.variants : []).map(variant => (
-                            <TableRow key={variant.sku}>
-                                <TableCell className="hidden sm:table-cell">
-                                    <Image src={product.images?.[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={48} height={48} className="rounded-md object-cover"/>
-                                </TableCell>
+                        (Array.isArray(product.variants) && product.variants.length > 0 ? product.variants : [{sku: 'N/A', color: 'N/A', size: 'N/A', stock: product.inventory.warehouseStock || 0}]).map((variant, index) => (
+                            <TableRow key={`${product.id}-${variant.sku}`}>
+                                {index === 0 && (
+                                  <>
+                                    <TableCell rowSpan={product.variants?.length || 1} className="hidden sm:table-cell align-top">
+                                        <Image src={product.images?.[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={48} height={48} className="rounded-md object-cover"/>
+                                    </TableCell>
+                                    <TableCell rowSpan={product.variants?.length || 1} className="align-top">
+                                      <p className="font-semibold">{product.name}</p>
+                                    </TableCell>
+                                  </>
+                                )}
                                 <TableCell>
-                                    <p className="font-semibold">{product.name}</p>
-                                    <p className="text-sm text-muted-foreground">{variant.color} / {variant.size}</p>
+                                    {product.variants?.length > 0 && <p className="text-sm text-muted-foreground">{variant.color} / {variant.size}</p>}
+                                    <p className="font-mono text-xs">{variant.sku}</p>
                                 </TableCell>
-                                <TableCell className="font-mono text-xs">{variant.sku}</TableCell>
                                 <TableCell>
                                     <Input
                                         type="number"
-                                        value={variant.stock}
-                                        onChange={e => handleStockChange(product.id, variant.sku, e.target.value)}
-                                        className={cn("h-9", variant.stock < 20 && 'bg-red-100/50 border-red-300')}
+                                        value={variant.stock ?? ''}
+                                        onChange={e => handleVariantStockChange(product.id, variant.sku, e.target.value)}
+                                        className={cn("h-9", (variant.stock || 0) < 20 && 'bg-red-100/50 border-red-300')}
+                                        disabled={product.variants.length === 0}
                                     />
                                 </TableCell>
+                                 {index === 0 && (
+                                   <TableCell rowSpan={product.variants?.length || 1} className="align-top">
+                                      <Input
+                                        type="number"
+                                        value={product.inventory?.physicalStoreStock ?? ''}
+                                        onChange={e => handlePhysicalStockChange(product.id, e.target.value)}
+                                        className="h-9"
+                                    />
+                                   </TableCell>
+                                )}
                             </TableRow>
                         ))
                     )}

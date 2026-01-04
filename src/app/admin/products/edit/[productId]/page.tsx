@@ -1005,7 +1005,7 @@ export default function EditProductPage() {
                             <Input id="physical-stock" type="number" placeholder="e.g. 50" value={physicalStoreStock} onChange={e => setPhysicalStoreStock(e.target.value)} disabled={isLoading}/>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="warehouse-stock">Warehouse/Online Stock</Label>
+                            <Label htmlFor="warehouse-stock">Warehouse / Online Stock</Label>
                             <Input id="warehouse-stock" type="number" placeholder="e.g. 200" value={warehouseTotalStock} readOnly disabled/>
                         </div>
                     </div>
@@ -1039,6 +1039,7 @@ export default function EditProductPage() {
     </div>
   );
 }
+
 
 
 
