@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
-import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, where, query, documentId, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirebase } from '@/firebase';
 
@@ -56,11 +56,9 @@ export default function SportsPage() {
 
      useEffect(() => {
         if (!db) return;
-        const fetchSportsPageContent = async () => {
+        const docRef = doc(db, 'site_content', 'sports_page');
+        const unsubscribe = onSnapshot(docRef, async (docSnap) => {
             setLoading(true);
-            const docRef = doc(db, 'site_content', 'sports_page');
-            const docSnap = await getDoc(docRef);
-            
             if (docSnap.exists()) {
                 const data = docSnap.data() as SportsPageContent;
                 setContent(data);
@@ -74,11 +72,17 @@ export default function SportsPage() {
                     
                     const orderedProducts = productIds.map(id => productList.find(p => p.id === id)).filter(Boolean) as Product[];
                     setTrendingProducts(orderedProducts);
+                } else {
+                    setTrendingProducts([]);
                 }
+            } else {
+                setContent({});
+                setTrendingProducts([]);
             }
             setLoading(false);
-        };
-        fetchSportsPageContent();
+        });
+
+        return () => unsubscribe();
     }, [db]);
 
     if (loading) {

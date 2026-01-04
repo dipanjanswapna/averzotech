@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
-import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, where, query, documentId, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirebase } from '@/firebase';
 
@@ -56,11 +56,9 @@ export default function HomeLivingPage() {
 
      useEffect(() => {
         if (!db) return;
-        const fetchHomeLivingPageContent = async () => {
+        const docRef = doc(db, 'site_content', 'home-living_page');
+        const unsubscribe = onSnapshot(docRef, async (docSnap) => {
             setLoading(true);
-            const docRef = doc(db, 'site_content', 'home-living_page');
-            const docSnap = await getDoc(docRef);
-            
             if (docSnap.exists()) {
                 const data = docSnap.data() as HomeLivingPageContent;
                 setContent(data);
@@ -74,11 +72,17 @@ export default function HomeLivingPage() {
                     
                     const orderedProducts = productIds.map(id => productList.find(p => p.id === id)).filter(Boolean) as Product[];
                     setTrendingProducts(orderedProducts);
+                } else {
+                    setTrendingProducts([]);
                 }
+            } else {
+                setContent({});
+                setTrendingProducts([]);
             }
             setLoading(false);
-        };
-        fetchHomeLivingPageContent();
+        });
+
+        return () => unsubscribe();
     }, [db]);
 
     if (loading) {

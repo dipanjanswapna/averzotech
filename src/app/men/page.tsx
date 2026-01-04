@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
-import { doc, getDoc, collection, getDocs, where, query, documentId } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, where, query, documentId, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirebase } from '@/firebase';
 
@@ -57,11 +57,9 @@ export default function MenPage() {
 
     useEffect(() => {
         if (!db) return;
-        const fetchMenPageContent = async () => {
-            setLoading(true);
-            const docRef = doc(db, 'site_content', 'men_page');
-            const docSnap = await getDoc(docRef);
-            
+        
+        const docRef = doc(db, 'site_content', 'men_page');
+        const unsubscribe = onSnapshot(docRef, async (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data() as MenPageContent;
                 setContent(data);
@@ -70,17 +68,23 @@ export default function MenPage() {
                     const productIds = data.trendingProducts.map(p => p.id);
                     const productsRef = collection(db, 'products');
                     const q = query(productsRef, where(documentId(), 'in', productIds));
+                    
                     const productSnap = await getDocs(q);
                     const productList = productSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
                     
-                    // Maintain the order from Firestore
                     const orderedProducts = productIds.map(id => productList.find(p => p.id === id)).filter(Boolean) as Product[];
                     setTrendingProducts(orderedProducts);
+                } else {
+                    setTrendingProducts([]);
                 }
+            } else {
+                 setContent({});
+                 setTrendingProducts([]);
             }
             setLoading(false);
-        };
-        fetchMenPageContent();
+        });
+
+        return () => unsubscribe();
     }, [db]);
 
     if (loading) {
