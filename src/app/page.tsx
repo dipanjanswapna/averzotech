@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Heart, Clock } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, query, where, Timestamp, documentId, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PreFooterCta } from '@/components/pre-footer-cta';
 import Autoplay from "embla-carousel-autoplay"
@@ -116,68 +116,69 @@ export default function Home() {
 
    useEffect(() => {
     if(!db) return;
-    const fetchHomepageContent = async () => {
+    
+    const unsubscribes: (() => void)[] = [];
+
+    const fetchHomepageContent = () => {
       setLoading(true);
       const docRef = doc(db, 'site_content', 'homepage');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data() as HomepageContent;
-        setContent(data);
-        
-        const dealProductIds = (data.deals || []).map((d) => d.id).filter(Boolean);
-        let dealsWithDetails: Deal[] = [];
+      const unsubscribe = onSnapshot(docRef, async (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as HomepageContent;
+          setContent(data);
+          
+          const dealProductIds = (data.deals || []).map((d) => d.id).filter(Boolean);
+          let dealsWithDetails: Deal[] = [];
 
-        if (dealProductIds.length > 0) {
-            const productsRef = collection(db, 'products');
-            const q = query(productsRef, where(documentId(), 'in', dealProductIds));
-            const productSnap = await getDocs(q);
-            const productsData = productSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+          if (dealProductIds.length > 0) {
+              const productsRef = collection(db, 'products');
+              const q = query(productsRef, where(documentId(), 'in', dealProductIds));
+              const productSnap = await getDocs(q);
+              const productsData = productSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
 
-            dealsWithDetails = dealProductIds.map((id: string) => {
-                const productData:any = productsData.find(p => p.id === id);
-                if (productData) {
-                    return {
-                        id: productData.id,
-                        name: productData.name,
-                        brand: productData.brand,
-                        price: productData.pricing.price,
-                        originalPrice: productData.pricing.comparePrice,
-                        discount: `${productData.pricing.discount}% OFF`,
-                        image: productData.images[0],
-                        dataAiHint: productData.name.toLowerCase(),
-                        inventory: productData.inventory,
-                    };
-                }
-                return null;
-            }).filter(Boolean) as Deal[];
+              dealsWithDetails = dealProductIds.map((id: string) => {
+                  const productData:any = productsData.find(p => p.id === id);
+                  if (productData) {
+                      return {
+                          id: productData.id,
+                          name: productData.name,
+                          brand: productData.brand,
+                          price: productData.pricing.price,
+                          originalPrice: productData.pricing.comparePrice,
+                          discount: `${productData.pricing.discount}% OFF`,
+                          image: productData.images[0],
+                          dataAiHint: productData.name.toLowerCase(),
+                          inventory: productData.inventory,
+                      };
+                  }
+                  return null;
+              }).filter(Boolean) as Deal[];
+          }
+          setDeals(dealsWithDetails);
+        } else {
+          setContent({
+              heroImages: [
+                  { url: 'https://placehold.co/1200x600.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
+                  { url: 'https://placehold.co/1200x600.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
+              ],
+              carouselSettings: { autoplay: true, autoplaySpeed: 4000 },
+              brands: Array(10).fill({ url: 'https://placehold.co/200x200.png', alt: 'Brand logo', dataAiHint: 'brand logo' }),
+              deals: [],
+              categories: Array(6).fill({ url: 'https://placehold.co/400x500.png', name: 'Category', discount: 'Up to 50% Off', link: '#', dataAiHint: 'fashion category' }),
+          });
         }
-        
-        setDeals(dealsWithDetails);
-
-      } else {
-        setContent({
-            heroImages: [
-                { url: 'https://placehold.co/1200x600.png', alt: 'Fashion sale banner', dataAiHint: 'fashion sale' },
-                { url: 'https://placehold.co/1200x600.png', alt: 'New arrivals banner', dataAiHint: 'new arrivals' },
-            ],
-            carouselSettings: { autoplay: true, autoplaySpeed: 4000 },
-            brands: Array(10).fill({ url: 'https://placehold.co/200x200.png', alt: 'Brand logo', dataAiHint: 'brand logo' }),
-            deals: [],
-            categories: Array(6).fill({ url: 'https://placehold.co/400x500.png', name: 'Category', discount: 'Up to 50% Off', link: '#', dataAiHint: 'fashion category' }),
-        });
-      }
-      setLoading(false);
+        setLoading(false);
+      });
+      unsubscribes.push(unsubscribe);
     };
 
-    const fetchCampaigns = async () => {
+    const fetchCampaigns = () => {
         setCampaignsLoading(true);
-        try {
-            const campaignsRef = collection(db, 'campaigns');
-            const q = query(campaignsRef, where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
-            const campaignSnap = await getDocs(q);
-            
-            if (!campaignSnap.empty) {
-                const allCampaigns = campaignSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Campaign));
+        const campaignsRef = collection(db, 'campaigns');
+        const q = query(campaignsRef, where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            if (!snapshot.empty) {
+                const allCampaigns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Campaign));
                 
                 const flashSaleCampaign = allCampaigns.find(c => c.type === 'Flash Sale') || null;
                 setFlashSale(flashSaleCampaign);
@@ -190,17 +191,27 @@ export default function Home() {
                     const productDocs = await Promise.all(productPromises);
                     const productList = productDocs.map(doc => ({ id: doc.id, ...doc.data() } as FlashSaleItem)).filter(p => p.id);
                     setFlashSaleItems(productList);
+                } else {
+                    setFlashSaleItems([]);
                 }
+            } else {
+                setFlashSale(null);
+                setOtherCampaigns([]);
+                setFlashSaleItems([]);
             }
-        } catch (error) {
+             setCampaignsLoading(false);
+        }, (error) => {
             console.error("Error fetching campaigns data:", error);
-        } finally {
             setCampaignsLoading(false);
-        }
+        });
+        unsubscribes.push(unsubscribe);
     };
 
     fetchHomepageContent();
     fetchCampaigns();
+
+    return () => unsubscribes.forEach(unsub => unsub());
+
   }, [db]);
 
   return (
@@ -539,4 +550,3 @@ function FlashSaleTimer({ endTime }: { endTime: Date }) {
         </div>
     );
 }
-

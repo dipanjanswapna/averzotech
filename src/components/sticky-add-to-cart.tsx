@@ -14,6 +14,9 @@ interface Product {
     pricing: {
         price: number;
     };
+    inventory: {
+        availability: string;
+    };
 }
 
 interface StickyAddToCartProps {
@@ -24,6 +27,7 @@ interface StickyAddToCartProps {
 }
 
 export function StickyAddToCart({ product, onAddToCart, onBuyNow, isOutOfStock }: StickyAddToCartProps) {
+    const isPreOrder = product.inventory.availability === 'pre-order';
     return (
         <div className="fixed md:bottom-0 bottom-16 left-0 right-0 z-40 animate-slide-up">
             <div className="container mx-auto px-4 py-2">
@@ -44,10 +48,10 @@ export function StickyAddToCart({ product, onAddToCart, onBuyNow, isOutOfStock }
                         </div>
                         <div className="flex gap-2">
                              <Button onClick={onBuyNow} variant="secondary" disabled={isOutOfStock}>
-                                BUY NOW
+                                {isPreOrder ? 'PRE-ORDER & CHECKOUT' : (isOutOfStock ? 'BUY NOW' : 'BUY NOW')}
                              </Button>
                              <Button onClick={onAddToCart} disabled={isOutOfStock}>
-                                <ShoppingBag className="mr-2 h-4 w-4" /> ADD TO CART
+                                <ShoppingBag className="mr-2 h-4 w-4" /> {isPreOrder ? 'PRE-ORDER NOW' : 'ADD TO CART'}
                              </Button>
                         </div>
                     </div>

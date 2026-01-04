@@ -1,6 +1,4 @@
 
-      
-
 'use client';
 
 import React from 'react';
@@ -16,7 +14,7 @@ interface StockIndicatorProps {
 
 export function StockIndicator({ stock, initialStock, availability }: StockIndicatorProps) {
   if (availability === 'pre-order') {
-    return <Badge className="bg-blue-100 text-blue-800">Available for Pre-order</Badge>;
+    return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100/80">Available for Pre-order</Badge>;
   }
 
   if (stock <= 0 || availability === 'out-of-stock') {
@@ -56,5 +54,3 @@ export function StockIndicator({ stock, initialStock, availability }: StockIndic
     </div>
   );
 }
-
-    

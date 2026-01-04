@@ -25,7 +25,7 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { collection, getDocs, query, where, Timestamp, getDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, Timestamp, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StockIndicator } from '@/components/stock-indicator';
 import { useFirebase } from '@/firebase';
@@ -107,35 +107,36 @@ export default function FlashSalePage() {
 
   useEffect(() => {
     if (!db) return;
-    const fetchFlashSaleData = async () => {
-        setLoading(true);
-        try {
-            const campaignsRef = collection(db, 'campaigns');
-            const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
-            const campaignSnap = await getDocs(q);
-            
-            if (!campaignSnap.empty) {
-                const campaignDoc = campaignSnap.docs[0];
-                const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
-                setFlashSale(campaignData);
+    const campaignsRef = collection(db, 'campaigns');
+    const q = query(campaignsRef, where("type", "==", "Flash Sale"), where("status", "==", "Active"), where("endDate", ">", Timestamp.now()));
+    
+    const unsubscribe = onSnapshot(q, async (campaignSnap) => {
+      if (!campaignSnap.empty) {
+        const campaignDoc = campaignSnap.docs[0];
+        const campaignData = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
+        setFlashSale(campaignData);
 
-                if(campaignData.products && campaignData.products.length > 0) {
-                    const productPromises = campaignData.products.map(id => getDoc(doc(db, "products", id)));
-                    const productDocs = await Promise.all(productPromises);
-                    const productList = productDocs.map(doc => ({ id: doc.id, ...doc.data() } as Product)).filter(p => p.id);
-                    setAllFlashSaleItems(productList);
-                    setDisplayedItems(productList);
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching flash sale data:", error);
-            toast({ title: "Error", description: "Could not fetch flash sale details.", variant: "destructive" });
-        } finally {
-            setLoading(false);
+        if (campaignData.products && campaignData.products.length > 0) {
+          const productPromises = campaignData.products.map(id => getDoc(doc(db, "products", id)));
+          const productDocs = await Promise.all(productPromises);
+          const productList = productDocs.map(doc => ({ id: doc.id, ...doc.data() } as Product)).filter(p => p.id);
+          setAllFlashSaleItems(productList);
+        } else {
+            setAllFlashSaleItems([]);
         }
-    };
-    fetchFlashSaleData();
-  }, [toast, db]);
+      } else {
+        setFlashSale(null);
+        setAllFlashSaleItems([]);
+      }
+      setLoading(false);
+    }, (error) => {
+        console.error("Error fetching flash sale data:", error);
+        toast({ title: "Error", description: "Could not fetch flash sale details.", variant: "destructive" });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [db, toast]);
 
   const brands = [...new Set(allFlashSaleItems.map(item => item.brand))];
   const categories = [...new Set(allFlashSaleItems.map(item => item.organization.category))];
