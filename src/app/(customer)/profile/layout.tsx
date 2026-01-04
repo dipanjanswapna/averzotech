@@ -20,6 +20,7 @@ import { getAuth, signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useEffect } from "react";
 
 export default function ProfileLayout({
   children,
@@ -29,13 +30,14 @@ export default function ProfileLayout({
   const { user, loading } = useFirebase();
   const router = useRouter();
 
-  if (loading) {
-    return <div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>;
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [loading, user, router]);
 
-  if (!user) {
-    router.push('/login');
-    return null;
+  if (loading || !user) {
+    return <div className="flex h-screen items-center justify-center"><LoadingSpinner /></div>;
   }
   
   return (
