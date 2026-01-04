@@ -32,6 +32,8 @@
             "type": "object",
             "properties": {
                  "stock": { "type": "number" },
+                 "physicalStoreStock": { "type": "number" },
+                 "warehouseStock": { "type": "number" },
                  "initialStock": { "type": "number" },
                  "sku": { "type": "string" },
                  "availability": { "type": "string", "enum": ["in-stock", "out-of-stock", "pre-order"] },

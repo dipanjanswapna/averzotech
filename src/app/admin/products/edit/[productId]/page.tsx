@@ -132,6 +132,10 @@ export default function EditProductPage() {
     const [moq, setMoq] = useState('');
     const [maxPurchaseLimit, setMaxPurchaseLimit] = useState('');
     const [availability, setAvailability] = useState('in-stock');
+    const [physicalStoreStock, setPhysicalStoreStock] = useState('');
+    const [warehouseStock, setWarehouseStock] = useState('');
+    const totalStock = useMemo(() => Number(physicalStoreStock || 0) + Number(warehouseStock || 0), [physicalStoreStock, warehouseStock]);
+
     
     // Shipping
     const [estimatedDelivery, setEstimatedDelivery] = useState('');
@@ -195,6 +199,8 @@ export default function EditProductPage() {
                     setComparePrice(String(data.pricing?.comparePrice || ''));
                     setTax(String(data.pricing?.tax || ''));
                     setAvailability(data.inventory?.availability || 'in-stock');
+                    setPhysicalStoreStock(String(data.inventory?.physicalStoreStock || ''));
+                    setWarehouseStock(String(data.inventory?.warehouseStock || ''));
                     setMoq(String(data.inventory?.moq || ''));
                     setMaxPurchaseLimit(String(data.inventory?.maxPurchaseLimit || ''));
                     setEstimatedDelivery(data.shipping?.estimatedDelivery || '');
@@ -482,7 +488,9 @@ export default function EditProductPage() {
                 inventory: {
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
-                    stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    stock: totalStock,
+                    physicalStoreStock: Number(physicalStoreStock) || 0,
+                    warehouseStock: Number(warehouseStock) || 0,
                     availability: availability,
                 },
                 shipping: {
@@ -985,6 +993,20 @@ export default function EditProductPage() {
             <Card>
                 <CardHeader><CardTitle>Shipping & Inventory</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label htmlFor="physical-stock">Physical Store Stock</Label>
+                            <Input id="physical-stock" type="number" placeholder="e.g. 50" value={physicalStoreStock} onChange={e => setPhysicalStoreStock(e.target.value)} disabled={isLoading}/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="warehouse-stock">Warehouse/Online Stock</Label>
+                            <Input id="warehouse-stock" type="number" placeholder="e.g. 200" value={warehouseStock} onChange={e => setWarehouseStock(e.target.value)} disabled={isLoading}/>
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="total-stock">Total Stock</Label>
+                        <Input id="total-stock" type="number" value={totalStock} readOnly disabled />
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="moq">Minimum Order Quantity (MOQ)</Label>
                         <Input id="moq" type="number" placeholder="e.g. 5" value={moq} onChange={e => setMoq(e.target.value)} disabled={isLoading}/>
@@ -1011,3 +1033,4 @@ export default function EditProductPage() {
     </div>
   );
 }
+
