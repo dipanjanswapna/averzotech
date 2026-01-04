@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -98,7 +99,7 @@ export default function StockManagementPage() {
             if (p.id === productId) {
                 return {
                     ...p,
-                    variants: p.variants.map(v => v.sku === sku ? { ...v, stock: stockValue } : v)
+                    variants: Array.isArray(p.variants) ? p.variants.map(v => v.sku === sku ? { ...v, stock: stockValue } : v) : []
                 };
             }
             return p;
@@ -189,7 +190,7 @@ export default function StockManagementPage() {
                 </TableHeader>
                 <TableBody>
                     {filteredProducts.flatMap(product => 
-                        (product.variants || []).map(variant => (
+                        (Array.isArray(product.variants) ? product.variants : []).map(variant => (
                             <TableRow key={variant.sku}>
                                 <TableCell className="hidden sm:table-cell">
                                     <Image src={product.images?.[0] || 'https://placehold.co/64x64.png'} alt={product.name} width={48} height={48} className="rounded-md object-cover"/>
