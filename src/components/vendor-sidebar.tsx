@@ -1,8 +1,20 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, ShoppingCart, Settings, LogOut, FileText, BarChart3, Boxes, Receipt, Wallet, MessageSquareQuestion } from 'lucide-react';
+import {
+  Home,
+  Package,
+  ShoppingCart,
+  LogOut,
+  FileText,
+  BarChart3,
+  Boxes,
+  Receipt,
+  Wallet,
+  MessageCircleQuestion,
+} from 'lucide-react';
 import { Logo } from './logo';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -84,7 +96,7 @@ export function VendorSidebar({ user }: { user: any }) {
     { href: '/vendor/invoices', label: 'Invoices', icon: FileText },
     { href: '/vendor/accounts', label: 'Accounts', icon: Wallet },
     { href: '/vendor/reports', label: 'Reports', icon: BarChart3 },
-    { href: '/vendor/support', label: 'Support', icon: MessageSquareQuestion },
+    { href: '/vendor/support', label: 'Support', icon: MessageCircleQuestion },
   ];
   
   const productManagementItems = [
