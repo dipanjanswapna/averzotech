@@ -156,7 +156,7 @@ export default function EditUserPage() {
         <CardContent className="space-y-6">
             <div className='flex items-center gap-4'>
                 <Avatar className="h-20 w-20">
-                    <AvatarImage src={user.photoURL} alt={user.fullName} />
+                    <AvatarImage src={user.photoURL || undefined} alt={user.fullName} />
                     <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>

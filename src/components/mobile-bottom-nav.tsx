@@ -31,7 +31,7 @@ export function MobileBottomNav() {
                          return (
                             <Link key={item.href} href={item.href} className="flex flex-col items-center justify-center text-center">
                                 <Avatar className="h-7 w-7">
-                                    <AvatarImage src={user.photoURL || ''} alt={user.fullName} />
+                                    <AvatarImage src={user.photoURL || undefined} alt={user.fullName} />
                                     <AvatarFallback>{user.fullName?.[0]}</AvatarFallback>
                                 </Avatar>
                                 <span className={cn("text-xs mt-1", isActive ? 'text-primary font-semibold' : 'text-muted-foreground')}>

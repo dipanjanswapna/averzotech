@@ -109,7 +109,7 @@ export default function AdminDashboard() {
           const data = doc.data();
           return {
             id: doc.id,
-            customerName: data.customerName,
+            customerName: data.shippingAddress?.name || 'N/A',
             customerEmail: data.shippingAddress?.email || 'N/A',
             total: data.total,
             avatarUrl: '', // Placeholder for avatar

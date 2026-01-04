@@ -94,7 +94,7 @@ export function DeliverySidebar({ user }: { user: any }) {
             <DropdownMenuTrigger asChild>
                 <div className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-secondary">
                     <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.photoURL} alt={user?.fullName} />
+                        <AvatarImage src={user?.photoURL || undefined} alt={user?.fullName} />
                         <AvatarFallback>{user?.fullName?.[0]}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 group-data-[state=expanded]:block hidden">
