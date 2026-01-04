@@ -1007,7 +1007,7 @@ export default function EditProductPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="warehouse-stock">Warehouse/Online Stock</Label>
-                            <Input id="warehouse-stock" type="number" placeholder="e.g. 200" value={warehouseStock} onChange={e => setWarehouseStock(e.target.value)} disabled={isLoading}/>
+                            <Input id="warehouse-stock" type="number" placeholder="e.g. 200" value={warehouseTotalStock} readOnly disabled/>
                         </div>
                     </div>
                      <div className="space-y-2">
@@ -1040,5 +1040,6 @@ export default function EditProductPage() {
     </div>
   );
 }
+
 
 

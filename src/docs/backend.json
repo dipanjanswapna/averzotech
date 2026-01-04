@@ -32,6 +32,8 @@
             "type": "object",
             "properties": {
                  "stock": { "type": "number" },
+                 "physicalStoreStock": { "type": "number" },
+                 "warehouseStock": { "type": "number" },
                  "initialStock": { "type": "number" },
                  "sku": { "type": "string" },
                  "availability": { "type": "string", "enum": ["in-stock", "out-of-stock", "pre-order"] },
@@ -42,23 +44,38 @@
         },
         "brand": { "type": "string" },
         "variants": {
-          "type": "object",
-          "properties": {
-            "colors": {
-              "type": "array",
-              "items": {
+            "type": "array",
+            "items": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "hex": { "type": "string" }
+                    "sku": { "type": "string" },
+                    "wholesalePrice": { "type": "number" },
+                    "stock": { "type": "number" },
+                    "color": { "type": "string" },
+                    "size": { "type": "string" },
+                    "tiers": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "minQuantity": { "type": "number" },
+                                "pricePerUnit": { "type": "number" }
+                            }
+                        }
+                    },
+                    "batches": {
+                      "type": "array",
+                      "items": {
+                          "type": "object",
+                          "properties": {
+                              "batchNumber": { "type": "string" },
+                              "expiryDate": { "type": "string", "format": "date" },
+                              "stock": { "type": "number" }
+                          }
+                      }
+                    }
                 }
-              }
-            },
-            "sizes": {
-              "type": "array",
-              "items": { "type": "string" }
             }
-          }
         }
       },
       "required": ["name", "pricing", "images", "organization", "inventory"]
@@ -325,3 +342,4 @@
     }
   }
 }
+
