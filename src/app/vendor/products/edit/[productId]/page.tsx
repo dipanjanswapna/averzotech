@@ -162,10 +162,10 @@ export default function EditVendorProductPage() {
                     
                     const savedColors = productVariants.map((v: Variant) => v.color) || [];
                     const uniqueColors = [...new Set(savedColors)];
-                    setColors(uniqueColors.map(c => ({ name: c, hex: '#000000' }))); // hex is placeholder
+                    setColors(uniqueColors.map(c => ({ name: c as string, hex: '#000000' }))); // hex is placeholder
                     
                     const savedSizes = productVariants.map((v: Variant) => v.size) || [];
-                    setSizes([...new Set(savedSizes)]);
+                    setSizes([...new Set(savedSizes)] as string[]);
 
                     setVariants(productVariants);
                     
@@ -461,6 +461,8 @@ export default function EditVendorProductPage() {
                 ...v,
                 stock: (v.batches || []).reduce((acc, b) => acc + (Number(b.stock) || 0), 0)
             }));
+            
+            const warehouseTotalStock = updatedVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
 
             const productData = {
                 name: productName,
@@ -484,15 +486,10 @@ export default function EditVendorProductPage() {
                     subcategory: selectedSubcategory,
                     tags,
                 },
-                pricing: {
-                    price: 0,
-                    comparePrice: 0,
-                    discount: 0,
-                },
                 inventory: {
                     moq: parseInt(moq, 10) || 1,
                     maxPurchaseLimit: maxPurchaseLimit ? parseInt(maxPurchaseLimit, 10) : null,
-                    stock: updatedVariants.reduce((acc, v) => acc + (v.stock || 0), 0),
+                    stock: warehouseTotalStock, // This is warehouse/online stock
                     availability: availability,
                     lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold, 10) : 10,
                 },
