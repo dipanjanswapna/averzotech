@@ -43,7 +43,7 @@ import { collection, getDocs, query, orderBy, doc, deleteDoc } from 'firebase/fi
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 
 interface Order {
     id: string;
@@ -54,34 +54,10 @@ interface Order {
 }
 
 export default function OrdersPage() {
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
     const { toast } = useToast();
     const { db } = useFirebase();
-
-    const fetchOrders = async () => {
-        if(!db) return;
-        setLoading(true);
-        try {
-            const ordersCollection = collection(db, 'orders');
-            const q = query(ordersCollection, orderBy('createdAt', 'desc'));
-            const orderSnapshot = await getDocs(q);
-            const orderList = orderSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as Order));
-            setOrders(orderList);
-        } catch (error) {
-            console.error("Error fetching orders: ", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchOrders();
-    }, [db]);
+    const { data: orders, loading, error } = useCollection<Order>('orders');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const handleDeleteOrder = async (orderId: string, orderName: string) => {
         if(!db) return;
@@ -91,7 +67,7 @@ export default function OrdersPage() {
                 title: "Order Deleted",
                 description: `Order ${orderName} has been permanently deleted.`,
             });
-            fetchOrders(); // Re-fetch to update list
+            // Data will refetch automatically due to useCollection hook
         } catch (error) {
              toast({
                 title: "Error Deleting Order",

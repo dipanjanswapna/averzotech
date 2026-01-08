@@ -23,13 +23,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect, useMemo } from 'react';
-import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getDivisions, getDistricts, getThanas, getPostOffices } from '@/lib/location';
 import { Textarea } from '@/components/ui/textarea';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 
 interface Address {
     id: string;
@@ -48,8 +48,8 @@ interface Address {
 export default function AddressesPage() {
     const { user, db } = useFirebase();
     const { toast } = useToast();
-    const [addresses, setAddresses] = useState<Address[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: addresses, loading } = useCollection<Address>(user ? `users/${user.uid}/addresses` : '');
+    
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
@@ -72,27 +72,6 @@ export default function AddressesPage() {
     const thanas = useMemo(() => formData.district ? getThanas(formData.division, formData.district) : [], [formData.division, formData.district]);
     const postOffices = useMemo(() => formData.thana ? getPostOffices(formData.division, formData.district, formData.thana) : [], [formData.division, formData.district, formData.thana]);
 
-    const fetchAddresses = async () => {
-        if (!user || !db) return;
-        setLoading(true);
-        try {
-            const addressesCol = collection(db, 'users', user.uid, 'addresses');
-            const addressSnapshot = await getDocs(addressesCol);
-            const addressList = addressSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Address));
-            setAddresses(addressList);
-        } catch (error) {
-            console.error("Error fetching addresses: ", error);
-            toast({ title: "Error", description: "Could not fetch addresses.", variant: "destructive" });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if(user) {
-            fetchAddresses();
-        }
-    }, [user, db]);
 
     useEffect(() => {
         if (editingAddress) {
@@ -174,7 +153,6 @@ export default function AddressesPage() {
         try {
             await batch.commit();
             toast({ title: "Default address updated" });
-            fetchAddresses();
         } catch (error) {
             console.error("Error setting default address: ", error);
             toast({ title: "Error", description: "Failed to update default address.", variant: "destructive" });
@@ -208,7 +186,6 @@ export default function AddressesPage() {
                 await addDoc(addressesCol, dataToSave);
                 toast({ title: "Address Added" });
             }
-            fetchAddresses();
             setIsDialogOpen(false);
             setEditingAddress(null);
         } catch (error) {
@@ -223,7 +200,6 @@ export default function AddressesPage() {
         try {
             await deleteDoc(docRef);
             toast({ title: "Address Removed" });
-            fetchAddresses();
         } catch (error) {
             console.error("Error deleting address: ", error);
             toast({ title: "Error", description: "Could not remove address.", variant: "destructive" });
