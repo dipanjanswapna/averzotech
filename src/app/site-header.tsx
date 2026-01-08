@@ -22,7 +22,7 @@ import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useAuth, AppUser } from '@/hooks/use-auth';
+import { AppUser } from '@/firebase/provider';
 import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
 import { useCart } from '@/hooks/use-cart';
@@ -37,8 +37,7 @@ const getDashboardLink = (user: AppUser | null) => {
 }
 
 export function SiteHeader() {
-  const { user } = useAuth();
-  const { auth } = useFirebase();
+  const { user, auth } = useFirebase();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { toast } = useToast();
@@ -281,7 +280,7 @@ export function SiteHeader() {
                   <DropdownMenuTrigger asChild>
                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
+                            <AvatarImage src={user?.photoURL || undefined} alt={user?.fullName || ''} />
                             <AvatarFallback>{user ? user.fullName.charAt(0).toUpperCase() : <User className='h-5 w-5' />}</AvatarFallback>
                         </Avatar>
                     </Button>
@@ -326,9 +325,7 @@ export function SiteHeader() {
             <ScrollArea className="md:hidden -mx-4">
               <nav className="flex items-center gap-6 text-sm font-medium px-4">
                  {categories.map((category) => (
-                    <SheetClose asChild key={category.name}>
-                        <Link href={category.href} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
-                    </SheetClose>
+                    <Link href={category.href} key={category.name} className="hover:text-primary py-2 flex-shrink-0">{category.name}</Link>
                 ))}
               </nav>
               <ScrollBar orientation="horizontal" className="invisible" />

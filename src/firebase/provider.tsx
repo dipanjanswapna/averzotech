@@ -85,9 +85,13 @@ export function FirebaseProvider({
 
   const value = { app, auth, db, user, loading, isAdmin, setUser };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <FirebaseContext.Provider value={value}>
-        {loading ? <LoadingSpinner /> : children}
+        {children}
     </FirebaseContext.Provider>
   );
 }

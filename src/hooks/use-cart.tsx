@@ -2,8 +2,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
-import { app } from '@/lib/firebase';
 
 // Define the structure of an applied coupon
 export interface AppliedCoupon {
