@@ -7,7 +7,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from '@/components/ui/card';
 import {
   Table,
@@ -32,12 +31,12 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, where, doc, writeBatch, increment, serverTimestamp, limit } from 'firebase/firestore';
+import { useEffect, useState, useMemo } from 'react';
+import { collection, doc, writeBatch, increment, serverTimestamp, getDocs, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useFirebase } from '@/firebase/provider';
+import { useFirebase, useCollection } from '@/firebase';
 
 interface Order {
     id: string;
@@ -46,60 +45,53 @@ interface Order {
     total: number;
     items: { id: string, name: string, image: string, quantity: number }[];
     returnId?: string;
+    userId: string;
 }
 
 export default function MyOrdersPage() {
     const { user, db } = useFirebase();
     const { toast } = useToast();
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { data: orders, loading } = useCollection<Order>(user ? `users/${user.uid}/orders` : '');
+
     const [cancellationReason, setCancellationReason] = useState('');
-
-    const findReturnForOrder = async (orderId: string): Promise<string | undefined> => {
-        if (!db) return undefined;
-        const returnsRef = collection(db, 'returns');
-        const q = query(returnsRef, where("orderId", "==", orderId), limit(1));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            return querySnapshot.docs[0].id;
-        }
-        return undefined;
-    };
-
-    const fetchOrders = async () => {
-        if (!user || !db) return;
-        setLoading(true);
-        try {
-            const ordersCollection = collection(db, 'orders');
-            const q = query(ordersCollection, where("userId", "==", user.uid));
-            const orderSnapshot = await getDocs(q);
-            const orderListPromises = orderSnapshot.docs.map(async (doc) => {
-                const orderData = { id: doc.id, ...doc.data() } as Omit<Order, 'returnId'>;
-                const returnId = await findReturnForOrder(doc.id);
-                return { ...orderData, returnId };
-            });
-
-            let orderList = await Promise.all(orderListPromises);
-            
-            orderList.sort((a, b) => {
-                const dateA = a.createdAt?.seconds || 0;
-                const dateB = b.createdAt?.seconds || 0;
-                return dateB - dateA;
-            });
-
-            setOrders(orderList);
-        } catch (error) {
-            console.error("Error fetching orders: ", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [processedOrders, setProcessedOrders] = useState<Order[]>([]);
 
     useEffect(() => {
-        if (user) {
-            fetchOrders();
+        if (!db || !orders.length) {
+            setProcessedOrders(orders);
+            return;
         }
-    }, [user, db]);
+
+        const processOrders = async () => {
+            const returnsRef = collection(db, 'returns');
+            const orderIdsWithReturns = orders.map(o => o.id);
+
+            if(orderIdsWithReturns.length === 0) {
+                 setProcessedOrders(orders);
+                 return;
+            }
+
+            const q = query(returnsRef, where("orderId", "in", orderIdsWithReturns));
+            const returnsSnapshot = await getDocs(q);
+            const returnMap = new Map<string, string>();
+            returnsSnapshot.forEach(doc => {
+                returnMap.set(doc.data().orderId, doc.id);
+            });
+
+            const updatedOrders = orders.map(order => ({
+                ...order,
+                returnId: returnMap.get(order.id)
+            }));
+            
+            updatedOrders.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+            setProcessedOrders(updatedOrders);
+        };
+        
+        processOrders();
+
+    }, [orders, db]);
+
 
     const handleCancelOrder = async (order: Order) => {
         if (!canCancel(order)) {
@@ -133,7 +125,6 @@ export default function MyOrdersPage() {
 
             await batch.commit();
             toast({ title: "Order Cancelled", description: "Your order has been successfully cancelled." });
-            fetchOrders(); 
         } catch (error) {
              console.error("Error cancelling order: ", error);
              toast({ title: "Error", description: "Failed to cancel the order.", variant: "destructive" });
@@ -209,7 +200,7 @@ export default function MyOrdersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
+              {processedOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id.substring(0,7)}...</TableCell>
                   <TableCell>{formatDate(order.createdAt)}</TableCell>

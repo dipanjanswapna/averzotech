@@ -20,11 +20,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, query, orderBy, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Undo2 } from 'lucide-react';
-import { useFirebase } from '@/firebase/provider';
+import { useFirebase, useCollection } from '@/firebase';
 
 interface ReturnRequest {
   id: string;
@@ -32,39 +32,16 @@ interface ReturnRequest {
   status: 'Pending' | 'Approved' | 'Rejected' | 'Processing' | 'Completed';
   createdAt: any;
   items: { name: string; quantity: number }[];
+  userId: string;
 }
 
 export default function MyReturnsPage() {
   const { user, db } = useFirebase();
   const { toast } = useToast();
-  const [requests, setRequests] = useState<ReturnRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user?.uid || !db) return;
-
-    const fetchReturnRequests = async () => {
-      setLoading(true);
-      try {
-        const returnsRef = collection(db, 'returns');
-        const q = query(returnsRef, where("userId", "==", user.uid), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const requestsList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as ReturnRequest));
-        setRequests(requestsList);
-      } catch (error) {
-        console.error("Error fetching return requests:", error);
-        toast({ title: "Error", description: "Could not fetch your return requests.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReturnRequests();
-  }, [user, toast, db]);
-
+  const { data: requests, loading } = useCollection<ReturnRequest>(
+    user ? `users/${user.uid}/returns` : ''
+  );
+  
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'Approved': return 'bg-green-100 text-green-800';

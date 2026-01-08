@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import { Logo } from '@/components/logo';
+import { Logo } from './logo';
 import { Input } from './ui/input';
 import { MegaMenu } from './mega-menu';
 import { ScrollArea, ScrollBar } from './ui/scroll-area';
@@ -25,7 +26,7 @@ import { AppUser } from '@/firebase/provider';
 import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
 import { useCart } from '@/hooks/use-cart';
-import { useAuth } from '@/hooks/use-auth';
+import { useFirebase } from '@/firebase';
 
 const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
@@ -36,7 +37,7 @@ const getDashboardLink = (user: AppUser | null) => {
 }
 
 export function SiteHeader() {
-  const { user, auth } = useAuth();
+  const { user, auth } = useFirebase();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { toast } = useToast();
