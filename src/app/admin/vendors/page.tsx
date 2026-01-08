@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -31,37 +32,12 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Vendor } from '@/types';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 
 export default function VendorsPage() {
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: vendors, loading } = useCollection<Vendor>('vendors');
   const { toast } = useToast();
-  const { db } = useFirebase();
-
-  useEffect(() => {
-    if (!db) return;
-    const fetchVendors = async () => {
-      setLoading(true);
-      try {
-        const vendorsCollection = collection(db, 'vendors');
-        const q = query(vendorsCollection, orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const vendorList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Vendor));
-        setVendors(vendorList);
-      } catch (error) {
-        console.error("Error fetching vendors: ", error);
-        toast({ title: "Error", description: "Could not fetch vendors.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchVendors();
-  }, [toast, db]);
-
+  
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-800';
@@ -74,6 +50,15 @@ export default function VendorsPage() {
       if (score > 75) return 'text-green-600';
       if (score > 50) return 'text-yellow-600';
       return 'text-red-600';
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold">Vendors</h1>
+        <p>Loading vendors...</p>
+      </div>
+    );
   }
 
   return (
@@ -93,70 +78,67 @@ export default function VendorsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <p>Loading vendors...</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Shop Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Trust Score</TableHead>
-                  <TableHead>SLA</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Shop Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Trust Score</TableHead>
+                <TableHead>SLA</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {vendors.length > 0 ? vendors.map((vendor) => (
+                <TableRow key={vendor.id}>
+                  <TableCell className="font-medium flex items-center gap-2">
+                      {vendor.shopName}
+                      {vendor.isSuperVendor && (
+                          <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400">
+                              <Star className="w-3 h-3 mr-1"/> Super
+                          </Badge>
+                      )}
+                  </TableCell>
+                  <TableCell>{vendor.category}</TableCell>
+                  <TableCell>
+                      <span className={cn("font-bold", getScoreColor(vendor.performance?.trustScore || 0))}>
+                          {vendor.performance?.trustScore || 'N/A'}
+                      </span>
+                  </TableCell>
+                  <TableCell>{vendor.sla?.deliveryCommitment} hours</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn(getStatusBadgeClass(vendor.status))}>
+                      {vendor.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                         <DropdownMenuItem asChild>
+                              <Link href={`/admin/vendors/${vendor.id}`}>View Details</Link>
+                         </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {vendors.map((vendor) => (
-                  <TableRow key={vendor.id}>
-                    <TableCell className="font-medium flex items-center gap-2">
-                        {vendor.shopName}
-                        {vendor.isSuperVendor && (
-                            <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-400">
-                                <Star className="w-3 h-3 mr-1"/> Super
-                            </Badge>
-                        )}
+              )) : (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">
+                       No approved vendors found.
                     </TableCell>
-                    <TableCell>{vendor.category}</TableCell>
-                    <TableCell>
-                        <span className={cn("font-bold", getScoreColor(vendor.performance?.trustScore || 0))}>
-                            {vendor.performance?.trustScore || 'N/A'}
-                        </span>
-                    </TableCell>
-                    <TableCell>{vendor.sla?.deliveryCommitment} hours</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={cn(getStatusBadgeClass(vendor.status))}>
-                        {vendor.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                           <DropdownMenuItem asChild>
-                                <Link href={`/admin/vendors/${vendor.id}`}>View Details</Link>
-                           </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-           {vendors.length === 0 && !loading && (
-             <div className="text-center p-8 text-muted-foreground">
-                No approved vendors found.
-             </div>
-           )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

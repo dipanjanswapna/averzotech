@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ interface UseDocOptions {
   // Add any options you might need
 }
 
-export function useDoc<T>(path: string, id: string, options?: UseDocOptions) {
+export function useDoc<T>(path: string, id?: string, options?: UseDocOptions) {
   const { db } = useFirebase();
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +19,7 @@ export function useDoc<T>(path: string, id: string, options?: UseDocOptions) {
   useEffect(() => {
     if (!db || !id) {
         setLoading(false);
+        setData(null);
         return;
     };
 

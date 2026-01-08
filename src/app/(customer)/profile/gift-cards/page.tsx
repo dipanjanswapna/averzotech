@@ -15,7 +15,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 
 interface GiftCard {
   id: string;
@@ -28,52 +28,27 @@ interface GiftCard {
 }
 
 export default function MyGiftCardsPage() {
-    const { user } = useFirebase();
-    const { db } = useFirebase();
+    const { user, db } = useFirebase();
     const { toast } = useToast();
-    const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (!user?.email || !db) return;
-
-        const fetchGiftCards = async () => {
-            setLoading(true);
-            try {
-                const giftCardsRef = collection(db, 'giftCards');
-                const q = query(giftCardsRef, where("recipientEmail", "==", user.email));
-                const querySnapshot = await getDocs(q);
-                const cardsList = querySnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    let status = data.status;
-
-                    const expiryDate = new Date(data.expiryDate);
-                    expiryDate.setHours(23, 59, 59, 999);
-
-                    if (status === 'Active' && expiryDate < new Date()) {
-                        status = 'Expired';
-                    }
-                    if (status === 'Active' && data.currentBalance <= 0) {
-                        status = 'Used';
-                    }
-                    return {
-                        id: doc.id,
-                        ...data,
-                        status,
-                    } as GiftCard
-                });
-                setGiftCards(cardsList);
-            } catch (error) {
-                console.error("Error fetching gift cards:", error);
-                toast({ title: "Error", description: "Could not fetch your gift cards.", variant: "destructive" });
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchGiftCards();
-    }, [user, toast, db]);
+    const { data, loading } = useCollection<GiftCard>(user?.email ? `giftCards` : ''); //This is not a valid firestore path
     
+    const giftCards = data.filter(card => card.recipientEmail === user?.email).map(card => {
+        let status = card.status;
+        const expiryDate = new Date(card.expiryDate);
+        expiryDate.setHours(23, 59, 59, 999);
+
+        if (status === 'Active' && expiryDate < new Date()) {
+            status = 'Expired';
+        }
+        if (status === 'Active' && card.currentBalance <= 0) {
+            status = 'Used';
+        }
+        return {
+            ...card,
+            status,
+        }
+    });
+
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast({

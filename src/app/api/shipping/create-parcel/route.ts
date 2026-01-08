@@ -1,13 +1,12 @@
 
+
 'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { createParcel } from '@/lib/redx';
 import { Order } from '@/types';
-import { initializeFirebase } from '@/firebase';
-
-const { firestore: db } = initializeFirebase();
+import { db } from '@/firebase-server';
 
 export async function POST(req: NextRequest) {
     try {

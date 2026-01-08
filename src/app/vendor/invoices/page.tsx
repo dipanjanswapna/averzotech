@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -28,41 +29,17 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { VendorInvoice } from '@/types';
 
 
 export default function VendorInvoicesPage() {
-  const [invoices, setInvoices] = useState<VendorInvoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user, db } = useFirebase();
+  const { user } = useFirebase();
+  const { data: invoices, loading } = useCollection<VendorInvoice>(user?.uid ? 'vendorInvoices' : '');
 
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      if (!user?.fullName || !db) return;
-      setLoading(true);
-      try {
-        const invoicesCollection = collection(db, 'vendorInvoices');
-        const q = query(invoicesCollection, where("vendorName", "==", user.fullName), orderBy('createdAt', 'desc'));
-        const invoiceSnapshot = await getDocs(q);
-        const invoiceList = invoiceSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as VendorInvoice));
-        setInvoices(invoiceList);
-      } catch (error) {
-        console.error("Error fetching invoices: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const vendorInvoices = invoices.filter(invoice => invoice.vendorId === user?.uid);
 
-    if (user) {
-      fetchInvoices();
-    }
-  }, [user, db]);
-  
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case 'Paid':
@@ -129,7 +106,7 @@ export default function VendorInvoicesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.length > 0 ? invoices.map((invoice) => (
+              {vendorInvoices.length > 0 ? vendorInvoices.map((invoice) => (
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.id.substring(0, 7)}...</TableCell>
                   <TableCell>{formatDate(invoice.createdAt)}</TableCell>
@@ -151,7 +128,7 @@ export default function VendorInvoicesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                           <Link href={`/vendor/invoices/${invoice.id}`}>View Details</Link>
+                           <Link href={`/admin/vendor-invoices/${invoice.id}`}>View Details</Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

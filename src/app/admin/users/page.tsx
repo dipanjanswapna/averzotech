@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -30,7 +31,7 @@ import { MoreHorizontal, Trash2, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 
 
 interface User {
@@ -44,30 +45,9 @@ interface User {
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: users, loading, error } = useCollection<User>('users');
   const { db } = useFirebase();
   const { toast } = useToast();
-
-  const fetchUsers = async () => {
-    if (!db) return;
-    setLoading(true);
-    try {
-        const usersCollection = collection(db, 'users');
-        const userSnapshot = await getDocs(usersCollection);
-        const userList = userSnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User));
-        setUsers(userList);
-    } catch (error) {
-        console.error("Error fetching users: ", error);
-        toast({ title: "Error", description: "Could not fetch users.", variant: "destructive" });
-    } finally {
-        setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchUsers();
-  }, [db]);
 
   const handleDeleteUser = async (userId: string) => {
     if(!db) return;
@@ -77,7 +57,6 @@ export default function UsersPage() {
             title: "User Deleted",
             description: "The user has been successfully removed from the database.",
         });
-        fetchUsers(); 
     } catch (error) {
         console.error("Error deleting user: ", error);
         toast({

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,35 +31,11 @@ import { useEffect, useState } from 'react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { VendorInvoice } from '@/types';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 
 
 export default function VendorInvoicesPage() {
-  const [invoices, setInvoices] = useState<VendorInvoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { db } = useFirebase();
-
-  useEffect(() => {
-    if (!db) return;
-    const fetchInvoices = async () => {
-      setLoading(true);
-      try {
-        const invoicesCollection = collection(db, 'vendorInvoices');
-        const q = query(invoicesCollection, orderBy('createdAt', 'desc'));
-        const invoiceSnapshot = await getDocs(q);
-        const invoiceList = invoiceSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as VendorInvoice));
-        setInvoices(invoiceList);
-      } catch (error) {
-        console.error("Error fetching invoices: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInvoices();
-  }, [db]);
+  const { data: invoices, loading } = useCollection<VendorInvoice>('vendorInvoices');
   
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
