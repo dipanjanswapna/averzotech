@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -27,14 +26,15 @@ export default function RegisterPage() {
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
 
   const { toast } = useToast();
-  const { auth, db } = useFirebase();
+  const { app, db } = useFirebase();
   const router = useRouter();
 
   const isVendorAndFormIncomplete = role === 'vendor' && !vendorApplicationData;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth || !db) return;
+    if (!app || !db) return;
+    const auth = getAuth(app);
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -105,7 +105,8 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignUp = async () => {
-    if (!auth || !db) return;
+    if (!app || !db) return;
+    const auth = getAuth(app);
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {

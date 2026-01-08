@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -12,22 +11,22 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { Chrome } from 'lucide-react';
-import { AppUser } from '@/firebase/provider';
-import { useFirebase } from '@/firebase/provider';
+import { AppUser, useFirebase } from '@/firebase/provider';
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { app } = useFirebase();
+  const { app, db } = useFirebase();
   const router = useRouter();
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!app) return;
+    if (!app || !db) return;
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    
     setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -108,9 +107,8 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    if (!app) return;
+    if (!app || !db) return;
     const auth = getAuth(app);
-    const db = getFirestore(app);
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     try {
@@ -247,5 +245,3 @@ export default function LoginPage() {
     </Card>
   );
 }
-
-    

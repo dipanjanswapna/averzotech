@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -9,7 +8,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { Playfair_Display, PT_Sans } from 'next/font/google';
 import { DynamicComponents } from '@/components/dynamic-components';
 import { CartSheet } from '@/components/cart-sheet';
-import { FirebaseProvider } from '@/firebase/provider';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -34,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${ptSans.variable}`}>
       <body className="font-sans antialiased">
-        <FirebaseProvider>
+        <FirebaseClientProvider>
           <CartProvider>
             <WishlistProvider>
               <div className="flex flex-col min-h-screen">
@@ -47,7 +46,7 @@ export default function RootLayout({
               <Toaster />
             </WishlistProvider>
           </CartProvider>
-        </FirebaseProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

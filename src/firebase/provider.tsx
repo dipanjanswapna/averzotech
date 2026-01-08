@@ -1,12 +1,9 @@
-
 'use client';
-import { Auth, getAuth, onAuthStateChanged } from 'firebase/auth';
+import { Auth, onAuthStateChanged } from 'firebase/auth';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { FirebaseApp } from 'firebase/app';
-import { Firestore, getFirestore, doc, getDoc } from 'firebase/firestore';
-import { initializeFirebase } from '.';
+import { Firestore, doc, getDoc } from 'firebase/firestore';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-
 
 export interface AppUser {
   uid: string;
@@ -37,17 +34,25 @@ export const useFirebase = () => {
     return context;
 };
 
+interface FirebaseProviderProps {
+  children: ReactNode;
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
+}
+
 export function FirebaseProvider({
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { app, auth, firestore: db } = initializeFirebase();
+  app,
+  auth,
+  db
+}: FirebaseProviderProps) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         try {
             const userDocRef = doc(db, "users", firebaseUser.uid);
@@ -85,13 +90,9 @@ export function FirebaseProvider({
 
   const value = { app, auth, db, user, loading, isAdmin, setUser };
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   return (
     <FirebaseContext.Provider value={value}>
-        {children}
+        {loading ? <LoadingSpinner /> : children}
     </FirebaseContext.Provider>
   );
 }

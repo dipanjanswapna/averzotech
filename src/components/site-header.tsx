@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -22,10 +21,11 @@ import { ScrollArea, ScrollBar } from './ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { AppUser, useFirebase } from '@/firebase';
+import { AppUser } from '@/firebase/provider';
 import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
 import { useCart } from '@/hooks/use-cart';
+import { useAuth } from '@/hooks/use-auth';
 
 const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
@@ -36,7 +36,7 @@ const getDashboardLink = (user: AppUser | null) => {
 }
 
 export function SiteHeader() {
-  const { user, auth } = useFirebase();
+  const { user, auth } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { toast } = useToast();
@@ -121,7 +121,7 @@ export function SiteHeader() {
                             {user ? (
                                 <div className="flex items-center gap-3">
                                     <Avatar className="h-12 w-12">
-                                        <AvatarImage src={user.photoURL || undefined} alt={user.fullName} />
+                                        <AvatarImage src={user.photoURL || ''} alt={user.fullName} />
                                         <AvatarFallback>{user.fullName?.[0].toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     <div>
@@ -138,8 +138,12 @@ export function SiteHeader() {
                             <nav className="flex flex-col space-y-2">
                               {user ? (
                                 <>
-                                    <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><User className="mr-2 h-5 w-5" />Profile</Link>
-                                    <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary" onClick={() => setIsSheetOpen(false)}><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                                    <SheetClose asChild>
+                                      <Link href="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary"><User className="mr-2 h-5 w-5" />Profile</Link>
+                                    </SheetClose>
+                                    <SheetClose asChild>
+                                      <Link href="/wishlist" className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary"><Heart className="mr-2 h-5 w-5" />Wishlist</Link>
+                                    </SheetClose>
                                     <div className="flex items-center gap-3 rounded-md p-2 hover:bg-secondary cursor-pointer" onClick={() => { setIsCartOpen(true); setIsSheetOpen(false); }}><ShoppingCart className="mr-2 h-5 w-5" />Cart</div>
                                     <Separator className="my-2" />
                                     <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-500" onClick={() => {handleLogout(); setIsSheetOpen(false);}}>
@@ -201,7 +205,7 @@ export function SiteHeader() {
                     <DropdownMenuTrigger asChild>
                          <Button variant="ghost" size="icon">
                             <Avatar className="h-7 w-7">
-                                <AvatarImage src={user?.photoURL || undefined} alt={user?.fullName || ''} />
+                                <AvatarImage src={user?.photoURL || ''} alt={user?.fullName || ''} />
                                 <AvatarFallback>{user ? user.fullName.charAt(0).toUpperCase() : <User className='h-5 w-5' />}</AvatarFallback>
                             </Avatar>
                         </Button>
