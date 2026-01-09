@@ -76,14 +76,6 @@ export default function ShippingPage() {
       const initialAddress = currentShippingAddress || defaultAddress || (addressList.length > 0 ? addressList[0] : null);
       setSelectedAddress(initialAddress);
       
-      if (initialAddress) {
-        const thanas = getSundarbanThanas(initialAddress.district);
-        setSundarbanThanas(thanas);
-        if (thanas.length > 0) {
-          setSelectedSundarbanThana(thanas[0]);
-        }
-      }
-
       setLoadingAddresses(false);
     };
     fetchAddresses();
@@ -132,7 +124,7 @@ export default function ShippingPage() {
                 email: user?.email || '',
                 phone: selectedAddress.phone,
                 fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.thana}, ${selectedAddress.district}`,
-                method: selectedShippingMethod || 'Standard Courier (RedX)',
+                method: 'Standard Courier (RedX)',
             };
         }
 
@@ -228,7 +220,7 @@ export default function ShippingPage() {
                                 <p className="text-sm text-muted-foreground">Est. Delivery: 2-4 business days</p>
                             </div>
                         </div>
-                        <p className="font-semibold">৳{availableShippingMethods.find(m => m.name === 'Standard Courier')?.fee.toFixed(2) || '60.00'}</p>
+                        <p className="font-semibold">৳{availableShippingMethods.find(m => m.name === 'Standard Courier (RedX)')?.fee.toFixed(2) || '60.00'}</p>
                         <RadioGroupItem value="Standard Courier (RedX)" id="standard-courier" className="ml-4"/>
                     </Label>
                      <Label htmlFor="sundarban-courier" className={cn("flex items-center justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === 'Pickup from Store' })}>

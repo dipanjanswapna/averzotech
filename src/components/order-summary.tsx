@@ -36,7 +36,7 @@ export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMe
                     )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
-                        <p className="font-semibold">{shippingInfo?.method || shippingMethod ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
+                        <p className="font-semibold">{shippingInfo?.method ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
                     </div>
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Taxes</p>
@@ -53,10 +53,10 @@ export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMe
                             <Separator className="my-2" />
                             <div className="space-y-2 text-sm">
                                 <div className="flex items-start gap-3">
-                                    {shippingInfo.delivery_area_id === -1 ? <Store className="h-4 w-4 mt-1 text-muted-foreground" /> : <Home className="h-4 w-4 mt-1 text-muted-foreground" />}
+                                    {shippingInfo.method === 'Pickup from Store' ? <Store className="h-4 w-4 mt-1 text-muted-foreground" /> : <Home className="h-4 w-4 mt-1 text-muted-foreground" />}
                                     <div>
                                         <p className="text-muted-foreground">
-                                            {shippingInfo.delivery_area_id === -1 ? 'Pickup From' : 'Ship to'}
+                                            {shippingInfo.method === 'Pickup from Store' ? 'Pickup From' : 'Ship to'}
                                         </p>
                                         <p className="font-semibold text-xs">{shippingInfo.fullAddress}</p>
                                     </div>
