@@ -55,10 +55,10 @@ export const OrderSummary: React.FC = () => {
                                 <div className="flex items-start gap-3">
                                     {shippingInfo.method === 'Pickup from Store' ? <Store className="h-4 w-4 mt-1 text-muted-foreground" /> : <Home className="h-4 w-4 mt-1 text-muted-foreground" />}
                                     <div>
-                                        <p className="text-muted-foreground">
+                                        <p className="text-muted-foreground font-semibold">
                                             {shippingInfo.method === 'Pickup from Store' ? 'Pickup From' : 'Ship to'}
                                         </p>
-                                        <p className="font-semibold text-xs">{shippingInfo.fullAddress}</p>
+                                        <p className="text-xs">{shippingInfo.fullAddress}</p>
                                     </div>
                                 </div>
                             </div>

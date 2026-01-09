@@ -50,9 +50,9 @@ export default function ShippingPage() {
   const [selectedSundarbanThana, setSelectedSundarbanThana] = React.useState<string>('');
 
   const availableShippingMethods = React.useMemo(() => {
-    const methods = [{ name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60 }];
+    const methods = [{ name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60, icon: Truck }];
     if (selectedAddress && getSundarbanThanas(selectedAddress.district).length > 0) {
-        methods.push({ name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 120 });
+        methods.push({ name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 45, icon: Store });
     }
     return methods;
   }, [selectedAddress]);
@@ -87,18 +87,10 @@ export default function ShippingPage() {
           } else {
             setSelectedSundarbanThana('');
           }
+          // Default to RedX when address changes
+          setSelectedShippingMethod('Standard Courier (RedX)');
       }
   }, [selectedAddress]);
-
-  React.useEffect(() => {
-    if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {
-      setSelectedShippingMethod(shippingInfo.method);
-    } else if (availableShippingMethods.length > 0) {
-      setSelectedShippingMethod(availableShippingMethods[0].name);
-    } else {
-      setSelectedShippingMethod(null);
-    }
-  }, [availableShippingMethods, shippingInfo]);
 
   React.useEffect(() => {
     if (selectedAddress && selectedShippingMethod) {
@@ -133,12 +125,10 @@ export default function ShippingPage() {
             };
         }
         
-        // Only update if there's a change to avoid loops
         if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
             setShippingInfo(newShippingInfo);
         }
     } else if (shippingInfo) {
-      // Clear shipping info if no address or method is selected
       setShippingInfo(null);
     }
 }, [selectedAddress, selectedShippingMethod, selectedSundarbanThana, user, setShippingInfo, shippingInfo]);
@@ -231,7 +221,7 @@ export default function ShippingPage() {
                     {availableShippingMethods.map(method => (
                         <Label key={method.name} htmlFor={method.name} className={cn("flex items-start justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === method.name })}>
                             <div className="flex items-center gap-3">
-                                {method.name === 'Pickup from Store' ? <Store className="h-6 w-6 text-muted-foreground" /> : <Truck className="h-6 w-6 text-muted-foreground" />}
+                                <method.icon className="h-6 w-6 text-muted-foreground" />
                                 <div className='flex-1'>
                                     <p className="font-semibold">{method.name}</p>
                                     <p className="text-sm text-muted-foreground">{method.estimatedDelivery}</p>
@@ -276,5 +266,3 @@ export default function ShippingPage() {
     </div>
   )
 }
-
-    

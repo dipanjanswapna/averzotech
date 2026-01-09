@@ -30,6 +30,9 @@ export interface ShippingInfo {
     method: string;
     delivery_area: string;
     delivery_area_id: number;
+    district: string;
+    division: string;
+    upazila: string;
 }
 
 export interface ShippingMethod {
@@ -218,25 +221,31 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const availableShippingMethods: ShippingMethod[] = useMemo(() => {
-    if (shippingInfo?.method === 'Sundarban Courier') {
+    if (shippingInfo?.method === 'Pickup from Store') {
         return [
           { name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60 },
-          { name: 'Sundarban Courier', estimatedDelivery: '3-5 business days', fee: 120 }
+          { name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 45 }
         ];
     }
     return [
-      { name: 'Standard Courier (RedX)', estimatedDelivery: '3-5 business days', fee: shippingFee },
-      { name: 'Sundarban Courier', estimatedDelivery: '3-5 business days', fee: 120 },
+      { name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60 },
+      { name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 45 },
     ];
-  }, [shippingFee, shippingInfo]);
+  }, [shippingInfo]);
 
   const calculateShippingFee = useCallback(async () => {
-    if (!shippingInfo || !shippingInfo.delivery_area_id || shippingInfo.method !== 'Standard Courier (RedX)') {
-        if(shippingInfo?.method === 'Sundarban Courier') {
-            setShippingFee(120);
-        } else {
-            setShippingFee(60); 
-        }
+    if (!shippingInfo) {
+      setShippingFee(0);
+      return;
+    }
+
+    if (shippingInfo.method === 'Pickup from Store') {
+      setShippingFee(45);
+      return;
+    }
+
+    if (!shippingInfo.delivery_area_id) {
+        setShippingFee(60); // Default RedX fee
         return;
     }
     
@@ -271,6 +280,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if(shippingInfo){
       calculateShippingFee();
+    } else {
+        setShippingFee(0);
     }
   }, [calculateShippingFee, shippingInfo]);
 
