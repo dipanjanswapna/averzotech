@@ -259,11 +259,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           setShippingFee(chargeData.delivery_charge);
         } catch (error) {
           console.error("Failed to calculate RedX charge, using fallback.", error);
-           setShippingFee(shippingInfo.division === 'Dhaka' ? 50 : 80);
+           setShippingFee(shippingInfo.division === 'Dhaka' ? 60 : 120);
         }
       } else {
         // Fallback for addresses without delivery_area_id
-        setShippingFee(shippingInfo.division === 'Dhaka' ? 50 : 80);
+        setShippingFee(shippingInfo.division === 'Dhaka' ? 60 : 120);
       }
     };
 
@@ -334,5 +334,3 @@ export const useCart = () => {
   }
   return context;
 };
-
-    

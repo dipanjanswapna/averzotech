@@ -48,8 +48,8 @@ export default function ShippingPolicyPage() {
               <div>
                 <h2 className="font-semibold text-2xl mt-0">Shipping Costs</h2>
                  <ul className="list-disc pl-6 space-y-2">
-                    <li><strong>Inside Dhaka:</strong> ৳60</li>
-                    <li><strong>Outside Dhaka:</strong> ৳120</li>
+                    <li><strong>Inside Dhaka:</strong> Starts from ৳60. Charges may vary based on weight.</li>
+                    <li><strong>Outside Dhaka:</strong> Starts from ৳120. Charges may vary based on weight.</li>
                     <li><strong>Free Shipping:</strong> We offer free shipping on all pre-paid orders over ৳2000.</li>
                 </ul>
               </div>
