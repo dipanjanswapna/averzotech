@@ -173,7 +173,7 @@ export default function AddressManagementPage() {
 
     const handleImport = async () => {
         if (!importFile) {
-            toast({ title: "No file selected", description: "Please select a CSV or JSON file to import.", variant: "destructive" });
+            toast({ title: "No file selected", description: "Please select a CSV file to import.", variant: "destructive" });
             return;
         }
         setIsImporting(true);

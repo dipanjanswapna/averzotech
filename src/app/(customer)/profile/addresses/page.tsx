@@ -70,11 +70,9 @@ export default function AddressesPage() {
         isDefault: false,
     });
     
-    const divisions = useMemo(() => getDivisions(), []);
-    const districts = useMemo(() => formData.division ? getDistricts(formData.division) : [], [formData.division]);
-    const thanas = useMemo(() => formData.district ? getThanas(formData.division, formData.district) : [], [formData.division, formData.district]);
-    const postOffices = useMemo(() => formData.thana ? getPostOffices(formData.division, formData.district, formData.thana) : [], [formData.division, formData.district, formData.thana]);
-
+    const { data: divisions } = useCollection<any>('divisions');
+    const { data: districts } = useCollection<any>(formData.division ? `divisions/${formData.division}/districts` : '');
+    const { data: thanas } = useCollection<any>(formData.district ? `districts/${formData.district}/upazilas` : '');
 
     useEffect(() => {
         if (editingAddress) {
@@ -115,25 +113,14 @@ export default function AddressesPage() {
         setFormData(prev => ({ ...prev, [id]: value }));
     };
     
-    const handleSelectChange = (field: 'division' | 'district' | 'thana' | 'postOffice') => (value: string) => {
+    const handleSelectChange = (field: 'division' | 'district' | 'thana') => (value: string) => {
         setFormData(prev => {
             const newState:any = {...prev, [field]: value};
-            // Reset dependent fields
             if (field === 'division') {
                 newState.district = '';
                 newState.thana = '';
-                newState.postOffice = '';
-                newState.postCode = '';
             } else if (field === 'district') {
                 newState.thana = '';
-                newState.postOffice = '';
-                newState.postCode = '';
-            } else if (field === 'thana') {
-                newState.postOffice = '';
-                newState.postCode = '';
-            } else if (field === 'postOffice') {
-                const selected = postOffices.find(p => p.postOffice === value);
-                newState.postCode = selected ? selected.postCode : '';
             }
             return newState;
         });
@@ -296,27 +283,21 @@ export default function AddressesPage() {
                     <Select value={formData.division} onValueChange={handleSelectChange('division')}>
                         <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
                         <SelectContent>
-                            {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                            {divisions?.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
                         </SelectContent>
                     </Select>
                     <Select value={formData.district} onValueChange={handleSelectChange('district')} disabled={!formData.division}>
                         <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                         <SelectContent>
-                            {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                            {districts?.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                     <Select value={formData.thana} onValueChange={handleSelectChange('thana')} disabled={!formData.district}>
                         <SelectTrigger><SelectValue placeholder="Select Thana/Upazila" /></SelectTrigger>
                         <SelectContent>
-                            {thanas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                     <Select value={formData.postOffice} onValueChange={handleSelectChange('postOffice')} disabled={!formData.thana}>
-                        <SelectTrigger><SelectValue placeholder="Select Post Office" /></SelectTrigger>
-                        <SelectContent>
-                            {postOffices.map((u) => <SelectItem key={u.postCode} value={u.postOffice}>{u.postOffice} - {u.postCode}</SelectItem>)}
+                            {thanas?.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.name_en}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>

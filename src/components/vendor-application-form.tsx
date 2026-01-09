@@ -27,7 +27,8 @@ import { filterCategories } from '@/lib/categories';
 import { ScrollArea } from './ui/scroll-area';
 import { Checkbox } from './ui/checkbox';
 import { VendorApplicationData } from '@/types';
-import { getDivisions, getDistricts, getThanas, getPostOffices } from '@/lib/location';
+import { getDivisions, getDistricts, getThanas } from '@/lib/location';
+import { useCollection } from '@/firebase';
 
 interface VendorApplicationFormProps {
     user: { fullName: string };
@@ -63,39 +64,24 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
     const [division, setDivision] = useState('');
     const [district, setDistrict] = useState('');
     const [thana, setThana] = useState('');
-    const [postOffice, setPostOffice] = useState('');
-    const [postCode, setPostCode] = useState('');
 
+    const { data: divisions } = useCollection<any>('divisions');
+    const { data: districts } = useCollection<any>(division ? `divisions/${division}/districts` : '');
+    const { data: thanas } = useCollection<any>(district ? `districts/${district}/upazilas` : '');
 
-    const divisions = useMemo(() => getDivisions(), []);
-    const districts = useMemo(() => division ? getDistricts(division) : [], [division]);
-    const thanas = useMemo(() => district ? getThanas(division, district) : [], [division, district]);
-    const postOffices = useMemo(() => thana ? getPostOffices(division, district, thana) : [], [division, district, thana]);
-
-    const handleSelectChange = (field: 'division' | 'district' | 'thana' | 'postOffice') => (value: string) => {
+    const handleSelectChange = (field: 'division' | 'district' | 'thana') => (value: string) => {
         switch(field) {
             case 'division':
                 setDivision(value);
                 setDistrict('');
                 setThana('');
-                setPostOffice('');
-                setPostCode('');
                 break;
             case 'district':
                 setDistrict(value);
                 setThana('');
-                setPostOffice('');
-                setPostCode('');
                 break;
             case 'thana':
                 setThana(value);
-                setPostOffice('');
-                setPostCode('');
-                break;
-            case 'postOffice':
-                setPostOffice(value);
-                const selected = postOffices.find(p => p.postOffice === value);
-                setPostCode(selected ? selected.postCode : '');
                 break;
         }
     };
@@ -146,11 +132,11 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                 branchName: paymentMethod === 'bank' ? branchName : '',
                 mobileNumber: paymentMethod === 'mobile' ? mobileNumber : '',
             },
-            division,
-            district,
-            thana,
-            postOffice,
-            postCode
+            division: divisions?.find((d: any) => d.id === division)?.name_en || '',
+            district: districts?.find((d: any) => d.id === district)?.name_en || '',
+            thana: thanas?.find((t: any) => t.id === thana)?.name_en || '',
+            postOffice: '', // This can be removed if not needed, or populated from a new 'unions' collection
+            postCode: ''
         };
         onSubmit(formData);
     };
@@ -172,27 +158,21 @@ export function VendorApplicationForm({ user, onSubmit, isLoading = false }: Ven
                             <Select value={division} onValueChange={handleSelectChange('division')}>
                                 <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
                                 <SelectContent>
-                                    {divisions.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                    {divisions?.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                             <Select value={district} onValueChange={handleSelectChange('district')} disabled={!division}>
                                 <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                                 <SelectContent>
-                                    {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                                    {districts?.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <Select value={thana} onValueChange={handleSelectChange('thana')} disabled={!district}>
+                        <div className="grid grid-cols-1 gap-4">
+                             <Select value={thana} onValueChange={handleSelectChange('thana')} disabled={!district}>
                                 <SelectTrigger><SelectValue placeholder="Select Thana/Upazila" /></SelectTrigger>
                                 <SelectContent>
-                                    {thanas.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <Select value={postOffice} onValueChange={handleSelectChange('postOffice')} disabled={!thana}>
-                                <SelectTrigger><SelectValue placeholder="Select Post Office" /></SelectTrigger>
-                                <SelectContent>
-                                    {postOffices.map((u) => <SelectItem key={u.postCode} value={u.postOffice}>{u.postOffice} - {u.postCode}</SelectItem>)}
+                                    {thanas?.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.name_en}</SelectItem>)}
                                 </SelectContent>
                             </Select>
                         </div>
