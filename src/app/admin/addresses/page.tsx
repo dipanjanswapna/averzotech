@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -62,7 +61,6 @@ const ENTITY_CONFIG = {
     districts: { collectionName: 'districts', parent: 'divisions', fields: ['name_en', 'name_bn', 'code'] },
     upazilas: { collectionName: 'upazilas', parent: 'districts', fields: ['name_en', 'name_bn', 'code'] },
     unions: { collectionName: 'unions', parent: 'upazilas', fields: ['name_en', 'name_bn', 'code'] },
-    areas: { collectionName: 'areas', parent: 'unions', fields: ['name_en', 'name_bn', 'postal_code'] },
 } as const;
 
 type EntityKey = keyof typeof ENTITY_CONFIG;
@@ -82,7 +80,6 @@ const initialDivisions = [
 
 export default function AddressManagementPage() {
     const { db } = useFirebase();
-    const [activeTab, setActiveTab] = useState<EntityKey>('divisions');
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
@@ -90,11 +87,15 @@ export default function AddressManagementPage() {
     const { toast } = useToast();
     
     const [data, setData] = useState<Record<EntityKey, any[]>>({
-        divisions: [], districts: [], upazilas: [], unions: [], areas: [],
+        divisions: [], districts: [], upazilas: [], unions: [],
     });
     const [loading, setLoading] = useState<Record<EntityKey, boolean>>({
-        divisions: true, districts: true, upazilas: true, unions: true, areas: true,
+        divisions: true, districts: true, upazilas: true, unions: true,
     });
+    
+    const [selectedDivision, setSelectedDivision] = useState('');
+    const [selectedDistrict, setSelectedDistrict] = useState('');
+    const [selectedUpazila, setSelectedUpazila] = useState('');
 
 
     // States for bulk import
@@ -122,14 +123,6 @@ export default function AddressManagementPage() {
         (Object.keys(ENTITY_CONFIG) as EntityKey[]).forEach(fetchData);
     }, [db]);
 
-    const filteredData = useMemo(() => {
-        if (!searchTerm) return data[activeTab];
-        return data[activeTab].filter((item: any) => 
-            (item.name_en && item.name_en.toLowerCase().includes(searchTerm.toLowerCase())) ||
-            (item.name_bn && item.name_bn.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-    }, [activeTab, searchTerm, data]);
-    
     const handleSeedDivisions = async () => {
         if (!db) return;
         setIsImporting(true);
@@ -137,7 +130,7 @@ export default function AddressManagementPage() {
             const batch = writeBatch(db);
             const divisionsCollection = collection(db, 'divisions');
             initialDivisions.forEach(division => {
-                const docRef = doc(divisionsCollection, division.name_en.toLowerCase());
+                const docRef = doc(divisionsCollection, division.name_en.toLowerCase().replace(' ', '-'));
                 batch.set(docRef, division);
             });
             await batch.commit();
@@ -151,49 +144,42 @@ export default function AddressManagementPage() {
     };
 
 
-    const handleSaveEntity = async (entityData: any) => {
-         if (!entityData.name_en || !entityData.name_bn || !db) {
-            toast({ title: "Error", description: "English and Bengali names are required.", variant: "destructive" });
+    const handleSaveEntity = async (entityKey: EntityKey, entityData: any) => {
+        const parentIdField = ENTITY_CONFIG[entityKey].parent ? `${ENTITY_CONFIG[entityKey].parent!.slice(0,-1)}_id` : null;
+
+        if (!entityData.name_en || (parentIdField && !entityData[parentIdField])) {
+            toast({ title: "Error", description: "Name and parent selection are required.", variant: "destructive" });
             return;
         }
 
-        const currentDataSet = data[activeTab];
-        const isDuplicate = currentDataSet.some(item => 
-            item.id !== entityData.id && // Exclude self in edit mode
-            item.name_en.toLowerCase() === entityData.name_en.toLowerCase() &&
-            (!ENTITY_CONFIG[activeTab].parent || item[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`] === entityData[`${ENTITY_CONFIG[activeTab].parent!.slice(0, -1)}_id`])
-        );
+        if (!db) return;
 
-        if(isDuplicate){
-            toast({ title: "Duplicate Entry", description: `A ${activeTab.slice(0, -1)} with this name already exists.`, variant: "destructive" });
-            return;
-        }
-        
         try {
             if (editingEntity) { // Update
-                const docRef = doc(db, ENTITY_CONFIG[activeTab].collectionName, editingEntity.id);
+                const docRef = doc(db, ENTITY_CONFIG[entityKey].collectionName, editingEntity.id);
                 await updateDoc(docRef, entityData);
-                toast({ title: "Success", description: `${activeTab.slice(0, -1)} updated.` });
+                toast({ title: "Success", description: `${entityKey.slice(0, -1)} updated.` });
             } else { // Create
-                await addDoc(collection(db, ENTITY_CONFIG[activeTab].collectionName), entityData);
-                toast({ title: "Success", description: `New ${activeTab.slice(0, -1)} added.` });
+                const docId = entityData.name_en.toLowerCase().replace(/\s+/g, '-');
+                await addDoc(collection(db, ENTITY_CONFIG[entityKey].collectionName), {...entityData});
+                toast({ title: "Success", description: `New ${entityKey.slice(0, -1)} added.` });
             }
-            fetchData(activeTab);
+            fetchData(entityKey);
             setIsAddDialogOpen(false);
             setEditingEntity(null);
         } catch (error) {
-            toast({ title: "Error", description: `Failed to save ${activeTab.slice(0, -1)}.`, variant: "destructive" });
+            toast({ title: "Error", description: `Failed to save ${entityKey.slice(0, -1)}.`, variant: "destructive" });
         }
     };
 
-    const handleDeleteEntity = async (entityId: string) => {
+    const handleDeleteEntity = async (entityKey: EntityKey, entityId: string) => {
         if(!db) return;
          try {
-            await deleteDoc(doc(db, ENTITY_CONFIG[activeTab].collectionName, entityId));
-            toast({ title: "Deleted", description: `${activeTab.slice(0, -1)} has been deleted.` });
-            fetchData(activeTab);
+            await deleteDoc(doc(db, ENTITY_CONFIG[entityKey].collectionName, entityId));
+            toast({ title: "Deleted", description: `${entityKey.slice(0, -1)} has been deleted.` });
+            fetchData(entityKey);
          } catch(error) {
-            toast({ title: "Error", description: `Failed to delete ${activeTab.slice(0, -1)}.`, variant: "destructive" });
+            toast({ title: "Error", description: `Failed to delete ${entityKey.slice(0, -1)}.`, variant: "destructive" });
          }
     };
     
@@ -266,14 +252,13 @@ export default function AddressManagementPage() {
         setIsAddDialogOpen(true);
     }
 
-    const renderAddDialogContent = () => {
-        const parentKey = ENTITY_CONFIG[activeTab].parent;
+    const renderAddDialogContent = (entityKey: EntityKey) => {
+        const parentKey = ENTITY_CONFIG[entityKey].parent;
         const parentName = parentKey?.slice(0, -1);
         const parentData = parentKey ? data[parentKey] : [];
         const currentData = editingEntity || {};
-
-        const fields = ENTITY_CONFIG[activeTab].fields;
-
+        const fields = ENTITY_CONFIG[entityKey].fields;
+        
         const [formData, setFormData] = useState(currentData);
 
         useEffect(() => {
@@ -310,16 +295,29 @@ export default function AddressManagementPage() {
                     <DialogClose asChild>
                         <Button variant="secondary" onClick={() => setEditingEntity(null)}>Cancel</Button>
                     </DialogClose>
-                    <Button onClick={() => handleSaveEntity(formData)}>Save</Button>
+                    <Button onClick={() => handleSaveEntity(entityKey, formData)}>Save</Button>
                 </DialogFooter>
             </div>
         );
     }
 
-    const renderTable = (entityName: EntityKey, tableData: any[]) => {
+    const renderTable = (entityName: EntityKey, tableData: any[], title: string, parentId?: string, parentField?: string) => {
         if (loading[entityName]) return <p className="text-muted-foreground p-4 text-center">Loading data...</p>;
-        if (tableData.length === 0) {
-            if(entityName === 'divisions') {
+        
+        let filteredData = tableData;
+        if(parentId && parentField) {
+            filteredData = tableData.filter(d => d[parentField] === parentId);
+        }
+
+        if (searchTerm) {
+            filteredData = filteredData.filter((item: any) => 
+                (item.name_en && item.name_en.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (item.name_bn && item.name_bn.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        }
+
+        if (filteredData.length === 0) {
+            if(entityName === 'divisions' && tableData.length === 0) {
                 return (
                     <div className="text-center p-8 border-2 border-dashed rounded-lg">
                         <p className="mb-4 text-muted-foreground">No divisions found. You can seed the initial 8 divisions of Bangladesh.</p>
@@ -332,51 +330,78 @@ export default function AddressManagementPage() {
             return <p className="text-muted-foreground p-4 text-center">No data found.</p>;
         };
         
-        const headers = Object.keys(tableData[0]).filter(h => h !== 'id' && !h.endsWith('_id'));
+        const headers = Object.keys(filteredData[0]).filter(h => h !== 'id' && !h.endsWith('_id'));
 
         return (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        {headers.map(header => <TableHead key={header}>{header.replace(/_/g, ' ').toUpperCase()}</TableHead>)}
-                        <TableHead><span className="sr-only">Actions</span></TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {tableData.map((row) => (
-                        <TableRow key={row.id}>
-                            {headers.map(header => <TableCell key={header}>{row[header]}</TableCell>)}
-                            <TableCell>
-                                <AlertDialog>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                            <DropdownMenuItem onClick={() => openEditDialog(row)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                                            <AlertDialogTrigger asChild>
-                                                <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete the selected {activeTab.slice(0, -1)}.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteEntity(row.id)}>Delete</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{title}</CardTitle>
+                     <div className="flex justify-between items-center">
+                        <div className="relative w-full max-w-sm">
+                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                             <Input 
+                                placeholder={`Search ${entityName}...`} 
+                                className="pl-9"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                             />
+                        </div>
+                        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                             <DialogTrigger asChild>
+                                <Button onClick={openAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
+                            </DialogTrigger>
+                                <DialogContent>
+                                <DialogHeader><DialogTitle>{editingEntity ? 'Edit' : 'Add New'} {entityName.slice(0,-1)}</DialogTitle></DialogHeader>
+                                    {renderAddDialogContent(entityName)}
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                {headers.map(header => <TableHead key={header}>{header.replace(/_/g, ' ').toUpperCase()}</TableHead>)}
+                                <TableHead><span className="sr-only">Actions</span></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredData.map((row) => (
+                                <TableRow key={row.id}>
+                                    {headers.map(header => <TableCell key={header}>{row[header]}</TableCell>)}
+                                    <TableCell>
+                                        <AlertDialog>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem onClick={() => openEditDialog(row)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete the selected {entityName.slice(0, -1)}.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteEntity(entityName, row.id)}>Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         )
     }
 
@@ -389,89 +414,86 @@ export default function AddressManagementPage() {
                 </p>
             </div>
             
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as EntityKey)}>
+            <Card>
+                <CardHeader className="flex-row items-center justify-between">
+                     <CardTitle>Global Actions</CardTitle>
+                    <div className="flex gap-2">
+                        <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Bulk Import</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader><DialogTitle>Bulk Import Address Data</DialogTitle></DialogHeader>
+                                <div className="space-y-4">
+                                    <Label htmlFor="import-file">Upload CSV file</Label>
+                                    <p className="text-sm text-muted-foreground">Note: The backend will process this file and populate all address levels (Divisions, Districts, etc.).</p>
+                                    <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv" />
+                                    {isImporting && (
+                                        <div className="space-y-2">
+                                            <Progress value={importProgress} />
+                                            <p className="text-xs text-muted-foreground text-center">{importProgress}%</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <DialogFooter>
+                                    <Button variant="secondary" onClick={() => setIsImportDialogOpen(false)} disabled={isImporting}>Cancel</Button>
+                                    <Button onClick={handleImport} disabled={isImporting || !importFile}>
+                                        {isImporting ? 'Importing...' : 'Import'}
+                                    </Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                         <Button onClick={handleSeedDivisions} disabled={isImporting || data.divisions.length > 0}>
+                            <Database className="mr-2 h-4 w-4" /> Seed Divisions
+                        </Button>
+                    </div>
+                </CardHeader>
+            </Card>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                 <Select value={selectedDivision} onValueChange={v => {setSelectedDivision(v); setSelectedDistrict(''); setSelectedUpazila('')}}>
+                    <SelectTrigger><SelectValue placeholder="Select Division" /></SelectTrigger>
+                    <SelectContent>
+                         {data.divisions.map(d => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={selectedDistrict} onValueChange={v => {setSelectedDistrict(v); setSelectedUpazila('')}} disabled={!selectedDivision}>
+                    <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                    <SelectContent>
+                        {data.districts.filter(d => d.division_id === selectedDivision).map(d => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={selectedUpazila} onValueChange={setSelectedUpazila} disabled={!selectedDistrict}>
+                    <SelectTrigger><SelectValue placeholder="Select Upazila/Thana" /></SelectTrigger>
+                    <SelectContent>
+                       {data.upazilas.filter(u => u.district_id === selectedDistrict).map(u => <SelectItem key={u.id} value={u.id}>{u.name_en}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <Button onClick={() => {setSelectedDivision(''); setSelectedDistrict(''); setSelectedUpazila(''); setSearchTerm('')}}>Reset Filters</Button>
+            </div>
+            
+             <Tabs defaultValue="divisions" className="w-full">
                 <TabsList>
                     <TabsTrigger value="divisions">Divisions</TabsTrigger>
-                    <TabsTrigger value="districts">Districts</TabsTrigger>
-                    <TabsTrigger value="upazilas">Upazilas</TabsTrigger>
-                    <TabsTrigger value="unions">Unions</TabsTrigger>
-                    <TabsTrigger value="areas">Areas/Post Offices</TabsTrigger>
+                    <TabsTrigger value="districts" disabled={!selectedDivision}>Districts</TabsTrigger>
+                    <TabsTrigger value="upazilas" disabled={!selectedDistrict}>Upazilas/Thanas</TabsTrigger>
+                    <TabsTrigger value="unions" disabled={!selectedUpazila}>Unions</TabsTrigger>
                 </TabsList>
-                
-                 <Card className="mt-4">
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <CardTitle className="capitalize">{activeTab}</CardTitle>
-                                <CardDescription>Search, add, edit, or delete {activeTab}.</CardDescription>
-                            </div>
-                            <div className="flex gap-2">
-                                <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Bulk Import</Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader><DialogTitle>Bulk Import Address Data</DialogTitle></DialogHeader>
-                                        <div className="space-y-4">
-                                            <Label htmlFor="import-file">Upload CSV file</Label>
-                                            <p className="text-sm text-muted-foreground">Note: The backend will process this file and populate all address levels (Divisions, Districts, etc.).</p>
-                                            <Input id="import-file" type="file" onChange={handleFileChange} disabled={isImporting} accept=".csv" />
-                                            {isImporting && (
-                                                <div className="space-y-2">
-                                                    <Progress value={importProgress} />
-                                                    <p className="text-xs text-muted-foreground text-center">{importProgress}%</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <DialogFooter>
-                                            <Button variant="secondary" onClick={() => setIsImportDialogOpen(false)} disabled={isImporting}>Cancel</Button>
-                                            <Button onClick={handleImport} disabled={isImporting || !importFile}>
-                                                {isImporting ? 'Importing...' : 'Import'}
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button onClick={openAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
-                                    </DialogTrigger>
-                                     <DialogContent>
-                                        <DialogHeader><DialogTitle>{editingEntity ? 'Edit' : 'Add New'} {activeTab.slice(0,-1)}</DialogTitle></DialogHeader>
-                                         {renderAddDialogContent()}
-                                    </DialogContent>
-                                </Dialog>
-                            </div>
-                        </div>
-                        <div className="relative mt-4">
-                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                             <Input 
-                                placeholder={`Search ${activeTab}...`} 
-                                className="pl-9"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                             />
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                       <TabsContent value="divisions">
-                          {renderTable('divisions', filteredData)}
-                       </TabsContent>
-                        <TabsContent value="districts">
-                            {renderTable('districts', filteredData)}
-                        </TabsContent>
-                        <TabsContent value="upazilas">
-                            {renderTable('upazilas', filteredData)}
-                        </TabsContent>
-                        <TabsContent value="unions">
-                            {renderTable('unions', filteredData)}
-                        </TabsContent>
-                        <TabsContent value="areas">
-                            {renderTable('areas', filteredData)}
-                        </TabsContent>
-                    </CardContent>
-                </Card>
-
+                <TabsContent value="divisions">
+                    {renderTable('divisions', data.divisions, 'All Divisions')}
+                </TabsContent>
+                <TabsContent value="districts">
+                     {renderTable('districts', data.districts, 'Districts', selectedDivision, 'division_id')}
+                </TabsContent>
+                <TabsContent value="upazilas">
+                     {renderTable('upazilas', data.upazilas, 'Upazilas/Thanas', selectedDistrict, 'district_id')}
+                </TabsContent>
+                 <TabsContent value="unions">
+                     {renderTable('unions', data.unions, 'Unions', selectedUpazila, 'upazila_id')}
+                </TabsContent>
             </Tabs>
         </div>
     );
 }
+
+    
