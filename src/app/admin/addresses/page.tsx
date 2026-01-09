@@ -453,9 +453,21 @@ export default function AddressManagementPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                       <TabsContent value={activeTab}>
-                          {renderTable(activeTab, filteredData)}
+                       <TabsContent value="divisions">
+                          {renderTable('divisions', filteredData)}
                        </TabsContent>
+                        <TabsContent value="districts">
+                            {renderTable('districts', filteredData)}
+                        </TabsContent>
+                        <TabsContent value="upazilas">
+                            {renderTable('upazilas', filteredData)}
+                        </TabsContent>
+                        <TabsContent value="unions">
+                            {renderTable('unions', filteredData)}
+                        </TabsContent>
+                        <TabsContent value="areas">
+                            {renderTable('areas', filteredData)}
+                        </TabsContent>
                     </CardContent>
                 </Card>
 
@@ -463,5 +475,3 @@ export default function AddressManagementPage() {
         </div>
     );
 }
-
-
