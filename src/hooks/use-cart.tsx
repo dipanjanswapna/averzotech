@@ -218,15 +218,25 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const availableShippingMethods: ShippingMethod[] = useMemo(() => {
+    if (shippingInfo?.method === 'Sundarban Courier') {
+        return [
+          { name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60 },
+          { name: 'Sundarban Courier', estimatedDelivery: '3-5 business days', fee: 120 }
+        ];
+    }
     return [
-      { name: 'Standard Courier', estimatedDelivery: '3-5 business days', fee: shippingFee },
-      { name: 'Express Delivery', estimatedDelivery: '1-2 business days', fee: shippingFee + 60 } // Example surcharge
+      { name: 'Standard Courier (RedX)', estimatedDelivery: '3-5 business days', fee: shippingFee },
+      { name: 'Sundarban Courier', estimatedDelivery: '3-5 business days', fee: 120 },
     ];
-  }, [shippingFee]);
+  }, [shippingFee, shippingInfo]);
 
   const calculateShippingFee = useCallback(async () => {
-    if (!shippingInfo || !shippingInfo.delivery_area_id) {
-        setShippingFee(60); 
+    if (!shippingInfo || !shippingInfo.delivery_area_id || shippingInfo.method !== 'Standard Courier (RedX)') {
+        if(shippingInfo?.method === 'Sundarban Courier') {
+            setShippingFee(120);
+        } else {
+            setShippingFee(60); 
+        }
         return;
     }
     
