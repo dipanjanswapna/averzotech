@@ -38,7 +38,7 @@ interface Address {
 export default function ShippingPage() {
   const router = useRouter();
   const { user } = useFirebase();
-  const { cart, setShippingInfo, shippingInfo, availableShippingMethods } = useCart();
+  const { cart, setShippingInfo, shippingInfo } = useCart();
   const { toast } = useToast();
   
   const { data: addresses, loading: loadingAddresses } = useCollection<Address>(user ? `users/${user.uid}/addresses` : '');
@@ -49,13 +49,21 @@ export default function ShippingPage() {
   const [sundarbanThanas, setSundarbanThanas] = React.useState<string[]>([]);
   const [selectedSundarbanThana, setSelectedSundarbanThana] = React.useState<string>('');
 
+  const availableShippingMethods = React.useMemo(() => {
+    const methods = [{ name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60 }];
+    if (selectedAddress && getSundarbanThanas(selectedAddress.district).length > 0) {
+        methods.push({ name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 120 });
+    }
+    return methods;
+  }, [selectedAddress]);
+
 
   React.useEffect(() => {
     if (!user) {
       router.push('/login');
       return;
     }
-    if (cart.length === 0) {
+    if (!loadingAddresses && cart.length === 0) {
       toast({ title: 'Your cart is empty!', description: 'Add items to your cart to proceed to shipping.' });
       router.push('/');
       return;
@@ -68,7 +76,7 @@ export default function ShippingPage() {
         setSelectedAddress(initialAddress);
     }
     
-  }, [user, addresses, loadingAddresses, router, cart.length, toast]);
+  }, [user, addresses, loadingAddresses, router, cart.length, toast, shippingInfo]);
   
   React.useEffect(() => {
       if (selectedAddress) {
@@ -97,7 +105,8 @@ export default function ShippingPage() {
         let newShippingInfo: ShippingInfo;
         if (selectedShippingMethod === 'Pickup from Store') {
             if(!selectedSundarbanThana){
-                // Don't set shipping info if thana is not selected yet
+                // Don't set shipping info if thana is not selected yet for pickup
+                setShippingInfo(null);
                 return;
             }
             newShippingInfo = {
@@ -107,7 +116,7 @@ export default function ShippingPage() {
                 phone: selectedAddress.phone,
                 fullAddress: `Pickup from Sundarban Courier, ${selectedSundarbanThana}, ${selectedAddress.district}`,
                 method: 'Pickup from Store',
-                delivery_area: selectedSundarbanThana,
+                delivery_area: selectedSundarbanThana, // Storing thana as delivery area
                 delivery_area_id: -1, // Use a special ID for pickup
                 district: selectedAddress.district,
                 division: selectedAddress.division,
@@ -123,11 +132,13 @@ export default function ShippingPage() {
                 method: 'Standard Courier (RedX)',
             };
         }
-
+        
+        // Only update if there's a change to avoid loops
         if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
             setShippingInfo(newShippingInfo);
         }
     } else if (shippingInfo) {
+      // Clear shipping info if no address or method is selected
       setShippingInfo(null);
     }
 }, [selectedAddress, selectedShippingMethod, selectedSundarbanThana, user, setShippingInfo, shippingInfo]);
@@ -142,10 +153,18 @@ export default function ShippingPage() {
       });
       return;
     }
+     if (selectedShippingMethod === 'Pickup from Store' && !selectedSundarbanThana) {
+        toast({
+        title: 'Pickup Branch Required',
+        description: 'Please select a Sundarban Courier branch for pickup.',
+        variant: 'destructive',
+      });
+      return;
+    }
     router.push('/payment');
   };
 
-  if (!user) return null;
+  if (!user && !loadingAddresses) return null;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -207,52 +226,47 @@ export default function ShippingPage() {
                 <CardDescription>Choose how you'd like to receive your order.</CardDescription>
               </CardHeader>
               <CardContent>
+                {selectedAddress ? (
                 <RadioGroup value={selectedShippingMethod || ''} onValueChange={setSelectedShippingMethod} className="space-y-4">
-                    <Label htmlFor="standard-courier" className={cn("flex items-center justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === 'Standard Courier (RedX)' })}>
-                        <div className="flex items-center gap-3">
-                            <Truck className="h-6 w-6 text-muted-foreground" />
-                            <div>
-                                <p className="font-semibold">Home Delivery (via RedX)</p>
-                                <p className="text-sm text-muted-foreground">Est. Delivery: 2-4 business days</p>
+                    {availableShippingMethods.map(method => (
+                        <Label key={method.name} htmlFor={method.name} className={cn("flex items-start justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === method.name })}>
+                            <div className="flex items-center gap-3">
+                                {method.name === 'Pickup from Store' ? <Store className="h-6 w-6 text-muted-foreground" /> : <Truck className="h-6 w-6 text-muted-foreground" />}
+                                <div className='flex-1'>
+                                    <p className="font-semibold">{method.name}</p>
+                                    <p className="text-sm text-muted-foreground">{method.estimatedDelivery}</p>
+                                    {method.name === 'Pickup from Store' && selectedShippingMethod === 'Pickup from Store' && (
+                                         <Select value={selectedSundarbanThana} onValueChange={setSelectedSundarbanThana}>
+                                            <SelectTrigger className="w-full md:w-[280px] mt-2 h-8">
+                                                <SelectValue placeholder="Select Pickup Branch" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {sundarbanThanas.map(thana => (
+                                                    <SelectItem key={thana} value={thana}>{thana}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                     )}
+                                </div>
                             </div>
-                        </div>
-                        <p className="font-semibold">৳{availableShippingMethods.find(m => m.name === 'Standard Courier (RedX)')?.fee.toFixed(2) || '60.00'}</p>
-                        <RadioGroupItem value="Standard Courier (RedX)" id="standard-courier" className="ml-4"/>
-                    </Label>
-                     <Label htmlFor="sundarban-courier" className={cn("flex items-start justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === 'Pickup from Store' })}>
-                        <div className="flex items-center gap-3">
-                            <Store className="h-6 w-6 text-muted-foreground" />
-                            <div className='flex-1'>
-                                <p className="font-semibold">Pickup from Store (Sundarban Courier)</p>
-                                <p className="text-sm text-muted-foreground">Collect from your nearest branch</p>
-                                 {selectedShippingMethod === 'Pickup from Store' && (
-                                     <Select value={selectedSundarbanThana} onValueChange={setSelectedSundarbanThana}>
-                                        <SelectTrigger className="w-full md:w-[280px] mt-2 h-8">
-                                            <SelectValue placeholder="Select Pickup Branch" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {sundarbanThanas.map(thana => (
-                                                <SelectItem key={thana} value={thana}>{thana}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                 )}
+                            <div className="flex items-center">
+                                <p className="font-semibold mr-4">৳{method.fee.toFixed(2)}</p>
+                                <RadioGroupItem value={method.name} id={method.name} />
                             </div>
-                        </div>
-                        <div className="flex items-center">
-                            <p className="font-semibold mr-4">৳{availableShippingMethods.find(m => m.name === 'Pickup from Store')?.fee.toFixed(2) || '120.00'}</p>
-                            <RadioGroupItem value="Pickup from Store" id="sundarban-courier" />
-                        </div>
-                    </Label>
+                        </Label>
+                    ))}
                 </RadioGroup>
+                 ) : (
+                    <p className="text-muted-foreground text-sm">Please select a shipping address to see available shipping methods.</p>
+                )}
               </CardContent>
             </Card>
 
           </div>
           <div className="lg:col-span-1">
             <div className="sticky top-24">
-              <OrderSummary shippingMethod={selectedShippingMethod ?? undefined} />
-              <Button size="lg" className="w-full mt-6" onClick={handleContinue} disabled={!selectedAddress || !selectedShippingMethod}>
+              <OrderSummary />
+              <Button size="lg" className="w-full mt-6" onClick={handleContinue} disabled={!selectedAddress || !selectedShippingMethod || (selectedShippingMethod === 'Pickup from Store' && !selectedSundarbanThana)}>
                 Continue to Payment
               </Button>
             </div>
@@ -262,3 +276,5 @@ export default function ShippingPage() {
     </div>
   )
 }
+
+    

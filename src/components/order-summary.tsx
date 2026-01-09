@@ -6,7 +6,7 @@ import { useCart } from "@/hooks/use-cart";
 import { Separator } from "./ui/separator";
 import { Home, Store } from 'lucide-react';
 
-export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMethod }) => {
+export const OrderSummary: React.FC = () => {
     const { subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total, shippingInfo } = useCart();
 
     const giftCardDiscount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) : 0;
@@ -36,7 +36,7 @@ export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMe
                     )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
-                        <p className="font-semibold">{shippingInfo?.method ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
+                        <p className="font-semibold">{shippingInfo ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
                     </div>
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Taxes</p>
@@ -69,3 +69,5 @@ export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMe
         </Card>
     )
 }
+
+    
