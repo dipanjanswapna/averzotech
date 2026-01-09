@@ -58,9 +58,9 @@ import Papa from 'papaparse';
 
 const ENTITY_CONFIG = {
     divisions: { collectionName: 'divisions', parent: null, fields: ['name_en', 'name_bn', 'code'] },
-    districts: { collectionName: 'districts', parent: 'divisions', fields: ['name_en', 'name_bn', 'code'] },
-    upazilas: { collectionName: 'upazilas', parent: 'districts', fields: ['name_en', 'name_bn', 'code'] },
-    unions: { collectionName: 'unions', parent: 'upazilas', fields: ['name_en', 'name_bn', 'code'] },
+    districts: { collectionName: 'districts', parent: 'divisions', fields: ['name_en', 'name_bn', 'code', 'division_id'] },
+    upazilas: { collectionName: 'upazilas', parent: 'districts', fields: ['name_en', 'name_bn', 'code', 'district_id'] },
+    unions: { collectionName: 'unions', parent: 'upazilas', fields: ['name_en', 'name_bn', 'code', 'upazila_id'] },
 } as const;
 
 type EntityKey = keyof typeof ENTITY_CONFIG;
@@ -77,13 +77,74 @@ const initialDivisions = [
     { name_en: 'Sylhet', name_bn: 'সিলেট' },
 ];
 
+function AddEditDialogContent({
+    entityKey,
+    editingEntity,
+    parentData,
+    onSave,
+}: {
+    entityKey: EntityKey;
+    editingEntity: EntityData | null;
+    parentData: any[];
+    onSave: (entityKey: EntityKey, entityData: any) => void;
+}) {
+    const parentKey = ENTITY_CONFIG[entityKey].parent;
+    const parentName = parentKey?.slice(0, -1);
+    const fields = ENTITY_CONFIG[entityKey].fields;
+    
+    const [formData, setFormData] = useState(editingEntity || {});
+
+    useEffect(() => {
+        setFormData(editingEntity || {});
+    }, [editingEntity]);
+
+    const handleChange = (field: string, value: string) => {
+        setFormData(prev => ({...prev, [field]: value}));
+    }
+
+    return (
+        <>
+            <DialogHeader>
+                <DialogTitle>{editingEntity ? 'Edit' : 'Add New'} {entityKey.slice(0,-1)}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+                {parentKey && (
+                     <div className="space-y-2">
+                        <Label htmlFor={`${parentName}_id`} className="capitalize">{parentName}</Label>
+                        <Select
+                            value={formData[`${parentName}_id`] || ''} 
+                            onValueChange={value => handleChange(`${parentName}_id`, value)}
+                        >
+                            <SelectTrigger><SelectValue placeholder={`Select ${parentName}`} /></SelectTrigger>
+                            <SelectContent>
+                                {parentData.map(d => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+                {fields.filter(f => !f.endsWith('_id')).map(field => (
+                    <div className="space-y-2" key={field}>
+                        <Label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}</Label>
+                        <Input id={field} value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
+                    </div>
+                ))}
+            </div>
+             <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="secondary">Cancel</Button>
+                </DialogClose>
+                <Button onClick={() => onSave(entityKey, formData)}>Save</Button>
+            </DialogFooter>
+        </>
+    );
+}
 
 export default function AddressManagementPage() {
     const { db } = useFirebase();
     const [searchTerm, setSearchTerm] = useState('');
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+    const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
     const [editingEntity, setEditingEntity] = useState<EntityData | null>(null);
+    const [activeTab, setActiveTab] = useState<EntityKey>('divisions');
     const { toast } = useToast();
     
     const [data, setData] = useState<Record<EntityKey, any[]>>({
@@ -102,6 +163,7 @@ export default function AddressManagementPage() {
     const [importFile, setImportFile] = useState<File | null>(null);
     const [isImporting, setIsImporting] = useState(false);
     const [importProgress, setImportProgress] = useState(0);
+    const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
      const fetchData = async (entity: EntityKey) => {
         if (!db) return;
@@ -145,7 +207,8 @@ export default function AddressManagementPage() {
 
 
     const handleSaveEntity = async (entityKey: EntityKey, entityData: any) => {
-        const parentIdField = ENTITY_CONFIG[entityKey].parent ? `${ENTITY_CONFIG[entityKey].parent!.slice(0,-1)}_id` : null;
+        const parentConfig = ENTITY_CONFIG[entityKey].parent;
+        const parentIdField = parentConfig ? `${parentConfig.slice(0, -1)}_id` : null;
 
         if (!entityData.name_en || (parentIdField && !entityData[parentIdField])) {
             toast({ title: "Error", description: "Name and parent selection are required.", variant: "destructive" });
@@ -160,12 +223,11 @@ export default function AddressManagementPage() {
                 await updateDoc(docRef, entityData);
                 toast({ title: "Success", description: `${entityKey.slice(0, -1)} updated.` });
             } else { // Create
-                const docId = entityData.name_en.toLowerCase().replace(/\s+/g, '-');
                 await addDoc(collection(db, ENTITY_CONFIG[entityKey].collectionName), {...entityData});
                 toast({ title: "Success", description: `New ${entityKey.slice(0, -1)} added.` });
             }
             fetchData(entityKey);
-            setIsAddDialogOpen(false);
+            setIsAddEditDialogOpen(false);
             setEditingEntity(null);
         } catch (error) {
             toast({ title: "Error", description: `Failed to save ${entityKey.slice(0, -1)}.`, variant: "destructive" });
@@ -245,62 +307,13 @@ export default function AddressManagementPage() {
 
     const openEditDialog = (entity: EntityData) => {
         setEditingEntity(entity);
-        setIsAddDialogOpen(true);
+        setIsAddEditDialogOpen(true);
     }
     const openAddDialog = () => {
         setEditingEntity(null);
-        setIsAddDialogOpen(true);
+        setIsAddEditDialogOpen(true);
     }
-
-    const renderAddDialogContent = (entityKey: EntityKey) => {
-        const parentKey = ENTITY_CONFIG[entityKey].parent;
-        const parentName = parentKey?.slice(0, -1);
-        const parentData = parentKey ? data[parentKey] : [];
-        const currentData = editingEntity || {};
-        const fields = ENTITY_CONFIG[entityKey].fields;
-        
-        const [formData, setFormData] = useState(currentData);
-
-        useEffect(() => {
-            setFormData(editingEntity || {});
-        }, [editingEntity]);
-
-        const handleChange = (field: string, value: string) => {
-            setFormData(prev => ({...prev, [field]: value}));
-        }
-
-        return (
-            <div className="space-y-4">
-                {parentKey && (
-                     <div className="space-y-2">
-                        <Label htmlFor={`${parentName}_id`} className="capitalize">{parentName}</Label>
-                        <Select
-                            value={formData[`${parentName}_id`]} 
-                            onValueChange={value => handleChange(`${parentName}_id`, value)}
-                        >
-                            <SelectTrigger><SelectValue placeholder={`Select ${parentName}`} /></SelectTrigger>
-                            <SelectContent>
-                                {parentData.map(d => <SelectItem key={d.id} value={d.id}>{d.name_en}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
-                {fields.map(field => (
-                    <div className="space-y-2" key={field}>
-                        <Label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}</Label>
-                        <Input id={field} value={formData[field] || ''} onChange={e => handleChange(field, e.target.value)} />
-                    </div>
-                ))}
-                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="secondary" onClick={() => setEditingEntity(null)}>Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={() => handleSaveEntity(entityKey, formData)}>Save</Button>
-                </DialogFooter>
-            </div>
-        );
-    }
-
+    
     const renderTable = (entityName: EntityKey, tableData: any[], title: string, parentId?: string, parentField?: string) => {
         if (loading[entityName]) return <p className="text-muted-foreground p-4 text-center">Loading data...</p>;
         
@@ -330,7 +343,7 @@ export default function AddressManagementPage() {
             return <p className="text-muted-foreground p-4 text-center">No data found.</p>;
         };
         
-        const headers = Object.keys(filteredData[0]).filter(h => h !== 'id' && !h.endsWith('_id'));
+        const headers = ENTITY_CONFIG[entityName].fields.filter(h => h !== 'id' && !h.endsWith('_id'));
 
         return (
             <Card>
@@ -346,15 +359,7 @@ export default function AddressManagementPage() {
                                 onChange={e => setSearchTerm(e.target.value)}
                              />
                         </div>
-                        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                             <DialogTrigger asChild>
-                                <Button onClick={openAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
-                            </DialogTrigger>
-                                <DialogContent>
-                                <DialogHeader><DialogTitle>{editingEntity ? 'Edit' : 'Add New'} {entityName.slice(0,-1)}</DialogTitle></DialogHeader>
-                                    {renderAddDialogContent(entityName)}
-                            </DialogContent>
-                        </Dialog>
+                        <Button onClick={openAddDialog}><PlusCircle className="mr-2 h-4 w-4" /> Add New</Button>
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -404,6 +409,9 @@ export default function AddressManagementPage() {
             </Card>
         )
     }
+
+    const parentKey = ENTITY_CONFIG[activeTab].parent;
+    const parentData = parentKey ? data[parentKey] : [];
 
     return (
         <div className="space-y-8">
@@ -472,7 +480,7 @@ export default function AddressManagementPage() {
                 <Button onClick={() => {setSelectedDivision(''); setSelectedDistrict(''); setSelectedUpazila(''); setSearchTerm('')}}>Reset Filters</Button>
             </div>
             
-             <Tabs defaultValue="divisions" className="w-full">
+             <Tabs defaultValue="divisions" className="w-full" onValueChange={value => setActiveTab(value as EntityKey)}>
                 <TabsList>
                     <TabsTrigger value="divisions">Divisions</TabsTrigger>
                     <TabsTrigger value="districts" disabled={!selectedDivision}>Districts</TabsTrigger>
@@ -492,8 +500,19 @@ export default function AddressManagementPage() {
                      {renderTable('unions', data.unions, 'Unions', selectedUpazila, 'upazila_id')}
                 </TabsContent>
             </Tabs>
+             <Dialog open={isAddEditDialogOpen} onOpenChange={(open) => {setIsAddEditDialogOpen(open); if(!open) setEditingEntity(null)}}>
+                <DialogContent>
+                    <AddEditDialogContent 
+                        entityKey={activeTab}
+                        editingEntity={editingEntity}
+                        parentData={parentData}
+                        onSave={handleSaveEntity}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
+    
 
     
