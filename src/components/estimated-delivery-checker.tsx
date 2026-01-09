@@ -67,7 +67,7 @@ export function EstimatedDeliveryChecker() {
         <div className="mt-4">
             <div className="flex items-center gap-2">
                 <Input 
-                    type="text"
+                    type="number"
                     placeholder="Enter Pincode"
                     value={pincode}
                     onChange={(e) => setPincode(e.target.value)}

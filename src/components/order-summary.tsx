@@ -4,12 +4,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCart } from "@/hooks/use-cart";
 import { Separator } from "./ui/separator";
+import { Home, Store } from 'lucide-react';
 
 export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMethod }) => {
     const { subTotal, appliedCoupon, appliedGiftCard, shippingFee, taxes, total, shippingInfo } = useCart();
 
     const giftCardDiscount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotal - (appliedCoupon?.discountAmount || 0)) : 0;
-
 
     return (
         <Card>
@@ -47,6 +47,23 @@ export const OrderSummary: React.FC<{ shippingMethod?: string }> = ({ shippingMe
                         <p>Total</p>
                         <p>৳{total.toFixed(2)}</p>
                     </div>
+
+                    {shippingInfo && (
+                        <>
+                            <Separator className="my-2" />
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-start gap-3">
+                                    {shippingInfo.delivery_area_id === -1 ? <Store className="h-4 w-4 mt-1 text-muted-foreground" /> : <Home className="h-4 w-4 mt-1 text-muted-foreground" />}
+                                    <div>
+                                        <p className="text-muted-foreground">
+                                            {shippingInfo.delivery_area_id === -1 ? 'Pickup From' : 'Ship to'}
+                                        </p>
+                                        <p className="font-semibold text-xs">{shippingInfo.fullAddress}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </CardContent>
         </Card>
