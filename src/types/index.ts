@@ -330,3 +330,37 @@ export interface TicketReply {
     message: string;
     createdAt: any;
 }
+
+// Product type for the app
+export interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  images: string[];
+  giftWithPurchase?: {
+      enabled: boolean;
+      description: string;
+  };
+  pricing: {
+    price: number;
+    comparePrice?: number;
+    discount?: number;
+    tax?: number;
+  };
+  shipping: {
+      estimatedDelivery: string;
+      weight?: number; // in kg
+  };
+  inventory: {
+      sku: string;
+      availability: 'in-stock' | 'out-of-stock' | 'pre-order';
+      stock: number;
+      initialStock?: number;
+  };
+  variants: {
+      sizes: string[];
+      colors: { name: string, hex: string }[];
+  }
+}
+
+    

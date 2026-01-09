@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { calculateCharge } from '@/lib/redx';
 
 // Define the structure of an applied coupon
 export interface AppliedCoupon {
@@ -60,6 +61,7 @@ export interface Product {
     };
     shipping: {
         estimatedDelivery: string;
+        weight?: number; // Add weight property
     };
     inventory: {
         sku: string;
@@ -105,8 +107,6 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 // Shipping Constants
-const INSIDE_DHAKA_FEE = 50;
-const OUTSIDE_DHAKA_FEE = 80;
 const FREE_SHIPPING_THRESHOLD = 2000;
 
 
@@ -116,6 +116,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   const [shippingInfo, setShippingInfoState] = useState<ShippingInfo | null>(null);
+  const [shippingFee, setShippingFee] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
@@ -226,32 +227,49 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const availableShippingMethods: ShippingMethod[] = useMemo(() => {
-    if (shippingInfo?.method === 'Pickup from Store') {
-        return [
-          { name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60 },
-          { name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 45 }
-        ];
-    }
     return [
-      { name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60 },
-      { name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 45 },
+      { name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: shippingFee },
+      { name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 45 }
     ];
-  }, [shippingInfo]);
-
-  const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
+  }, [shippingFee]);
   
-  const shippingFee = useMemo(() => {
-    if (!shippingInfo || subTotal >= FREE_SHIPPING_THRESHOLD) {
-      return 0;
-    }
-    if (shippingInfo.method === 'Pickup from Store') {
-      return 45; 
-    }
-    if (shippingInfo.division === 'Dhaka') {
-        return INSIDE_DHAKA_FEE;
-    }
-    return OUTSIDE_DHAKA_FEE;
-  }, [shippingInfo, subTotal]);
+  const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
+
+  useEffect(() => {
+    const calculateShipping = async () => {
+      if (!shippingInfo || subTotal >= FREE_SHIPPING_THRESHOLD) {
+        setShippingFee(0);
+        return;
+      }
+
+      if (shippingInfo.method === 'Pickup from Store') {
+        setShippingFee(45);
+        return;
+      }
+
+      if (shippingInfo.delivery_area_id > 0) {
+        try {
+          // Calculate total weight (defaulting to 0.5kg per item if not specified)
+          const totalWeight = cart.reduce((acc, item) => acc + ((item.shipping?.weight || 0.5) * item.quantity), 0);
+          const chargeData = await calculateCharge({
+            delivery_area_id: shippingInfo.delivery_area_id,
+            cash_collection_amount: subTotal,
+            weight: totalWeight * 1000, // Convert kg to grams
+          });
+          setShippingFee(chargeData.delivery_charge);
+        } catch (error) {
+          console.error("Failed to calculate RedX charge, using fallback.", error);
+           setShippingFee(shippingInfo.division === 'Dhaka' ? 50 : 80);
+        }
+      } else {
+        // Fallback for addresses without delivery_area_id
+        setShippingFee(shippingInfo.division === 'Dhaka' ? 50 : 80);
+      }
+    };
+
+    calculateShipping();
+  }, [shippingInfo, subTotal, cart]);
+
 
   const discountAmount = useMemo(() => {
     if (!appliedCoupon || cart.length === 0) return 0;
@@ -316,3 +334,5 @@ export const useCart = () => {
   }
   return context;
 };
+
+    
