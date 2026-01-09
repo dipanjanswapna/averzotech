@@ -38,7 +38,7 @@ interface Address {
 export default function ShippingPage() {
   const router = useRouter();
   const { user } = useFirebase();
-  const { cart, setShippingInfo, shippingInfo } = useCart();
+  const { cart, setShippingInfo, shippingInfo, shippingFee } = useCart();
   const { toast } = useToast();
   
   const { data: addresses, loading: loadingAddresses } = useCollection<Address>(user ? `users/${user.uid}/addresses` : '');
@@ -50,12 +50,12 @@ export default function ShippingPage() {
   const [selectedSundarbanThana, setSelectedSundarbanThana] = React.useState<string>('');
 
   const availableShippingMethods = React.useMemo(() => {
-    const methods = [{ name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: 60, icon: Truck }];
+    const methods = [{ name: 'Standard Courier (RedX)', estimatedDelivery: '2-4 business days', fee: shippingFee, icon: Truck }];
     if (selectedAddress && getSundarbanThanas(selectedAddress.district).length > 0) {
         methods.push({ name: 'Pickup from Store', estimatedDelivery: '3-5 business days', fee: 45, icon: Store });
     }
     return methods;
-  }, [selectedAddress]);
+  }, [selectedAddress, shippingFee]);
 
 
   React.useEffect(() => {
@@ -240,7 +240,9 @@ export default function ShippingPage() {
                                 </div>
                             </div>
                             <div className="flex items-center">
-                                <p className="font-semibold mr-4">৳{method.fee.toFixed(2)}</p>
+                                <p className="font-semibold mr-4">
+                                     {shippingFee === 0 ? <span className='text-green-600'>Free</span> : `৳${method.fee.toFixed(2)}`}
+                                </p>
                                 <RadioGroupItem value={method.name} id={method.name} />
                             </div>
                         </Label>

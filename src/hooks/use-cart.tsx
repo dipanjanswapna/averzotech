@@ -104,13 +104,18 @@ interface CartContextType {
 // Create the context
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// Shipping Constants
+const INSIDE_DHAKA_FEE = 50;
+const OUTSIDE_DHAKA_FEE = 80;
+const FREE_SHIPPING_THRESHOLD = 2000;
+
+
 // Create a provider component
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<Product[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [appliedGiftCard, setAppliedGiftCard] = useState<AppliedGiftCard | null>(null);
   const [shippingInfo, setShippingInfoState] = useState<ShippingInfo | null>(null);
-  const [shippingFee, setShippingFee] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
@@ -233,62 +238,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     ];
   }, [shippingInfo]);
 
-  const calculateShippingFee = useCallback(async () => {
-    if (!shippingInfo) {
-      setShippingFee(0);
-      return;
-    }
-
-    if (shippingInfo.method === 'Pickup from Store') {
-      setShippingFee(45);
-      return;
-    }
-
-    if (!shippingInfo.delivery_area_id) {
-        setShippingFee(60); // Default RedX fee
-        return;
-    }
-    
-    const isCod = shippingInfo.method === 'cod'; 
-    const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
-    const discount = appliedCoupon?.discountAmount || 0;
-    const codAmount = isCod ? Math.max(0, subTotal - discount) : 0;
-    const weight = cart.reduce((totalWeight, item) => totalWeight + (item.quantity * 500), 0) || 500;
-
-    try {
-        const response = await fetch('/api/shipping/calculate-charge', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                delivery_area_id: shippingInfo.delivery_area_id,
-                cash_collection_amount: codAmount,
-                weight: weight
-            })
-        });
-
-        if (!response.ok) throw new Error('Failed to calculate shipping');
-
-        const data = await response.json();
-        setShippingFee(data.delivery_charge || 60);
-
-    } catch (error) {
-        console.error("Shipping calculation error:", error);
-        setShippingFee(60);
-    }
-  }, [shippingInfo, cart, appliedCoupon]);
-
-  useEffect(() => {
-    if(shippingInfo){
-      calculateShippingFee();
-    } else {
-        setShippingFee(0);
-    }
-  }, [calculateShippingFee, shippingInfo]);
-
-
-  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
   const subTotal = cart.reduce((acc, item) => acc + (item.pricing.price * item.quantity), 0);
   
+  const shippingFee = useMemo(() => {
+    if (!shippingInfo || subTotal >= FREE_SHIPPING_THRESHOLD) {
+      return 0;
+    }
+    if (shippingInfo.method === 'Pickup from Store') {
+      return 45; 
+    }
+    if (shippingInfo.division === 'Dhaka') {
+        return INSIDE_DHAKA_FEE;
+    }
+    return OUTSIDE_DHAKA_FEE;
+  }, [shippingInfo, subTotal]);
+
   const discountAmount = useMemo(() => {
     if (!appliedCoupon || cart.length === 0) return 0;
     const applicableItems = appliedCoupon.applicability?.type === 'products'
@@ -300,7 +264,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     if(appliedCoupon.type === 'fixed') return Math.min(appliedCoupon.value, applicableSubtotal);
     if(appliedCoupon.type === 'percentage') return applicableSubtotal * (appliedCoupon.value / 100);
     return 0;
-  }, [appliedCoupon, cart]);
+  }, [appliedCoupon, cart, subTotal]);
   
   const subTotalAfterCoupon = subTotal - discountAmount;
   const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, subTotalAfterCoupon) : 0;
@@ -313,7 +277,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }, 0);
   }, [cart]);
 
-  const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + (shippingInfo ? shippingFee : 0) + taxes);
+  const total = Math.max(0, subTotalAfterCoupon - giftCardAmount + shippingFee + taxes);
+  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
 
   return (
     <CartContext.Provider value={{ 
@@ -331,7 +296,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeGiftCard,
         subTotal,
         total,
-        shippingFee: shippingInfo ? shippingFee : 0,
+        shippingFee,
         taxes,
         shippingInfo,
         setShippingInfo,

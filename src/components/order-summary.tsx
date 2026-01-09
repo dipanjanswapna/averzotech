@@ -36,7 +36,7 @@ export const OrderSummary: React.FC = () => {
                     )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
-                        <p className="font-semibold">{shippingInfo ? `৳${shippingFee.toFixed(2)}` : 'Select method'}</p>
+                        <p className="font-semibold">{shippingInfo ? (shippingFee === 0 ? <span className="text-green-600">Free</span> : `৳${shippingFee.toFixed(2)}`) : 'Select method'}</p>
                     </div>
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Taxes</p>
@@ -69,5 +69,3 @@ export const OrderSummary: React.FC = () => {
         </Card>
     )
 }
-
-    
