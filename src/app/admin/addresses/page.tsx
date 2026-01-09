@@ -42,7 +42,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Upload, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { PlusCircle, Search, Upload, MoreHorizontal, Edit, Trash2, Database } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +53,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useFirebase } from '@/firebase';
-import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 import Papa from 'papaparse';
 
 
@@ -67,6 +67,17 @@ const ENTITY_CONFIG = {
 
 type EntityKey = keyof typeof ENTITY_CONFIG;
 type EntityData = { id: string, [key: string]: any };
+
+const initialDivisions = [
+    { name_en: 'Barisal', name_bn: 'বরিশাল' },
+    { name_en: 'Chittagong', name_bn: 'চট্টগ্রাম' },
+    { name_en: 'Dhaka', name_bn: 'ঢাকা' },
+    { name_en: 'Khulna', name_bn: 'খুলনা' },
+    { name_en: 'Mymensingh', name_bn: 'ময়মনসিংহ' },
+    { name_en: 'Rajshahi', name_bn: 'রাজশাহী' },
+    { name_en: 'Rangpur', name_bn: 'রংপুর' },
+    { name_en: 'Sylhet', name_bn: 'সিলেট' },
+];
 
 
 export default function AddressManagementPage() {
@@ -118,6 +129,27 @@ export default function AddressManagementPage() {
             (item.name_bn && item.name_bn.toLowerCase().includes(searchTerm.toLowerCase()))
         );
     }, [activeTab, searchTerm, data]);
+    
+    const handleSeedDivisions = async () => {
+        if (!db) return;
+        setIsImporting(true);
+        try {
+            const batch = writeBatch(db);
+            const divisionsCollection = collection(db, 'divisions');
+            initialDivisions.forEach(division => {
+                const docRef = doc(divisionsCollection, division.name_en.toLowerCase());
+                batch.set(docRef, division);
+            });
+            await batch.commit();
+            toast({ title: "Success", description: "Initial divisions have been seeded." });
+            fetchData('divisions');
+        } catch(error) {
+            toast({ title: "Error", description: "Failed to seed divisions.", variant: "destructive"});
+        } finally {
+            setIsImporting(false);
+        }
+    };
+
 
     const handleSaveEntity = async (entityData: any) => {
          if (!entityData.name_en || !entityData.name_bn || !db) {
@@ -285,8 +317,20 @@ export default function AddressManagementPage() {
     }
 
     const renderTable = (entityName: EntityKey, tableData: any[]) => {
-        if (loading[entityName]) return <p className="text-muted-foreground p-4">Loading data...</p>;
-        if (tableData.length === 0) return <p className="text-muted-foreground p-4">No data found.</p>;
+        if (loading[entityName]) return <p className="text-muted-foreground p-4 text-center">Loading data...</p>;
+        if (tableData.length === 0) {
+            if(entityName === 'divisions') {
+                return (
+                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                        <p className="mb-4 text-muted-foreground">No divisions found. You can seed the initial 8 divisions of Bangladesh.</p>
+                        <Button onClick={handleSeedDivisions} disabled={isImporting}>
+                            <Database className="mr-2 h-4 w-4" /> Seed Initial Divisions
+                        </Button>
+                    </div>
+                )
+            }
+            return <p className="text-muted-foreground p-4 text-center">No data found.</p>;
+        };
         
         const headers = Object.keys(tableData[0]).filter(h => h !== 'id' && !h.endsWith('_id'));
 
@@ -419,4 +463,5 @@ export default function AddressManagementPage() {
         </div>
     );
 }
+
 
