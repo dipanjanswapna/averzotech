@@ -10,15 +10,14 @@ import { Button } from '@/components/ui/button';
 import { SiteHeader } from '@/components/site-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart, ShippingInfo } from '@/hooks/use-cart';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { OrderSummary } from '@/components/order-summary';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useCollection } from '@/firebase';
 import { getSundarbanThanas } from '@/lib/location';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -38,13 +37,12 @@ interface Address {
 
 export default function ShippingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user } = useFirebase();
   const { cart, setShippingInfo, shippingInfo, availableShippingMethods } = useCart();
   const { toast } = useToast();
-  const { db } = useFirebase();
+  
+  const { data: addresses, loading: loadingAddresses } = useCollection<Address>(user ? `users/${user.uid}/addresses` : '');
 
-  const [addresses, setAddresses] = React.useState<Address[]>([]);
-  const [loadingAddresses, setLoadingAddresses] = React.useState(true);
   const [selectedAddress, setSelectedAddress] = React.useState<Address | null>(null);
   const [selectedShippingMethod, setSelectedShippingMethod] = React.useState<string | null>(null);
   
@@ -63,23 +61,14 @@ export default function ShippingPage() {
       return;
     }
 
-    const fetchAddresses = async () => {
-      if (!db) return;
-      setLoadingAddresses(true);
-      const addressesCol = collection(db, 'users', user.uid, 'addresses');
-      const addressSnapshot = await getDocs(addressesCol);
-      const addressList = addressSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Address));
-      setAddresses(addressList);
-
-      const currentShippingAddress = shippingInfo ? addressList.find(a => a.id === (shippingInfo as any).id) : null;
-      const defaultAddress = addressList.find(a => a.isDefault);
-      const initialAddress = currentShippingAddress || defaultAddress || (addressList.length > 0 ? addressList[0] : null);
-      setSelectedAddress(initialAddress);
-      
-      setLoadingAddresses(false);
-    };
-    fetchAddresses();
-  }, [user, router, cart.length, toast, db]);
+    if (!loadingAddresses && addresses.length > 0) {
+        const currentShippingAddress = shippingInfo ? addresses.find(a => a.id === (shippingInfo as any).id) : null;
+        const defaultAddress = addresses.find(a => a.isDefault);
+        const initialAddress = currentShippingAddress || defaultAddress || addresses[0];
+        setSelectedAddress(initialAddress);
+    }
+    
+  }, [user, addresses, loadingAddresses, router, cart.length, toast]);
   
   React.useEffect(() => {
       if (selectedAddress) {
@@ -104,9 +93,13 @@ export default function ShippingPage() {
   }, [availableShippingMethods, shippingInfo]);
 
   React.useEffect(() => {
-    if (selectedAddress) {
+    if (selectedAddress && selectedShippingMethod) {
         let newShippingInfo: ShippingInfo;
         if (selectedShippingMethod === 'Pickup from Store') {
+            if(!selectedSundarbanThana){
+                // Don't set shipping info if thana is not selected yet
+                return;
+            }
             newShippingInfo = {
                 id: selectedAddress.id,
                 name: selectedAddress.name,
@@ -116,6 +109,9 @@ export default function ShippingPage() {
                 method: 'Pickup from Store',
                 delivery_area: selectedSundarbanThana,
                 delivery_area_id: -1, // Use a special ID for pickup
+                district: selectedAddress.district,
+                division: selectedAddress.division,
+                upazila: selectedSundarbanThana,
             };
         } else {
             newShippingInfo = {
@@ -223,15 +219,15 @@ export default function ShippingPage() {
                         <p className="font-semibold">৳{availableShippingMethods.find(m => m.name === 'Standard Courier (RedX)')?.fee.toFixed(2) || '60.00'}</p>
                         <RadioGroupItem value="Standard Courier (RedX)" id="standard-courier" className="ml-4"/>
                     </Label>
-                     <Label htmlFor="sundarban-courier" className={cn("flex items-center justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === 'Pickup from Store' })}>
+                     <Label htmlFor="sundarban-courier" className={cn("flex items-start justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === 'Pickup from Store' })}>
                         <div className="flex items-center gap-3">
                             <Store className="h-6 w-6 text-muted-foreground" />
-                            <div>
+                            <div className='flex-1'>
                                 <p className="font-semibold">Pickup from Store (Sundarban Courier)</p>
                                 <p className="text-sm text-muted-foreground">Collect from your nearest branch</p>
                                  {selectedShippingMethod === 'Pickup from Store' && (
                                      <Select value={selectedSundarbanThana} onValueChange={setSelectedSundarbanThana}>
-                                        <SelectTrigger className="w-[280px] mt-2 h-8">
+                                        <SelectTrigger className="w-full md:w-[280px] mt-2 h-8">
                                             <SelectValue placeholder="Select Pickup Branch" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -243,8 +239,10 @@ export default function ShippingPage() {
                                  )}
                             </div>
                         </div>
-                        <p className="font-semibold">৳120.00</p>
-                        <RadioGroupItem value="Pickup from Store" id="sundarban-courier" className="ml-4"/>
+                        <div className="flex items-center">
+                            <p className="font-semibold mr-4">৳{availableShippingMethods.find(m => m.name === 'Pickup from Store')?.fee.toFixed(2) || '120.00'}</p>
+                            <RadioGroupItem value="Pickup from Store" id="sundarban-courier" />
+                        </div>
                     </Label>
                 </RadioGroup>
               </CardContent>

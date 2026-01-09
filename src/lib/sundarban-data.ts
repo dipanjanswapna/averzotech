@@ -671,7 +671,7 @@ export const sundarbanBranches = [
     { district: 'Netrakona', office: 'Madan Thana', contact: '', address: 'Netrakona' },
     { district: 'Netrakona', office: 'Purbadhala Thana', contact: '', address: 'Netrakona' },
     { district: 'Netrakona', office: 'Mohongonj Upozila Agency Netrokona', contact: '01740956986, 01983308388', address: 'Netrokona' },
-    { district: 'Netrakona', office: 'Durgapur Thana Agency Netrokona', contact: '01711704043, 01734225377', address: 'Netrakona' },
+    { district: 'Netrakona', office: 'Durgapur Thana Agency Netrokona', contact: '01711704043, 01734225377', address: 'Netrokona' },
     { district: 'Sherpur', office: 'Nokla Upozila Agency Sherpur', contact: '01190741278', address: 'Sherpur' },
     { district: 'Sherpur', office: 'Sherpur Dist', contact: '', address: 'Sherpur' },
     { district: 'Sherpur', office: 'Jhenaigathi', contact: '', address: 'Sherpur' },
