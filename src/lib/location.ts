@@ -1,5 +1,4 @@
 
-
 import { postalData as bangladeshPostalData } from './bangladesh-postal-data';
 import { sundarbanBranches } from './sundarban-data';
 import { getDeliveryInfoByPincode as redxDeliveryInfo } from './delivery';
@@ -63,7 +62,10 @@ export const getSundarbanDistricts = () => {
 }
 
 export const getSundarbanThanas = (district: string) => {
-    return [...new Set(sundarbanBranches.filter(b => b.district === district).map(b => b.office))].sort();
+    const thanas = sundarbanBranches
+        .filter(b => b.district.toLowerCase() === district.toLowerCase())
+        .map(b => b.office.trim());
+    return [...new Set(thanas)].sort();
 }
 
 export const getDeliveryInfoByPincode = redxDeliveryInfo;

@@ -1,10 +1,18 @@
 
+
 'use server';
 import path from 'path';
 import fs from 'fs/promises';
 
 interface DeliveryData {
-    pincode: string;
+    id: number;
+    name: string;
+    bn_name: string;
+    lat: string;
+    lng: string;
+    charge: string;
+    district_id: number;
+    post_code: string;
     area: string;
     time: string;
 }
@@ -17,30 +25,20 @@ async function loadDeliveryData(): Promise<DeliveryData[]> {
     }
 
     try {
-        const filePath = path.join(process.cwd(), 'public', 'delivary.csv');
+        const filePath = path.join(process.cwd(), 'public', 'redx_areas.json');
         const fileContent = await fs.readFile(filePath, 'utf-8');
-        
-        const lines = fileContent.split('\n').slice(1); // Skip header row
-        const data = lines.map(line => {
-            const [district, area, pincode, homeDelivery, lockdown, charge1kg, charge2kg, charge3kg, codCharge] = line.split(',');
-            return {
-                pincode: pincode?.trim(),
-                area: area?.trim(),
-                time: "2-4" // Placeholder for time as it is not in the new CSV
-            };
-        }).filter(item => item.pincode && item.area);
+        const data = JSON.parse(fileContent);
         
         deliveryDataCache = data;
         return data;
     } catch (error) {
-        console.error("Failed to read or parse delivary.csv:", error);
-        // In case of error, return an empty array to prevent crashes
+        console.error("Failed to read or parse redx_areas.json:", error);
         return [];
     }
 }
 
 export async function getDeliveryInfoByPincode(pincode: string): Promise<DeliveryData | null> {
     const deliveryData = await loadDeliveryData();
-    const info = deliveryData.find(item => item.pincode === pincode.trim());
+    const info = deliveryData.find(item => item.post_code === pincode.trim());
     return info || null;
 }

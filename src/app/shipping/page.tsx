@@ -1,8 +1,9 @@
+
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ChevronRight, PlusCircle, Home, Truck } from 'lucide-react';
+import { ChevronRight, PlusCircle, Home, Truck, Store } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,8 @@ import { cn } from '@/lib/utils';
 import { collection, getDocs } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { useFirebase } from '@/firebase';
+import { getSundarbanThanas } from '@/lib/location';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Address {
   id: string;
@@ -26,7 +29,7 @@ interface Address {
   streetAddress: string;
   division: string;
   district: string;
-  upazila: string;
+  thana: string;
   phone: string;
   isDefault: boolean;
   delivery_area: string;
@@ -44,6 +47,10 @@ export default function ShippingPage() {
   const [loadingAddresses, setLoadingAddresses] = React.useState(true);
   const [selectedAddress, setSelectedAddress] = React.useState<Address | null>(null);
   const [selectedShippingMethod, setSelectedShippingMethod] = React.useState<string | null>(null);
+  
+  const [sundarbanThanas, setSundarbanThanas] = React.useState<string[]>([]);
+  const [selectedSundarbanThana, setSelectedSundarbanThana] = React.useState<string>('');
+
 
   React.useEffect(() => {
     if (!user) {
@@ -64,15 +71,35 @@ export default function ShippingPage() {
       const addressList = addressSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Address));
       setAddresses(addressList);
 
-      // Set default address based on shippingInfo or isDefault flag or first address
       const currentShippingAddress = shippingInfo ? addressList.find(a => a.id === (shippingInfo as any).id) : null;
       const defaultAddress = addressList.find(a => a.isDefault);
-      setSelectedAddress(currentShippingAddress || defaultAddress || (addressList.length > 0 ? addressList[0] : null));
+      const initialAddress = currentShippingAddress || defaultAddress || (addressList.length > 0 ? addressList[0] : null);
+      setSelectedAddress(initialAddress);
+      
+      if (initialAddress) {
+        const thanas = getSundarbanThanas(initialAddress.district);
+        setSundarbanThanas(thanas);
+        if (thanas.length > 0) {
+          setSelectedSundarbanThana(thanas[0]);
+        }
+      }
 
       setLoadingAddresses(false);
     };
     fetchAddresses();
   }, [user, router, cart.length, toast, db]);
+  
+  React.useEffect(() => {
+      if (selectedAddress) {
+          const thanas = getSundarbanThanas(selectedAddress.district);
+          setSundarbanThanas(thanas);
+          if (thanas.length > 0) {
+            setSelectedSundarbanThana(thanas.includes(selectedAddress.thana) ? selectedAddress.thana : thanas[0]);
+          } else {
+            setSelectedSundarbanThana('');
+          }
+      }
+  }, [selectedAddress]);
 
   React.useEffect(() => {
     if (shippingInfo?.method && availableShippingMethods.some(m => m.name === shippingInfo.method)) {
@@ -84,26 +111,39 @@ export default function ShippingPage() {
     }
   }, [availableShippingMethods, shippingInfo]);
 
-  // Effect to update shipping info in the cart hook whenever selection changes
   React.useEffect(() => {
-    if (selectedAddress && selectedShippingMethod) {
-      const newShippingInfo: ShippingInfo = {
-        ...(selectedAddress as any), // include address id to remember selection
-        name: selectedAddress.name,
-        email: user?.email || '',
-        phone: selectedAddress.phone,
-        fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.upazila}, ${selectedAddress.district}, ${selectedAddress.division}`,
-        method: selectedShippingMethod,
-        delivery_area: selectedAddress.delivery_area,
-        delivery_area_id: selectedAddress.delivery_area_id,
-      };
-      if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
-        setShippingInfo(newShippingInfo);
-      }
-    } else if (shippingInfo && (!selectedShippingMethod || !selectedAddress)) {
+    if (selectedAddress) {
+        let newShippingInfo: ShippingInfo;
+        if (selectedShippingMethod === 'Pickup from Store') {
+            newShippingInfo = {
+                id: selectedAddress.id,
+                name: selectedAddress.name,
+                email: user?.email || '',
+                phone: selectedAddress.phone,
+                fullAddress: `Pickup from Sundarban Courier, ${selectedSundarbanThana}, ${selectedAddress.district}`,
+                method: 'Pickup from Store',
+                delivery_area: selectedSundarbanThana,
+                delivery_area_id: -1, // Use a special ID for pickup
+            };
+        } else {
+            newShippingInfo = {
+                ...(selectedAddress as any),
+                name: selectedAddress.name,
+                email: user?.email || '',
+                phone: selectedAddress.phone,
+                fullAddress: `${selectedAddress.streetAddress}, ${selectedAddress.thana}, ${selectedAddress.district}`,
+                method: selectedShippingMethod || 'Standard Courier (RedX)',
+            };
+        }
+
+        if (JSON.stringify(newShippingInfo) !== JSON.stringify(shippingInfo)) {
+            setShippingInfo(newShippingInfo);
+        }
+    } else if (shippingInfo) {
       setShippingInfo(null);
     }
-  }, [selectedAddress, selectedShippingMethod, user, setShippingInfo, shippingInfo]);
+}, [selectedAddress, selectedShippingMethod, selectedSundarbanThana, user, setShippingInfo, shippingInfo]);
+
 
   const handleContinue = () => {
     if (!selectedAddress || !selectedShippingMethod) {
@@ -155,7 +195,7 @@ export default function ShippingPage() {
                               {addr.isDefault && <Badge>Default</Badge>}
                             </div>
                             <address className="not-italic text-sm text-muted-foreground">
-                              {addr.streetAddress}, {addr.upazila}, {addr.district} <br />
+                              {addr.streetAddress}, {addr.thana}, {addr.district} <br />
                               {addr.division}<br />
                               Phone: {addr.phone}
                             </address>
@@ -184,23 +224,35 @@ export default function ShippingPage() {
                         <div className="flex items-center gap-3">
                             <Truck className="h-6 w-6 text-muted-foreground" />
                             <div>
-                                <p className="font-semibold">Standard Courier (RedX)</p>
+                                <p className="font-semibold">Home Delivery (via RedX)</p>
                                 <p className="text-sm text-muted-foreground">Est. Delivery: 2-4 business days</p>
                             </div>
                         </div>
                         <p className="font-semibold">৳{availableShippingMethods.find(m => m.name === 'Standard Courier')?.fee.toFixed(2) || '60.00'}</p>
                         <RadioGroupItem value="Standard Courier (RedX)" id="standard-courier" className="ml-4"/>
                     </Label>
-                     <Label htmlFor="sundarban-courier" className={cn("flex items-center justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === 'Sundarban Courier' })}>
+                     <Label htmlFor="sundarban-courier" className={cn("flex items-center justify-between border p-4 rounded-lg cursor-pointer", { "border-primary ring-1 ring-primary": selectedShippingMethod === 'Pickup from Store' })}>
                         <div className="flex items-center gap-3">
-                            <Home className="h-6 w-6 text-muted-foreground" />
+                            <Store className="h-6 w-6 text-muted-foreground" />
                             <div>
-                                <p className="font-semibold">Sundarban Courier Service</p>
-                                <p className="text-sm text-muted-foreground">Est. Delivery: 3-5 business days</p>
+                                <p className="font-semibold">Pickup from Store (Sundarban Courier)</p>
+                                <p className="text-sm text-muted-foreground">Collect from your nearest branch</p>
+                                 {selectedShippingMethod === 'Pickup from Store' && (
+                                     <Select value={selectedSundarbanThana} onValueChange={setSelectedSundarbanThana}>
+                                        <SelectTrigger className="w-[280px] mt-2 h-8">
+                                            <SelectValue placeholder="Select Pickup Branch" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {sundarbanThanas.map(thana => (
+                                                <SelectItem key={thana} value={thana}>{thana}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                 )}
                             </div>
                         </div>
                         <p className="font-semibold">৳120.00</p>
-                        <RadioGroupItem value="Sundarban Courier" id="sundarban-courier" className="ml-4"/>
+                        <RadioGroupItem value="Pickup from Store" id="sundarban-courier" className="ml-4"/>
                     </Label>
                 </RadioGroup>
               </CardContent>

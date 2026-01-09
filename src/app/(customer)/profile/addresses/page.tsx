@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -27,7 +28,7 @@ import { collection, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'fireb
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getDivisions, getDistricts, getThanas, getPostOffices } from '@/lib/location';
+import { getDivisions, getDistricts, getThanas, getPostOffices, getDeliveryInfoByPincode } from '@/lib/location';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase, useCollection } from '@/firebase';
 
@@ -43,6 +44,8 @@ interface Address {
     postCode: string;
     phone: string;
     isDefault: boolean;
+    delivery_area?: string;
+    delivery_area_id?: number;
 }
 
 export default function AddressesPage() {
@@ -162,7 +165,13 @@ export default function AddressesPage() {
     const handleSubmit = async () => {
         if (!user || !db) return;
         
-        const dataToSave = { ...formData };
+        const deliveryInfo = await getDeliveryInfoByPincode(formData.postCode);
+
+        const dataToSave = { 
+            ...formData,
+            delivery_area: deliveryInfo?.area || '',
+            delivery_area_id: deliveryInfo?.id || 0
+        };
 
         const addressesCol = collection(db, 'users', user.uid, 'addresses');
         
@@ -244,6 +253,7 @@ export default function AddressesPage() {
                         <p className="text-muted-foreground">{addr.streetAddress}</p>
                         <p className="text-muted-foreground">{addr.postOffice}, {addr.thana}, {addr.district}</p>
                         <p className="text-muted-foreground mt-2">Mobile: <span className="font-medium text-foreground">{addr.phone}</span></p>
+                         {addr.delivery_area && <p className="text-xs mt-2 text-green-600">✓ RedX Home delivery available to {addr.delivery_area}</p>}
                     </CardContent>
                     <CardFooter className="flex justify-between">
                         <div className="flex gap-2">
