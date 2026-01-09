@@ -28,7 +28,7 @@ import { collection, doc, addDoc, updateDoc, deleteDoc, writeBatch } from 'fireb
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getDivisions, getDistricts, getThanas, getPostOffices, getDeliveryInfoByPincode } from '@/lib/location';
+import { getDeliveryInfoByPincode } from '@/lib/location';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirebase, useCollection } from '@/firebase';
 

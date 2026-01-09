@@ -1,5 +1,6 @@
 
 
+
 import { postalData as bangladeshPostalData } from './bangladesh-postal-data';
 import { sundarbanBranches } from './sundarban-data';
 import { getDeliveryInfoByPincode as redxDeliveryInfo } from './delivery';
@@ -90,7 +91,7 @@ loadAndProcessData();
 
 export const getDivisions = () => allDivisions;
 export const getDistricts = (division: string) => allDistricts[division]?.sort() || [];
-export const getThanas = (division: string, district: string) => allThanas[district]?.sort() || [];
+export const getThanas = (district: string) => allThanas[district]?.sort() || [];
 
 export const getPostOffices = (division: string, district: string, thana: string) => {
     // This is still using the old data structure, as post offices aren't in the new one.
