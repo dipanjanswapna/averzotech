@@ -96,7 +96,7 @@ export function MegaMenu({ category, isMobile = false }: { category: any, isMobi
       {category.subCategories && category.subCategories.length > 0 && (
           <DropdownMenuContent 
             className="w-auto p-4" 
-            sideOffset={15} 
+            sideOffset={10} 
             onMouseEnter={handleOpen} 
             onMouseLeave={handleClose}
             align="start"

@@ -327,18 +327,18 @@ export function SiteHeader() {
           </div>
         </div>
       </div>
-       <div className="h-9 items-center border-t flex">
+       <div className="h-8 items-center border-t flex">
           <div className="container">
             <ScrollArea className="md:hidden -mx-4">
-              <nav className="flex items-center gap-6 text-sm font-medium px-4">
+              <nav className="flex items-center gap-6 text-xs font-medium px-4">
                  {categories.map((category) => (
-                    <Link href={category.href} key={category.name} className="hover:text-primary py-1 flex-shrink-0">{category.name}</Link>
+                    <Link href={category.href} key={category.name} className="hover:text-primary flex-shrink-0">{category.name}</Link>
                 ))}
               </nav>
               <ScrollBar orientation="horizontal" className="invisible" />
             </ScrollArea>
 
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <nav className="hidden md:flex items-center gap-6 text-xs font-medium">
               {categories.map((category) => (
                 <MegaMenu key={category.name} category={category} />
               ))}
