@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, Search, ShoppingCart, User, Heart, LogOut, Phone, Facebook, Instagram, Youtube, Twitter } from 'lucide-react';
+import { Menu, Search, ShoppingCart, User, Heart, LogOut, Phone, Facebook, Instagram, Youtube, Twitter, ImageIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ import { Separator } from './ui/separator';
 import { filterCategories } from '@/lib/categories';
 import { useCart } from '@/hooks/use-cart';
 import { useFirebase } from '@/firebase';
+import { ShopTheLookModal } from './shop-the-look-modal';
 
 const getDashboardLink = (user: AppUser | null) => {
     if (!user) return '/profile'; // Default fallback
@@ -40,6 +41,7 @@ export function SiteHeader() {
   const { user, auth } = useFirebase();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isShopTheLookOpen, setIsShopTheLookOpen] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
   const { cartCount, setIsCartOpen } = useCart();
@@ -86,6 +88,7 @@ export function SiteHeader() {
   const dashboardLink = getDashboardLink(user);
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
        <div className="bg-secondary text-secondary-foreground text-xs">
          <div className="container flex h-8 items-center justify-between">
@@ -96,8 +99,12 @@ export function SiteHeader() {
               </Link>
            </div>
            <div className="flex items-center gap-4">
+              <Button variant="link" size="sm" className="text-xs p-0 h-auto text-secondary-foreground hover:text-primary" onClick={() => setIsShopTheLookOpen(true)}>
+                  <ImageIcon className="h-4 w-4 mr-1" /> Shop the look
+              </Button>
+              <Separator orientation='vertical' className="h-4 bg-border hidden sm:block" />
               <span className='hidden sm:inline'>Follow us on:</span>
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                  <Link href="#"><Facebook className="h-4 w-4" /></Link>
                  <Link href="#"><Instagram className="h-4 w-4" /></Link>
                  <Link href="#"><Youtube className="h-4 w-4" /></Link>
@@ -339,5 +346,7 @@ export function SiteHeader() {
           </div>
        </div>
     </header>
+    <ShopTheLookModal isOpen={isShopTheLookOpen} onOpenChange={setIsShopTheLookOpen} />
+    </>
   );
 }
