@@ -1,8 +1,9 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc, query, where, getDocs, limit, updateDoc } from 'firebase/firestore';
 import { Order } from '@/types';
+import { db } from '@/firebase-server';
 
 async function findOrder(tran_id: string): Promise<string | null> {
     const ordersRef = collection(db, 'orders');
@@ -63,11 +64,7 @@ export async function POST(req: NextRequest) {
 
         batch.set(newOrderRef, finalOrderData);
         
-        for (const item of orderData.items) {
-            const productRef = doc(db, 'products', item.id);
-            batch.update(productRef, { "inventory.stock": increment(-item.quantity) });
-        }
-        
+        // Stock was already decremented at payment initiation. Now we just delete the pending order.
         batch.delete(pendingOrderRef);
 
         await batch.commit();
