@@ -1,4 +1,5 @@
 
+'use server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { collection, addDoc, serverTimestamp, writeBatch, doc, increment, getDoc, deleteDoc } from 'firebase/firestore';
