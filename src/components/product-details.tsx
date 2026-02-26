@@ -125,6 +125,8 @@ export function ProductDetails() {
   const [quantity, setQuantity] = React.useState(1);
   const [selectedSize, setSelectedSize] = React.useState<string>('');
   const [selectedColor, setSelectedColor] = React.useState<{name: string, hex: string} | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = React.useState(0);
+  const [carouselApi, setCarouselApi] = React.useState<any>();
   
   // Review form state
   const [newReviewRating, setNewReviewRating] = React.useState(5);
@@ -141,6 +143,21 @@ export function ProductDetails() {
   const { toast } = useToast();
 
   const isInWishlist = product ? wishlist.some(item => item.id === product.id) : false;
+
+  React.useEffect(() => {
+    if (!carouselApi) return;
+
+    setActiveImageIndex(carouselApi.selectedScrollSnap());
+    const onSelect = () => setActiveImageIndex(carouselApi.selectedScrollSnap());
+
+    carouselApi.on('select', onSelect);
+    carouselApi.on('reInit', onSelect);
+
+    return () => {
+      carouselApi.off('select', onSelect);
+      carouselApi.off('reInit', onSelect);
+    };
+  }, [carouselApi]);
 
   React.useEffect(() => {
     if (!productId || !db) return;
@@ -225,9 +242,13 @@ export function ProductDetails() {
         toast({ title: "Selection required", description: "Please select a size.", variant: "destructive" });
         return;
     }
-     if (!selectedColor && product.variants.colors.length > 0) {
+    if (!selectedColor && product.variants.colors.length > 0) {
         toast({ title: "Selection required", description: "Please select a color.", variant: "destructive" });
         return;
+    }
+    if (product.inventory.availability === 'in-stock' && quantity > product.inventory.stock) {
+      toast({ title: "Quantity unavailable", description: `Only ${product.inventory.stock} item(s) are currently available.`, variant: "destructive" });
+      return;
     }
     const productToAdd = {
         ...product,
@@ -393,6 +414,8 @@ export function ProductDetails() {
   const isPreOrder = product.inventory.availability === 'pre-order';
   const isTryOnAvailable = product.organization.category === 'Accessories' && (product.organization.subcategory === 'Watches' || product.organization.subcategory === 'Sunglasses');
   const minQuantity = product.inventory.moq || 1;
+  const maxQuantity = product.inventory.stock > 0 ? product.inventory.stock : minQuantity;
+  const productHighlights = product.organization.tags?.slice(0, 4) || [];
 
 
   return (
@@ -406,7 +429,7 @@ export function ProductDetails() {
           <div>
               <div className="grid gap-4">
                   <div className="group relative">
-                      <Carousel className="w-full" opts={{ loop: true, }}>
+                      <Carousel className="w-full" opts={{ loop: true }} setApi={setCarouselApi}>
                           <CarouselContent>
                               {product.images.map((image, index) => (
                                   <CarouselItem key={index}>
@@ -428,6 +451,24 @@ export function ProductDetails() {
                   {safeVideoUrl && (
                     <div className="aspect-video overflow-hidden rounded-lg">
                         <iframe width="100%" height="100%" src={safeVideoUrl} title="Product Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                    </div>
+                  )}
+                  {product.images.length > 1 && (
+                    <div className="grid grid-cols-5 gap-2">
+                      {product.images.map((image, index) => (
+                        <button
+                          key={`thumb-${index}`}
+                          type="button"
+                          onClick={() => carouselApi?.scrollTo(index)}
+                          className={cn(
+                            'relative overflow-hidden rounded-md border-2 transition-colors',
+                            activeImageIndex === index ? 'border-primary' : 'border-transparent hover:border-muted-foreground/40'
+                          )}
+                          aria-label={`View image ${index + 1}`}
+                        >
+                          <Image src={image} alt={`${product.name} thumbnail ${index + 1}`} width={120} height={120} className="aspect-square w-full object-cover" />
+                        </button>
+                      ))}
                     </div>
                   )}
               </div>
@@ -491,6 +532,28 @@ export function ProductDetails() {
                     availability={product.inventory.availability}
                 />
             </div>
+            {productHighlights.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {productHighlights.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="rounded-full px-3 py-1 text-xs">#{tag}</Badge>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+              <div className="rounded-lg border p-3 bg-muted/30">
+                <p className="text-xs uppercase text-muted-foreground">SKU</p>
+                <p className="font-semibold mt-1">{product.inventory.sku || 'N/A'}</p>
+              </div>
+              <div className="rounded-lg border p-3 bg-muted/30">
+                <p className="text-xs uppercase text-muted-foreground">Category</p>
+                <p className="font-semibold mt-1">{product.organization.category}</p>
+              </div>
+              <div className="rounded-lg border p-3 bg-muted/30">
+                <p className="text-xs uppercase text-muted-foreground">Available</p>
+                <p className="font-semibold mt-1">{Math.max(product.inventory.stock, 0)} pcs</p>
+              </div>
+            </div>
 
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-foreground mb-2">COLOR</h3>
@@ -522,7 +585,7 @@ export function ProductDetails() {
               <div className="flex items-center border rounded-md">
                   <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.max(minQuantity, q-1))}><Minus className="w-4 h-4" /></Button>
                   <Input type="number" value={quantity} readOnly className="w-12 h-8 text-center border-none focus-visible:ring-0" />
-                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => q+1)}><Plus className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => setQuantity(q => Math.min(maxQuantity, q + 1))}><Plus className="w-4 h-4" /></Button>
               </div>
               {minQuantity > 1 && (
                   <p className="text-sm text-muted-foreground">Minimum: {minQuantity} pcs</p>
